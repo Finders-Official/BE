@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: finders-api
+
+  profiles:
+    active: local  # 기본 프로필
+
+  # ========================================
+  # JPA 공통 설정
+  # ========================================
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100
+
+  # ========================================
+  # Jackson 설정
+  # ========================================
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: Asia/Seoul
+    date-format: yyyy-MM-dd HH:mm:ss
+
+# ========================================
+# Server 설정
+# ========================================
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# ========================================
+# Actuator 설정
+# ========================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# ========================================
+# Swagger 설정
+# ========================================
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+# ========================================
+# Logging 설정
+# ========================================
+logging:
+  level:
+    root: INFO
+    com.finders: DEBUG
+    org.springframework.web: INFO

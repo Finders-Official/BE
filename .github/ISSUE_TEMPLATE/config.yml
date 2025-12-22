@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/your-org/finders-spring/tree/main/docs
+    about: 프로젝트 문서를 확인해주세요 (ARCHITECTURE.md, CONVENTIONS.md, API.md)

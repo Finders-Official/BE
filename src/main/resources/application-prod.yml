@@ -1,0 +1,74 @@
+# ========================================
+# Production 환경 설정
+# ========================================
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # 운영에서는 validate만!
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+# ========================================
+# JWT 설정
+# ========================================
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiry: 1800000       # 30분
+  refresh-token-expiry: 604800000    # 7일
+
+# ========================================
+# OAuth2 설정
+# ========================================
+oauth2:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    client-secret: ${KAKAO_CLIENT_SECRET}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
+  apple:
+    client-id: ${APPLE_CLIENT_ID}
+    team-id: ${APPLE_TEAM_ID}
+    key-id: ${APPLE_KEY_ID}
+    redirect-uri: ${APPLE_REDIRECT_URI}
+
+# ========================================
+# Google Cloud 설정
+# ========================================
+google:
+  cloud:
+    vision:
+      enabled: true
+    project-id: ${GOOGLE_CLOUD_PROJECT}
+    credentials:
+      location: ${GOOGLE_APPLICATION_CREDENTIALS}
+
+# ========================================
+# Logging (최소화)
+# ========================================
+logging:
+  level:
+    root: WARN
+    com.finders: INFO
+    org.springframework.web: WARN
+
+# ========================================
+# Actuator (제한적 노출)
+# ========================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

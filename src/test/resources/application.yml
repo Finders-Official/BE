@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  secret: test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm
+  access-token-expiry: 3600000
+  refresh-token-expiry: 604800000
+
+oauth2:
+  kakao:
+    client-id: test-kakao-client-id
+    client-secret: test-kakao-secret
+    redirect-uri: http://localhost:8080/api/auth/kakao/callback
+  apple:
+    client-id: test-apple-client-id
+    team-id: test-team-id
+    key-id: test-key-id
+    redirect-uri: http://localhost:8080/api/auth/apple/callback
+
+google:
+  cloud:
+    vision:
+      enabled: false
+    project-id: test-project
