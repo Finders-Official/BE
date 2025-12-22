@@ -5,6 +5,13 @@ spring:
     password:
     driver-class-name: org.h2.Driver
 
+  # Jackson 설정 (ISO 8601 표준)
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: Asia/Seoul
+    serialization:
+      write-dates-as-timestamps: false
+
   jpa:
     hibernate:
       ddl-auto: create-drop

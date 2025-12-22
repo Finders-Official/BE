@@ -16,12 +16,13 @@ spring:
         default_batch_fetch_size: 100
 
   # ========================================
-  # Jackson 설정
+  # Jackson 설정 (ISO 8601 표준)
   # ========================================
   jackson:
     default-property-inclusion: non_null
     time-zone: Asia/Seoul
-    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: false  # ISO 8601 형식 사용 (yyyy-MM-dd'T'HH:mm:ss)
 
 # ========================================
 # Server 설정

@@ -10,6 +10,13 @@ import org.springframework.context.annotation.Primary;
 
 /**
  * Jackson ObjectMapper 설정
+ *
+ * <p>날짜/시간 직렬화 형식: ISO 8601 표준</p>
+ * <ul>
+ *   <li>LocalDateTime: yyyy-MM-dd'T'HH:mm:ss (예: 2025-12-23T14:30:00)</li>
+ *   <li>LocalDate: yyyy-MM-dd (예: 2025-12-23)</li>
+ *   <li>LocalTime: HH:mm:ss (예: 14:30:00)</li>
+ * </ul>
  */
 @Configuration
 public class JacksonConfig {
@@ -22,7 +29,7 @@ public class JacksonConfig {
         // Snake Case 설정 (user_name, created_at 등)
         objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
-        // Java 8 날짜/시간 지원
+        // Java 8 날짜/시간 지원 (ISO 8601 형식)
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
