@@ -1,18 +1,19 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v1.2.4 | 2025-12-23
+> v1.3.3 | 2025-12-24
 
 ---
 
-## 테이블 목록 (33개)
+## 테이블 목록 (32개)
 
 | 도메인 | 테이블 | 설명 |
 |--------|--------|------|
-| **member** | `member` | 회원 정보 |
+| **member** | `member` | 회원 정보 (토큰 잔액 포함) |
 | | `social_account` | 소셜 로그인 연동 (카카오/애플) |
 | | `member_address` | 배송지 주소 |
 | | `member_agreement` | 약관 동의 이력 |
+| | `token_history` | AI 토큰 충전/사용 내역 |
 | **store** | `photo_lab` | 현상소 정보 |
 | | `photo_lab_image` | 현상소 이미지 |
 | | `photo_lab_keyword` | 현상소 키워드/태그 |
@@ -31,11 +32,9 @@
 | | `photo_restoration` | AI 사진 복원 요청 |
 | **community** | `post` | 게시글 (리뷰 시 rating 포함) |
 | | `post_image` | 게시글 이미지 |
-| | `post_hashtag` | 게시글 해시태그 |
 | | `comment` | 댓글 |
 | | `post_like` | 좋아요 |
 | | `favorite_photo_lab` | 관심 현상소 |
-| | `favorite_post` | 관심 게시글 |
 | **inquiry** | `inquiry` | 1:1 문의 |
 | | `inquiry_reply` | 문의 답변 |
 | **common** | `notice` | 공지사항 |
@@ -52,19 +51,18 @@
 member ─┬─ 1:N ─ social_account
         ├─ 1:N ─ member_address
         ├─ 1:N ─ member_agreement (약관 동의)
+        ├─ 1:N ─ token_history (토큰 내역)
         ├─ 1:N ─ reservation ──── 1:1 ─ development_order ─┬─ 1:N ─ scanned_photo
         │                                                  └─ 1:N ─ print_order ─┬─ 1:N ─ print_order_item
         │                                                                        └─ 1:1 ─ delivery
-        ├─ 1:N ─ photo_restoration (AI 복원)
+        ├─ 1:N ─ photo_restoration (AI 복원, 토큰 사용)
         ├─ 1:N ─ post ─┬─ 1:N ─ post_image
-        │              ├─ 1:N ─ post_hashtag
         │              ├─ 1:N ─ comment
         │              └─ 1:N ─ post_like
         ├─ 1:N ─ favorite_photo_lab
-        ├─ 1:N ─ favorite_post
         ├─ 1:N ─ inquiry ─── 1:N ─ inquiry_reply
         ├─ 1:N ─ notification
-        └─ 1:N ─ payment (결제)
+        └─ 1:N ─ payment (결제, 토큰 구매)
 
 photo_lab ─┬─ 1:N ─ photo_lab_image
            ├─ 1:N ─ photo_lab_keyword
@@ -108,8 +106,13 @@ NotificationType: ORDER, RESERVATION, COMMUNITY, MARKETING, NOTICE
 AgreementType: TERMS, PRIVACY, MARKETING, LOCATION
 DocumentType: BUSINESS_LICENSE, BUSINESS_PERMIT
 RestorationStatus: PENDING, PROCESSING, COMPLETED, FAILED
-PaymentMethod: BANK_TRANSFER, CARD
-PaymentStatus: PENDING, COMPLETED, CANCELLED, REFUNDED
+FeedbackRating: GOOD, BAD
+
+// 결제/토큰 (v1.3.0 추가)
+PaymentMethod: BANK_TRANSFER, CARD  // 계좌이체 + 포트원 카드결제
+PaymentStatus: PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
+OrderType: RESERVATION, PRINT_ORDER, TOKEN_PURCHASE
+TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 ```
 
 ---
@@ -134,17 +137,15 @@ USE finders;
 CREATE TABLE member (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     nickname        VARCHAR(20)     NOT NULL,   -- social 로그인에서 받아야함
-    -- name            VARCHAR(50)     NULL, -- 필요 없는 듯?
     email           VARCHAR(100)    NULL,       -- social 로그인에서 받아야함
-    phone           VARCHAR(20)     NULL,       -- 인증 API 구현해야함함
+    phone           VARCHAR(20)     NULL,       -- 인증 API 구현해야함
     profile_image   VARCHAR(500)    NULL,       -- social 로그인에서 받아야함
     role            VARCHAR(20)     NOT NULL DEFAULT 'USER',
     status          VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 모든 DATETIME은 yyyy-MM-dd'T'HH:mm:ss, 2025-12-23T14:30:00로 될 예정
-    --  // 참고: 시간 관련 설정 Entity 
-    --   private LocalDateTime createdAt;   // DATETIME → 2025-12-23T14:30:00
-    --   private LocalDate reservationDate; // DATE → 2025-12-23
-    --      TIME → 09:00:00
+    -- AI 토큰 관련
+    token_balance   INT UNSIGNED    NOT NULL DEFAULT 3,     -- 보유 토큰 (회원가입 시 3개 지급)
+    last_token_refresh_at DATETIME  NULL,                   -- 마지막 무료 토큰 리프레시 일시
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
@@ -156,7 +157,7 @@ CREATE TABLE member (
 CREATE TABLE social_account (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,   -- FK
-    provider        VARCHAR(20)     NOT NULL,
+    provider        VARCHAR(20)     NOT NULL,   -- KAKAO, APPLE만 사용
     provider_id     VARCHAR(100)    NOT NULL,
     access_token    VARCHAR(500)    NULL,
     refresh_token   VARCHAR(500)    NULL,
@@ -187,7 +188,7 @@ CREATE TABLE member_address (
     CONSTRAINT fk_address_member FOREIGN KEY ( ) REFERENCES member(id)
 ) ENGINE=InnoDB COMMENT='배송지';
 
-CREATE TABLE member_agreement (
+CREATE TABLE member_agreement ( -- 개인정보 이용약관
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,   -- FK
     agreement_type  VARCHAR(20)     NOT NULL,   -- TERMS, PRIVACY, MARKETING, LOCATION
@@ -199,6 +200,23 @@ CREATE TABLE member_agreement (
     CONSTRAINT fk_agreement_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_agreement_type CHECK (agreement_type IN ('TERMS', 'PRIVACY', 'MARKETING', 'LOCATION'))
 ) ENGINE=InnoDB COMMENT='약관 동의 이력';
+
+CREATE TABLE token_history (    -- AI 토큰 충전/사용 내역
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    member_id       BIGINT          NOT NULL,
+    type            VARCHAR(20)     NOT NULL,   -- SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
+    amount          INT             NOT NULL,   -- 변동량 (+3, -1 등)
+    balance_after   INT UNSIGNED    NOT NULL,   -- 변동 후 잔액
+    related_type    VARCHAR(50)     NULL,       -- PHOTO_RESTORATION, PAYMENT
+    related_id      BIGINT          NULL,       -- 관련 엔티티 ID
+    description     VARCHAR(200)    NULL,       -- 설명 (예: "회원가입 보너스", "AI 복원 사용")
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_token_history_member (member_id, created_at DESC),
+    INDEX idx_token_history_type (type),
+    CONSTRAINT fk_token_history_member FOREIGN KEY (member_id) REFERENCES member(id),
+    CONSTRAINT chk_token_type CHECK (type IN ('SIGNUP_BONUS', 'REFRESH', 'PURCHASE', 'USE', 'REFUND'))
+) ENGINE=InnoDB COMMENT='토큰 내역';
 
 -- ============================================
 -- 2. STORE (현상소)
@@ -481,13 +499,20 @@ CREATE TABLE photo_restoration (    -- Vision AI 사용
     member_id       BIGINT          NOT NULL,
     original_url    VARCHAR(500)    NOT NULL,   -- 원본 이미지
     restored_url    VARCHAR(500)    NULL,       -- 복원된 이미지
+    mask_data       TEXT            NULL,       -- 마스킹 영역 데이터 (JSON)
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',  -- PENDING, PROCESSING, COMPLETED, FAILED
+    -- 토큰 관련
+    token_used      INT UNSIGNED    NOT NULL DEFAULT 1,         -- 사용된 토큰 수
+    -- 피드백 (AI 품질 개선용)
+    feedback_rating VARCHAR(10)     NULL,       -- GOOD, BAD
+    feedback_comment VARCHAR(500)   NULL,       -- 피드백 코멘트 (선택)
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_restoration_member (member_id, status),
     CONSTRAINT fk_restoration_member FOREIGN KEY (member_id) REFERENCES member(id),
-    CONSTRAINT chk_restoration_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))
+    CONSTRAINT chk_restoration_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')),
+    CONSTRAINT chk_feedback_rating CHECK (feedback_rating IS NULL OR feedback_rating IN ('GOOD', 'BAD'))
 ) ENGINE=InnoDB COMMENT='AI 사진 복원';
 
 -- ============================================
@@ -517,7 +542,7 @@ CREATE TABLE post (
     CONSTRAINT chk_post_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED'))
 ) ENGINE=InnoDB COMMENT='게시글';
 
-CREATE TABLE post_image (
+CREATE TABLE post_image (   -- 1:N
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     post_id         BIGINT          NOT NULL,   -- FK
     image_url       VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage
@@ -530,38 +555,24 @@ CREATE TABLE post_image (
     CONSTRAINT fk_post_image FOREIGN KEY (post_id) REFERENCES post(id) ON DELETE CASCADE
 ) ENGINE=InnoDB COMMENT='게시글 이미지';
 
-CREATE TABLE post_hashtag (
-    id              BIGINT          NOT NULL AUTO_INCREMENT,
-    post_id         BIGINT          NOT NULL,
-    hashtag         VARCHAR(50)     NOT NULL,
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_post_hashtag (post_id, hashtag),
-    INDEX idx_hashtag (hashtag),
-    CONSTRAINT fk_post_hashtag FOREIGN KEY (post_id) REFERENCES post(id) ON DELETE CASCADE
-) ENGINE=InnoDB COMMENT='게시글 해시태그';
-
-CREATE TABLE comment (  -- 댓글
+CREATE TABLE comment (  -- 댓글 (대댓글 기능 없음)
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     post_id         BIGINT          NOT NULL,
     member_id       BIGINT          NOT NULL,
-    parent_id       BIGINT          NULL,       -- 대댓글이 몇단계까지 가능한가요? PM에게 여쭤보기 
     content         VARCHAR(1000)   NOT NULL,
     status          VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
-    INDEX idx_comment_post (post_id),
-    INDEX idx_comment_parent (parent_id),
+    INDEX idx_comment_post (post_id, created_at),
     CONSTRAINT fk_comment_post FOREIGN KEY (post_id) REFERENCES post(id),
-    CONSTRAINT fk_comment_member FOREIGN KEY (member_id) REFERENCES member(id),
-    CONSTRAINT fk_comment_parent FOREIGN KEY (parent_id) REFERENCES comment(id)
+    CONSTRAINT fk_comment_member FOREIGN KEY (member_id) REFERENCES member(id)
 ) ENGINE=InnoDB COMMENT='댓글';
 
-CREATE TABLE post_like (
+CREATE TABLE post_like (    -- 하트
     id              BIGINT          NOT NULL AUTO_INCREMENT,
-    post_id         BIGINT          NOT NULL,
+    post_id         BIGINT          NOT NULL, 
     member_id       BIGINT          NOT NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -570,7 +581,7 @@ CREATE TABLE post_like (
     CONSTRAINT fk_like_member FOREIGN KEY (member_id) REFERENCES member(id)
 ) ENGINE=InnoDB COMMENT='좋아요';
 
-CREATE TABLE favorite_photo_lab (
+CREATE TABLE favorite_photo_lab (   -- 별표
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     photo_lab_id    BIGINT          NOT NULL,
@@ -581,22 +592,11 @@ CREATE TABLE favorite_photo_lab (
     CONSTRAINT fk_fav_lab_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id)
 ) ENGINE=InnoDB COMMENT='관심 현상소';
 
-CREATE TABLE favorite_post (
-    id              BIGINT          NOT NULL AUTO_INCREMENT,
-    member_id       BIGINT          NOT NULL,
-    post_id         BIGINT          NOT NULL,
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_favorite_post (member_id, post_id),
-    CONSTRAINT fk_fav_post_member FOREIGN KEY (member_id) REFERENCES member(id),
-    CONSTRAINT fk_fav_post_post FOREIGN KEY (post_id) REFERENCES post(id)
-) ENGINE=InnoDB COMMENT='관심 게시글';
-
 -- ============================================
 -- 6. INQUIRY
 -- ============================================
 
-CREATE TABLE inquiry (  -- PM님께 여쭤봐야할 듯...
+CREATE TABLE inquiry (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     photo_lab_id    BIGINT          NULL,
@@ -615,20 +615,20 @@ CREATE TABLE inquiry (  -- PM님께 여쭤봐야할 듯...
 CREATE TABLE inquiry_reply (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     inquiry_id      BIGINT          NOT NULL,
-    admin_id        BIGINT          NULL,       -- admin 계정 만들어서 DB에 추가해야할 듯
+    replier_id      BIGINT          NOT NULL,   -- 답변자 (ADMIN: 서비스 문의, OWNER: 현상소 문의)
     content         TEXT            NOT NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_reply_inquiry (inquiry_id),
     CONSTRAINT fk_reply_inquiry FOREIGN KEY (inquiry_id) REFERENCES inquiry(id),
-    CONSTRAINT fk_reply_admin FOREIGN KEY (admin_id) REFERENCES member(id)
+    CONSTRAINT fk_reply_replier FOREIGN KEY (replier_id) REFERENCES member(id)
 ) ENGINE=InnoDB COMMENT='문의 답변';
 
 -- ============================================
 -- 7. COMMON
 -- ============================================
 
-CREATE TABLE notice (
+CREATE TABLE notice (   -- 전체 회원 공지사항 게시판 
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     title           VARCHAR(200)    NOT NULL,
     content         TEXT            NOT NULL,
@@ -643,7 +643,7 @@ CREATE TABLE notice (
     CONSTRAINT chk_notice_type CHECK (notice_type IN ('GENERAL', 'EVENT', 'POLICY'))
 ) ENGINE=InnoDB COMMENT='공지사항';
 
-CREATE TABLE promotion (
+CREATE TABLE promotion (    -- 메인페이지 프로모션 배너 부분
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     photo_lab_id    BIGINT          NULL,
     title           VARCHAR(200)    NOT NULL,
@@ -664,7 +664,7 @@ CREATE TABLE promotion (
     CONSTRAINT fk_promotion_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id)
 ) ENGINE=InnoDB COMMENT='프로모션';
 
-CREATE TABLE film_content (
+CREATE TABLE film_content ( -- 필름컨텐츠 부분
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     title           VARCHAR(200)    NOT NULL,
     subtitle        VARCHAR(300)    NULL,
@@ -674,7 +674,7 @@ CREATE TABLE film_content (
     height          INT UNSIGNED    NULL,       -- 이미지 높이
     content_type    VARCHAR(20)     NOT NULL DEFAULT 'ARTICLE',
     view_count      INT UNSIGNED    NOT NULL DEFAULT 0,
-    is_featured     TINYINT(1)      NOT NULL DEFAULT 0,
+    is_featured     TINYINT(1)      NOT NULL DEFAULT 0, -- 메인 페이지에서 특정 필름 콘텐츠를 추천하는 데 사용
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
@@ -683,7 +683,7 @@ CREATE TABLE film_content (
     CONSTRAINT chk_content_type CHECK (content_type IN ('ARTICLE', 'TIP', 'NEWS'))
 ) ENGINE=InnoDB COMMENT='필름 콘텐츠';
 
-CREATE TABLE notification (
+CREATE TABLE notification ( -- 회원별 개인 알림(앱 푸시/ 알림센터)
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     title           VARCHAR(100)    NOT NULL,
@@ -699,23 +699,37 @@ CREATE TABLE notification (
     CONSTRAINT chk_notification_type CHECK (notification_type IN ('ORDER', 'RESERVATION', 'COMMUNITY', 'MARKETING', 'NOTICE'))
 ) ENGINE=InnoDB COMMENT='알림';
 
-CREATE TABLE payment (  -- PM님께 여쭤봐야할 듯...
+CREATE TABLE payment (  -- PM님께서 포트원 결제 연동 검토중...
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
-    order_type      VARCHAR(20)     NOT NULL,   -- RESERVATION, PRINT_ORDER
-    order_id        BIGINT          NOT NULL,   -- 주문 ID (reservation.id 또는 print_order.id)
-    amount          INT UNSIGNED    NOT NULL,
-    payment_method  VARCHAR(20)     NOT NULL,   -- BANK_TRANSFER, CARD -- 카드가 없어도 되지 않을까..?
-    status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',  -- PENDING, COMPLETED, CANCELLED, REFUNDED
+    order_type      VARCHAR(20)     NOT NULL,   -- RESERVATION, PRINT_ORDER, TOKEN_PURCHASE
+    order_id        BIGINT          NULL,       -- 주문 ID (토큰 구매 시 NULL)
+    amount          INT UNSIGNED    NOT NULL,   -- 결제 금액 (원)
+    token_amount    INT UNSIGNED    NULL,       -- 구매한 토큰 수 (토큰 구매 시)
+    payment_method  VARCHAR(20)     NOT NULL DEFAULT 'BANK_TRANSFER',
+    status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
+    -- 계좌이체 전용
+    depositor_name  VARCHAR(50)     NULL,       -- 입금자명 (계좌이체 시)
+    -- 포트원 PG 연동용
+    merchant_uid    VARCHAR(100)    NULL,       -- 주문 고유번호 (우리가 생성)
+    imp_uid         VARCHAR(100)    NULL,       -- 포트원 결제 고유번호
+    receipt_url     VARCHAR(500)    NULL,       -- 영수증 URL
+    -- 결과 정보
     paid_at         DATETIME        NULL,
+    fail_reason     VARCHAR(200)    NULL,       -- 결제 실패 사유
+    cancelled_at    DATETIME        NULL,
+    cancel_reason   VARCHAR(200)    NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
+    UNIQUE KEY uk_merchant_uid (merchant_uid),
     INDEX idx_payment_member (member_id, status),
     INDEX idx_payment_order (order_type, order_id),
+    INDEX idx_payment_imp_uid (imp_uid),
     CONSTRAINT fk_payment_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_payment_method CHECK (payment_method IN ('BANK_TRANSFER', 'CARD')),
-    CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'COMPLETED', 'CANCELLED', 'REFUNDED'))
+    CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED')),
+    CONSTRAINT chk_order_type CHECK (order_type IN ('RESERVATION', 'PRINT_ORDER', 'TOKEN_PURCHASE'))
 ) ENGINE=InnoDB COMMENT='결제';
 ```
 
@@ -727,13 +741,13 @@ CREATE TABLE payment (  -- PM님께 여쭤봐야할 듯...
 |------|--------|
 | CM-020~022 로그인/가입 | member, social_account, member_agreement |
 | HM-010 메인 홈 | photo_lab, promotion, film_content |
-| HM-020 사진 복원 | photo_restoration |
+| HM-021~025 사진 복원 | photo_restoration, token_history, member (token_balance) |
 | PL-010~011 현상소 탐색 | photo_lab, photo_lab_keyword |
 | PL-020~021 현상소 상세/예약 | photo_lab_*, reservation, reservation_item, payment |
-| CO-020~030 사진수다 | post (rating), post_image, post_hashtag, comment, post_like |
+| CO-020~030 사진수다 | post (rating), post_image, comment, post_like |
 | PM-000~018 현상관리 | development_order, scanned_photo, print_order, print_order_item, delivery, payment |
 | UR-010~025 마이페이지 | member, social_account |
-| UR-030~050 관심목록 | favorite_photo_lab, favorite_post, post |
+| UR-030~040 관심목록 | favorite_photo_lab, post_like |
 | UR-060~062 배송지 | member_address |
 | UR-070~081 공지/문의 | notice, inquiry, inquiry_reply |
 | 사업자 등록 | photo_lab, photo_lab_document |
@@ -751,3 +765,9 @@ CREATE TABLE payment (  -- PM님께 여쭤봐야할 듯...
 | 1.2.2 | 2025-12-23 | 이미지 테이블 정리: thumbnail_url 제거, width/height 추가 (photo_lab_image, scanned_photo, post_image) |
 | 1.2.3 | 2025-12-23 | promotion, film_content에 width/height 추가, film_content.thumbnail_url → image_url 변경 |
 | 1.2.4 | 2025-12-23 | NoticeType에 POLICY 추가 (일반공지, 이벤트안내, 약관/정책공지) |
+| 1.2.5 | 2025-12-24 | post_hashtag 테이블 제거 (화면설계서 미사용) (32개 테이블) |
+| 1.2.6 | 2025-12-24 | payment 테이블 리팩토링: 계좌이체 전용(depositor_name), 포트원 연동 대비(pg_tid, receipt_url), 취소 관련(cancelled_at, cancel_reason) 컬럼 추가 |
+| 1.3.0 | 2025-12-24 | **AI 토큰 시스템 추가**: token_history 테이블 신규, member에 token_balance/last_token_refresh_at 추가, photo_restoration에 token_used/feedback_rating/feedback_comment/mask_data 추가, payment에 포트원 필드(merchant_uid, imp_uid, token_amount, fail_reason) 추가 및 TOKEN_PURCHASE 지원 (33개 테이블) |
+| 1.3.1 | 2025-12-24 | inquiry_reply.admin_id → replier_id 변경 (ADMIN/OWNER 모두 답변 가능하도록) |
+| 1.3.2 | 2025-12-24 | comment 테이블에서 대댓글 기능 제거 (parent_id, idx_comment_parent, fk_comment_parent 삭제) |
+| 1.3.3 | 2025-12-24 | favorite_post 테이블 제거 (좋아요한 게시글은 post_like로 조회) (32개 테이블) |
