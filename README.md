@@ -6,8 +6,8 @@
 
 | Category | Technology |
 |----------|------------|
-| Language | Java 17 |
-| Framework | Spring Boot 3.4.1 |
+| Language | Java 21 |
+| Framework | Spring Boot 3.4.13 |
 | Build Tool | Gradle 8.11 |
 | Database | MySQL 8.x, H2 (local) |
 | ORM | Spring Data JPA, QueryDSL 5.1 |
@@ -19,7 +19,7 @@
 
 ### Prerequisites
 
-- Java 17+
+- Java 21+
 - Gradle 8.x
 - MySQL 8.x (optional, H2 for local)
 
