@@ -41,16 +41,16 @@ public class SwaggerConfig {
                 .version("v1.0.0")
                 .contact(new Contact()
                         .name("Finders Team")
-                        .email("contact@finders.com"));
+                        .email("contact@finders.kr"));
     }
 
     private List<Server> servers() {
         return switch (activeProfile) {
             case "prod" -> List.of(
-                    new Server().url("https://api.finders.com").description("Production Server")
+                    new Server().url("https://api.finders.kr").description("Production Server")
             );
             case "dev" -> List.of(
-                    new Server().url("https://dev-api.finders.com").description("Development Server"),
+                    new Server().url("https://dev-api.finders.kr").description("Development Server"),
                     new Server().url("http://localhost:8080").description("Local Server")
             );
             default -> List.of(
