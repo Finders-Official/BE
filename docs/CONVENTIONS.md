@@ -282,41 +282,29 @@ public class MemberQueryRepository {
 
 #### 브랜치 구조
 ```
-main                              # 운영 브랜치
-develop                           # 개발 브랜치
-<type>/<scope>-<issue>-<설명>      # 작업 브랜치
+main                        # 운영 브랜치
+develop                     # 개발 브랜치
+<type>/<설명>-#<issue>       # 작업 브랜치
 ```
 
 #### 형식
 ```
-<type>/<scope>-<issue_number>-<간단한_설명>
+<type>/<간단한_설명>-#<issue_number>
 ```
 
 | 구성요소 | 설명 | 예시 |
 |----------|------|------|
 | `type` | 작업 유형 | `feat`, `fix`, `refactor`, `hotfix` |
-| `scope` | 도메인/모듈 | `member`, `store`, `auth` 등 |
-| `issue_number` | GitHub 이슈 번호 | `14`, `23`, `108` |
 | `설명` | 간단한 작업 설명 (영문, 케밥케이스) | `signup-api`, `image-upload` |
-
-#### 사용 가능한 Scope
-```
-auth          # 인증/인가
-member        # 회원
-store         # 가게
-reservation   # 예약
-photo         # 사진
-community     # 커뮤니티
-inquiry       # 문의
-common        # 공통 기능
-```
+| `issue_number` | GitHub 이슈 번호 **(필수)** | `#14`, `#23`, `#108` |
 
 #### 예시
 ```bash
-feat/member-14-signup-api        # 회원가입 API 기능 추가
-fix/store-23-image-upload        # 가게 이미지 업로드 버그 수정
-refactor/auth-8-token-logic      # 토큰 로직 리팩토링
-hotfix/reservation-45-date-bug   # 예약 날짜 긴급 버그 수정
+feat/signup-api-#14          # 회원가입 API 기능 추가
+fix/image-upload-#23         # 이미지 업로드 버그 수정
+refactor/token-logic-#8      # 토큰 로직 리팩토링
+hotfix/date-bug-#45          # 날짜 관련 긴급 버그 수정
+chore/docker-setup-#5        # Docker 환경 설정
 ```
 
 ---
@@ -325,7 +313,7 @@ hotfix/reservation-45-date-bug   # 예약 날짜 긴급 버그 수정
 
 #### 형식
 ```
-<type>(<scope>): <subject> (#<issue_number>)
+<type>: <subject> (#<issue_number>)
 
 <body>
 ```
@@ -344,29 +332,32 @@ hotfix/reservation-45-date-bug   # 예약 날짜 긴급 버그 수정
 | `remove` | 파일 삭제 |
 
 #### 규칙
-1. **type, scope**: 소문자 영문
+1. **type**: 소문자 영문
 2. **subject**: 한글 또는 영문, 50자 이내, 마침표 없음
 3. **body**: 한글 작성 권장, 무엇을 왜 변경했는지 설명
-4. **이슈 번호**: 반드시 연결된 이슈 번호 포함
+4. **이슈 번호**: 선택 사항 (참고용)
 
 #### 예시
 
 ```bash
 # 간단한 커밋
-git commit -m "feat(member): 회원가입 API 구현 (#14)"
+git commit -m "feat: 회원가입 API 구현 (#14)"
 
 # 본문 포함 커밋
-git commit -m "feat(auth): 소셜 로그인 기능 추가 (#28)
+git commit -m "feat: 소셜 로그인 기능 추가 (#28)
 
 - 카카오 OAuth2 로그인 구현
-- 네이버 OAuth2 로그인 구현
+- 애플 OAuth2 로그인 구현
 - 소셜 계정 연동 테이블 추가"
 
 # 버그 수정
-git commit -m "fix(store): 이미지 업로드 시 NPE 발생 수정 (#45)"
+git commit -m "fix: 이미지 업로드 시 NPE 발생 수정 (#45)"
 
 # 리팩토링
-git commit -m "refactor(reservation): 예약 검증 로직 분리 (#67)"
+git commit -m "refactor: 예약 검증 로직 분리 (#67)"
+
+# 이슈 번호 없이 (선택 사항)
+git commit -m "chore: 코드 포맷팅 적용"
 ```
 
 ---
@@ -374,5 +365,6 @@ git commit -m "refactor(reservation): 예약 검증 로직 분리 (#67)"
 ### Issue & PR 연동
 
 - 브랜치 생성 시 반드시 이슈 먼저 생성
-- 커밋 메시지에 이슈 번호 포함 → 자동 연결
+- 브랜치명에 이슈 번호 필수 포함
+- 커밋 메시지 이슈 번호는 선택 (참고용)
 - PR 머지 시 이슈 자동 종료: `Closes #14`, `Fixes #14`
