@@ -1,0 +1,40 @@
+# ========================================
+# Finders API - 로컬 개발 환경
+# ========================================
+# 사용법:
+#   1. docker compose up -d
+#   2. ./gradlew bootRun --args='--spring.profiles.active=docker'
+#   3. http://localhost:8080/api/swagger-ui.html
+# ========================================
+
+services:
+  # ========================================
+  # MySQL Database
+  # ========================================
+  mysql:
+    image: mysql:8.0
+    container_name: finders-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: finders
+      MYSQL_USER: finders
+      MYSQL_PASSWORD: finders123
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql-data:

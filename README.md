@@ -46,6 +46,7 @@ cp .env.example .env
 | Profile | Description | Database |
 |---------|-------------|----------|
 | `local` | 로컬 개발 환경 | H2 In-Memory |
+| `docker` | Docker MySQL 연동 | MySQL (Docker) |
 | `dev` | 개발 서버 | MySQL |
 | `prod` | 운영 서버 | MySQL |
 
@@ -53,6 +54,29 @@ cp .env.example .env
 # Run with specific profile
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
+
+### Docker로 개발하기 (권장)
+
+```bash
+# 1. MySQL 컨테이너 실행
+docker compose up -d
+
+# 2. Spring Boot 실행 (docker 프로필)
+./gradlew bootRun --args='--spring.profiles.active=docker'
+
+# 3. 컨테이너 종료
+docker compose down
+
+# 데이터 초기화가 필요한 경우
+docker compose down -v
+```
+
+| 서비스 | 접속 정보 |
+|--------|-----------|
+| MySQL | `localhost:3306` |
+| DB Name | `finders` |
+| Username | `finders` |
+| Password | `finders123` |
 
 ## API Documentation
 
