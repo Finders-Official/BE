@@ -141,10 +141,10 @@ USE finders;
 
 CREATE TABLE member (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
-    nickname        VARCHAR(20)     NOT NULL,   -- social 로그인에서 받아야함
-    email           VARCHAR(100)    NULL,       -- social 로그인에서 받아야함
+    nickname        VARCHAR(20)     NOT NULL,   -- social 로그인에서 받아옴
+    email           VARCHAR(100)    NULL,       -- social 로그인에서 받아야 하는데, 카카오에 비즈앱 등록 전에는 못 가져옴... PM에게 물어봐야할 듯
     phone           VARCHAR(20)     NULL,       -- 인증 API 구현해야함
-    profile_image   VARCHAR(500)    NULL,       -- social 로그인에서 받아야함
+    profile_image   VARCHAR(500)    NULL,       -- social 로그인에서 받아옴
     role            VARCHAR(20)     NOT NULL DEFAULT 'USER',
     status          VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',
     -- AI 토큰 관련

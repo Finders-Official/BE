@@ -61,11 +61,23 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
+      # DB - Docker 내부 네트워크 사용
       DB_URL: jdbc:mysql://mysql:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
       DB_USER: finders
       DB_PASSWORD: finders123
+      # Kakao API (.env에서 읽음)
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
+      # JWT (.env에서 읽음)
+      JWT_SECRET: ${JWT_SECRET}
+      # GCP (.env에서 읽음)
+      GCS_BUCKET: ${GCS_BUCKET}
+      VISION_ENABLED: ${VISION_ENABLED:-false}
     networks:
       - finders-network
     profiles:
