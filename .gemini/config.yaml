@@ -1,0 +1,33 @@
+have_fun: false  # 장난스러운 멘트/톤 비활성화
+
+code_review:
+  disable: false  # 코드 리뷰 기능 활성화
+  comment_severity_threshold: MEDIUM  # MEDIUM 이상 문제에만 댓글
+  max_review_comments: -1  # 리뷰 댓글 수 무제한
+
+  pull_request_opened:
+    help: false       # PR 생성 시 도움말 비활성화
+    summary: true     # PR 요약 활성화
+    code_review: true # PR 오픈 시 자동 리뷰
+
+# 리뷰 제외 패턴
+ignore_patterns:
+  - '.github/'           # GitHub 워크플로우
+  - '.gradle/'           # Gradle 캐시
+  - '.vscode/'           # VS Code 설정
+  - 'gradle/'            # Gradle Wrapper
+  - 'build/'             # 빌드 결과물
+  - 'docker/'            # Docker 설정
+  - 'docs/'              # 문서 파일
+  - '*.md'               # 마크다운 문서
+  - '*.lock'             # Lock 파일
+  - '*.sql'              # SQL 스크립트
+  - 'gradlew'            # Gradle Wrapper 스크립트
+  - 'gradlew.bat'
+  - 'settings.gradle'
+  - 'docker-compose*.yml'
+  - 'Dockerfile'
+  - '.env*'
+  - '.gitignore'
+  - '.dockerignore'
+  - '**/generated/**'    # QueryDSL Q클래스 등 생성 코드

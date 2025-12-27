@@ -27,8 +27,8 @@
 
 ```bash
 # 1. Clone repository
-git clone <repository-url>
-cd finders-api
+git clone https://github.com/Finders-Official/Spring.git
+cd Spring
 
 # 2. Copy environment file
 cp .env.example .env
