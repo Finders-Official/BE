@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Build
+build/
+.gradle/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Environment
+.env
+.env.local
+.env.prod
+
+# Docker
+docker-compose*.yml
+Dockerfile
+
+# Docs
+docs/
+*.md
+
+# Logs
+*.log
+logs/

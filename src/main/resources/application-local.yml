@@ -1,57 +1,27 @@
 # ========================================
-# Local 환경 설정
+# 로컬 개발 환경 설정
 # ========================================
+# 사용법:
+#   docker compose up -d && ./gradlew bootRun
+# ========================================
+
 spring:
-  # H2 In-Memory DB (로컬 개발용)
-  datasource:
-    url: jdbc:h2:mem:finders;MODE=MySQL;DB_CLOSE_DELAY=-1
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update  # 로컬: 엔티티 변경 시 자동 반영
     show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+
+  # 로컬 DB 기본값 (Docker MySQL)
+  datasource:
+    url: jdbc:mysql://localhost:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
 
 # ========================================
-# JWT 설정
-# ========================================
-jwt:
-  secret: local-development-secret-key-must-be-at-least-256-bits-long-for-hs256
-  access-token-expiry: 3600000      # 1시간
-  refresh-token-expiry: 604800000   # 7일
-
-# ========================================
-# OAuth2 설정 (로컬용 더미)
-# ========================================
-oauth2:
-  kakao:
-    client-id: ${KAKAO_CLIENT_ID:local-kakao-client-id}
-    client-secret: ${KAKAO_CLIENT_SECRET:local-kakao-secret}
-    redirect-uri: http://localhost:8080/api/auth/kakao/callback
-  apple:
-    client-id: ${APPLE_CLIENT_ID:local-apple-client-id}
-    team-id: ${APPLE_TEAM_ID:local-team-id}
-    key-id: ${APPLE_KEY_ID:local-key-id}
-    redirect-uri: http://localhost:8080/api/auth/apple/callback
-
-# ========================================
-# Google Cloud 설정
+# Google Cloud (로컬에서는 비활성화)
 # ========================================
 google:
   cloud:
     vision:
-      enabled: false  # 로컬에서는 비활성화
-    project-id: ${GOOGLE_CLOUD_PROJECT:local-project}
+      enabled: false
 
 # ========================================
 # Logging (상세)

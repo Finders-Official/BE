@@ -9,19 +9,19 @@
 | Language | Java 21 |
 | Framework | Spring Boot 3.4.13 |
 | Build Tool | Gradle 8.11 |
-| Database | MySQL 8.x, H2 (local) |
+| Database | MySQL 8.x |
 | ORM | Spring Data JPA, QueryDSL 5.1 |
 | Security | Spring Security, JWT |
 | API Docs | SpringDoc OpenAPI (Swagger) |
-| Cloud | Google Cloud Vision AI |
+| Cloud | GCP (Compute Engine, Cloud SQL, Cloud Storage, Vision AI) |
 
 ## Getting Started
 
 ### Prerequisites
 
 - Java 21+
+- Docker & Docker Compose
 - Gradle 8.x
-- MySQL 8.x (optional, H2 for local)
 
 ### Installation
 
@@ -45,29 +45,25 @@ cp .env.example .env
 
 | Profile | Description | Database |
 |---------|-------------|----------|
-| `local` | 로컬 개발 환경 | H2 In-Memory |
-| `docker` | Docker MySQL 연동 | MySQL (Docker) |
-| `dev` | 개발 서버 | MySQL |
-| `prod` | 운영 서버 | MySQL |
+| `local` | 로컬 개발 환경 | MySQL (Docker) |
+| `prod` | 운영 서버 | GCP Cloud SQL |
 
-```bash
-# Run with specific profile
-./gradlew bootRun --args='--spring.profiles.active=local'
-```
-
-### Docker로 개발하기 (권장)
+### 로컬 개발 (권장)
 
 ```bash
 # 1. MySQL 컨테이너 실행
 docker compose up -d
 
-# 2. Spring Boot 실행 (docker 프로필)
-./gradlew bootRun --args='--spring.profiles.active=docker'
+# 2. Spring Boot 실행 (기본 profile: local)
+./gradlew bootRun
 
-# 3. 컨테이너 종료
+# 3. Swagger 확인
+open http://localhost:8080/api/swagger-ui.html
+
+# 4. 종료
 docker compose down
 
-# 데이터 초기화가 필요한 경우
+# 데이터 초기화
 docker compose down -v
 ```
 

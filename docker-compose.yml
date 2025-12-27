@@ -2,9 +2,18 @@
 # Finders API - 로컬 개발 환경
 # ========================================
 # 사용법:
-#   1. docker compose up -d
-#   2. ./gradlew bootRun --args='--spring.profiles.active=docker'
-#   3. http://localhost:8080/api/swagger-ui.html
+#   1. MySQL만 실행 (Spring은 IDE에서):
+#      docker compose up mysql -d
+#      ./gradlew bootRun
+#
+#   2. 전체 실행 (MySQL + Spring):
+#      docker compose up -d
+#
+#   3. 종료:
+#      docker compose down
+#
+#   4. 데이터 초기화:
+#      docker compose down -v
 # ========================================
 
 services:
@@ -35,6 +44,36 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - finders-network
+
+  # ========================================
+  # Spring Boot Backend (선택적)
+  # ========================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finders-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL: jdbc:mysql://mysql:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      DB_USER: finders
+      DB_PASSWORD: finders123
+    networks:
+      - finders-network
+    profiles:
+      - full  # docker compose --profile full up 으로 실행
 
 volumes:
   mysql-data:
+
+networks:
+  finders-network:
+    driver: bridge

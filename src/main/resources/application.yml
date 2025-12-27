@@ -2,13 +2,29 @@ spring:
   application:
     name: finders-api
 
+  # 프로필 설정 (기본값: local)
   profiles:
-    active: local  # 기본 프로필
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  # ========================================
+  # Database (MySQL)
+  # ========================================
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/finders}
+    username: ${DB_USER:finders}
+    password: ${DB_PASSWORD:finders123}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: 5
+      connection-timeout: 30000
 
   # ========================================
   # JPA 공통 설정
   # ========================================
   jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQLDialect
     open-in-view: false
     properties:
       hibernate:
@@ -22,7 +38,7 @@ spring:
     default-property-inclusion: non_null
     time-zone: Asia/Seoul
     serialization:
-      write-dates-as-timestamps: false  # ISO 8601 형식 사용 (yyyy-MM-dd'T'HH:mm:ss)
+      write-dates-as-timestamps: false
 
 # ========================================
 # Server 설정
@@ -31,6 +47,41 @@ server:
   port: 8080
   servlet:
     context-path: /api
+
+# ========================================
+# JWT 설정
+# ========================================
+jwt:
+  secret: ${JWT_SECRET:local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256}
+  access-token-expiry: ${JWT_ACCESS_EXPIRY:3600000}      # 1시간
+  refresh-token-expiry: ${JWT_REFRESH_EXPIRY:604800000}  # 7일
+
+# ========================================
+# OAuth2 설정
+# ========================================
+oauth2:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID:}
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8080/api/auth/kakao/callback}
+  apple:
+    client-id: ${APPLE_CLIENT_ID:}
+    team-id: ${APPLE_TEAM_ID:}
+    key-id: ${APPLE_KEY_ID:}
+    redirect-uri: ${APPLE_REDIRECT_URI:http://localhost:8080/api/auth/apple/callback}
+
+# ========================================
+# Google Cloud 설정
+# ========================================
+google:
+  cloud:
+    project-id: ${GOOGLE_CLOUD_PROJECT:}
+    credentials:
+      location: ${GOOGLE_APPLICATION_CREDENTIALS:}
+    vision:
+      enabled: ${VISION_ENABLED:false}
+    storage:
+      bucket: ${GCS_BUCKET:}
 
 # ========================================
 # Actuator 설정
@@ -64,4 +115,3 @@ logging:
   level:
     root: INFO
     com.finders: DEBUG
-    org.springframework.web: INFO
