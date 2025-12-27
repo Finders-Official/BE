@@ -1,11 +1,11 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v1.3.3 | 2025-12-24
+> v1.9.0 | 2025-12-28
 
 ---
 
-## 테이블 목록 (32개)
+## 테이블 목록 (29개)
 
 | 도메인 | 테이블 | 설명 |
 |--------|--------|------|
@@ -19,18 +19,15 @@
 | | `photo_lab_keyword` | 현상소 키워드/태그 |
 | | `photo_lab_notice` | 현상소 공지사항 |
 | | `photo_lab_business_hour` | 영업시간 |
-| | `photo_lab_service` | 서비스 메뉴 (현상/스캔/인화) |
-| | `photo_lab_bank_account` | 정산 계좌 |
 | | `photo_lab_document` | 사업자 증빙 서류 |
 | **reservation** | `reservation` | 예약 정보 |
-| | `reservation_item` | 예약 항목 (가격 스냅샷) |
 | **photo** | `development_order` | 현상 주문 |
 | | `scanned_photo` | 스캔된 사진 |
 | | `print_order` | 인화 주문 |
 | | `print_order_item` | 인화 주문 상세 |
 | | `delivery` | 배송 정보 |
 | | `photo_restoration` | AI 사진 복원 요청 |
-| **community** | `post` | 게시글 (리뷰 시 rating 포함) |
+| **community** | `post` | 게시글/리뷰 (자가현상 여부 포함) |
 | | `post_image` | 게시글 이미지 |
 | | `comment` | 댓글 |
 | | `post_like` | 좋아요 |
@@ -52,9 +49,11 @@ member ─┬─ 1:N ─ social_account
         ├─ 1:N ─ member_address
         ├─ 1:N ─ member_agreement (약관 동의)
         ├─ 1:N ─ token_history (토큰 내역)
-        ├─ 1:N ─ reservation ──── 1:1 ─ development_order ─┬─ 1:N ─ scanned_photo
-        │                                                  └─ 1:N ─ print_order ─┬─ 1:N ─ print_order_item
-        │                                                                        └─ 1:1 ─ delivery
+        ├─ 1:N ─ reservation ──── 0..1:1 ─ development_order ─┬─ 1:N ─ scanned_photo
+        │                                                     └─ 0..1:N ─ print_order ─┬─ 1:N ─ print_order_item
+        │                                                                              └─ 0..1:1 ─ delivery
+        ├─ 1:N ─ development_order (현장 주문, 예약 없이)
+        ├─ 1:N ─ print_order (현장 주문, 현상 없이)
         ├─ 1:N ─ photo_restoration (AI 복원, 토큰 사용)
         ├─ 1:N ─ post ─┬─ 1:N ─ post_image
         │              ├─ 1:N ─ comment
@@ -68,10 +67,10 @@ photo_lab ─┬─ 1:N ─ photo_lab_image
            ├─ 1:N ─ photo_lab_keyword
            ├─ 1:N ─ photo_lab_notice
            ├─ 1:N ─ photo_lab_business_hour
-           ├─ 1:N ─ photo_lab_service
-           ├─ 1:N ─ photo_lab_bank_account
            ├─ 1:N ─ photo_lab_document (증빙서류)
-           └─ 1:N ─ reservation
+           ├─ 1:N ─ reservation
+           ├─ 1:N ─ development_order (현장 주문)
+           └─ 1:N ─ print_order (현장 주문)
 ```
 
 ---
@@ -86,7 +85,7 @@ SocialProvider: KAKAO, APPLE
 
 // 현상소
 PhotoLabStatus: PENDING, ACTIVE, SUSPENDED, CLOSED
-ServiceType: DEVELOP, SCAN, PRINT
+DayOfWeek: SUN, MON, TUE, WED, THU, FRI, SAT
 
 // 예약/주문
 ReservationStatus: PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
@@ -101,6 +100,12 @@ PostStatus: ACTIVE, HIDDEN, DELETED
 // 공지/알림
 NoticeType: GENERAL, EVENT, POLICY
 NotificationType: ORDER, RESERVATION, COMMUNITY, MARKETING, NOTICE
+PromotionType: BANNER, POPUP, EVENT
+
+// 인화 옵션
+PaperType: GLOSSY, MATTE, SILK, LUSTER
+PrintMethod: INKJET, LASER, SILVER_HALIDE
+PrintProcess: NORMAL, BORDER, BORDERLESS
 
 // 약관/결제/복원 (v1.2.0 추가)
 AgreementType: TERMS, PRIVACY, MARKETING, LOCATION
@@ -108,10 +113,10 @@ DocumentType: BUSINESS_LICENSE, BUSINESS_PERMIT
 RestorationStatus: PENDING, PROCESSING, COMPLETED, FAILED
 FeedbackRating: GOOD, BAD
 
-// 결제/토큰 (v1.3.0 추가)
-PaymentMethod: BANK_TRANSFER, CARD  // 계좌이체 + 포트원 카드결제
+// 결제/토큰 (v1.3.0 추가, v1.6.0 포트원 전환)
+PaymentMethod: CARD, EASY_PAY, ON_SITE  // 포트원 카드/간편결제 + 현장결제(확장고려)
 PaymentStatus: PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
-OrderType: RESERVATION, PRINT_ORDER, TOKEN_PURCHASE
+OrderType: DEVELOPMENT_ORDER, PRINT_ORDER, TOKEN_PURCHASE
 TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 ```
 
@@ -159,9 +164,6 @@ CREATE TABLE social_account (
     member_id       BIGINT          NOT NULL,   -- FK
     provider        VARCHAR(20)     NOT NULL,   -- KAKAO, APPLE만 사용
     provider_id     VARCHAR(100)    NOT NULL,
-    access_token    VARCHAR(500)    NULL,
-    refresh_token   VARCHAR(500)    NULL,
-    token_expires_at DATETIME       NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -179,20 +181,20 @@ CREATE TABLE member_address (
     zipcode         VARCHAR(10)     NOT NULL,   -- 우편번호
     address         VARCHAR(200)    NOT NULL,   -- 'ex) 서울 서초구 고무래로 89
     address_detail  VARCHAR(100)    NULL,       -- 'ex) 3003동 303호
-    is_default      TINYINT(1)      NOT NULL DEFAULT 0, -- 기본 배송지 여부
+    is_default      BOOLEAN         NOT NULL DEFAULT FALSE, -- 기본 배송지 여부
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
     INDEX idx_address_member (member_id, is_default),
-    CONSTRAINT fk_address_member FOREIGN KEY ( ) REFERENCES member(id)
+    CONSTRAINT fk_address_member FOREIGN KEY (member_id) REFERENCES member(id)
 ) ENGINE=InnoDB COMMENT='배송지';
 
 CREATE TABLE member_agreement ( -- 개인정보 이용약관
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,   -- FK
     agreement_type  VARCHAR(20)     NOT NULL,   -- TERMS, PRIVACY, MARKETING, LOCATION
-    is_agreed       TINYINT(1)      NOT NULL,
+    is_agreed       BOOLEAN         NOT NULL,
     agreed_at       DATETIME        NOT NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -234,12 +236,13 @@ CREATE TABLE photo_lab (
     latitude        DECIMAL(10, 8)  NULL,
     longitude       DECIMAL(11, 8)  NULL,
     rating          DECIMAL(2, 1)   NOT NULL DEFAULT 0.0,
-    review_count    INT UNSIGNED    NOT NULL DEFAULT 0,
-    reservation_count INT UNSIGNED  NOT NULL DEFAULT 0,
+    post_count    INT UNSIGNED    NOT NULL DEFAULT 0, -- 작업 결과물에 필요함
+    reservation_count INT UNSIGNED  NOT NULL DEFAULT 0, -- 예약 완료 시점에 업데이트
     avg_work_time   INT UNSIGNED    NULL,       -- 주문 완료 시점에(development_order.status = 'COMPLETED') 백엔드에서 직접 계산해서 저장
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
-    is_delivery_available TINYINT(1) NOT NULL DEFAULT 0,    -- 1: TRUE(배송가능), 0: FALSE(배송 불가능)
+    is_delivery_available BOOLEAN    NOT NULL DEFAULT FALSE, -- TRUE: 배송가능, FALSE: 배송 불가능
     business_number VARCHAR(20)     NULL,       -- 사업자 번호
+    qr_code_url     VARCHAR(500)    NULL,       -- QR 코드 이미지 URL (현장 주문용)
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
@@ -252,24 +255,22 @@ CREATE TABLE photo_lab (
     CONSTRAINT chk_lab_status CHECK (status IN ('PENDING', 'ACTIVE', 'SUSPENDED', 'CLOSED'))
 ) ENGINE=InnoDB COMMENT='현상소';
 
-CREATE TABLE photo_lab_image (  -- 현상소마다 이미지 개수가 여러 개이므로 따로 분리리
+CREATE TABLE photo_lab_image (  -- 현상소마다 이미지 개수가 여러 개이므로 따로 분리
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     photo_lab_id    BIGINT          NOT NULL,   -- FK
-    image_url       VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage 사용 예정(AWS S3보다 저렴)
-    width           INT UNSIGNED    NULL,       -- 이미지 너비 (Masonry 레이아웃용)
-    height          INT UNSIGNED    NULL,       -- 이미지 높이 (Masonry 레이아웃용)
-    display_order   INT             NOT NULL DEFAULT 0, -- 자동 증가가 아니므로 application 단에서 저장할 때 처리해야 함
-    is_main         TINYINT(1)      NOT NULL DEFAULT 0, -- display_order과 별개로 main으로 보여질 이미지 설정
+    image_url       VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage
+    display_order   INT             NOT NULL DEFAULT 0,
+    is_main         BOOLEAN         NOT NULL DEFAULT FALSE, -- 대표 이미지 여부
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_lab_image (photo_lab_id, is_main),
     CONSTRAINT fk_lab_image FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id) ON DELETE CASCADE
 ) ENGINE=InnoDB COMMENT='현상소 이미지';
 
-CREATE TABLE photo_lab_keyword (
+CREATE TABLE photo_lab_keyword (    -- 1:N (5개 고정 키워드)
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     photo_lab_id    BIGINT          NOT NULL,   -- FK
-    keyword         VARCHAR(50)     NOT NULL,   -- 따뜻한 색감, 청량한, 빈티지한, 영화용 필름, 택배 접수만 가능하지만, 일단 VARCHAR(50)으로 진행
+    keyword         VARCHAR(50)     NOT NULL,   -- 고정 키워드: 따뜻한 색감, 청량한, 빈티지한, 영화용 필름, 택배 접수
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_lab_keyword (photo_lab_id, keyword),
@@ -284,7 +285,7 @@ CREATE TABLE photo_lab_notice (
     notice_type     VARCHAR(20)     NOT NULL DEFAULT 'GENERAL', -- ENUM 처리 GENERAL: 일반공지, EVENT: 이벤트행사공지
     start_date      DATE            NULL,   -- yyyy-MM-dd, 2025-12-23
     end_date        DATE            NULL,
-    is_active       TINYINT(1)      NOT NULL DEFAULT 1,
+    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -296,53 +297,24 @@ CREATE TABLE photo_lab_notice (
 CREATE TABLE photo_lab_business_hour (  -- 현상소의 각 요일마다의 일정 등록 1:N 관계
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     photo_lab_id    BIGINT          NOT NULL,
-    day_of_week     TINYINT         NOT NULL,   -- Java의 DayOfWeek 사용해서 0=일, 1=월, 2=화... 자동 ENUM 사용하기
+    day_of_week     VARCHAR(3)      NOT NULL,   -- SUN, MON, TUE, WED, THU, FRI, SAT
     open_time       TIME            NULL,       -- HH:mm:ss (예: 09:00:00)
     close_time      TIME            NULL,
-    is_closed       TINYINT(1)      NOT NULL DEFAULT 0, -- 0: 해당 요일 영업일, 1: 해당 요일 휴무일
+    is_closed       BOOLEAN         NOT NULL DEFAULT FALSE, -- FALSE: 영업일, TRUE: 휴무일
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_lab_hour (photo_lab_id, day_of_week),
-    CONSTRAINT fk_lab_hour FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id) ON DELETE CASCADE
+    CONSTRAINT fk_lab_hour FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id) ON DELETE CASCADE,
+    CONSTRAINT chk_day_of_week CHECK (day_of_week IN ('SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'))
 ) ENGINE=InnoDB COMMENT='영업시간';
-
-CREATE TABLE photo_lab_service ( -- 뒤에 reservation_item과 연결되어있음 (서비스 메뉴)
-    id              BIGINT          NOT NULL AUTO_INCREMENT,
-    photo_lab_id    BIGINT          NOT NULL,
-    service_type    VARCHAR(20)     NOT NULL,   -- DEVELOP(현상), SCAN(스캔), PRINT(인화)
-    name            VARCHAR(100)    NOT NULL,
-    description     VARCHAR(500)    NULL,
-    price           INT UNSIGNED    NOT NULL DEFAULT 0,
-    is_available    TINYINT(1)      NOT NULL DEFAULT 1,
-    display_order   INT             NOT NULL DEFAULT 0,
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_lab_service (photo_lab_id, service_type, name),
-    INDEX idx_lab_service (photo_lab_id, service_type, is_available),
-    CONSTRAINT fk_lab_service FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id) ON DELETE CASCADE,
-    CONSTRAINT chk_service_type CHECK (service_type IN ('DEVELOP', 'SCAN', 'PRINT'))
-) ENGINE=InnoDB COMMENT='서비스 메뉴';
-
-CREATE TABLE photo_lab_bank_account (    
-    id              BIGINT          NOT NULL AUTO_INCREMENT,
-    photo_lab_id    BIGINT          NOT NULL,
-    bank_name       VARCHAR(50)     NOT NULL,   -- 우리은행
-    account_number  VARCHAR(50)     NOT NULL,   -- 1002-123-123456
-    account_holder  VARCHAR(50)     NOT NULL,   -- 홍길동
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    INDEX idx_lab_bank (photo_lab_id, is_default),
-    CONSTRAINT fk_lab_bank FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id) ON DELETE CASCADE
-) ENGINE=InnoDB COMMENT='정산 계좌';
 
 CREATE TABLE photo_lab_document (   -- GCP Cloud Storage에 bucket 만들어서 저장해야 할 듯
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     photo_lab_id    BIGINT          NOT NULL,
     document_type   VARCHAR(30)     NOT NULL,   -- BUSINESS_LICENSE, BUSINESS_PERMIT
-    file_url        VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage에 documents/{photo_lab_id}/business-license/{document_id}.pdf 의 이름으로 저장해야할 듯
+    file_url        VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage에 documents/{photo_lab_id}/business-license/{document_id}_{number}.pdf 의 이름으로 저장해야할 듯
+    -- 파일의 버전관리가 필요하다. 관리자 입장에서 생각해보면, approved, rejeceted, pending
     file_name       VARCHAR(200)    NULL,
     verified_at     DATETIME        NULL,       -- 검증 완료 일시
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -360,71 +332,57 @@ CREATE TABLE reservation (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,   -- FK
     photo_lab_id    BIGINT          NOT NULL,   -- FK
-    -- reservation_code VARCHAR(20)    NOT NULL,   -- 이 값이 꼭 필요할까...? RSV-20251225-001
     reservation_date DATE           NOT NULL,   -- 사용자가 선택한 날짜
     reservation_time TIME           NOT NULL,   -- 사용자가 선택한 시간
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
-    total_price     INT UNSIGNED    NOT NULL DEFAULT 0, -- 데이터 무결성을 위해서 백엔드에서 계산해서 api로 프론트엔드에게 값 제공, reservation_item.total_price의 총합
+    -- 작업 내용 선택 (다중 선택 가능)
+    is_develop      BOOLEAN         NOT NULL DEFAULT FALSE,  -- 현상
+    is_scan         BOOLEAN         NOT NULL DEFAULT FALSE,  -- 스캔
+    is_print        BOOLEAN         NOT NULL DEFAULT FALSE,  -- 인화
     roll_count      INT UNSIGNED    NOT NULL DEFAULT 1,
-    request_message VARCHAR(500)    NULL, 
+    request_message VARCHAR(500)    NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_reservation_code (reservation_code),
     INDEX idx_reservation_member (member_id, status),
     INDEX idx_reservation_lab (photo_lab_id, reservation_date),
     CONSTRAINT fk_reservation_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT fk_reservation_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id),
     CONSTRAINT chk_reservation_status CHECK (status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'))
 ) ENGINE=InnoDB COMMENT='예약';
- 
-CREATE TABLE reservation_item (   -- 1:N 관계 (예약 항목, 가격 스냅샷)
-    id              BIGINT          NOT NULL AUTO_INCREMENT,
-    reservation_id  BIGINT          NOT NULL,
-    service_id      BIGINT          NOT NULL,   -- photo_lab_service.id 참조
-    service_type    VARCHAR(20)     NOT NULL,   -- 스냅샷
-    service_name    VARCHAR(100)    NOT NULL,   -- 스냅샷
-    quantity        INT UNSIGNED    NOT NULL DEFAULT 1,
-    unit_price      INT UNSIGNED    NOT NULL,   -- 스냅샷
-    total_price     INT UNSIGNED    NOT NULL,   -- unit_price × quantity
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_res_item (reservation_id, service_id),
-    CONSTRAINT fk_res_item_reservation FOREIGN KEY (reservation_id) REFERENCES reservation(id),
-    CONSTRAINT fk_res_item_service FOREIGN KEY (service_id) REFERENCES photo_lab_service(id)
-) ENGINE=InnoDB COMMENT='예약 항목 (가격 스냅샷)';
 
 -- ============================================
--- 4. PHOTO (현상/스캔/인화) - 이 부분은 연구가 좀 더 필요한 부분...
+-- 4. PHOTO (현상/스캔/인화)
 -- ============================================
 
-CREATE TABLE development_order (
+CREATE TABLE development_order (    -- 현상/스캔 세트로
     id              BIGINT          NOT NULL AUTO_INCREMENT,
-    reservation_id  BIGINT          NOT NULL,
+    reservation_id  BIGINT          NULL,       -- 예약 없이 현장 주문 가능 (QR 스캔)
+    photo_lab_id    BIGINT          NOT NULL,   -- 현상소 (예약 없을 때 필수)
     member_id       BIGINT          NOT NULL,
     order_code      VARCHAR(20)     NOT NULL,
     status          VARCHAR(20)     NOT NULL DEFAULT 'RECEIVED',
-    scan_progress   TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    total_photos    INT UNSIGNED    NOT NULL DEFAULT 0,
+    total_photos    INT UNSIGNED    NOT NULL DEFAULT 0,  -- 스캔 진행률은 scanned_photo COUNT로 계산
+    total_price     INT UNSIGNED    NOT NULL DEFAULT 0,  -- 주문 시점 가격 스냅샷 (현상+스캔 패키지)
     completed_at    DATETIME        NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_dev_order_code (order_code),
     INDEX idx_dev_order_member (member_id, status),
+    INDEX idx_dev_order_lab (photo_lab_id, status),
     CONSTRAINT fk_dev_order_reservation FOREIGN KEY (reservation_id) REFERENCES reservation(id),
+    CONSTRAINT fk_dev_order_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id),
     CONSTRAINT fk_dev_order_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_dev_status CHECK (status IN ('RECEIVED', 'DEVELOPING', 'SCANNING', 'COMPLETED'))
 ) ENGINE=InnoDB COMMENT='현상 주문';
 
-CREATE TABLE scanned_photo (
+CREATE TABLE scanned_photo (    -- 1:N 관계
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     order_id        BIGINT          NOT NULL,   -- FK development_order
-    image_url       VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage - 이미지 업로드 할때, width, height 메타데이터 추출해서 DB에 저장해야 함.
+    image_url       VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage
     file_name       VARCHAR(200)    NULL,
-    width           INT UNSIGNED    NULL,       -- 이미지 너비, pinterest 기능 구현할 때 프론트엔드에서 필요함.
-    height          INT UNSIGNED    NULL,       -- 이미지 높이
     display_order   INT             NOT NULL DEFAULT 0,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -434,7 +392,8 @@ CREATE TABLE scanned_photo (
 
 CREATE TABLE print_order (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
-    dev_order_id    BIGINT          NOT NULL,   -- FK development_order
+    dev_order_id    BIGINT          NULL,       -- 현상 없이 인화만 요청 가능
+    photo_lab_id    BIGINT          NOT NULL,   -- 현상소
     member_id       BIGINT          NOT NULL,
     order_code      VARCHAR(20)     NOT NULL,
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
@@ -447,7 +406,9 @@ CREATE TABLE print_order (
     PRIMARY KEY (id),
     UNIQUE KEY uk_print_order_code (order_code),
     INDEX idx_print_order_member (member_id, status),
+    INDEX idx_print_order_lab (photo_lab_id, status),
     CONSTRAINT fk_print_order_dev FOREIGN KEY (dev_order_id) REFERENCES development_order(id),
+    CONSTRAINT fk_print_order_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id),
     CONSTRAINT fk_print_order_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_print_status CHECK (status IN ('PENDING', 'CONFIRMED', 'PRINTING', 'READY', 'SHIPPED', 'COMPLETED')),
     CONSTRAINT chk_receipt_method CHECK (receipt_method IN ('PICKUP', 'DELIVERY'))
@@ -468,7 +429,10 @@ CREATE TABLE print_order_item (
     PRIMARY KEY (id),
     INDEX idx_print_item_order (print_order_id),
     CONSTRAINT fk_print_item_order FOREIGN KEY (print_order_id) REFERENCES print_order(id),
-    CONSTRAINT fk_print_item_photo FOREIGN KEY (scanned_photo_id) REFERENCES scanned_photo(id)
+    CONSTRAINT fk_print_item_photo FOREIGN KEY (scanned_photo_id) REFERENCES scanned_photo(id),
+    CONSTRAINT chk_paper_type CHECK (paper_type IN ('GLOSSY', 'MATTE', 'SILK', 'LUSTER')),
+    CONSTRAINT chk_print_method CHECK (print_method IN ('INKJET', 'LASER', 'SILVER_HALIDE')),
+    CONSTRAINT chk_print_process CHECK (process IN ('NORMAL', 'BORDER', 'BORDERLESS'))
 ) ENGINE=InnoDB COMMENT='인화 상세';
 
 CREATE TABLE delivery (
@@ -522,11 +486,11 @@ CREATE TABLE photo_restoration (    -- Vision AI 사용
 CREATE TABLE post (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,   -- FK
-    photo_lab_id    BIGINT          NULL,       -- FK
+    photo_lab_id    BIGINT          NULL,       -- FK (현상소 이용 시)
+    is_self_developed BOOLEAN       NOT NULL DEFAULT FALSE, -- TRUE: 자가현상, FALSE: 현상소 이용
     title           VARCHAR(200)    NULL,
     content         TEXT            NOT NULL,
-    rating          TINYINT         NULL,       -- 리뷰 평점 (1~5), 일반 게시글은 NULL
-    view_count      INT UNSIGNED    NOT NULL DEFAULT 0,
+    lab_review      VARCHAR(500)    NULL,       -- 현상소 리뷰 (현상소 이용 시)
     like_count      INT UNSIGNED    NOT NULL DEFAULT 0,
     comment_count   INT UNSIGNED    NOT NULL DEFAULT 0,
     status          VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',
@@ -535,19 +499,18 @@ CREATE TABLE post (
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
     INDEX idx_post_member (member_id, status),
+    INDEX idx_post_lab (photo_lab_id),
     INDEX idx_post_created (created_at DESC),
     FULLTEXT INDEX ft_post_content (title, content),
     CONSTRAINT fk_post_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT fk_post_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id),
     CONSTRAINT chk_post_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED'))
-) ENGINE=InnoDB COMMENT='게시글';
+) ENGINE=InnoDB COMMENT='게시글/리뷰';
 
 CREATE TABLE post_image (   -- 1:N
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     post_id         BIGINT          NOT NULL,   -- FK
     image_url       VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage
-    width           INT UNSIGNED    NULL,       -- 이미지 너비 (Masonry 레이아웃용)
-    height          INT UNSIGNED    NULL,       -- 이미지 높이 (Masonry 레이아웃용)
     display_order   INT             NOT NULL DEFAULT 0,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -555,7 +518,7 @@ CREATE TABLE post_image (   -- 1:N
     CONSTRAINT fk_post_image FOREIGN KEY (post_id) REFERENCES post(id) ON DELETE CASCADE
 ) ENGINE=InnoDB COMMENT='게시글 이미지';
 
-CREATE TABLE comment (  -- 댓글 (대댓글 기능 없음)
+CREATE TABLE comment (  -- 댓글
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     post_id         BIGINT          NOT NULL,
     member_id       BIGINT          NOT NULL,
@@ -567,10 +530,11 @@ CREATE TABLE comment (  -- 댓글 (대댓글 기능 없음)
     PRIMARY KEY (id),
     INDEX idx_comment_post (post_id, created_at),
     CONSTRAINT fk_comment_post FOREIGN KEY (post_id) REFERENCES post(id),
-    CONSTRAINT fk_comment_member FOREIGN KEY (member_id) REFERENCES member(id)
+    CONSTRAINT fk_comment_member FOREIGN KEY (member_id) REFERENCES member(id),
+    CONSTRAINT chk_comment_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED'))
 ) ENGINE=InnoDB COMMENT='댓글';
 
-CREATE TABLE post_like (    -- 하트
+CREATE TABLE post_like (    -- 하트 표시
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     post_id         BIGINT          NOT NULL, 
     member_id       BIGINT          NOT NULL,
@@ -581,7 +545,7 @@ CREATE TABLE post_like (    -- 하트
     CONSTRAINT fk_like_member FOREIGN KEY (member_id) REFERENCES member(id)
 ) ENGINE=InnoDB COMMENT='좋아요';
 
-CREATE TABLE favorite_photo_lab (   -- 별표
+CREATE TABLE favorite_photo_lab (   -- 별 표시
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     photo_lab_id    BIGINT          NOT NULL,
@@ -607,6 +571,7 @@ CREATE TABLE inquiry (
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_inquiry_member (member_id, status),
+    INDEX idx_inquiry_lab (photo_lab_id),
     CONSTRAINT fk_inquiry_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT fk_inquiry_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id),
     CONSTRAINT chk_inquiry_status CHECK (status IN ('PENDING', 'ANSWERED', 'CLOSED'))
@@ -627,14 +592,14 @@ CREATE TABLE inquiry_reply (
 -- ============================================
 -- 7. COMMON
 -- ============================================
-
+ 
 CREATE TABLE notice (   -- 전체 회원 공지사항 게시판 
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     title           VARCHAR(200)    NOT NULL,
     content         TEXT            NOT NULL,
     notice_type     VARCHAR(20)     NOT NULL DEFAULT 'GENERAL',
-    is_pinned       TINYINT(1)      NOT NULL DEFAULT 0,
-    view_count      INT UNSIGNED    NOT NULL DEFAULT 0,
+    is_pinned       BOOLEAN         NOT NULL DEFAULT FALSE, -- 고정되었는지
+    view_count      INT UNSIGNED    NOT NULL DEFAULT 0,     -- 공지에 view count가 필요할까..?
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
@@ -645,36 +610,32 @@ CREATE TABLE notice (   -- 전체 회원 공지사항 게시판
 
 CREATE TABLE promotion (    -- 메인페이지 프로모션 배너 부분
     id              BIGINT          NOT NULL AUTO_INCREMENT,
-    photo_lab_id    BIGINT          NULL,
+    photo_lab_id    BIGINT          NOT NULL,
     title           VARCHAR(200)    NOT NULL,
     description     VARCHAR(500)    NULL,
     image_url       VARCHAR(500)    NOT NULL,   -- GCP Cloud Storage
-    width           INT UNSIGNED    NULL,       -- 이미지 너비
-    height          INT UNSIGNED    NULL,       -- 이미지 높이
-    link_url        VARCHAR(500)    NULL,
     promotion_type  VARCHAR(20)     NOT NULL DEFAULT 'BANNER',
     display_order   INT             NOT NULL DEFAULT 0,
     start_date      DATETIME        NOT NULL,
     end_date        DATETIME        NOT NULL,
-    is_active       TINYINT(1)      NOT NULL DEFAULT 1,
+    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_promotion_active (is_active, start_date, end_date),
-    CONSTRAINT fk_promotion_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id)
+    CONSTRAINT fk_promotion_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id),
+    CONSTRAINT chk_promotion_type CHECK (promotion_type IN ('BANNER', 'POPUP', 'EVENT'))
 ) ENGINE=InnoDB COMMENT='프로모션';
 
-CREATE TABLE film_content ( -- 필름컨텐츠 부분
+CREATE TABLE film_content ( -- 필름 콘텐츠
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     title           VARCHAR(200)    NOT NULL,
     subtitle        VARCHAR(300)    NULL,
     content         TEXT            NOT NULL,
     image_url       VARCHAR(500)    NULL,       -- GCP Cloud Storage (썸네일)
-    width           INT UNSIGNED    NULL,       -- 이미지 너비
-    height          INT UNSIGNED    NULL,       -- 이미지 높이
     content_type    VARCHAR(20)     NOT NULL DEFAULT 'ARTICLE',
     view_count      INT UNSIGNED    NOT NULL DEFAULT 0,
-    is_featured     TINYINT(1)      NOT NULL DEFAULT 0, -- 메인 페이지에서 특정 필름 콘텐츠를 추천하는 데 사용
+    is_featured     BOOLEAN         NOT NULL DEFAULT FALSE, -- 메인 페이지 추천 여부
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
@@ -691,7 +652,7 @@ CREATE TABLE notification ( -- 회원별 개인 알림(앱 푸시/ 알림센터)
     notification_type VARCHAR(20)   NOT NULL,
     related_id      BIGINT          NULL COMMENT '관련 엔티티 ID',
     related_type    VARCHAR(50)     NULL COMMENT '관련 엔티티 타입', 
-    is_read         TINYINT(1)      NOT NULL DEFAULT 0,
+    is_read         BOOLEAN         NOT NULL DEFAULT FALSE,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_notification_member (member_id, is_read, created_at DESC),
@@ -699,17 +660,15 @@ CREATE TABLE notification ( -- 회원별 개인 알림(앱 푸시/ 알림센터)
     CONSTRAINT chk_notification_type CHECK (notification_type IN ('ORDER', 'RESERVATION', 'COMMUNITY', 'MARKETING', 'NOTICE'))
 ) ENGINE=InnoDB COMMENT='알림';
 
-CREATE TABLE payment (  -- PM님께서 포트원 결제 연동 검토중...
+CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1. 계좌이체 기능 없앰 2. 대신 포트원 카드결제와 간편결제 기능 추가
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
-    order_type      VARCHAR(20)     NOT NULL,   -- RESERVATION, PRINT_ORDER, TOKEN_PURCHASE
+    order_type      VARCHAR(20)     NOT NULL,   -- DEVELOPMENT_ORDER, PRINT_ORDER, TOKEN_PURCHASE
     order_id        BIGINT          NULL,       -- 주문 ID (토큰 구매 시 NULL)
     amount          INT UNSIGNED    NOT NULL,   -- 결제 금액 (원)
     token_amount    INT UNSIGNED    NULL,       -- 구매한 토큰 수 (토큰 구매 시)
-    payment_method  VARCHAR(20)     NOT NULL DEFAULT 'BANK_TRANSFER',
+    payment_method  VARCHAR(20)     NOT NULL,   -- CARD, EASY_PAY, ON_SITE
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
-    -- 계좌이체 전용
-    depositor_name  VARCHAR(50)     NULL,       -- 입금자명 (계좌이체 시)
     -- 포트원 PG 연동용
     merchant_uid    VARCHAR(100)    NULL,       -- 주문 고유번호 (우리가 생성)
     imp_uid         VARCHAR(100)    NULL,       -- 포트원 결제 고유번호
@@ -727,9 +686,9 @@ CREATE TABLE payment (  -- PM님께서 포트원 결제 연동 검토중...
     INDEX idx_payment_order (order_type, order_id),
     INDEX idx_payment_imp_uid (imp_uid),
     CONSTRAINT fk_payment_member FOREIGN KEY (member_id) REFERENCES member(id),
-    CONSTRAINT chk_payment_method CHECK (payment_method IN ('BANK_TRANSFER', 'CARD')),
+    CONSTRAINT chk_payment_method CHECK (payment_method IN ('CARD', 'EASY_PAY', 'ON_SITE')),
     CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED')),
-    CONSTRAINT chk_order_type CHECK (order_type IN ('RESERVATION', 'PRINT_ORDER', 'TOKEN_PURCHASE'))
+    CONSTRAINT chk_order_type CHECK (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER', 'TOKEN_PURCHASE'))
 ) ENGINE=InnoDB COMMENT='결제';
 ```
 
@@ -743,13 +702,14 @@ CREATE TABLE payment (  -- PM님께서 포트원 결제 연동 검토중...
 | HM-010 메인 홈 | photo_lab, promotion, film_content |
 | HM-021~025 사진 복원 | photo_restoration, token_history, member (token_balance) |
 | PL-010~011 현상소 탐색 | photo_lab, photo_lab_keyword |
-| PL-020~021 현상소 상세/예약 | photo_lab_*, reservation, reservation_item, payment |
-| CO-020~030 사진수다 | post (rating), post_image, comment, post_like |
+| PL-020~021 현상소 상세/예약 | photo_lab_*, reservation, payment |
+| CO-020~030 사진수다 | post (자가현상 여부), post_image, comment, post_like |
 | PM-000~018 현상관리 | development_order, scanned_photo, print_order, print_order_item, delivery, payment |
 | UR-010~025 마이페이지 | member, social_account |
 | UR-030~040 관심목록 | favorite_photo_lab, post_like |
 | UR-060~062 배송지 | member_address |
 | UR-070~081 공지/문의 | notice, inquiry, inquiry_reply |
+| 알림 센터 | notification |
 | 사업자 등록 | photo_lab, photo_lab_document |
 
 ---
@@ -771,3 +731,14 @@ CREATE TABLE payment (  -- PM님께서 포트원 결제 연동 검토중...
 | 1.3.1 | 2025-12-24 | inquiry_reply.admin_id → replier_id 변경 (ADMIN/OWNER 모두 답변 가능하도록) |
 | 1.3.2 | 2025-12-24 | comment 테이블에서 대댓글 기능 제거 (parent_id, idx_comment_parent, fk_comment_parent 삭제) |
 | 1.3.3 | 2025-12-24 | favorite_post 테이블 제거 (좋아요한 게시글은 post_like로 조회) (32개 테이블) |
+| 1.3.4 | 2025-12-27 | 모든 TINYINT(1) → BOOLEAN 타입으로 변경 (is_default, is_agreed, is_delivery_available, is_main, is_active, is_closed, is_available, is_pinned, is_featured, is_read) |
+| 1.4.0 | 2025-12-27 | **스키마 대폭 정리**: social_account에서 토큰 컬럼 제거, reservation_item 테이블 제거, reservation.total_price 제거, post에 is_self_developed 추가 및 rating/view_count 제거, 모든 이미지 테이블에서 width/height 제거 (31개 테이블) |
+| 1.4.1 | 2025-12-27 | day_of_week TINYINT → VARCHAR + CHECK 변경, development_order.scan_progress 제거 (scanned_photo COUNT로 계산) |
+| 1.4.2 | 2025-12-27 | 오류 수정: member_address FK 누락, photo_lab_bank_account 인덱스 오류, 주석 정리 |
+| 1.5.0 | 2025-12-28 | **photo_lab_service 테이블 제거**, reservation에 is_develop/is_scan/is_print 컬럼 추가 (작업 내용 다중 선택), ServiceType Enum 제거 (30개 테이블) |
+| 1.5.1 | 2025-12-28 | post 테이블에 lab_review 컬럼 추가 (현상소 이용 시 한줄 리뷰) |
+| 1.5.2 | 2025-12-28 | promotion 테이블: link_url 제거, photo_lab_id NOT NULL로 변경 (프로모션은 항상 현상소 상세로 연결) |
+| 1.6.0 | 2025-12-28 | **포트원 결제 전환**: photo_lab_bank_account 테이블 제거, payment에서 depositor_name 제거, PaymentMethod를 CARD/EASY_PAY로 변경 (29개 테이블) |
+| 1.7.0 | 2025-12-28 | **현장 주문 지원**: photo_lab에 qr_code_url 추가, development_order.reservation_id NULL 허용 + photo_lab_id 추가, print_order.dev_order_id NULL 허용 + photo_lab_id 추가 (예약/현상 없이 주문 가능) |
+| 1.8.0 | 2025-12-28 | **스키마 검토 및 정리**: ERD 관계도 현장 주문 반영, comment.status CHECK 추가, promotion.promotion_type CHECK 추가 (BANNER/POPUP/EVENT), print_order_item CHECK 추가 (paper_type/print_method/process), post/inquiry에 photo_lab_id 인덱스 추가 |
+| 1.9.0 | 2025-12-28 | **결제 시스템 정리**: development_order에 total_price 추가 (가격 스냅샷), OrderType에서 RESERVATION→DEVELOPMENT_ORDER 변경, PaymentMethod에 ON_SITE 추가 (현장결제) |
