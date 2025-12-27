@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v1.9.0 | 2025-12-28
+> v1.9.2 | 2025-12-28
 
 ---
 
@@ -504,7 +504,11 @@ CREATE TABLE post (
     FULLTEXT INDEX ft_post_content (title, content),
     CONSTRAINT fk_post_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT fk_post_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id),
-    CONSTRAINT chk_post_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED'))
+    CONSTRAINT chk_post_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED')),
+    CONSTRAINT chk_post_lab_required CHECK (
+        (is_self_developed = TRUE AND photo_lab_id IS NULL) OR
+        (is_self_developed = FALSE AND photo_lab_id IS NOT NULL)
+    )
 ) ENGINE=InnoDB COMMENT='게시글/리뷰';
 
 CREATE TABLE post_image (   -- 1:N
@@ -688,7 +692,11 @@ CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1.
     CONSTRAINT fk_payment_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_payment_method CHECK (payment_method IN ('CARD', 'EASY_PAY', 'ON_SITE')),
     CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED')),
-    CONSTRAINT chk_order_type CHECK (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER', 'TOKEN_PURCHASE'))
+    CONSTRAINT chk_order_type CHECK (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER', 'TOKEN_PURCHASE')),
+    CONSTRAINT chk_payment_data CHECK (
+        (order_type = 'TOKEN_PURCHASE' AND token_amount IS NOT NULL AND order_id IS NULL) OR
+        (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER') AND order_id IS NOT NULL AND token_amount IS NULL)
+    )
 ) ENGINE=InnoDB COMMENT='결제';
 ```
 
@@ -742,3 +750,5 @@ CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1.
 | 1.7.0 | 2025-12-28 | **현장 주문 지원**: photo_lab에 qr_code_url 추가, development_order.reservation_id NULL 허용 + photo_lab_id 추가, print_order.dev_order_id NULL 허용 + photo_lab_id 추가 (예약/현상 없이 주문 가능) |
 | 1.8.0 | 2025-12-28 | **스키마 검토 및 정리**: ERD 관계도 현장 주문 반영, comment.status CHECK 추가, promotion.promotion_type CHECK 추가 (BANNER/POPUP/EVENT), print_order_item CHECK 추가 (paper_type/print_method/process), post/inquiry에 photo_lab_id 인덱스 추가 |
 | 1.9.0 | 2025-12-28 | **결제 시스템 정리**: development_order에 total_price 추가 (가격 스냅샷), OrderType에서 RESERVATION→DEVELOPMENT_ORDER 변경, PaymentMethod에 ON_SITE 추가 (현장결제) |
+| 1.9.1 | 2025-12-28 | payment 테이블에 chk_payment_data CHECK 추가 (TOKEN_PURCHASE↔token_amount, 주문↔order_id 필수 관계 강제) |
+| 1.9.2 | 2025-12-28 | post 테이블에 chk_post_lab_required CHECK 추가 (자가현상↔photo_lab_id 일관성 강제) |
