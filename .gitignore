@@ -84,3 +84,8 @@ docker-compose.override.yml
 # Documentation Images
 # ========================================
 /docs/images
+
+# ========================================
+# Infrastructure (민감 정보)
+# ========================================
+docs/INFRASTRUCTURE.md
