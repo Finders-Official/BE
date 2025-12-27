@@ -3,11 +3,11 @@
 # ========================================
 # 사용법:
 #   1. MySQL만 실행 (Spring은 IDE에서):
-#      docker compose up mysql -d
+#      docker compose up -d
 #      ./gradlew bootRun
 #
 #   2. 전체 실행 (MySQL + Spring):
-#      docker compose up -d
+#      docker compose --profile full up -d
 #
 #   3. 종료:
 #      docker compose down
@@ -18,7 +18,7 @@
 
 services:
   # ========================================
-  # MySQL Database
+  # MySQL Database (로컬 개발용)
   # ========================================
   mysql:
     image: mysql:8.0
@@ -48,7 +48,7 @@ services:
       - finders-network
 
   # ========================================
-  # Spring Boot Backend (선택적)
+  # Spring Boot Backend (로컬 전체 실행용)
   # ========================================
   backend:
     build:
@@ -61,22 +61,16 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
-    env_file:
-      - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
-      # DB - Docker 내부 네트워크 사용
       DB_URL: jdbc:mysql://mysql:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
       DB_USER: finders
       DB_PASSWORD: finders123
-      # Kakao API (.env에서 읽음)
-      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
-      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
-      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
-      # JWT (.env에서 읽음)
-      JWT_SECRET: ${JWT_SECRET}
-      # GCP (.env에서 읽음)
-      GCS_BUCKET: ${GCS_BUCKET}
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:-http://localhost:8080/api/auth/kakao/callback}
+      GCS_BUCKET: ${GCS_BUCKET:-}
       VISION_ENABLED: ${VISION_ENABLED:-false}
     networks:
       - finders-network

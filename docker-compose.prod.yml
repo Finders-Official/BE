@@ -1,0 +1,41 @@
+# ========================================
+# Finders API - 배포 환경 (GCP)
+# ========================================
+# 사용법:
+#   1. 배포:
+#      docker compose -f docker-compose.prod.yml up -d --build
+#
+#   2. 로그 확인:
+#      docker compose -f docker-compose.prod.yml logs -f
+#
+#   3. 종료:
+#      docker compose -f docker-compose.prod.yml down
+#
+#   4. 재배포:
+#      docker compose -f docker-compose.prod.yml up -d --build --force-recreate
+# ========================================
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finders-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.prod
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  default:
+    driver: bridge
