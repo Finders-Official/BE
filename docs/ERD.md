@@ -676,6 +676,7 @@ CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1.
     -- 포트원 PG 연동용
     merchant_uid    VARCHAR(100)    NULL,       -- 주문 고유번호 (우리가 생성)
     imp_uid         VARCHAR(100)    NULL,       -- 포트원 결제 고유번호
+    pg_provider     VARCHAR(20)     NULL,       -- PG사 (kakao, tosspay, kcp 등)
     receipt_url     VARCHAR(500)    NULL,       -- 영수증 URL
     -- 결과 정보
     paid_at         DATETIME        NULL,
@@ -752,3 +753,4 @@ CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1.
 | 1.9.0 | 2025-12-28 | **결제 시스템 정리**: development_order에 total_price 추가 (가격 스냅샷), OrderType에서 RESERVATION→DEVELOPMENT_ORDER 변경, PaymentMethod에 ON_SITE 추가 (현장결제) |
 | 1.9.1 | 2025-12-28 | payment 테이블에 chk_payment_data CHECK 추가 (TOKEN_PURCHASE↔token_amount, 주문↔order_id 필수 관계 강제) |
 | 1.9.2 | 2025-12-28 | post 테이블에 chk_post_lab_required CHECK 추가 (자가현상↔photo_lab_id 일관성 강제) |
+| 1.9.3 | 2025-12-28 | payment 테이블에 pg_provider 컬럼 추가 (PG사 정보 기록: kakao, tosspay, kcp 등) |
