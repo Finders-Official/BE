@@ -22,11 +22,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # 3. Gradle 빌드 (테스트 제외)
+      # 3. Gradle 빌드
       - name: Build with Gradle
         run: |
           chmod +x gradlew
-          ./gradlew clean bootJar -x test
+          ./gradlew clean bootJar
 
       # 4. Docker Hub 로그인
       - name: Login to Docker Hub
