@@ -1,32 +1,35 @@
-name: Deploy with Docker Compose
+name: Finders CD (Deploy to Prod)
 
 on:
   push:
     branches: [ "main" ]
 
 env:
-  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-backend
+  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-api
   CONTAINER_NAME: finders-backend
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 소스 코드 가져오기
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      # 2. JDK 21 설정
-      - name: Set up JDK 21
+      - name: Set up JDK 22
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      # 3. Gradle 빌드
-      - name: Build with Gradle
-        run: |
-          chmod +x gradlew
-          ./gradlew clean bootJar
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build without Test
+        # CI에서 이미 테스트를 통과했다고 믿고, 배포 속도를 위해 테스트는 건너뜁니다.
+        run: ./gradlew build -x test
 
       # 4. Docker Hub 로그인
       - name: Login to Docker Hub
