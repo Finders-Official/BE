@@ -1,18 +1,20 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v1.9.2 | 2025-12-28
+> v2.0.0 | 2025-12-30
 
 ---
 
-## 테이블 목록 (29개)
+## 테이블 목록 (31개)
 
 | 도메인 | 테이블 | 설명 |
 |--------|--------|------|
 | **member** | `member` | 회원 정보 (토큰 잔액 포함) |
 | | `social_account` | 소셜 로그인 연동 (카카오/애플) |
 | | `member_address` | 배송지 주소 |
+| | `member_device` | FCM 디바이스 토큰 (푸시 알림용) |
 | | `member_agreement` | 약관 동의 이력 |
+| | `terms` | 약관 버전 관리 |
 | | `token_history` | AI 토큰 충전/사용 내역 |
 | **store** | `photo_lab` | 현상소 정보 |
 | | `photo_lab_image` | 현상소 이미지 |
@@ -47,8 +49,10 @@
 ```
 member ─┬─ 1:N ─ social_account
         ├─ 1:N ─ member_address
-        ├─ 1:N ─ member_agreement (약관 동의)
+        ├─ 1:N ─ member_device (FCM 토큰)
+        ├─ 1:N ─ member_agreement ─── N:1 ─ terms (약관 버전)
         ├─ 1:N ─ token_history (토큰 내역)
+        ├─ 1:N ─ photo_lab (Owner가 여러 현상소 운영 가능)
         ├─ 1:N ─ reservation ──── 0..1:1 ─ development_order ─┬─ 1:N ─ scanned_photo
         │                                                     └─ 0..1:N ─ print_order ─┬─ 1:N ─ print_order_item
         │                                                                              └─ 0..1:1 ─ delivery
@@ -82,6 +86,7 @@ photo_lab ─┬─ 1:N ─ photo_lab_image
 MemberRole: USER, OWNER, ADMIN
 MemberStatus: ACTIVE, SUSPENDED, WITHDRAWN
 SocialProvider: KAKAO, APPLE
+DeviceType: IOS, ANDROID, WEB
 
 // 현상소
 PhotoLabStatus: PENDING, ACTIVE, SUSPENDED, CLOSED
@@ -190,18 +195,53 @@ CREATE TABLE member_address (
     CONSTRAINT fk_address_member FOREIGN KEY (member_id) REFERENCES member(id)
 ) ENGINE=InnoDB COMMENT='배송지';
 
-CREATE TABLE member_agreement ( -- 개인정보 이용약관
+CREATE TABLE terms (    -- 약관 버전 관리
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    type            VARCHAR(20)     NOT NULL,   -- TERMS, PRIVACY, MARKETING, LOCATION
+    version         VARCHAR(20)     NOT NULL,   -- 버전 (예: 1.0, 1.1, 2.0)
+    title           VARCHAR(200)    NOT NULL,   -- 약관 제목
+    content         TEXT            NOT NULL,   -- 약관 내용
+    is_required     BOOLEAN         NOT NULL DEFAULT TRUE,  -- 필수 동의 여부
+    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,  -- 현재 활성 버전 여부
+    effective_date  DATE            NOT NULL,   -- 시행일
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_terms_version (type, version),
+    INDEX idx_terms_active (type, is_active),
+    CONSTRAINT chk_terms_type CHECK (type IN ('TERMS', 'PRIVACY', 'MARKETING', 'LOCATION'))
+) ENGINE=InnoDB COMMENT='약관 버전';
+
+CREATE TABLE member_agreement ( -- 회원별 약관 동의 이력
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,   -- FK
-    agreement_type  VARCHAR(20)     NOT NULL,   -- TERMS, PRIVACY, MARKETING, LOCATION
+    terms_id        BIGINT          NOT NULL,   -- FK (약관 버전 참조)
     is_agreed       BOOLEAN         NOT NULL,
     agreed_at       DATETIME        NOT NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_agreement_member (member_id),
+    INDEX idx_agreement_terms (terms_id),
     CONSTRAINT fk_agreement_member FOREIGN KEY (member_id) REFERENCES member(id),
-    CONSTRAINT chk_agreement_type CHECK (agreement_type IN ('TERMS', 'PRIVACY', 'MARKETING', 'LOCATION'))
+    CONSTRAINT fk_agreement_terms FOREIGN KEY (terms_id) REFERENCES terms(id)
 ) ENGINE=InnoDB COMMENT='약관 동의 이력';
+
+CREATE TABLE member_device (    -- FCM(Firebase) 디바이스 토큰
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    member_id       BIGINT          NOT NULL,   -- FK
+    device_token    VARCHAR(500)    NOT NULL,   -- FCM 토큰
+    device_type     VARCHAR(20)     NOT NULL,   -- IOS, ANDROID, WEB
+    device_name     VARCHAR(100)    NULL,       -- 디바이스 이름 (예: iPhone 15, Galaxy S24)
+    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
+    last_used_at    DATETIME        NULL,       -- 마지막 사용 시각
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_device_token (device_token),
+    INDEX idx_device_member (member_id, is_active),
+    CONSTRAINT fk_device_member FOREIGN KEY (member_id) REFERENCES member(id),
+    CONSTRAINT chk_device_type CHECK (device_type IN ('IOS', 'ANDROID', 'WEB'))
+) ENGINE=InnoDB COMMENT='FCM 디바이스 토큰';
 
 CREATE TABLE token_history (    -- AI 토큰 충전/사용 내역
     id              BIGINT          NOT NULL AUTO_INCREMENT,
@@ -754,3 +794,4 @@ CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1.
 | 1.9.1 | 2025-12-28 | payment 테이블에 chk_payment_data CHECK 추가 (TOKEN_PURCHASE↔token_amount, 주문↔order_id 필수 관계 강제) |
 | 1.9.2 | 2025-12-28 | post 테이블에 chk_post_lab_required CHECK 추가 (자가현상↔photo_lab_id 일관성 강제) |
 | 1.9.3 | 2025-12-28 | payment 테이블에 pg_provider 컬럼 추가 (PG사 정보 기록: kakao, tosspay, kcp 등) |
+| 2.0.0 | 2025-12-30 | **약관 버전관리 및 FCM 지원**: `terms` 테이블 추가 (약관 버전 관리), `member_agreement`에 `terms_id` FK 추가, `member_device` 테이블 추가 (FCM 토큰), `DeviceType` Enum 추가, ERD 관계도에 Owner-PhotoLab 1:N 관계 명시 (31개 테이블) |
