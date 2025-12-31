@@ -1,11 +1,11 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.2.0 | 2025-12-31
+> v2.2.4 | 2026-01-01
 
 ---
 
-## 테이블 목록 (34개)
+## 테이블 목록 (33개)
 
 | 도메인 | 테이블 | 설명 |
 |--------|--------|------|
@@ -41,7 +41,6 @@
 | | `inquiry_reply` | 문의 답변 |
 | **common** | `notice` | 공지사항 |
 | | `promotion` | 프로모션/배너 |
-| | `film_content` | 필름 콘텐츠 |
 | | `notification` | 알림 |
 | | `payment` | 결제 정보 (토스 페이먼츠) |
 
@@ -111,6 +110,9 @@ DeliveryStatus: PENDING, PREPARING, SHIPPED, IN_TRANSIT, DELIVERED
 // 커뮤니티
 PostStatus: ACTIVE, HIDDEN, DELETED
 
+// 문의
+InquiryStatus: PENDING, ANSWERED, CLOSED
+
 // 공지/알림
 NoticeType: GENERAL, EVENT, POLICY
 NotificationType: ORDER, RESERVATION, COMMUNITY, MARKETING, NOTICE
@@ -150,6 +152,52 @@ TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 
 ---
 
+## GCS (Cloud Storage) 규칙
+
+> 이미지/파일 저장소 규칙. DB에는 `storage_key`(경로)만 저장하고, API 응답 시 URL 변환.
+
+### 버킷 구성
+
+| 버킷 | 용도 | 접근 방식 |
+|------|------|----------|
+| `finders-public` | 공개 이미지 (현상소, 게시글, 프로필 등) | 직접 URL |
+| `finders-private` | 비공개 파일 (스캔 사진, 서류, AI 복원) | Signed URL (1시간) |
+
+### 경로 규칙
+
+| 테이블 | 컬럼 | 버킷 | 경로 패턴 |
+|--------|------|------|----------|
+| `member` | `profile_image` | public | `profiles/{memberId}/{uuid}.{ext}` |
+| `photo_lab_image` | `image_url` | public | `labs/{photoLabId}/images/{uuid}.{ext}` |
+| `photo_lab` | `qr_code_url` | public | `labs/{photoLabId}/qr.png` |
+| `photo_lab_document` | `file_url` | **private** | `labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
+| `photo_lab_notice` | - | - | 이미지 없음 (텍스트만) |
+| `scanned_photo` | `image_url` | **private** | `orders/{developmentOrderId}/scans/{uuid}.{ext}` |
+| `post_image` | `image_url` | public | `posts/{postId}/{uuid}.{ext}` |
+| `photo_restoration` | `original_url` | **private** | `restorations/{memberId}/original/{uuid}.{ext}` |
+| `photo_restoration` | `restored_url` | **private** | `restorations/{memberId}/restored/{uuid}.{ext}` |
+| `promotion` | `image_url` | public | `promotions/{promotionId}/{uuid}.{ext}` |
+
+### 임시 업로드 (Lifecycle)
+
+```
+temp/{memberId}/{uuid}.{ext}
+```
+- 업로드 시 `temp/`에 저장 → 엔티티 연결 시 영구 경로로 이동
+- **30일 후 자동 삭제** (GCS Lifecycle 정책)
+
+### API 응답 처리
+
+```java
+// public 버킷: 직접 URL 반환
+"https://storage.googleapis.com/finders-public/profiles/123/abc.jpg"
+
+// private 버킷: Signed URL 반환 (1시간 유효)
+"https://storage.googleapis.com/finders-private/orders/456/scans/def.jpg?X-Goog-Signature=..."
+```
+
+---
+
 ## MySQL DDL
 
 ```sql
@@ -170,10 +218,10 @@ USE finders;
 CREATE TABLE member (   -- Base 테이블 (공통 필드만)
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     dtype           VARCHAR(20)     NOT NULL,   -- Discriminator: USER, OWNER, ADMIN (JPA가 자동 관리)
-    nickname        VARCHAR(20)     NOT NULL,
+    nickname        VARCHAR(20)     NOT NULL,   -- 카카오 비즈앱 통해서 가져옴
     email           VARCHAR(100)    NULL,       -- 카카오 비즈앱 통해서 가져옴
     phone           VARCHAR(20)     NULL,       -- 카카오 비즈앱 통해서 가져옴
-    profile_image   VARCHAR(500)    NULL,
+    profile_image   VARCHAR(500)    NULL,       -- 카카오 비즈앱 통해서 가져옴
     status          VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',
     refresh_token   VARCHAR(500)    NULL,       -- JWT Refresh Token (모든 역할 공통)
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -221,6 +269,7 @@ CREATE TABLE social_account (   -- User(dtype='USER') 전용
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_social_provider (provider, provider_id),
+    INDEX idx_social_member (member_id),
     CONSTRAINT fk_social_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_social_provider CHECK (provider IN ('KAKAO', 'APPLE'))
 ) ENGINE=InnoDB COMMENT='소셜 계정 (User 전용)';
@@ -274,7 +323,7 @@ CREATE TABLE member_agreement ( -- 회원별 약관 동의 이력
     CONSTRAINT fk_agreement_terms FOREIGN KEY (terms_id) REFERENCES terms(id)
 ) ENGINE=InnoDB COMMENT='약관 동의 이력';
 
-CREATE TABLE member_device (    -- FCM(Firebase) 디바이스 토큰
+CREATE TABLE member_device (    -- FCM(Firebase) 디바이스 토큰 -- 데모데이 전까지 절대 개발 금지
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,   -- FK
     device_token    VARCHAR(500)    NOT NULL,   -- FCM 토큰
@@ -700,7 +749,7 @@ CREATE TABLE notice (   -- 전체 회원 공지사항 게시판
     CONSTRAINT chk_notice_type CHECK (notice_type IN ('GENERAL', 'EVENT', 'POLICY'))
 ) ENGINE=InnoDB COMMENT='공지사항';
 
-CREATE TABLE promotion (    -- 메인페이지 프로모션 배너 부분
+CREATE TABLE promotion (    -- 메인페이지 프로모션 배너 부분 -- 데모데이 전까지 절대 개발 금지
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     photo_lab_id    BIGINT          NOT NULL,
     title           VARCHAR(200)    NOT NULL,
@@ -719,24 +768,7 @@ CREATE TABLE promotion (    -- 메인페이지 프로모션 배너 부분
     CONSTRAINT chk_promotion_type CHECK (promotion_type IN ('BANNER', 'POPUP', 'EVENT'))
 ) ENGINE=InnoDB COMMENT='프로모션';
 
-CREATE TABLE film_content ( -- 필름 콘텐츠
-    id              BIGINT          NOT NULL AUTO_INCREMENT,
-    title           VARCHAR(200)    NOT NULL,
-    subtitle        VARCHAR(300)    NULL,
-    content         TEXT            NOT NULL,
-    image_url       VARCHAR(500)    NULL,       -- GCP Cloud Storage (썸네일)
-    content_type    VARCHAR(20)     NOT NULL DEFAULT 'ARTICLE',
-    view_count      INT UNSIGNED    NOT NULL DEFAULT 0,
-    is_featured     BOOLEAN         NOT NULL DEFAULT FALSE, -- 메인 페이지 추천 여부
-    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at      DATETIME        NULL,
-    PRIMARY KEY (id),
-    INDEX idx_content_featured (is_featured DESC, created_at DESC),
-    CONSTRAINT chk_content_type CHECK (content_type IN ('ARTICLE', 'TIP', 'NEWS'))
-) ENGINE=InnoDB COMMENT='필름 콘텐츠';
-
-CREATE TABLE notification ( -- 회원별 개인 알림(앱 푸시/ 알림센터)
+CREATE TABLE notification ( -- 회원별 개인 알림(앱 푸시/ 알림센터) -- 데모데이 전까지 절대 개발 금지
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     title           VARCHAR(100)    NOT NULL,
@@ -755,56 +787,41 @@ CREATE TABLE notification ( -- 회원별 개인 알림(앱 푸시/ 알림센터)
 CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
-
     -- 주문 정보
     order_type      VARCHAR(20)     NOT NULL,   -- TOKEN_PURCHASE, DEVELOPMENT_ORDER, PRINT_ORDER
     related_order_id BIGINT         NULL,       -- development_order.id 또는 print_order.id (토큰 구매 시 NULL)
     order_id        VARCHAR(64)     NOT NULL,   -- 토스에 전송할 주문번호 (우리가 생성, 6~64자)
     order_name      VARCHAR(100)    NOT NULL,   -- 주문명 (예: "AI 복원 토큰 10개")
-
     -- 금액 정보
     amount          INT UNSIGNED    NOT NULL,   -- 결제 요청 금액
     balance_amount  INT UNSIGNED    NULL,       -- 취소 후 남은 금액
     token_amount    INT UNSIGNED    NULL,       -- 구매한 토큰 수 (TOKEN_PURCHASE 시)
-
-    -- 토스 페이먼츠 핵심 필드 (승인 후 저장)
-    payment_key     VARCHAR(200)    NULL,       -- 토스 결제 고유키 (필수 저장!)
-    last_transaction_key VARCHAR(64) NULL,      -- 마지막 거래 키 (취소/조회 시 필요)
-
-    -- 결제 수단 정보
+    -- 토스 페이먼츠 (승인 후 저장)
+    payment_key     VARCHAR(200)    NULL,       -- 토스 결제 고유키
+    last_transaction_key VARCHAR(64) NULL,      -- 마지막 거래 키 (취소/조회 시)
+    -- 결제 수단
     method          VARCHAR(30)     NULL,       -- 카드, 간편결제, 가상계좌, 계좌이체, 휴대폰
     easy_pay_provider VARCHAR(20)   NULL,       -- 간편결제 제공자 (토스페이, 카카오페이 등)
-
-    -- 상태 관리
     status          VARCHAR(20)     NOT NULL DEFAULT 'READY',
-
-    -- 카드 정보 (카드 결제 시)
+    -- 카드 정보
     card_company    VARCHAR(20)     NULL,       -- 카드사 (삼성, 현대 등)
     card_number     VARCHAR(20)     NULL,       -- 마스킹된 카드번호 (1234****5678)
     approve_no      VARCHAR(8)      NULL,       -- 승인번호 (환불/분쟁 시 필수)
     installment_months INT          NULL,       -- 할부 개월수 (0=일시불)
-
-    -- 영수증
     receipt_url     VARCHAR(500)    NULL,       -- 영수증 URL
-
     -- 시간 정보
     requested_at    DATETIME        NULL,       -- 결제 요청 시각
     approved_at     DATETIME        NULL,       -- 결제 승인 시각
     expires_at      DATETIME        NULL,       -- 타임아웃 (요청 후 10분)
-
-    -- 실패 정보
-    fail_code       VARCHAR(50)     NULL,       -- 실패 코드
-    fail_message    VARCHAR(200)    NULL,       -- 실패 메시지
-
-    -- 취소 정보
+    -- 실패/취소 정보
+    fail_code       VARCHAR(50)     NULL,
+    fail_message    VARCHAR(200)    NULL,
     cancelled_at    DATETIME        NULL,
     cancel_reason   VARCHAR(200)    NULL,
     cancel_amount   INT UNSIGNED    NULL,       -- 취소 금액 (부분취소 대응)
-
     -- 공통
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
     PRIMARY KEY (id),
     UNIQUE KEY uk_order_id (order_id),
     UNIQUE KEY uk_payment_key (payment_key),
@@ -831,7 +848,7 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
 | 화면 | 테이블 |
 |------|--------|
 | CM-020~022 로그인/가입 | member, member_user, social_account, member_agreement |
-| HM-010 메인 홈 | photo_lab, promotion, film_content |
+| HM-010 메인 홈 | photo_lab, promotion |
 | HM-021~025 사진 복원 | photo_restoration, token_history, member_user (token_balance) |
 | PL-010~011 현상소 탐색 | photo_lab, photo_lab_keyword |
 | PL-020~021 현상소 상세/예약 | photo_lab_*, reservation, payment |
@@ -881,3 +898,6 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
 | 2.1.0 | 2025-12-31 | **Member Joined Table 상속 적용**: `member` Base 테이블 + `member_user`/`member_owner`/`member_admin` 자식 테이블 분리, `member.role` → `dtype` 변경 (JPA Discriminator), `refresh_token` 컬럼 추가 (공통), User 전용 필드(`token_balance`, `last_token_refresh_at`) → `member_user`로 이동, Owner 전용 필드(`bank_*`, `business_number`) → `member_owner`로 이동, `photo_lab.business_number` 제거, `social_account`/`member_address`/`token_history`는 User 전용 명시 (34개 테이블) |
 | 2.2.0 | 2025-12-31 | **토스 페이먼츠 전환**: 포트원 필드 제거(`merchant_uid`, `imp_uid`, `pg_provider`, `payment_method`), 토스 필드 추가(`payment_key`, `last_transaction_key`, `order_id`, `order_name`, `method`, `easy_pay_provider`, `approve_no`, `card_company`, `card_number`, `installment_months`, `balance_amount`, `expires_at`, `fail_code`, `fail_message`, `cancel_amount`), `order_id` BIGINT → `related_order_id`로 변경, `PaymentStatus` 토스 표준으로 변경(READY/IN_PROGRESS/WAITING_FOR_DEPOSIT/DONE/CANCELED/PARTIAL_CANCELED/ABORTED/EXPIRED), `EasyPayProvider` Enum 추가 |
 | 2.2.1 | 2025-12-31 | `photo_lab` 테이블에 `max_reservations_per_hour` 컬럼 추가 (시간당 최대 예약 수, 기본값 3, Owner 조정 가능) |
+| 2.2.2 | 2026-01-01 | **Owner/Admin 로그인 지원**: `member_owner`, `member_admin`에 `password_hash` 컬럼 추가 (이메일/비밀번호 로그인), `social_account`에 `idx_social_member` 인덱스 추가 |
+| 2.2.3 | 2026-01-01 | `film_content` 테이블 삭제 (프론트엔드 하드코딩으로 대체) (33개 테이블) |
+| 2.2.4 | 2026-01-01 | **GCS 스토리지 규칙 문서화**: 버킷 구성(public/private), 테이블별 경로 규칙, 임시 업로드 Lifecycle 정책, API 응답 처리 방식 추가 |
