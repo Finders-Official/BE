@@ -225,16 +225,13 @@ public class MemberResponse {
         }
     }
 
-    @Builder
+    // 필드 3개 이하 → 생성자 직접 사용
     public record Summary(
         Long id,
         String nickname
     ) {
         public static Summary from(Member member) {
-            return Summary.builder()
-                    .id(member.getId())
-                    .nickname(member.getNickname())
-                    .build();
+            return new Summary(member.getId(), member.getNickname());
         }
     }
 }
