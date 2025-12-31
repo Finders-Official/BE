@@ -35,6 +35,20 @@ assignees: ''
 <!-- 관련 로그나 스크린샷이 있다면 첨부해주세요 -->
 
 
+## Related Domain
+<!-- 관련 도메인이 있다면 선택해주세요 -->
+- [ ] Member (회원)
+- [ ] Auth (인증)
+- [ ] Store (가게)
+- [ ] Reservation (예약)
+- [ ] Photo (사진)
+- [ ] Community (커뮤니티)
+- [ ] Inquiry (문의)
+- [ ] Global/Infrastructure
+- [ ] Documentation
+- [ ] CI/CD
+
+
 ## Additional Context
 <!-- 추가 정보가 있다면 작성해주세요 -->
 

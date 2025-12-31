@@ -6,6 +6,11 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
 
+  # Virtual Threads (Java 21+)
+  threads:
+    virtual:
+      enabled: true
+
   # ========================================
   # Database (MySQL)
   # ========================================

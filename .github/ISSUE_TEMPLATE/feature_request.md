@@ -32,6 +32,8 @@ assignees: ''
 - [ ] Community (커뮤니티)
 - [ ] Inquiry (문의)
 - [ ] Global/Infrastructure
+- [ ] Documentation
+- [ ] CI/CD
 
 
 ## Additional Context
