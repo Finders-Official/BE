@@ -1,21 +1,24 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.0.0 | 2025-12-30
+> v2.2.0 | 2025-12-31
 
 ---
 
-## 테이블 목록 (31개)
+## 테이블 목록 (34개)
 
 | 도메인 | 테이블 | 설명 |
 |--------|--------|------|
-| **member** | `member` | 회원 정보 (토큰 잔액 포함) |
-| | `social_account` | 소셜 로그인 연동 (카카오/애플) |
-| | `member_address` | 배송지 주소 |
+| **member** | `member` | 회원 Base (Joined Table 상속) |
+| | `member_user` | User 전용 (소셜 로그인 사용자, 토큰 관련) |
+| | `member_owner` | Owner 전용 (현상소 사장님, 정산 계좌) |
+| | `member_admin` | Admin 전용 (관리자, 추후 확장) |
+| | `social_account` | 소셜 로그인 연동 - User 전용 (카카오/애플) |
+| | `member_address` | 배송지 주소 - User 전용 |
 | | `member_device` | FCM 디바이스 토큰 (푸시 알림용) |
 | | `member_agreement` | 약관 동의 이력 |
 | | `terms` | 약관 버전 관리 |
-| | `token_history` | AI 토큰 충전/사용 내역 |
+| | `token_history` | AI 토큰 충전/사용 내역 - User 전용 |
 | **store** | `photo_lab` | 현상소 정보 |
 | | `photo_lab_image` | 현상소 이미지 |
 | | `photo_lab_keyword` | 현상소 키워드/태그 |
@@ -40,19 +43,25 @@
 | | `promotion` | 프로모션/배너 |
 | | `film_content` | 필름 콘텐츠 |
 | | `notification` | 알림 |
-| | `payment` | 결제 정보 |
+| | `payment` | 결제 정보 (토스 페이먼츠) |
 
 ---
 
 ## ERD 관계도
 
 ```
-member ─┬─ 1:N ─ social_account
-        ├─ 1:N ─ member_address
-        ├─ 1:N ─ member_device (FCM 토큰)
-        ├─ 1:N ─ member_agreement ─── N:1 ─ terms (약관 버전)
-        ├─ 1:N ─ token_history (토큰 내역)
-        ├─ 1:N ─ photo_lab (Owner가 여러 현상소 운영 가능)
+member (Base: Joined Table 상속)
+   │
+   ├── 1:1 ─ member_user ─┬─ 1:N ─ social_account (소셜 로그인)
+   │                      ├─ 1:N ─ member_address (배송지)
+   │                      └─ 1:N ─ token_history (토큰 내역)
+   │
+   ├── 1:1 ─ member_owner ─── 1:N ─ photo_lab (현상소 운영)
+   │
+   └── 1:1 ─ member_admin (추후 확장)
+
+member ─┬─ 1:N ─ member_device (FCM 토큰, 공통)
+        ├─ 1:N ─ member_agreement ─── N:1 ─ terms (약관 버전, 공통)
         ├─ 1:N ─ reservation ──── 0..1:1 ─ development_order ─┬─ 1:N ─ scanned_photo
         │                                                     └─ 0..1:N ─ print_order ─┬─ 1:N ─ print_order_item
         │                                                                              └─ 0..1:1 ─ delivery
@@ -82,10 +91,10 @@ photo_lab ─┬─ 1:N ─ photo_lab_image
 ## Enum 정의
 
 ```java
-// 회원
-MemberRole: USER, OWNER, ADMIN
+// 회원 (Joined Table 상속)
+MemberType: USER, OWNER, ADMIN  // dtype 컬럼 (discriminator)
 MemberStatus: ACTIVE, SUSPENDED, WITHDRAWN
-SocialProvider: KAKAO, APPLE
+SocialProvider: KAKAO, APPLE    // User 전용
 DeviceType: IOS, ANDROID, WEB
 
 // 현상소
@@ -118,10 +127,24 @@ DocumentType: BUSINESS_LICENSE, BUSINESS_PERMIT
 RestorationStatus: PENDING, PROCESSING, COMPLETED, FAILED
 FeedbackRating: GOOD, BAD
 
-// 결제/토큰 (v1.3.0 추가, v1.6.0 포트원 전환)
-PaymentMethod: CARD, EASY_PAY, ON_SITE  // 포트원 카드/간편결제 + 현장결제(확장고려)
-PaymentStatus: PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
-OrderType: DEVELOPMENT_ORDER, PRINT_ORDER, TOKEN_PURCHASE
+// 결제/토큰 (v2.2.0 토스 페이먼츠 전환)
+PaymentStatus:          // 토스 페이먼츠 표준
+  READY                 // 결제창 열림 (인증 전)
+  IN_PROGRESS           // 결제 진행 중 (인증 완료, 승인 대기)
+  WAITING_FOR_DEPOSIT   // 가상계좌 입금 대기
+  DONE                  // 결제 완료
+  CANCELED              // 전액 취소
+  PARTIAL_CANCELED      // 부분 취소
+  ABORTED               // 결제 실패
+  EXPIRED               // 시간 만료
+
+PaymentMethod:          // 토스 method 값 (한글)
+  카드, 간편결제, 가상계좌, 계좌이체, 휴대폰, 상품권
+
+EasyPayProvider:        // 간편결제 제공자
+  토스페이, 카카오페이, 네이버페이, 삼성페이, 애플페이, 페이코
+
+OrderType: TOKEN_PURCHASE, DEVELOPMENT_ORDER, PRINT_ORDER
 TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 ```
 
@@ -144,30 +167,55 @@ USE finders;
 -- 1. MEMBER
 -- ============================================
 
-CREATE TABLE member (
+CREATE TABLE member (   -- Base 테이블 (공통 필드만)
     id              BIGINT          NOT NULL AUTO_INCREMENT,
-    nickname        VARCHAR(20)     NOT NULL,   -- social 로그인에서 받아옴
-    email           VARCHAR(100)    NULL,       -- social 로그인에서 받아야 하는데, 카카오에 비즈앱 등록 전에는 못 가져옴... PM에게 물어봐야할 듯
-    phone           VARCHAR(20)     NULL,       -- 인증 API 구현해야함
-    profile_image   VARCHAR(500)    NULL,       -- social 로그인에서 받아옴
-    role            VARCHAR(20)     NOT NULL DEFAULT 'USER',
+    dtype           VARCHAR(20)     NOT NULL,   -- Discriminator: USER, OWNER, ADMIN (JPA가 자동 관리)
+    nickname        VARCHAR(20)     NOT NULL,
+    email           VARCHAR(100)    NULL,       -- 카카오 비즈앱 통해서 가져옴
+    phone           VARCHAR(20)     NULL,       -- 카카오 비즈앱 통해서 가져옴
+    profile_image   VARCHAR(500)    NULL,
     status          VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',
-    -- AI 토큰 관련
-    token_balance   INT UNSIGNED    NOT NULL DEFAULT 3,     -- 보유 토큰 (회원가입 시 3개 지급)
-    last_token_refresh_at DATETIME  NULL,                   -- 마지막 무료 토큰 리프레시 일시
+    refresh_token   VARCHAR(500)    NULL,       -- JWT Refresh Token (모든 역할 공통)
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uk_member_nickname (nickname),
-    CONSTRAINT chk_member_role CHECK (role IN ('USER', 'OWNER', 'ADMIN')),
+    INDEX idx_member_dtype (dtype),
+    CONSTRAINT chk_member_dtype CHECK (dtype IN ('USER', 'OWNER', 'ADMIN')),
     CONSTRAINT chk_member_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'WITHDRAWN'))
-) ENGINE=InnoDB COMMENT='회원';
+) ENGINE=InnoDB COMMENT='회원 Base (Joined Table 상속)';
 
-CREATE TABLE social_account (
+CREATE TABLE member_user (  -- User 전용 테이블 (소셜 로그인 사용자)
+    member_id       BIGINT          NOT NULL,   -- PK & FK → member.id
+    token_balance   INT UNSIGNED    NOT NULL DEFAULT 3,     -- 보유 토큰 (회원가입 시 3개 지급)
+    last_token_refresh_at DATETIME  NULL,                   -- 마지막 무료 토큰 리프레시 일시
+    PRIMARY KEY (member_id),
+    CONSTRAINT fk_member_user FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='User 전용 (소셜 로그인, 토큰)';
+
+CREATE TABLE member_owner ( -- Owner 전용 테이블 (현상소 사장님)
+    member_id       BIGINT          NOT NULL,   -- PK & FK → member.id
+    password_hash   VARCHAR(255)    NOT NULL,   -- BCrypt 해시 (이메일/비밀번호 로그인)
+    business_number VARCHAR(20)     NULL,       -- 사업자 번호
+    bank_name       VARCHAR(50)     NULL,       -- 은행명
+    bank_account_number VARCHAR(50) NULL,       -- 계좌번호
+    bank_account_holder VARCHAR(50) NULL,       -- 예금주
+    PRIMARY KEY (member_id),
+    CONSTRAINT fk_member_owner FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='Owner 전용 (사업자 정보, 정산 계좌)';
+
+CREATE TABLE member_admin ( -- Admin 전용 테이블 (관리자)
+    member_id       BIGINT          NOT NULL,   -- PK & FK → member.id
+    password_hash   VARCHAR(255)    NOT NULL,   -- BCrypt 해시 (이메일/비밀번호 로그인)
+    PRIMARY KEY (member_id),
+    CONSTRAINT fk_member_admin FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='Admin 전용';
+
+CREATE TABLE social_account (   -- User(dtype='USER') 전용
     id              BIGINT          NOT NULL AUTO_INCREMENT,
-    member_id       BIGINT          NOT NULL,   -- FK
-    provider        VARCHAR(20)     NOT NULL,   -- KAKAO, APPLE만 사용
+    member_id       BIGINT          NOT NULL,   -- FK (User만 연결, Owner/Admin은 소셜 로그인 미사용)
+    provider        VARCHAR(20)     NOT NULL,   -- KAKAO, APPLE
     provider_id     VARCHAR(100)    NOT NULL,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -175,7 +223,7 @@ CREATE TABLE social_account (
     UNIQUE KEY uk_social_provider (provider, provider_id),
     CONSTRAINT fk_social_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_social_provider CHECK (provider IN ('KAKAO', 'APPLE'))
-) ENGINE=InnoDB COMMENT='소셜 계정';
+) ENGINE=InnoDB COMMENT='소셜 계정 (User 전용)';
 
 CREATE TABLE member_address (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
@@ -266,7 +314,7 @@ CREATE TABLE token_history (    -- AI 토큰 충전/사용 내역
 
 CREATE TABLE photo_lab (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
-    owner_id        BIGINT          NOT NULL,
+    owner_id        BIGINT          NOT NULL,   -- FK → member_owner.member_id (Owner 전용)
     name            VARCHAR(100)    NOT NULL,
     description     TEXT            NULL,
     phone           VARCHAR(20)     NULL,
@@ -281,7 +329,7 @@ CREATE TABLE photo_lab (
     avg_work_time   INT UNSIGNED    NULL,       -- 주문 완료 시점에(development_order.status = 'COMPLETED') 백엔드에서 직접 계산해서 저장
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
     is_delivery_available BOOLEAN    NOT NULL DEFAULT FALSE, -- TRUE: 배송가능, FALSE: 배송 불가능
-    business_number VARCHAR(20)     NULL,       -- 사업자 번호
+    max_reservations_per_hour INT UNSIGNED NOT NULL DEFAULT 3, -- 시간당 최대 예약 가능 수 (Owner 조정 가능)
     qr_code_url     VARCHAR(500)    NULL,       -- QR 코드 이미지 URL (현장 주문용)
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -704,41 +752,76 @@ CREATE TABLE notification ( -- 회원별 개인 알림(앱 푸시/ 알림센터)
     CONSTRAINT chk_notification_type CHECK (notification_type IN ('ORDER', 'RESERVATION', 'COMMUNITY', 'MARKETING', 'NOTICE'))
 ) ENGINE=InnoDB COMMENT='알림';
 
-CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1. 계좌이체 기능 없앰 2. 대신 포트원 카드결제와 간편결제 기능 추가
+CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
-    order_type      VARCHAR(20)     NOT NULL,   -- DEVELOPMENT_ORDER, PRINT_ORDER, TOKEN_PURCHASE
-    order_id        BIGINT          NULL,       -- 주문 ID (토큰 구매 시 NULL)
-    amount          INT UNSIGNED    NOT NULL,   -- 결제 금액 (원)
-    token_amount    INT UNSIGNED    NULL,       -- 구매한 토큰 수 (토큰 구매 시)
-    payment_method  VARCHAR(20)     NOT NULL,   -- CARD, EASY_PAY, ON_SITE
-    status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
-    -- 포트원 PG 연동용
-    merchant_uid    VARCHAR(100)    NULL,       -- 주문 고유번호 (우리가 생성)
-    imp_uid         VARCHAR(100)    NULL,       -- 포트원 결제 고유번호
-    pg_provider     VARCHAR(20)     NULL,       -- PG사 (kakao, tosspay, kcp 등)
+
+    -- 주문 정보
+    order_type      VARCHAR(20)     NOT NULL,   -- TOKEN_PURCHASE, DEVELOPMENT_ORDER, PRINT_ORDER
+    related_order_id BIGINT         NULL,       -- development_order.id 또는 print_order.id (토큰 구매 시 NULL)
+    order_id        VARCHAR(64)     NOT NULL,   -- 토스에 전송할 주문번호 (우리가 생성, 6~64자)
+    order_name      VARCHAR(100)    NOT NULL,   -- 주문명 (예: "AI 복원 토큰 10개")
+
+    -- 금액 정보
+    amount          INT UNSIGNED    NOT NULL,   -- 결제 요청 금액
+    balance_amount  INT UNSIGNED    NULL,       -- 취소 후 남은 금액
+    token_amount    INT UNSIGNED    NULL,       -- 구매한 토큰 수 (TOKEN_PURCHASE 시)
+
+    -- 토스 페이먼츠 핵심 필드 (승인 후 저장)
+    payment_key     VARCHAR(200)    NULL,       -- 토스 결제 고유키 (필수 저장!)
+    last_transaction_key VARCHAR(64) NULL,      -- 마지막 거래 키 (취소/조회 시 필요)
+
+    -- 결제 수단 정보
+    method          VARCHAR(30)     NULL,       -- 카드, 간편결제, 가상계좌, 계좌이체, 휴대폰
+    easy_pay_provider VARCHAR(20)   NULL,       -- 간편결제 제공자 (토스페이, 카카오페이 등)
+
+    -- 상태 관리
+    status          VARCHAR(20)     NOT NULL DEFAULT 'READY',
+
+    -- 카드 정보 (카드 결제 시)
+    card_company    VARCHAR(20)     NULL,       -- 카드사 (삼성, 현대 등)
+    card_number     VARCHAR(20)     NULL,       -- 마스킹된 카드번호 (1234****5678)
+    approve_no      VARCHAR(8)      NULL,       -- 승인번호 (환불/분쟁 시 필수)
+    installment_months INT          NULL,       -- 할부 개월수 (0=일시불)
+
+    -- 영수증
     receipt_url     VARCHAR(500)    NULL,       -- 영수증 URL
-    -- 결과 정보
-    paid_at         DATETIME        NULL,
-    fail_reason     VARCHAR(200)    NULL,       -- 결제 실패 사유
+
+    -- 시간 정보
+    requested_at    DATETIME        NULL,       -- 결제 요청 시각
+    approved_at     DATETIME        NULL,       -- 결제 승인 시각
+    expires_at      DATETIME        NULL,       -- 타임아웃 (요청 후 10분)
+
+    -- 실패 정보
+    fail_code       VARCHAR(50)     NULL,       -- 실패 코드
+    fail_message    VARCHAR(200)    NULL,       -- 실패 메시지
+
+    -- 취소 정보
     cancelled_at    DATETIME        NULL,
     cancel_reason   VARCHAR(200)    NULL,
+    cancel_amount   INT UNSIGNED    NULL,       -- 취소 금액 (부분취소 대응)
+
+    -- 공통
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
     PRIMARY KEY (id),
-    UNIQUE KEY uk_merchant_uid (merchant_uid),
+    UNIQUE KEY uk_order_id (order_id),
+    UNIQUE KEY uk_payment_key (payment_key),
     INDEX idx_payment_member (member_id, status),
-    INDEX idx_payment_order (order_type, order_id),
-    INDEX idx_payment_imp_uid (imp_uid),
+    INDEX idx_payment_order_type (order_type, related_order_id),
+    INDEX idx_payment_status (status),
     CONSTRAINT fk_payment_member FOREIGN KEY (member_id) REFERENCES member(id),
-    CONSTRAINT chk_payment_method CHECK (payment_method IN ('CARD', 'EASY_PAY', 'ON_SITE')),
-    CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED')),
-    CONSTRAINT chk_order_type CHECK (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER', 'TOKEN_PURCHASE')),
+    CONSTRAINT chk_payment_status CHECK (status IN (
+        'READY', 'IN_PROGRESS', 'WAITING_FOR_DEPOSIT', 'DONE',
+        'CANCELED', 'PARTIAL_CANCELED', 'ABORTED', 'EXPIRED'
+    )),
+    CONSTRAINT chk_order_type CHECK (order_type IN ('TOKEN_PURCHASE', 'DEVELOPMENT_ORDER', 'PRINT_ORDER')),
     CONSTRAINT chk_payment_data CHECK (
-        (order_type = 'TOKEN_PURCHASE' AND token_amount IS NOT NULL AND order_id IS NULL) OR
-        (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER') AND order_id IS NOT NULL AND token_amount IS NULL)
+        (order_type = 'TOKEN_PURCHASE' AND token_amount IS NOT NULL AND related_order_id IS NULL) OR
+        (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER') AND related_order_id IS NOT NULL AND token_amount IS NULL)
     )
-) ENGINE=InnoDB COMMENT='결제';
+) ENGINE=InnoDB COMMENT='결제 (토스 페이먼츠)';
 ```
 
 ---
@@ -747,19 +830,19 @@ CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1.
 
 | 화면 | 테이블 |
 |------|--------|
-| CM-020~022 로그인/가입 | member, social_account, member_agreement |
+| CM-020~022 로그인/가입 | member, member_user, social_account, member_agreement |
 | HM-010 메인 홈 | photo_lab, promotion, film_content |
-| HM-021~025 사진 복원 | photo_restoration, token_history, member (token_balance) |
+| HM-021~025 사진 복원 | photo_restoration, token_history, member_user (token_balance) |
 | PL-010~011 현상소 탐색 | photo_lab, photo_lab_keyword |
 | PL-020~021 현상소 상세/예약 | photo_lab_*, reservation, payment |
 | CO-020~030 사진수다 | post (자가현상 여부), post_image, comment, post_like |
 | PM-000~018 현상관리 | development_order, scanned_photo, print_order, print_order_item, delivery, payment |
-| UR-010~025 마이페이지 | member, social_account |
+| UR-010~025 마이페이지 | member, member_user, social_account |
 | UR-030~040 관심목록 | favorite_photo_lab, post_like |
 | UR-060~062 배송지 | member_address |
 | UR-070~081 공지/문의 | notice, inquiry, inquiry_reply |
 | 알림 센터 | notification |
-| 사업자 등록 | photo_lab, photo_lab_document |
+| 사업자 등록 | member_owner, photo_lab, photo_lab_document |
 
 ---
 
@@ -795,3 +878,6 @@ CREATE TABLE payment (  -- 포트원 결제 연동 -- PM에게 확인 필수, 1.
 | 1.9.2 | 2025-12-28 | post 테이블에 chk_post_lab_required CHECK 추가 (자가현상↔photo_lab_id 일관성 강제) |
 | 1.9.3 | 2025-12-28 | payment 테이블에 pg_provider 컬럼 추가 (PG사 정보 기록: kakao, tosspay, kcp 등) |
 | 2.0.0 | 2025-12-30 | **약관 버전관리 및 FCM 지원**: `terms` 테이블 추가 (약관 버전 관리), `member_agreement`에 `terms_id` FK 추가, `member_device` 테이블 추가 (FCM 토큰), `DeviceType` Enum 추가, ERD 관계도에 Owner-PhotoLab 1:N 관계 명시 (31개 테이블) |
+| 2.1.0 | 2025-12-31 | **Member Joined Table 상속 적용**: `member` Base 테이블 + `member_user`/`member_owner`/`member_admin` 자식 테이블 분리, `member.role` → `dtype` 변경 (JPA Discriminator), `refresh_token` 컬럼 추가 (공통), User 전용 필드(`token_balance`, `last_token_refresh_at`) → `member_user`로 이동, Owner 전용 필드(`bank_*`, `business_number`) → `member_owner`로 이동, `photo_lab.business_number` 제거, `social_account`/`member_address`/`token_history`는 User 전용 명시 (34개 테이블) |
+| 2.2.0 | 2025-12-31 | **토스 페이먼츠 전환**: 포트원 필드 제거(`merchant_uid`, `imp_uid`, `pg_provider`, `payment_method`), 토스 필드 추가(`payment_key`, `last_transaction_key`, `order_id`, `order_name`, `method`, `easy_pay_provider`, `approve_no`, `card_company`, `card_number`, `installment_months`, `balance_amount`, `expires_at`, `fail_code`, `fail_message`, `cancel_amount`), `order_id` BIGINT → `related_order_id`로 변경, `PaymentStatus` 토스 표준으로 변경(READY/IN_PROGRESS/WAITING_FOR_DEPOSIT/DONE/CANCELED/PARTIAL_CANCELED/ABORTED/EXPIRED), `EasyPayProvider` Enum 추가 |
+| 2.2.1 | 2025-12-31 | `photo_lab` 테이블에 `max_reservations_per_hour` 컬럼 추가 (시간당 최대 예약 수, 기본값 3, Owner 조정 가능) |
