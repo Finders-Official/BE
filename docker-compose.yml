@@ -54,7 +54,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: finders-backend
+    container_name: finders-api
     restart: unless-stopped
     depends_on:
       mysql:

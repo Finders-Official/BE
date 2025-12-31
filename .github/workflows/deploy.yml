@@ -6,7 +6,7 @@ on:
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-api
-  CONTAINER_NAME: finders-backend
+  CONTAINER_NAME: finders-api
 
 permissions:
   contents: read
@@ -18,7 +18,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 22
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
