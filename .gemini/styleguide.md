@@ -204,42 +204,61 @@ public enum MemberRole {
 - Entity에서 `@Enumerated(EnumType.STRING)` 필수 (ORDINAL 금지)
 - 도메인별 `enums/` 패키지에 위치
 
-### DTO
+### DTO (record 기반)
+
+**record vs class 사용 기준:**
+
+| 구분 | 권장 | 이유 |
+|------|------|------|
+| **Request/Response DTO** | `record` | 불변, 간결, 순수 Java |
+| **Entity** | `class + Lombok` | JPA 기본 생성자 요구 |
 
 ```java
+// Request DTO (record)
 public class MemberRequest {
 
-    @Getter
-    @NoArgsConstructor
-    public static class Create {
+    public record Create(
         @NotBlank(message = "닉네임은 필수입니다.")
         @Size(min = 2, max = 20)
-        private String nickname;
-    }
+        String nickname,
+
+        @Email(message = "올바른 이메일 형식이 아닙니다.")
+        String email
+    ) {}
 }
 ```
 
 ```java
+// Response DTO (record + @Builder)
 public class MemberResponse {
 
-    @Getter
     @Builder
-    public static class Detail {
-        private Long id;
-        private String nickname;
-
+    public record Detail(
+        Long id,
+        String nickname,
+        String email
+    ) {
         public static Detail from(Member member) {
             return Detail.builder()
                     .id(member.getId())
                     .nickname(member.getNickname())
+                    .email(member.getEmail())
                     .build();
+        }
+    }
+
+    // 필드 3개 이하면 생성자 직접 사용
+    public record Summary(Long id, String nickname) {
+        public static Summary from(Member member) {
+            return new Summary(member.getId(), member.getNickname());
         }
     }
 }
 ```
 
 **DTO 규칙:**
-- Request/Response를 외부 클래스로, 세부 DTO를 static 내부 클래스로 정의
+- Request/Response를 외부 클래스로, 세부 DTO를 `record`로 정의
+- 필드 5개 이상이면 `@Builder` 사용, 3개 이하면 생성자 직접 사용
 - Response에는 `from()` 정적 팩토리 메서드 사용
 - 검증 어노테이션에 한글 message 포함
 
