@@ -32,10 +32,30 @@ public enum ErrorCode implements BaseCode {
     // ========================================
     // Auth
     // ========================================
-    AUTH_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401", "유효하지 않은 토큰입니다."),
-    AUTH_EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_402", "만료된 토큰입니다."),
-    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH_403", "인증 정보가 올바르지 않습니다."),
+
+    // 토큰 관련
+    AUTH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH_401", "인증 토큰이 존재하지 않습니다."),
+    AUTH_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_402", "유효하지 않은 토큰입니다."),
+    AUTH_EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_403", "만료된 토큰입니다."),
+
+    // Provider 요청/검증 (kakao, apple 등)
+    AUTH_UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_410", "지원하지 않는 소셜 로그인 제공자입니다."),
+    AUTH_INVALID_PROVIDER_REQUEST(HttpStatus.BAD_REQUEST, "AUTH_411", "소셜 로그인 요청 정보가 올바르지 않습니다."),
+
+    // OAuth 로그인
     AUTH_OAUTH_FAILED(HttpStatus.BAD_REQUEST, "AUTH_400", "소셜 로그인에 실패했습니다."),
+    AUTH_OAUTH_TOKEN_FAILED(HttpStatus.BAD_REQUEST, "AUTH_404", "소셜 토큰 발급에 실패했습니다."),
+    AUTH_OAUTH_PROFILE_FAILED(HttpStatus.BAD_REQUEST, "AUTH_405", "소셜 사용자 정보를 불러오지 못했습니다."),
+
+    // 계정/연동 정책
+    AUTH_SOCIAL_ACCOUNT_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH_406", "가입되지 않은 소셜 계정입니다."),
+    AUTH_PROVIDER_MISMATCH(HttpStatus.CONFLICT, "AUTH_409", "다른 소셜 계정으로 가입된 회원입니다."),
+    AUTH_SOCIAL_ACCOUNT_BLOCKED(HttpStatus.FORBIDDEN, "AUTH_412", "이용이 제한된 계정입니다."),
+
+    // 약관/추가정보
+    AUTH_TERMS_NOT_AGREED(HttpStatus.FORBIDDEN, "AUTH_413", "필수 약관에 동의하지 않았습니다."),
+    AUTH_ADDITIONAL_INFO_REQUIRED(HttpStatus.FORBIDDEN, "AUTH_414", "추가 정보 입력이 필요합니다."),
+
 
     // ========================================
     // Member
