@@ -1,4 +1,5 @@
 # API Specification
+작성 계획 - 김덕환
 
 ## Base URL
 
@@ -16,7 +17,7 @@
   "success": true,
   "code": "MEMBER_200",
   "message": "회원 조회에 성공했습니다.",
-  "timestamp": "2024-12-22T12:00:00",
+  "timestamp": "2025-01-15T12:00:00",
   "data": {
     "id": 1,
     "nickname": "finder",
@@ -32,7 +33,7 @@
   "success": false,
   "code": "MEMBER_404",
   "message": "회원을 찾을 수 없습니다.",
-  "timestamp": "2024-12-22T12:00:00",
+  "timestamp": "2025-01-15T12:00:00",
   "data": null
 }
 ```
@@ -44,7 +45,7 @@
   "success": true,
   "code": "STORE_200",
   "message": "현상소 목록 조회에 성공했습니다.",
-  "timestamp": "2024-12-22T12:00:00",
+  "timestamp": "2025-01-15T12:00:00",
   "data": [...],
   "pagination": {
     "page": 0,
