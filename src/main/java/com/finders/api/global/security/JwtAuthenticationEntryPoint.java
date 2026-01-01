@@ -25,7 +25,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
 
-        log.warn("[AuthenticationEntryPoint] 401 Unauthorized: {}", request.getRequestURI());
+        log.warn("[JwtAuthenticationEntryPoint.commence] 401 Unauthorized: {}", request.getRequestURI());
 
         // 1. 상태 코드 설정 (HTTP 401)
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
