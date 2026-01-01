@@ -1,0 +1,83 @@
+name: Finders CD (Deploy to Prod)
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-api
+  CONTAINER_NAME: finders-api
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build without Test
+        # CI에서 이미 테스트를 통과했다고 믿고, 배포 속도를 위해 테스트는 건너뜁니다.
+        run: ./gradlew build -x test
+
+      # 4. Docker Hub 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 5. Docker 이미지 빌드 및 푸시
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.DOCKER_IMAGE }}:latest
+
+      # 6. docker-compose.prod.yml 파일을 서버로 전송 (SCP)
+      - name: Copy Docker Compose file to Server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.GCE_HOST }}
+          username: ${{ secrets.GCE_USER }}
+          key: ${{ secrets.GCE_SSH_KEY }}
+          port: 22
+          source: "docker-compose.prod.yml"
+          target: "/home/${{ secrets.GCE_USER }}/app"
+          strip_components: 0
+
+      # 7. GCE 서버에 배포 (SSH 연결)
+      - name: Deploy to GCE
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.GCE_HOST }}
+          username: ${{ secrets.GCE_USER }}
+          key: ${{ secrets.GCE_SSH_KEY }}
+          port: 22
+          script: |
+          # 앱 디렉토리로 이동
+            mkdir -p ~/app
+            cd ~/app
+            
+            echo "${{ secrets.ENV_PROD }}" > .env.prod
+            
+            # 최신 이미지 당겨오기 (프로젝트 파일에 적힌 이미지명 사용)
+            sudo docker compose -f docker-compose.prod.yml pull
+            
+            # 서비스 재시작
+            sudo docker compose -f docker-compose.prod.yml up -d
+            
+            # 불필요한 이미지 정리
+            sudo docker image prune -f
