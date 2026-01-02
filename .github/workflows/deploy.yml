@@ -83,7 +83,7 @@ jobs:
             
             # 최대 60초(5초*12회) 대기
             for i in {1..12}; do
-              RESPONSE=$(curl -s http://localhost:8080/actuator/health || true)
+              RESPONSE=$(curl -s http://localhost:8080/api/actuator/health || true)
             
               if [[ "$RESPONSE" == *"UP"* ]]; then
                 echo "✅ 서비스 정상 실행 확인! (Attempt $i)"
