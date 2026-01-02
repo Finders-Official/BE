@@ -87,7 +87,17 @@ public enum ErrorCode implements BaseCode {
     // External API
     // ========================================
     EXTERNAL_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_503", "외부 API 호출에 실패했습니다."),
-    VISION_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "VISION_503", "Vision AI 호출에 실패했습니다.");
+    VISION_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "VISION_503", "Vision AI 호출에 실패했습니다."),
+
+    // ========================================
+    // Storage (GCS)
+    // ========================================
+    STORAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_500", "파일 업로드에 실패했습니다."),
+    STORAGE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_501", "파일 삭제에 실패했습니다."),
+    STORAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORAGE_404", "파일을 찾을 수 없습니다."),
+    STORAGE_INVALID_PATH(HttpStatus.BAD_REQUEST, "STORAGE_400", "잘못된 저장 경로입니다."),
+    STORAGE_INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "STORAGE_401", "허용되지 않는 파일 형식입니다."),
+    STORAGE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "STORAGE_402", "파일 크기가 제한을 초과했습니다.");
 
     private final HttpStatus status;
     private final String code;
