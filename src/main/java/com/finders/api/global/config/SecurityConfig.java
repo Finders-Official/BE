@@ -1,5 +1,7 @@
 package com.finders.api.global.config;
 
+import com.finders.api.global.security.JwtAccessDeniedHandler;
+import com.finders.api.global.security.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +26,9 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     // 인증 없이 접근 가능한 경로
     private static final String[] PUBLIC_ENDPOINTS = {
@@ -56,6 +61,11 @@ public class SecurityConfig {
                 .headers(headers ->
                         headers.frameOptions(frame -> frame.sameOrigin()))
 
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 401 에러 핸들링
+                        .accessDeniedHandler(jwtAccessDeniedHandler)           // 403 에러 핸들링
+                )
+
                 // 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
@@ -71,7 +81,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "https://finders-chi.vercel.app",
+                "http://localhost:3000",
+                "http://localhost:5173"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
