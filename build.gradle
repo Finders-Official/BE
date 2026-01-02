@@ -63,11 +63,10 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
     // ========================================
-    // Google Cloud (Vision AI, Vertex AI)
+    // Google Cloud Storage
     // ========================================
     implementation platform('com.google.cloud:libraries-bom:26.51.0')
-    implementation 'com.google.cloud:google-cloud-vision'
-    // implementation 'com.google.cloud:google-cloud-aiplatform'  // Vertex AI (후순위)
+    implementation 'com.google.cloud:google-cloud-storage'
 
     // ========================================
     // Utility
