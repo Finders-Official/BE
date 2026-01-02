@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -29,13 +30,13 @@ public class GcsStorageService implements StorageService {
     @Override
     public StorageResponse.Upload uploadPublic(MultipartFile file, StoragePath storagePath, Object... pathArgs) {
         validatePublicPath(storagePath);
-        return upload(file, properties.getPublicBucket(), storagePath, true, pathArgs);
+        return upload(file, properties.publicBucket(), storagePath, true, pathArgs);
     }
 
     @Override
     public StorageResponse.Upload uploadPrivate(MultipartFile file, StoragePath storagePath, Object... pathArgs) {
         validatePrivatePath(storagePath);
-        return upload(file, properties.getPrivateBucket(), storagePath, false, pathArgs);
+        return upload(file, properties.privateBucket(), storagePath, false, pathArgs);
     }
 
     private StorageResponse.Upload upload(MultipartFile file, String bucket,
@@ -50,14 +51,14 @@ public class GcsStorageService implements StorageService {
                     .setContentType(file.getContentType())
                     .build();
 
-            storage.create(blobInfo, file.getBytes());
+            storage.create(blobInfo, file.getInputStream());
 
             String url = isPublic ? getPublicUrl(objectPath) : null;
 
             log.info("[GcsStorageService.upload] bucket={}, path={}, size={}",
                     bucket, objectPath, file.getSize());
 
-            return StorageResponse.Upload.of(
+            return StorageResponse.Upload.from(
                     bucket,
                     objectPath,
                     url,
@@ -73,7 +74,7 @@ public class GcsStorageService implements StorageService {
 
     @Override
     public StorageResponse.Delete delete(String objectPath, boolean isPublic) {
-        String bucket = isPublic ? properties.getPublicBucket() : properties.getPrivateBucket();
+        String bucket = isPublic ? properties.publicBucket() : properties.privateBucket();
 
         BlobId blobId = BlobId.of(bucket, objectPath);
         boolean deleted = storage.delete(blobId);
@@ -86,9 +87,9 @@ public class GcsStorageService implements StorageService {
 
     @Override
     public StorageResponse.SignedUrl getSignedUrl(String objectPath, Integer expiryMinutes) {
-        int expiry = expiryMinutes != null ? expiryMinutes : properties.getSignedUrlExpiryMinutes();
+        int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
 
-        BlobInfo blobInfo = BlobInfo.newBuilder(properties.getPrivateBucket(), objectPath).build();
+        BlobInfo blobInfo = BlobInfo.newBuilder(properties.privateBucket(), objectPath).build();
 
         URL signedUrl = storage.signUrl(
                 blobInfo,
@@ -126,8 +127,7 @@ public class GcsStorageService implements StorageService {
     }
 
     private Object[] appendFilename(Object[] pathArgs, String filename) {
-        Object[] result = new Object[pathArgs.length + 1];
-        System.arraycopy(pathArgs, 0, result, 0, pathArgs.length);
+        Object[] result = Arrays.copyOf(pathArgs, pathArgs.length + 1);
         result[pathArgs.length] = filename;
         return result;
     }
