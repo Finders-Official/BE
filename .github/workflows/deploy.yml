@@ -67,8 +67,7 @@ jobs:
           key: ${{ secrets.GCE_SSH_KEY }}
           port: 22
           script: |
-          # 앱 디렉토리로 이동
-            mkdir -p ~/app
+            # 1. 앱 디렉토리 이동 및 환경변수 설정
             cd ~/app
             
             echo "${{ secrets.ENV_PROD }}" > .env.prod
