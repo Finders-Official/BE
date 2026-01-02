@@ -18,8 +18,8 @@ public class StorageResponse {
             String contentType,
             long size
     ) {
-        public static Upload of(String bucket, String objectPath, String url,
-                                String contentType, long size) {
+        public static Upload from(String bucket, String objectPath, String url,
+                                  String contentType, long size) {
             return Upload.builder()
                     .bucket(bucket)
                     .objectPath(objectPath)

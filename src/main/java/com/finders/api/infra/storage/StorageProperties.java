@@ -1,31 +1,32 @@
 package com.finders.api.infra.storage;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * GCS 설정 프로퍼티
+ * GCS 설정 프로퍼티 (불변 객체)
  */
-@Getter
-@Setter
 @ConfigurationProperties(prefix = "google.cloud.storage")
-public class StorageProperties {
+public record StorageProperties(
+        /**
+         * 공개 버킷 이름 (예: finders-public)
+         */
+        String publicBucket,
 
-    /**
-     * 공개 버킷 이름 (예: finders-public)
-     */
-    private String publicBucket;
+        /**
+         * 비공개 버킷 이름 (예: finders-private)
+         */
+        String privateBucket,
 
-    /**
-     * 비공개 버킷 이름 (예: finders-private)
-     */
-    private String privateBucket;
-
-    /**
-     * Signed URL 만료 시간 (분, 기본값: 60분)
-     */
-    private int signedUrlExpiryMinutes = 60;
+        /**
+         * Signed URL 만료 시간 (분, 기본값: 60분)
+         */
+        Integer signedUrlExpiryMinutes
+) {
+    public StorageProperties {
+        if (signedUrlExpiryMinutes == null) {
+            signedUrlExpiryMinutes = 60;
+        }
+    }
 
     /**
      * Public 버킷 기본 URL 반환
