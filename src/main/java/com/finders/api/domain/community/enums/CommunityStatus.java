@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum PostStatus {
+public enum CommunityStatus {
     ACTIVE("활성"),
     INACTIVE("비활성"),
     REMOVED("삭제");
