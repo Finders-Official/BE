@@ -21,11 +21,11 @@ public enum StoragePath {
     /** 프로필 이미지: profiles/{memberId}/{uuid}.{ext} */
     PROFILE("profiles/%d/%s", true),
 
-    /** 현상소 이미지: labs/{photoLabId}/images/{uuid}.{ext} */
-    LAB_IMAGE("labs/%d/images/%s", true),
+    /** 현상소 이미지: photo-labs/{photoLabId}/images/{uuid}.{ext} */
+    LAB_IMAGE("photo-labs/%d/images/%s", true),
 
-    /** 현상소 QR 코드: labs/{photoLabId}/qr.png */
-    LAB_QR("labs/%d/qr.png", true),
+    /** 현상소 QR 코드: photo-labs/{photoLabId}/qr.png */
+    LAB_QR("photo-labs/%d/qr.png", true),
 
     /** 게시글 이미지: posts/{postId}/{uuid}.{ext} */
     POST_IMAGE("posts/%d/%s", true),
@@ -40,8 +40,8 @@ public enum StoragePath {
     // Private Bucket Paths (Signed URL 필요)
     // ========================================
 
-    /** 현상소 증빙서류: labs/{photoLabId}/documents/{documentType}/{uuid}.{ext} */
-    LAB_DOCUMENT("labs/%d/documents/%s/%s", false),
+    /** 현상소 증빙서류: photo-labs/{photoLabId}/documents/{documentType}/{uuid}.{ext} */
+    LAB_DOCUMENT("photo-labs/%d/documents/%s/%s", false),
 
     /** 스캔 사진: temp/orders/{developmentOrderId}/scans/{uuid}.{ext} - 30일 후 자동 삭제 */
     SCANNED_PHOTO("temp/orders/%d/scans/%s", false),

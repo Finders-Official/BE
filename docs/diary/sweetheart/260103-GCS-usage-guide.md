@@ -115,12 +115,12 @@ result.deleted();  // true: 삭제됨, false: 파일 없었음
 | Enum | 버킷 | 경로 패턴 | 사용처 |
 |------|------|----------|--------|
 | `PROFILE` | public | `profiles/{memberId}/{uuid}` | 프로필 이미지 |
-| `LAB_IMAGE` | public | `labs/{labId}/images/{uuid}` | 현상소 이미지 |
-| `LAB_QR` | public | `labs/{labId}/qr.png` | 현상소 QR코드 |
+| `LAB_IMAGE` | public | `photo-labs/{labId}/images/{uuid}` | 현상소 이미지 |
+| `LAB_QR` | public | `photo-labs/{labId}/qr.png` | 현상소 QR코드 |
 | `POST_IMAGE` | public | `posts/{postId}/{uuid}` | 게시글 이미지 |
 | `PROMOTION` | public | `promotions/{id}/{uuid}` | 프로모션 이미지 |
 | `TEMP_PUBLIC` | public | `temp/{memberId}/{uuid}` | 임시 업로드 |
-| `LAB_DOCUMENT` | private | `labs/{labId}/documents/{type}/{uuid}` | 현상소 서류 |
+| `LAB_DOCUMENT` | private | `photo-labs/{labId}/documents/{type}/{uuid}` | 현상소 서류 |
 | `SCANNED_PHOTO` | private | `temp/orders/{orderId}/scans/{uuid}` | 스캔 사진 |
 | `RESTORATION_ORIGINAL` | private | `restorations/{memberId}/original/{uuid}` | AI 복원 원본 |
 | `RESTORATION_RESTORED` | private | `restorations/{memberId}/restored/{uuid}` | AI 복원 결과 |

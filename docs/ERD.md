@@ -168,9 +168,9 @@ TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 | 테이블 | 컬럼 | 버킷 | 경로 패턴 |
 |--------|------|------|----------|
 | `member` | `profile_image` | public | `profiles/{memberId}/{uuid}.{ext}` |
-| `photo_lab_image` | `image_url` | public | `labs/{photoLabId}/images/{uuid}.{ext}` |
-| `photo_lab` | `qr_code_url` | public | `labs/{photoLabId}/qr.png` |
-| `photo_lab_document` | `file_url` | **private** | `labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
+| `photo_lab_image` | `image_url` | public | `photo-labs/{photoLabId}/images/{uuid}.{ext}` |
+| `photo_lab` | `qr_code_url` | public | `photo-labs/{photoLabId}/qr.png` |
+| `photo_lab_document` | `file_url` | **private** | `photo-labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
 | `photo_lab_notice` | - | - | 이미지 없음 (텍스트만) |
 | `scanned_photo` | `image_url` | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}` |
 | `post_image` | `image_url` | public | `posts/{postId}/{uuid}.{ext}` |

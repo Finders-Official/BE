@@ -72,7 +72,7 @@ gsutil ls gs://finders-private
 | 용도 | 버킷 | 경로 패턴 |
 |------|------|----------|
 | 프로필 이미지 | public | `profiles/{memberId}/{uuid}.{ext}` |
-| 현상소 이미지 | public | `labs/{photoLabId}/images/{uuid}.{ext}` |
+| 현상소 이미지 | public | `photo-labs/{photoLabId}/images/{uuid}.{ext}` |
 | 게시글 이미지 | public | `posts/{postId}/{uuid}.{ext}` |
 | 스캔 사진 | private | `temp/orders/{orderId}/scans/{uuid}.{ext}` (30일 자동삭제) |
 | AI 복원 사진 | private | `restorations/{memberId}/{original|restored}/{uuid}.{ext}` |
