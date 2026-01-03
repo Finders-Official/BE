@@ -32,9 +32,9 @@ public class PhotoLab extends BaseEntity {
      * TODO: Member 엔티티 실제 패키지 경로에 맞게 import/타입 조정
      * 상위 import문에 주석 제거로 처리
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private Member owner;
+    //@ManyToOne(fetch = FetchType.LAZY)
+    //@JoinColumn(name = "owner_id", nullable = false)
+    //private Member owner;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -63,6 +63,10 @@ public class PhotoLab extends BaseEntity {
     @Builder.Default
     @Column(nullable = false, precision = 2, scale = 1)
     private BigDecimal rating = new BigDecimal("0.0");
+
+    @Builder.Default
+    @Column(name = "work_count", nullable = false)
+    private Integer workCount = 0;
 
     @Builder.Default
     @Column(name = "post_count", nullable = false)

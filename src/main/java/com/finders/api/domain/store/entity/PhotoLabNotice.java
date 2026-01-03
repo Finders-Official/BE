@@ -1,6 +1,6 @@
 package com.finders.api.domain.store.entity;
 
-import com.finders.api.domain.store.enums.PhotoLabNoticeType;
+import com.finders.api.domain.store.enums.NoticeType;
 import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,7 +37,7 @@ public class PhotoLabNotice extends BaseTimeEntity {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "notice_type", nullable = false, length = 20)
-    private PhotoLabNoticeType noticeType = PhotoLabNoticeType.GENERAL;
+    private NoticeType noticeType = NoticeType.GENERAL;
 
     @Column(name = "start_date")
     private LocalDate startDate;

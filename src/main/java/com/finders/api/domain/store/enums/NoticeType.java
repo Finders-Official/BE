@@ -1,6 +1,6 @@
 package com.finders.api.domain.store.enums;
 
-public enum PhotoLabNoticeType {
+public enum NoticeType {
     GENERAL,
     EVENT,
     POLICY
