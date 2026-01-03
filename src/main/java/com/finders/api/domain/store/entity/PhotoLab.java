@@ -4,10 +4,7 @@ import com.finders.api.domain.store.enums.PhotoLabStatus;
 import com.finders.api.global.entity.BaseEntity;
 //import com.finders.api.domain.member.entity.Member;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -22,8 +19,8 @@ import java.math.BigDecimal;
 )
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class PhotoLab extends BaseEntity {
 
     @Id
