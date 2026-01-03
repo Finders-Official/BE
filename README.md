@@ -126,14 +126,22 @@ src/main/java/com/finders/api/
 
 ### Code Style
 
-- [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html) 기반
-- 상세 컨벤션은 [docs/CONVENTIONS.md](docs/CONVENTIONS.md) 참고
+- 상세 코드 스타일: [docs/CODE_STYLE.md](docs/CODE_STYLE.md)
+- 네이밍/Git 컨벤션: [docs/CONVENTIONS.md](docs/CONVENTIONS.md)
+
+| 핵심 기술 | 설명 |
+|----------|------|
+| **record DTO** | 불변성 보장, 보일러플레이트 제거 |
+| **Virtual Threads** | 동시성 처리 성능 향상 |
+| **FixtureMonkey** | 테스트 데이터 자동 생성 |
 
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md) - 아키텍처 설계
-- [Conventions](docs/CONVENTIONS.md) - 코드 컨벤션
-- [API Spec](docs/API.md) - API 명세
+- [Code Style](docs/CODE_STYLE.md) - 코드 스타일 가이드
+- [Conventions](docs/CONVENTIONS.md) - 네이밍/Git 컨벤션
+- [ERD](docs/ERD.md) - 데이터베이스 설계서
+- [API](docs/API.md) - API 명세
 
 ## License
 

@@ -1,3 +1,18 @@
+<!--
+## PR 제목 컨벤션
+[TYPE] 설명 (#이슈번호)
+
+예시:
+- [FEAT] 회원가입 API 구현 (#14)
+- [FIX] 이미지 업로드 시 NPE 수정 (#23)
+- [REFACTOR] 토큰 로직 분리 (#8)
+- [DOCS] ERD 스키마 업데이트 (#6)
+- [CHORE] CI/CD 파이프라인 추가 (#3)
+- [RELEASE] v1.0.0 배포 (#30)
+
+TYPE: FEAT, FIX, DOCS, REFACTOR, TEST, CHORE, RENAME, REMOVE, RELEASE
+-->
+
 ## Summary
 <!-- 변경 사항을 간단히 설명해주세요 -->
 
@@ -15,6 +30,7 @@
 - [ ] Refactoring (기능 변경 없는 코드 개선)
 - [ ] Documentation (문서 수정)
 - [ ] Chore (빌드, 설정 등 기타 변경)
+- [ ] Release (develop → main 배포)
 
 
 ## Related Issues
