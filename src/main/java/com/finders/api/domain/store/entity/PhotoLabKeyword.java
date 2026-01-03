@@ -24,9 +24,6 @@ public class PhotoLabKeyword {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * FK → photo_lab(id)
-     */
     @ManyToOne
     @JoinColumn(name = "photo_lab_id", nullable = false)
     private PhotoLab photoLab;
