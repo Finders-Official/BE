@@ -50,6 +50,4 @@ public class Post extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CommunityStatus status = CommunityStatus.ACTIVE;
-
-    private LocalDateTime deletedAt;
 }

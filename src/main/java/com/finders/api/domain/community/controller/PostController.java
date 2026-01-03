@@ -70,10 +70,10 @@ public class PostController {
         return ApiResponse.success(SuccessCode.OK, postId + "번 게시물 좋아요 취소 성공");
     }
 
-    // 현상소 관련
-    @Operation(summary = "현상소 검색", description = "게시글 작성 시 연결할 현상소를 검색합니다.")
-    @GetMapping("/labs")
-    public ApiResponse<String> searchLabs(@RequestParam(required = false) String query) {
-        return ApiResponse.success(SuccessCode.STORE_LIST_FOUND, "현상소 검색 성공: " + query);
-    }
+//    // 현상소 관련
+//    @Operation(summary = "현상소 검색", description = "게시글 작성 시 연결할 현상소를 검색합니다.")
+//    @GetMapping("/labs")
+//    public ApiResponse<String> searchLabs(@RequestParam(required = false) String query) {
+//        return ApiResponse.success(SuccessCode.STORE_LIST_FOUND, "현상소 검색 성공: " + query);
+//    }
 }
