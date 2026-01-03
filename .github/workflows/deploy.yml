@@ -58,7 +58,7 @@ jobs:
           target: "/home/${{ secrets.GCE_USER }}/app"
           strip_components: 0
 
-      # 7. GCE 서버에 배포 (SSH 연결)
+      # 7. GCE 서버에 배포 및 검증 (Health Check 추가됨)
       - name: Deploy to GCE
         uses: appleboy/ssh-action@master
         with:
@@ -67,17 +67,35 @@ jobs:
           key: ${{ secrets.GCE_SSH_KEY }}
           port: 22
           script: |
-          # 앱 디렉토리로 이동
-            mkdir -p ~/app
+            # 1. 앱 디렉토리 이동 및 환경변수 설정
             cd ~/app
-            
             echo "${{ secrets.ENV_PROD }}" > .env.prod
             
-            # 최신 이미지 당겨오기 (프로젝트 파일에 적힌 이미지명 사용)
+            # 2. 최신 이미지 Pull
             sudo docker compose -f docker-compose.prod.yml pull
             
-            # 서비스 재시작
+            # 3. 기존 컨테이너 내리고 새로 시작
+            sudo docker compose -f docker-compose.prod.yml down
             sudo docker compose -f docker-compose.prod.yml up -d
             
-            # 불필요한 이미지 정리
-            sudo docker image prune -f
+            # 4. 배포 검증 (Health Check) 로직
+            echo "배포 후 Health Check 시작..."
+            
+            # 최대 60초(5초*12회) 대기
+            for i in {1..12}; do
+              RESPONSE=$(curl -s http://localhost:8080/api/actuator/health || true)
+            
+              if [[ "$RESPONSE" == *"UP"* ]]; then
+                echo "✅ 서비스 정상 실행 확인! (Attempt $i)"
+                sudo docker image prune -f  # 불필요한 이미지 정리
+                exit 0 # 성공으로 종료
+              fi
+            
+              echo "서비스 시작 대기 중... ($i/12)"
+              sleep 5
+            done
+            
+            # 5. 실패 시 처리
+            echo "❌ 배포 실패: 서비스가 제한 시간 내에 뜨지 않았습니다."
+            sudo docker compose -f docker-compose.prod.yml logs --tail=100
+            exit 1 # GitHub Actions를 '실패(Red)'로 처리
