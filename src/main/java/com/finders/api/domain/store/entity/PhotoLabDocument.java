@@ -1,10 +1,9 @@
 package com.finders.api.domain.store.entity;
 
 import com.finders.api.domain.store.enums.DocumentType;
+import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -16,11 +15,8 @@ import java.time.LocalDateTime;
         }
 )
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@EntityListeners(AuditingEntityListener.class)
-public class PhotoLabDocument {
+public class PhotoLabDocument extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,7 +39,18 @@ public class PhotoLabDocument {
     @Column(name = "verified_at")
     private LocalDateTime verifiedAt;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Builder
+    private PhotoLabDocument(
+            PhotoLab photoLab,
+            DocumentType documentType,
+            String fileUrl,
+            String fileName,
+            LocalDateTime verifiedAt
+    ) {
+        this.photoLab = photoLab;
+        this.documentType = documentType;
+        this.fileUrl = fileUrl;
+        this.fileName = fileName;
+        this.verifiedAt = verifiedAt;
+    }
 }

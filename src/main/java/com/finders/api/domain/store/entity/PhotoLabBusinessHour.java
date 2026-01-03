@@ -16,9 +16,7 @@ import java.time.LocalTime;
         }
 )
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class PhotoLabBusinessHour extends BaseTimeEntity {
 
     @Id
@@ -39,7 +37,21 @@ public class PhotoLabBusinessHour extends BaseTimeEntity {
     @Column(name = "close_time")
     private LocalTime closeTime;
 
-    @Builder.Default
     @Column(name = "is_closed", nullable = false)
     private boolean isClosed = false;
+
+    @Builder
+    private PhotoLabBusinessHour(
+            PhotoLab photoLab,
+            DayOfWeek dayOfWeek,
+            LocalTime openTime,
+            LocalTime closeTime,
+            Boolean isClosed
+    ) {
+        this.photoLab = photoLab;
+        this.dayOfWeek = dayOfWeek;
+        this.openTime = openTime;
+        this.closeTime = closeTime;
+        this.isClosed = isClosed != null && isClosed;
+    }
 }

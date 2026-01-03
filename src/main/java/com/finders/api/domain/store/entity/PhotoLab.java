@@ -13,14 +13,11 @@ import java.math.BigDecimal;
         name = "photo_lab",
         indexes = {
                 @Index(name = "idx_lab_status", columnList = "status"),
-                @Index(name = "idx_lab_rating", columnList = "rating"),
                 @Index(name = "idx_lab_location", columnList = "latitude, longitude")
         }
 )
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class PhotoLab extends BaseEntity {
 
     @Id
@@ -60,38 +57,67 @@ public class PhotoLab extends BaseEntity {
     @Column(precision = 11, scale = 8)
     private BigDecimal longitude;
 
-    @Builder.Default
-    @Column(nullable = false, precision = 2, scale = 1)
-    private BigDecimal rating = new BigDecimal("0.0");
-
-    @Builder.Default
     @Column(name = "work_count", nullable = false)
     private Integer workCount = 0;
 
-    @Builder.Default
     @Column(name = "post_count", nullable = false)
     private Integer postCount = 0;
 
-    @Builder.Default
     @Column(name = "reservation_count", nullable = false)
     private Integer reservationCount = 0;
 
     @Column(name = "avg_work_time")
     private Integer avgWorkTime;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PhotoLabStatus status = PhotoLabStatus.PENDING;
 
-    @Builder.Default
     @Column(name = "is_delivery_available", nullable = false)
     private boolean isDeliveryAvailable = false;
 
-    @Builder.Default
     @Column(name = "max_reservations_per_hour", nullable = false)
     private Integer maxReservationsPerHour = 3;
 
     @Column(name = "qr_code_url", length = 500)
     private String qrCodeUrl;
+
+    @Builder
+    private PhotoLab(
+            //Member owner,
+            String name,
+            String description,
+            String phone,
+            String zipcode,
+            String address,
+            String addressDetail,
+            BigDecimal latitude,
+            BigDecimal longitude,
+            Integer workCount,
+            Integer postCount,
+            Integer reservationCount,
+            Integer avgWorkTime,
+            PhotoLabStatus status,
+            Boolean isDeliveryAvailable,
+            Integer maxReservationsPerHour,
+            String qrCodeUrl
+    ) {
+        //this.owner = owner;
+        this.name = name;
+        this.description = description;
+        this.phone = phone;
+        this.zipcode = zipcode;
+        this.address = address;
+        this.addressDetail = addressDetail;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.workCount = workCount != null ? workCount : 0;
+        this.postCount = postCount != null ? postCount : 0;
+        this.reservationCount = reservationCount != null ? reservationCount : 0;
+        this.avgWorkTime = avgWorkTime;
+        this.status = status != null ? status : PhotoLabStatus.PENDING;
+        this.isDeliveryAvailable = isDeliveryAvailable != null && isDeliveryAvailable;
+        this.maxReservationsPerHour = maxReservationsPerHour != null ? maxReservationsPerHour : 3;
+        this.qrCodeUrl = qrCodeUrl;
+    }
 }
