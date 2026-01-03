@@ -8,8 +8,9 @@
 - [REFACTOR] 토큰 로직 분리 (#8)
 - [DOCS] ERD 스키마 업데이트 (#6)
 - [CHORE] CI/CD 파이프라인 추가 (#3)
+- [RELEASE] v1.0.0 배포 (#30)
 
-TYPE: FEAT, FIX, DOCS, REFACTOR, TEST, CHORE, RENAME, REMOVE
+TYPE: FEAT, FIX, DOCS, REFACTOR, TEST, CHORE, RENAME, REMOVE, RELEASE
 -->
 
 ## Summary
@@ -29,6 +30,7 @@ TYPE: FEAT, FIX, DOCS, REFACTOR, TEST, CHORE, RENAME, REMOVE
 - [ ] Refactoring (기능 변경 없는 코드 개선)
 - [ ] Documentation (문서 수정)
 - [ ] Chore (빌드, 설정 등 기타 변경)
+- [ ] Release (develop → main 배포)
 
 
 ## Related Issues
