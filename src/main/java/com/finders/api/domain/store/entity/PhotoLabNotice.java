@@ -24,9 +24,6 @@ public class PhotoLabNotice extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * FK → photo_lab(id)
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "photo_lab_id", nullable = false)
     private PhotoLab photoLab;
