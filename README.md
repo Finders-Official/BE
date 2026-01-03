@@ -7,7 +7,7 @@
 | Category | Technology |
 |----------|------------|
 | Language | Java 21 |
-| Framework | Spring Boot 3.4.13 |
+| Framework | Spring Boot 3.4.11 |
 | Build Tool | Gradle 8.11 |
 | Database | MySQL 8.x |
 | ORM | Spring Data JPA, QueryDSL 5.1 |
