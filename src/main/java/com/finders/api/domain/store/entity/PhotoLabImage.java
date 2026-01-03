@@ -1,5 +1,6 @@
 package com.finders.api.domain.store.entity;
 
+import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -15,11 +16,8 @@ import java.time.LocalDateTime;
         }
 )
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@EntityListeners(AuditingEntityListener.class)
-public class PhotoLabImage {
+public class PhotoLabImage extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,20 +25,27 @@ public class PhotoLabImage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "photo_lab_id", nullable = false)
-    private PhotoLab photolab;
+    private PhotoLab photoLab;
 
     @Column(name = "image_url", nullable = false, length = 500)
     private String imageUrl;
 
-    @Builder.Default
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder = 0;
 
-    @Builder.Default
     @Column(name = "is_main", nullable = false)
     private boolean isMain = false;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Builder
+    private PhotoLabImage(
+            PhotoLab photoLab,
+            String imageUrl,
+            Integer displayOrder,
+            Boolean isMain
+    ) {
+        this.photoLab = photoLab;
+        this.imageUrl = imageUrl;
+        this.displayOrder = displayOrder != null ? displayOrder : 0;
+        this.isMain = isMain != null && isMain;
+    }
 }

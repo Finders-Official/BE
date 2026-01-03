@@ -15,9 +15,7 @@ import java.time.LocalDate;
         }
 )
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class PhotoLabNotice extends BaseTimeEntity {
 
     @Id
@@ -34,7 +32,6 @@ public class PhotoLabNotice extends BaseTimeEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "notice_type", nullable = false, length = 20)
     private NoticeType noticeType = NoticeType.GENERAL;
@@ -45,7 +42,25 @@ public class PhotoLabNotice extends BaseTimeEntity {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
+
+    @Builder
+    private PhotoLabNotice(
+            PhotoLab photoLab,
+            String title,
+            String content,
+            NoticeType noticeType,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean isActive
+    ) {
+        this.photoLab = photoLab;
+        this.title = title;
+        this.content = content;
+        this.noticeType = noticeType != null ? noticeType : NoticeType.GENERAL;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.isActive = isActive == null || isActive;
+    }
 }

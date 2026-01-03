@@ -385,7 +385,6 @@ CREATE TABLE photo_lab (
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
     INDEX idx_lab_status (status),
-    INDEX idx_lab_rating (rating DESC),
     INDEX idx_lab_location (latitude, longitude),
     FULLTEXT INDEX ft_lab_name (name),
     CONSTRAINT fk_lab_owner FOREIGN KEY (owner_id) REFERENCES member(id),
