@@ -80,6 +80,9 @@ dependencies {
     // ========================================
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // FixtureMonkey (테스트 데이터 자동 생성)
+    testImplementation 'com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.11'
 }
 
 // ========================================

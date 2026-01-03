@@ -65,9 +65,34 @@ public class Entity extends BaseEntity {
 }
 ```
 
-### DTO Pattern
-- Request: `@Getter @NoArgsConstructor` with validation annotations
-- Response: `@Getter @Builder` with `static from(Entity)` factory method
+### DTO Pattern (record 기반)
+- **Request**: `record` + Validation annotations
+- **Response**: `record` + `@Builder` (필드 5개 이상 시) + `static from(Entity)` factory method
+- **Entity**: `class` + Lombok (JPA 요구사항)
+
+```java
+// Request DTO
+public class MemberRequest {
+    public record Create(
+        @NotBlank String nickname,
+        @Email String email
+    ) {}
+}
+
+// Response DTO
+public class MemberResponse {
+    @Builder
+    public record Detail(Long id, String nickname, String email) {
+        public static Detail from(Member member) {
+            return Detail.builder()
+                .id(member.getId())
+                .nickname(member.getNickname())
+                .email(member.getEmail())
+                .build();
+        }
+    }
+}
+```
 
 ### Service Pattern
 ```java

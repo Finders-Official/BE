@@ -32,6 +32,7 @@ public enum SuccessCode implements BaseCode {
     MEMBER_FOUND(HttpStatus.OK, "MEMBER_200", "회원 조회에 성공했습니다."),
     MEMBER_UPDATED(HttpStatus.OK, "MEMBER_201", "회원 정보가 수정되었습니다."),
     MEMBER_DELETED(HttpStatus.OK, "MEMBER_202", "회원 탈퇴가 완료되었습니다."),
+    MEMBER_ME_FOUND(HttpStatus.OK, "MEMBER_203", "내 정보 조회에 성공했습니다."),
 
     // ========================================
     // Store (현상소)
