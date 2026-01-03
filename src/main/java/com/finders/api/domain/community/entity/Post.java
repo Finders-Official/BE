@@ -27,19 +27,17 @@ public class Post extends BaseEntity {
 //    @JoinColumn(name = "photo_lab_id")
 //    private Store store;
 
+    @Column(nullable = false)
+    private Boolean isSelfDeveloped = false; // 자가 현상 여부 기본값으로 false
+
     @Column(nullable = false, length = 200)
     private String title;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    private Integer rating;
-
-    @Column(nullable = false)
-    private Boolean isSelfDeveloped = false; // 자가 현상 여부 기본값으로 false
-
-    @Column(nullable = false)
-    private Integer viewCount = 0;
+    @Column(length = 500)
+    private String labReview;
 
     @Column(nullable = false)
     private Integer likeCount = 0;

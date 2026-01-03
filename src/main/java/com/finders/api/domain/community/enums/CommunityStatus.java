@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum CommunityStatus {
     ACTIVE("활성"),
-    INACTIVE("비활성"),
-    REMOVED("삭제");
+    HIDDEN("비공개"),
+    DELETED("삭제");
 
     private final String description;
 }
