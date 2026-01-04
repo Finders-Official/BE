@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.2.5 | 2026-01-03
+> v2.2.7 | 2026-01-04
 
 ---
 
@@ -905,3 +905,4 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
 | 2.2.4 | 2026-01-01 | **GCS 스토리지 규칙 문서화**: 버킷 구성(public/private), 테이블별 경로 규칙, 임시 업로드 Lifecycle 정책, API 응답 처리 방식 추가 |
 | 2.2.5 | 2026-01-03 | `photo_lab` 테이블에 `rating` 칼럼 삭제, `work_count` 칼럼 추가 (작업 총 횟수, 월간 작업 횟수에 사용, 기본값 0) |
 | 2.2.6 | 2026-01-03 | `scanned_photo` 경로 변경: `orders/` → `temp/orders/` (30일 자동 삭제 통합 관리), Lifecycle 섹션 보강 |
+| 2.2.7 | 2026-01-04 | `DayOfWeek` enum 삭제, java.time.DayOfTime 으로 대체.(MONDAY, TUESDAY, WEDNESDAY,THURSDAY, FRIDAY, SATURDAY, SUNDAY) |
