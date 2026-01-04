@@ -7,42 +7,42 @@
 
 ## 테이블 목록 (33개)
 
-| 도메인 | 테이블 | 설명 |
-|--------|--------|------|
-| **member** | `member` | 회원 Base (Joined Table 상속) |
-| | `member_user` | User 전용 (소셜 로그인 사용자, 토큰 관련) |
-| | `member_owner` | Owner 전용 (현상소 사장님, 정산 계좌) |
-| | `member_admin` | Admin 전용 (관리자, 추후 확장) |
-| | `social_account` | 소셜 로그인 연동 - User 전용 (카카오/애플) |
-| | `member_address` | 배송지 주소 - User 전용 |
-| | `member_device` | FCM 디바이스 토큰 (푸시 알림용) |
-| | `member_agreement` | 약관 동의 이력 |
-| | `terms` | 약관 버전 관리 |
-| | `token_history` | AI 토큰 충전/사용 내역 - User 전용 |
-| **store** | `photo_lab` | 현상소 정보 |
-| | `photo_lab_image` | 현상소 이미지 |
-| | `photo_lab_keyword` | 현상소 키워드/태그 |
-| | `photo_lab_notice` | 현상소 공지사항 |
+| 도메인 | 테이블                       | 설명 |
+|--------|---------------------------|------|
+| **member** | `member`                  | 회원 Base (Joined Table 상속) |
+| | `member_user`             | User 전용 (소셜 로그인 사용자, 토큰 관련) |
+| | `member_owner`            | Owner 전용 (현상소 사장님, 정산 계좌) |
+| | `member_admin`            | Admin 전용 (관리자, 추후 확장) |
+| | `social_account`          | 소셜 로그인 연동 - User 전용 (카카오/애플) |
+| | `member_address`          | 배송지 주소 - User 전용 |
+| | `member_device`           | FCM 디바이스 토큰 (푸시 알림용) |
+| | `member_agreement`        | 약관 동의 이력 |
+| | `terms`                   | 약관 버전 관리 |
+| | `token_history`           | AI 토큰 충전/사용 내역 - User 전용 |
+| **store** | `photo_lab`               | 현상소 정보 |
+| | `photo_lab_image`         | 현상소 이미지 |
+| | `photo_lab_keyword`       | 현상소 키워드/태그 |
+| | `photo_lab_notice`        | 현상소 공지사항 |
 | | `photo_lab_business_hour` | 영업시간 |
-| | `photo_lab_document` | 사업자 증빙 서류 |
-| **reservation** | `reservation` | 예약 정보 |
-| **photo** | `development_order` | 현상 주문 |
-| | `scanned_photo` | 스캔된 사진 |
-| | `print_order` | 인화 주문 |
-| | `print_order_item` | 인화 주문 상세 |
-| | `delivery` | 배송 정보 |
-| | `photo_restoration` | AI 사진 복원 요청 |
-| **community** | `post` | 게시글/리뷰 (자가현상 여부 포함) |
-| | `post_image` | 게시글 이미지 |
-| | `comment` | 댓글 |
-| | `post_like` | 좋아요 |
-| | `favorite_photo_lab` | 관심 현상소 |
-| **inquiry** | `inquiry` | 1:1 문의 |
-| | `inquiry_reply` | 문의 답변 |
-| **common** | `notice` | 공지사항 |
-| | `promotion` | 프로모션/배너 |
-| | `notification` | 알림 |
-| | `payment` | 결제 정보 (토스 페이먼츠) |
+| | `photo_lab_document`      | 사업자 증빙 서류 |
+| **reservation** | `reservation`             | 예약 정보 |
+| **photo** | `development_order`       | 현상 주문 |
+| | `scanned_photo`           | 스캔된 사진 |
+| | `print_order`             | 인화 주문 |
+| | `print_order_item`        | 인화 주문 상세 |
+| | `delivery`                | 배송 정보 |
+| | `photo_restoration`       | AI 사진 복원 요청 |
+| **community** | `post`                    | 게시글/리뷰 (자가현상 여부 포함) |
+| | `post_image`              | 게시글 이미지 |
+| | `comments`                | 댓글 |
+| | `post_like`               | 좋아요 |
+| | `favorite_photo_lab`      | 관심 현상소 |
+| **inquiry** | `inquiry`                 | 1:1 문의 |
+| | `inquiry_reply`           | 문의 답변 |
+| **common** | `notice`                  | 공지사항 |
+| | `promotion`               | 프로모션/배너 |
+| | `notification`            | 알림 |
+| | `payment`                 | 결제 정보 (토스 페이먼츠) |
 
 ---
 
@@ -68,7 +68,7 @@ member ─┬─ 1:N ─ member_device (FCM 토큰, 공통)
         ├─ 1:N ─ print_order (현장 주문, 현상 없이)
         ├─ 1:N ─ photo_restoration (AI 복원, 토큰 사용)
         ├─ 1:N ─ post ─┬─ 1:N ─ post_image
-        │              ├─ 1:N ─ comment
+        │              ├─ 1:N ─ comments
         │              └─ 1:N ─ post_like
         ├─ 1:N ─ favorite_photo_lab
         ├─ 1:N ─ inquiry ─── 1:N ─ inquiry_reply
@@ -661,7 +661,7 @@ CREATE TABLE post_image (   -- 1:N
     CONSTRAINT fk_post_image FOREIGN KEY (post_id) REFERENCES post(id) ON DELETE CASCADE
 ) ENGINE=InnoDB COMMENT='게시글 이미지';
 
-CREATE TABLE comment (  -- 댓글
+CREATE TABLE comments (  -- 댓글
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     post_id         BIGINT          NOT NULL,
     member_id       BIGINT          NOT NULL,
@@ -671,10 +671,10 @@ CREATE TABLE comment (  -- 댓글
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
-    INDEX idx_comment_post (post_id, created_at),
-    CONSTRAINT fk_comment_post FOREIGN KEY (post_id) REFERENCES post(id),
-    CONSTRAINT fk_comment_member FOREIGN KEY (member_id) REFERENCES member(id),
-    CONSTRAINT chk_comment_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED'))
+    INDEX idx_comments_post (post_id, created_at),
+    CONSTRAINT fk_comments_post FOREIGN KEY (post_id) REFERENCES post(id),
+    CONSTRAINT fk_comments_member FOREIGN KEY (member_id) REFERENCES member(id),
+    CONSTRAINT chk_comments_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED'))
 ) ENGINE=InnoDB COMMENT='댓글';
 
 CREATE TABLE post_like (    -- 하트 표시
