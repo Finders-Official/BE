@@ -36,10 +36,11 @@ com.finders.api/
 │       ├── dto/            # 요청/응답 DTO
 │       └── enums/          # 도메인 상수
 │
-├── infra/                  # 인프라 레이어 (외부 시스템)
-│   ├── oauth/              # OAuth 클라이언트
-│   ├── google/             # Google Cloud 클라이언트
-│   └── storage/            # 파일 저장소 클라이언트
+├── infra/                  # 인프라 레이어 (외부 시스템, 교체 가능)
+│   ├── storage/            # 파일 저장소 (GCS)
+│   ├── oauth/              # OAuth 클라이언트 (Kakao, Apple)
+│   ├── payment/            # 결제 (토스 페이먼츠)
+│   └── replicate/          # AI 이미지 복원 (Stable Diffusion)
 │
 └── global/                 # 글로벌 레이어 (공통 모듈)
     ├── config/             # 설정 클래스
@@ -68,7 +69,7 @@ com.finders.api/
 
 ### 5. Photo (사진)
 - 스캔된 사진 관리
-- Vision AI 복구 기능
+- AI 복원 기능 (Replicate - Stable Diffusion Inpainting)
 - 인화 주문
 
 ### 6. Community (커뮤니티)
@@ -99,12 +100,14 @@ public class AppleOAuthClient implements OAuthClient { ... }
 외부 API를 내부 인터페이스로 추상화
 
 ```java
-public interface ImageAnalyzer {
-    AnalysisResult analyze(byte[] image);
+// Storage 예시 - GCS를 S3로 교체 가능
+public interface StorageService {
+    StorageResponse.Upload uploadPublic(MultipartFile file, StoragePath path, Object... args);
 }
 
-@Component
-public class GoogleVisionAdapter implements ImageAnalyzer { ... }
+@Service
+public class GcsStorageService implements StorageService { ... }
+// 필요시: public class S3StorageService implements StorageService { ... }
 ```
 
 ### 3. Observer Pattern (Spring Event)
@@ -123,10 +126,11 @@ public void handleReservationCreated(ReservationCreatedEvent event) { ... }
 
 | Service | Purpose | Package |
 |---------|---------|---------|
+| Google Cloud Storage | 파일 저장소 | `infra.storage` |
 | Kakao OAuth | 소셜 로그인 | `infra.oauth.kakao` |
 | Apple OAuth | 소셜 로그인 | `infra.oauth.apple` |
-| Google Vision AI | 사진 복구 | `infra.google.vision` |
-| Vertex AI | RAG (후순위) | `infra.google.vertexai` |
+| 토스 페이먼츠 | 결제 | `infra.payment` |
+| Replicate (Stable Diffusion) | AI 이미지 복원 | `infra.replicate` |
 
 ## Database Design
 
