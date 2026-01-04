@@ -1,10 +1,11 @@
 package com.finders.api.domain.store.entity;
 
-import com.finders.api.domain.store.enums.DayOfWeek;
+
 import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 @Entity
