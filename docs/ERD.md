@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.2.4 | 2026-01-01
+> v2.2.7 | 2026-01-04
 
 ---
 
@@ -98,7 +98,6 @@ DeviceType: IOS, ANDROID, WEB
 
 // 현상소
 PhotoLabStatus: PENDING, ACTIVE, SUSPENDED, CLOSED
-DayOfWeek: SUN, MON, TUE, WED, THU, FRI, SAT
 
 // 예약/주문
 ReservationStatus: PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
@@ -168,23 +167,27 @@ TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 | 테이블 | 컬럼 | 버킷 | 경로 패턴 |
 |--------|------|------|----------|
 | `member` | `profile_image` | public | `profiles/{memberId}/{uuid}.{ext}` |
-| `photo_lab_image` | `image_url` | public | `labs/{photoLabId}/images/{uuid}.{ext}` |
-| `photo_lab` | `qr_code_url` | public | `labs/{photoLabId}/qr.png` |
-| `photo_lab_document` | `file_url` | **private** | `labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
+| `photo_lab_image` | `image_url` | public | `photo-labs/{photoLabId}/images/{uuid}.{ext}` |
+| `photo_lab` | `qr_code_url` | public | `photo-labs/{photoLabId}/qr.png` |
+| `photo_lab_document` | `file_url` | **private** | `photo-labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
 | `photo_lab_notice` | - | - | 이미지 없음 (텍스트만) |
-| `scanned_photo` | `image_url` | **private** | `orders/{developmentOrderId}/scans/{uuid}.{ext}` |
+| `scanned_photo` | `image_url` | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}` |
 | `post_image` | `image_url` | public | `posts/{postId}/{uuid}.{ext}` |
 | `photo_restoration` | `original_url` | **private** | `restorations/{memberId}/original/{uuid}.{ext}` |
 | `photo_restoration` | `restored_url` | **private** | `restorations/{memberId}/restored/{uuid}.{ext}` |
 | `promotion` | `image_url` | public | `promotions/{promotionId}/{uuid}.{ext}` |
 
-### 임시 업로드 (Lifecycle)
+### 자동 삭제 (Lifecycle)
 
-```
-temp/{memberId}/{uuid}.{ext}
-```
-- 업로드 시 `temp/`에 저장 → 엔티티 연결 시 영구 경로로 이동
-- **30일 후 자동 삭제** (GCS Lifecycle 정책)
+`temp/` prefix가 붙은 모든 파일은 **30일 후 자동 삭제** (GCS Lifecycle 정책)
+
+| 용도 | 버킷 | 경로 패턴 |
+|------|------|----------|
+| 임시 업로드 | public | `temp/{memberId}/{uuid}.{ext}` |
+| 스캔 사진 | private | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}` |
+
+- 임시 업로드: 엔티티 연결 시 영구 경로로 이동
+- 스캔 사진: 고객이 30일 내 다운로드 필요
 
 ### API 응답 처리
 
@@ -193,7 +196,7 @@ temp/{memberId}/{uuid}.{ext}
 "https://storage.googleapis.com/finders-public/profiles/123/abc.jpg"
 
 // private 버킷: Signed URL 반환 (1시간 유효)
-"https://storage.googleapis.com/finders-private/orders/456/scans/def.jpg?X-Goog-Signature=..."
+"https://storage.googleapis.com/finders-private/temp/orders/456/scans/def.jpg?X-Goog-Signature=..."
 ```
 
 ---
@@ -372,7 +375,7 @@ CREATE TABLE photo_lab (
     address_detail  VARCHAR(100)    NULL,       -- 'ex) 3003동 303호
     latitude        DECIMAL(10, 8)  NULL,
     longitude       DECIMAL(11, 8)  NULL,
-    rating          DECIMAL(2, 1)   NOT NULL DEFAULT 0.0,
+    work_count    INT UNSIGNED    NOT NULL DEFAULT 0, -- 작업 총 횟수
     post_count    INT UNSIGNED    NOT NULL DEFAULT 0, -- 작업 결과물에 필요함
     reservation_count INT UNSIGNED  NOT NULL DEFAULT 0, -- 예약 완료 시점에 업데이트
     avg_work_time   INT UNSIGNED    NULL,       -- 주문 완료 시점에(development_order.status = 'COMPLETED') 백엔드에서 직접 계산해서 저장
@@ -385,7 +388,6 @@ CREATE TABLE photo_lab (
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
     INDEX idx_lab_status (status),
-    INDEX idx_lab_rating (rating DESC),
     INDEX idx_lab_location (latitude, longitude),
     FULLTEXT INDEX ft_lab_name (name),
     CONSTRAINT fk_lab_owner FOREIGN KEY (owner_id) REFERENCES member(id),
@@ -865,8 +867,8 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
 
 ## 변경 이력
 
-| 버전 | 날짜 | 변경 내용 |
-|------|------|----------|
+| 버전    | 날짜         | 변경 내용 |
+|-------|------------|----------|
 | 1.0.0 | 2025-12-22 | 최초 작성 (27개 테이블) |
 | 1.1.0 | 2025-12-22 | notification, post_hashtag 추가, CHECK 제약 추가, 인덱스 최적화 |
 | 1.2.0 | 2025-12-23 | member_agreement, photo_lab_document, photo_restoration, payment 테이블 추가, post.rating, print_order_item.print_method 컬럼 추가 (33개 테이블) |
@@ -901,3 +903,6 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
 | 2.2.2 | 2026-01-01 | **Owner/Admin 로그인 지원**: `member_owner`, `member_admin`에 `password_hash` 컬럼 추가 (이메일/비밀번호 로그인), `social_account`에 `idx_social_member` 인덱스 추가 |
 | 2.2.3 | 2026-01-01 | `film_content` 테이블 삭제 (프론트엔드 하드코딩으로 대체) (33개 테이블) |
 | 2.2.4 | 2026-01-01 | **GCS 스토리지 규칙 문서화**: 버킷 구성(public/private), 테이블별 경로 규칙, 임시 업로드 Lifecycle 정책, API 응답 처리 방식 추가 |
+| 2.2.5 | 2026-01-03 | `photo_lab` 테이블에 `rating` 칼럼 삭제, `work_count` 칼럼 추가 (작업 총 횟수, 월간 작업 횟수에 사용, 기본값 0) |
+| 2.2.6 | 2026-01-03 | `scanned_photo` 경로 변경: `orders/` → `temp/orders/` (30일 자동 삭제 통합 관리), Lifecycle 섹션 보강 |
+| 2.2.7 | 2026-01-04 | `DayOfWeek` enum 삭제, java.time.DayOfTime 으로 대체.(MONDAY, TUESDAY, WEDNESDAY,THURSDAY, FRIDAY, SATURDAY, SUNDAY) |

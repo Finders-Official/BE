@@ -57,7 +57,13 @@ public enum SuccessCode implements BaseCode {
     // Community
     // ========================================
     POST_CREATED(HttpStatus.CREATED, "POST_201", "게시글이 등록되었습니다."),
-    POST_FOUND(HttpStatus.OK, "POST_200", "게시글 조회에 성공했습니다.");
+    POST_FOUND(HttpStatus.OK, "POST_200", "게시글 조회에 성공했습니다."),
+
+    // ========================================
+    // Storage
+    // ========================================
+    STORAGE_UPLOADED(HttpStatus.CREATED, "STORAGE_201", "파일이 업로드되었습니다."),
+    STORAGE_DELETED(HttpStatus.OK, "STORAGE_200", "파일이 삭제되었습니다.");
 
     private final HttpStatus status;
     private final String code;
