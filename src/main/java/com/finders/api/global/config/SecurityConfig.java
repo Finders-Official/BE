@@ -41,7 +41,9 @@ public class SecurityConfig {
             // Auth
             "/auth/**",
             // H2 Console (local only)
-            "/h2-console/**"
+            "/h2-console/**",
+            // Storage Test (local only - @Profile("local")로 프로덕션 비활성화)
+            "/storage/test/**"
     };
 
     @Bean

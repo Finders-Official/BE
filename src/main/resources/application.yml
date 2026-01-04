@@ -86,7 +86,9 @@ google:
     vision:
       enabled: ${VISION_ENABLED:false}
     storage:
-      bucket: ${GCS_BUCKET:}
+      public-bucket: ${GCS_PUBLIC_BUCKET:finders-public}
+      private-bucket: ${GCS_PRIVATE_BUCKET:finders-private}
+      signed-url-expiry-minutes: ${GCS_SIGNED_URL_EXPIRY:60}
 
 # ========================================
 # Actuator 설정
