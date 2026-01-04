@@ -23,8 +23,8 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# JAR 파일 복사
-COPY --from=builder /app/build/libs/*.jar app.jar
+# JAR 파일 복사 (⚠️ plain.jar 제외)
+COPY --from=builder /app/build/libs/*-SNAPSHOT.jar app.jar
 
 # 포트 노출
 EXPOSE 8080
