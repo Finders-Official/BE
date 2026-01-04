@@ -47,10 +47,10 @@ public class SwaggerConfig {
     private List<Server> servers() {
         return switch (activeProfile) {
             case "prod" -> List.of(
-                    new Server().url("https://finders-api.log8.kr").description("Production Server")
+                    new Server().url("https://finders-api.log8.kr/api").description("Production Server")
             );
             default -> List.of(
-                    new Server().url("http://localhost:8080").description("Local Server")
+                    new Server().url("http://localhost:8080/api").description("Local Server")
             );
         };
     }

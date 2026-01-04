@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.2.4 | 2026-01-01
+> v2.2.5 | 2026-01-03
 
 ---
 
@@ -168,23 +168,27 @@ TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 | 테이블 | 컬럼 | 버킷 | 경로 패턴 |
 |--------|------|------|----------|
 | `member` | `profile_image` | public | `profiles/{memberId}/{uuid}.{ext}` |
-| `photo_lab_image` | `image_url` | public | `labs/{photoLabId}/images/{uuid}.{ext}` |
-| `photo_lab` | `qr_code_url` | public | `labs/{photoLabId}/qr.png` |
-| `photo_lab_document` | `file_url` | **private** | `labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
+| `photo_lab_image` | `image_url` | public | `photo-labs/{photoLabId}/images/{uuid}.{ext}` |
+| `photo_lab` | `qr_code_url` | public | `photo-labs/{photoLabId}/qr.png` |
+| `photo_lab_document` | `file_url` | **private** | `photo-labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
 | `photo_lab_notice` | - | - | 이미지 없음 (텍스트만) |
-| `scanned_photo` | `image_url` | **private** | `orders/{developmentOrderId}/scans/{uuid}.{ext}` |
+| `scanned_photo` | `image_url` | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}` |
 | `post_image` | `image_url` | public | `posts/{postId}/{uuid}.{ext}` |
 | `photo_restoration` | `original_url` | **private** | `restorations/{memberId}/original/{uuid}.{ext}` |
 | `photo_restoration` | `restored_url` | **private** | `restorations/{memberId}/restored/{uuid}.{ext}` |
 | `promotion` | `image_url` | public | `promotions/{promotionId}/{uuid}.{ext}` |
 
-### 임시 업로드 (Lifecycle)
+### 자동 삭제 (Lifecycle)
 
-```
-temp/{memberId}/{uuid}.{ext}
-```
-- 업로드 시 `temp/`에 저장 → 엔티티 연결 시 영구 경로로 이동
-- **30일 후 자동 삭제** (GCS Lifecycle 정책)
+`temp/` prefix가 붙은 모든 파일은 **30일 후 자동 삭제** (GCS Lifecycle 정책)
+
+| 용도 | 버킷 | 경로 패턴 |
+|------|------|----------|
+| 임시 업로드 | public | `temp/{memberId}/{uuid}.{ext}` |
+| 스캔 사진 | private | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}` |
+
+- 임시 업로드: 엔티티 연결 시 영구 경로로 이동
+- 스캔 사진: 고객이 30일 내 다운로드 필요
 
 ### API 응답 처리
 
@@ -193,7 +197,7 @@ temp/{memberId}/{uuid}.{ext}
 "https://storage.googleapis.com/finders-public/profiles/123/abc.jpg"
 
 // private 버킷: Signed URL 반환 (1시간 유효)
-"https://storage.googleapis.com/finders-private/orders/456/scans/def.jpg?X-Goog-Signature=..."
+"https://storage.googleapis.com/finders-private/temp/orders/456/scans/def.jpg?X-Goog-Signature=..."
 ```
 
 ---
@@ -901,3 +905,4 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
 | 2.2.2 | 2026-01-01 | **Owner/Admin 로그인 지원**: `member_owner`, `member_admin`에 `password_hash` 컬럼 추가 (이메일/비밀번호 로그인), `social_account`에 `idx_social_member` 인덱스 추가 |
 | 2.2.3 | 2026-01-01 | `film_content` 테이블 삭제 (프론트엔드 하드코딩으로 대체) (33개 테이블) |
 | 2.2.4 | 2026-01-01 | **GCS 스토리지 규칙 문서화**: 버킷 구성(public/private), 테이블별 경로 규칙, 임시 업로드 Lifecycle 정책, API 응답 처리 방식 추가 |
+| 2.2.5 | 2026-01-03 | `scanned_photo` 경로 변경: `orders/` → `temp/orders/` (30일 자동 삭제 통합 관리), Lifecycle 섹션 보강 |
