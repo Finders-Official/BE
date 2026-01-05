@@ -4,6 +4,7 @@ import com.finders.api.domain.member.entity.Member;
 import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -38,4 +39,12 @@ public class MemberAgreement extends BaseTimeEntity {
 
     @Column(nullable = false)
     private LocalDateTime agreedAt;
+
+    @Builder
+    private MemberAgreement(Member member, Terms terms, boolean isAgreed, LocalDateTime agreedAt) {
+        this.member = member;
+        this.terms = terms;
+        this.isAgreed = isAgreed;
+        this.agreedAt = agreedAt;
+    }
 }

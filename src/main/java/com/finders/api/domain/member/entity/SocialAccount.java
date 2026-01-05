@@ -4,6 +4,7 @@ import com.finders.api.domain.member.enums.SocialProvider;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -38,4 +39,11 @@ public class SocialAccount extends BaseEntity {
 
     @Column(name = "provider_id", nullable = false, length = 100)
     private String providerId;
+
+    @Builder
+    private SocialAccount(Member member, SocialProvider provider, String providerId) {
+        this.member = member;
+        this.provider = provider;
+        this.providerId = providerId;
+    }
 }
