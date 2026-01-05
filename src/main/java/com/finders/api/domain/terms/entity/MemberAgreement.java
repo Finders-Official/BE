@@ -1,12 +1,12 @@
 package com.finders.api.domain.terms.entity;
 
+import com.finders.api.domain.member.entity.Member;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.lang.reflect.Member;
 import java.time.LocalDateTime;
 
 @Entity
