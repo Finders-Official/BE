@@ -1,6 +1,5 @@
 package com.finders.api.domain.photo.entity;
 
-import com.finders.api.domain.photo.entity.DevelopmentOrder;
 import com.finders.api.domain.photo.enums.PrintOrderStatus;
 import com.finders.api.domain.photo.enums.ReceiptMethod;
 import com.finders.api.domain.store.entity.PhotoLab;
@@ -47,7 +46,7 @@ public class PrintOrder extends BaseTimeEntity {
     private PrintOrderStatus status;
 
     @Column(name = "total_price", nullable = false)
-    private Integer totalPrice;
+    private int totalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "receipt_method", length = 20, nullable = false)
