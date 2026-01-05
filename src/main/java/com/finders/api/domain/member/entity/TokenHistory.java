@@ -5,6 +5,7 @@ import com.finders.api.domain.member.enums.TokenRelatedType;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -46,4 +47,23 @@ public class TokenHistory extends BaseEntity {
 
     @Column(length = 200)
     private String description;
+
+    @Builder
+    private TokenHistory(
+            Member member,
+            TokenHistoryType type,
+            int amount,
+            int balanceAfter,
+            TokenRelatedType relatedType,
+            Long relatedId,
+            String description
+    ) {
+        this.member = member;
+        this.type = type;
+        this.amount = amount;
+        this.balanceAfter = balanceAfter;
+        this.relatedType = relatedType;
+        this.relatedId = relatedId;
+        this.description = description;
+    }
 }

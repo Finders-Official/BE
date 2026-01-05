@@ -4,6 +4,7 @@ import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -50,4 +51,14 @@ public class Terms extends BaseEntity {
     @Column(name = "effective_date", nullable = false)
     private LocalDate effectiveDate;
 
+    @Builder
+    private Terms(TermsType type, String version, String title, String content, boolean isRequired, boolean isActive, LocalDate effectiveDate) {
+        this.type = type;
+        this.version = version;
+        this.title = title;
+        this.content = content;
+        this.isRequired = isRequired;
+        this.isActive = isActive;
+        this.effectiveDate = effectiveDate;
+    }
 }
