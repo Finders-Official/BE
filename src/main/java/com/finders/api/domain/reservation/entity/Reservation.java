@@ -38,13 +38,13 @@ public class Reservation extends BaseTimeEntity {
     private ReservationStatus status;
 
     @Column(name = "is_develop", nullable = false)
-    private boolean develop;
+    private boolean isDevelop;
 
     @Column(name = "is_scan", nullable = false)
-    private boolean scan;
+    private boolean isScan;
 
     @Column(name = "is_print", nullable = false)
-    private boolean print;
+    private boolean isPrint;
 
     @Column(name = "roll_count", nullable = false)
     private int rollCount;
