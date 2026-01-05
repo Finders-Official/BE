@@ -14,6 +14,9 @@ import java.time.LocalDate;
         name = "terms",
         indexes = {
                 @Index(name = "idx_terms_active", columnList = "type, is_active")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_terms_version", columnNames = {"type", "version"})
         }
 )
 @Getter
@@ -25,26 +28,26 @@ public class Terms extends BaseEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "type", nullable = false, length = 20)
     private TermsType type;
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "version", nullable = false, length = 20)
     private String version;
 
-    @Column(nullable = false, length = 200)
+    @Column(name = "title", nullable = false, length = 200)
     private String title;
 
     @Lob
-    @Column(nullable = false)
+    @Column(name = "content", nullable = false)
     private String content;
 
-    @Column(nullable = false)
+    @Column(name = "is_required", nullable = false)
     private boolean isRequired;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
-    @Column(nullable = false)
+    @Column(name = "effective_date", nullable = false)
     private LocalDate effectiveDate;
 
 }
