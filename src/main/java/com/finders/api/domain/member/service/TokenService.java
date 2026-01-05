@@ -35,7 +35,7 @@ public class TokenService {
     }
 
     @Transactional
-    public void useTokens(Long memberId, int amount, String relatedType, Long relatedId, String description) {
+    public void useTokens(Long memberId, int amount, TokenRelatedType relatedType, Long relatedId, String description) {
         MemberUser member = getMemberUser(memberId);
 
         if (!member.hasEnoughTokens(amount)) {
@@ -46,9 +46,8 @@ public class TokenService {
         int balanceAfter = member.deductTokens(amount);
 
         // 이력 저장
-        TokenRelatedType tokenRelatedType = parseRelatedType(relatedType);
         TokenHistory history = TokenHistory.createUseHistory(
-                member, amount, balanceAfter, tokenRelatedType, relatedId, description
+                member, amount, balanceAfter, relatedType, relatedId, description
         );
         tokenHistoryRepository.save(history);
 
@@ -57,16 +56,15 @@ public class TokenService {
     }
 
     @Transactional
-    public void refundTokens(Long memberId, int amount, String relatedType, Long relatedId, String description) {
+    public void refundTokens(Long memberId, int amount, TokenRelatedType relatedType, Long relatedId, String description) {
         MemberUser member = getMemberUser(memberId);
 
         // 토큰 추가
         int balanceAfter = member.addTokens(amount);
 
         // 이력 저장
-        TokenRelatedType tokenRelatedType = parseRelatedType(relatedType);
         TokenHistory history = TokenHistory.createRefundHistory(
-                member, amount, balanceAfter, tokenRelatedType, relatedId, description
+                member, amount, balanceAfter, relatedType, relatedId, description
         );
         tokenHistoryRepository.save(history);
 
@@ -77,17 +75,5 @@ public class TokenService {
     private MemberUser getMemberUser(Long memberId) {
         return memberUserRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-    }
-
-    private TokenRelatedType parseRelatedType(String relatedType) {
-        if (relatedType == null) {
-            return null;
-        }
-        try {
-            return TokenRelatedType.valueOf(relatedType);
-        } catch (IllegalArgumentException e) {
-            log.warn("[TokenService] Unknown relatedType: {}", relatedType);
-            return null;
-        }
     }
 }
