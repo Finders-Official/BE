@@ -39,8 +39,16 @@ public abstract class Member extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private MemberStatus status = MemberStatus.ACTIVE;
+    private MemberStatus status;
 
     @Column(name = "refresh_token_hash", length = 500)
     private String refreshTokenHash;
+
+    protected Member(String name, String email, String phone, String profileImage) {
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.profileImage = profileImage;
+        this.status = MemberStatus.ACTIVE;
+    }
 }
