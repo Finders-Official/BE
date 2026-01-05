@@ -85,7 +85,7 @@ public class PhotoRestorationService {
 
         int currentBalance = tokenService.getBalance(memberId);
 
-        log.info("[PhotoRestoration] Created: id={}, predictionId={}, currentBalance={}",
+        log.info("[PhotoRestorationService.createRestoration] Created: id={}, predictionId={}, currentBalance={}",
                 restoration.getId(), prediction.id(), currentBalance);
 
         return RestorationResponse.Created.builder()
@@ -142,7 +142,7 @@ public class PhotoRestorationService {
 
         restoration.addFeedback(request.rating(), request.comment());
 
-        log.info("[PhotoRestoration] Feedback added: id={}, rating={}", restorationId, request.rating());
+        log.info("[PhotoRestorationService.addFeedback] Feedback added: id={}, rating={}", restorationId, request.rating());
     }
 
     @Transactional
@@ -153,7 +153,7 @@ public class PhotoRestorationService {
 
         // 중복 webhook 방지: 이미 처리된 건 스킵
         if (restoration.isCompleted() || restoration.isFailed()) {
-            log.warn("[PhotoRestoration] Already processed, skipping: id={}, status={}",
+            log.warn("[PhotoRestorationService.completeRestoration] Already processed, skipping: id={}, status={}",
                     restoration.getId(), restoration.getStatus());
             return;
         }
@@ -173,7 +173,7 @@ public class PhotoRestorationService {
         // 3. 상태 업데이트
         restoration.complete(restoredPath);
 
-        log.info("[PhotoRestoration] Completed: id={}, predictionId={}", restoration.getId(), predictionId);
+        log.info("[PhotoRestorationService.completeRestoration] Completed: id={}, predictionId={}", restoration.getId(), predictionId);
     }
 
     @Transactional
@@ -184,7 +184,7 @@ public class PhotoRestorationService {
 
         // 중복 webhook 방지: 이미 처리된 건 스킵
         if (restoration.isCompleted() || restoration.isFailed()) {
-            log.warn("[PhotoRestoration] Already processed, skipping: id={}, status={}",
+            log.warn("[PhotoRestorationService.failRestoration] Already processed, skipping: id={}, status={}",
                     restoration.getId(), restoration.getStatus());
             return;
         }
@@ -192,7 +192,7 @@ public class PhotoRestorationService {
         restoration.fail(errorMessage);
 
         // 토큰은 복원 완료 시점에 차감하므로, 실패 시 환불 불필요
-        log.info("[PhotoRestoration] Failed: id={}, predictionId={}, error={}",
+        log.info("[PhotoRestorationService.failRestoration] Failed: id={}, predictionId={}, error={}",
                 restoration.getId(), predictionId, errorMessage);
     }
 
@@ -202,7 +202,7 @@ public class PhotoRestorationService {
     }
 
     private String downloadAndStoreResult(String resultUrl, Long memberId) {
-        log.info("[PhotoRestoration] Downloading result image: url={}", resultUrl);
+        log.info("[PhotoRestorationService.downloadAndStoreResult] Downloading result image: url={}", resultUrl);
 
         try {
             // 1. Replicate 결과 이미지 다운로드
@@ -232,13 +232,13 @@ public class PhotoRestorationService {
                     memberId
             );
 
-            log.info("[PhotoRestoration] Result image stored: path={}", upload.objectPath());
+            log.info("[PhotoRestorationService.downloadAndStoreResult] Result image stored: path={}", upload.objectPath());
             return upload.objectPath();
 
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("[PhotoRestoration] Failed to download/store result: {}", e.getMessage(), e);
+            log.error("[PhotoRestorationService.downloadAndStoreResult] Failed to download/store result: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "복원 결과 이미지 저장 실패: " + e.getMessage());
         }
     }
