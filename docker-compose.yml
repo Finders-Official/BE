@@ -63,9 +63,9 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: local
-      DB_URL: jdbc:mysql://mysql:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-      DB_USER: finders
-      DB_PASSWORD: finders123
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      SPRING_DATASOURCE_USERNAME: finders
+      SPRING_DATASOURCE_PASSWORD: finders123
       JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256}
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
