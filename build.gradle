@@ -69,6 +69,11 @@ dependencies {
     implementation 'com.google.cloud:google-cloud-storage'
 
     // ========================================
+    // WebClient (Replicate API)
+    // ========================================
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // ========================================
     // Utility
     // ========================================
     compileOnly 'org.projectlombok:lombok'
