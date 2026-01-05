@@ -1,7 +1,7 @@
 package com.finders.api.domain.terms.entity;
 
 import com.finders.api.domain.member.entity.Member;
-import com.finders.api.global.entity.BaseEntity;
+import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MemberAgreement extends BaseEntity {
+public class MemberAgreement extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
