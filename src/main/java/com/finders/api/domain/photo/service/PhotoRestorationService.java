@@ -1,5 +1,6 @@
 package com.finders.api.domain.photo.service;
 
+import com.finders.api.domain.member.enums.TokenRelatedType;
 import com.finders.api.domain.member.service.TokenService;
 import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
@@ -14,10 +15,10 @@ import com.finders.api.infra.storage.StoragePath;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.reactive.function.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
@@ -32,12 +33,12 @@ public class PhotoRestorationService {
 
     private static final int RESTORATION_TOKEN_COST = 1;
     private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
-    private static final String RELATED_TYPE = "PHOTO_RESTORATION";
 
     private final PhotoRestorationRepository restorationRepository;
     private final StorageService storageService;
     private final TokenService tokenService;
     private final ReplicateClient replicateClient;
+    private final WebClient webClient;
 
     @Transactional
     public RestorationResponse.Created createRestoration(Long memberId, RestorationRequest.Create request) {
@@ -164,7 +165,7 @@ public class PhotoRestorationService {
         tokenService.useTokens(
                 restoration.getMemberId(),
                 restoration.getTokenUsed(),
-                RELATED_TYPE,
+                TokenRelatedType.PHOTO_RESTORATION,
                 restoration.getId(),
                 "AI 사진 복원 완료"
         );
@@ -205,8 +206,7 @@ public class PhotoRestorationService {
 
         try {
             // 1. Replicate 결과 이미지 다운로드
-            byte[] imageBytes = WebClient.create()
-                    .get()
+            byte[] imageBytes = webClient.get()
                     .uri(resultUrl)
                     .retrieve()
                     .bodyToMono(byte[].class)
