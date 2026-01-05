@@ -1,8 +1,8 @@
 package com.finders.api.domain.store.entity;
 
+import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.store.enums.PhotoLabStatus;
 import com.finders.api.global.entity.BaseEntity;
-//import com.finders.api.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,9 +29,9 @@ public class PhotoLab extends BaseEntity {
      * TODO: Member 엔티티 실제 패키지 경로에 맞게 import/타입 조정
      * 상위 import문에 주석 제거로 처리
      */
-    //@ManyToOne(fetch = FetchType.LAZY)
-    //@JoinColumn(name = "owner_id", nullable = false)
-    //private Member owner;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private MemberOwner owner;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -84,7 +84,7 @@ public class PhotoLab extends BaseEntity {
 
     @Builder
     private PhotoLab(
-            //Member owner,
+            MemberOwner owner,
             String name,
             String description,
             String phone,
@@ -102,7 +102,7 @@ public class PhotoLab extends BaseEntity {
             Integer maxReservationsPerHour,
             String qrCodeUrl
     ) {
-        //this.owner = owner;
+        this.owner = owner;
         this.name = name;
         this.description = description;
         this.phone = phone;
