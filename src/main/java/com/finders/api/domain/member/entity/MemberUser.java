@@ -2,6 +2,7 @@ package com.finders.api.domain.member.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -24,8 +25,22 @@ public class MemberUser extends Member {
     private String nickname;
 
     @Column(name = "token_balance", nullable = false)
-    private Integer tokenBalance = 3;
+    private Integer tokenBalance;
 
     @Column(name = "last_token_refresh_at")
     private LocalDateTime lastTokenRefreshAt;
+
+    @Builder
+    private MemberUser(
+            String name,
+            String email,
+            String phone,
+            String profileImage,
+            String nickname
+    ) {
+        super(name, email, phone, profileImage);
+        this.nickname = nickname;
+        this.tokenBalance = 3;
+        this.lastTokenRefreshAt = null;
+    }
 }

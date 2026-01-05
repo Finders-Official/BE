@@ -2,6 +2,7 @@ package com.finders.api.domain.member.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -28,4 +29,23 @@ public class MemberOwner extends Member {
     @Column(name = "bank_account_holder", length = 50)
     private String bankAccountHolder;
 
+    @Builder
+    private MemberOwner(
+            String name,
+            String email,
+            String phone,
+            String profileImage,
+            String passwordHash,
+            String businessNumber,
+            String bankName,
+            String bankAccountNumber,
+            String bankAccountHolder
+    ) {
+        super(name, email, phone, profileImage);
+        this.passwordHash = passwordHash;
+        this.businessNumber = businessNumber;
+        this.bankName = bankName;
+        this.bankAccountNumber = bankAccountNumber;
+        this.bankAccountHolder = bankAccountHolder;
+    }
 }
