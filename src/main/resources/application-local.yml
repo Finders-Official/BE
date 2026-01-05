@@ -11,9 +11,9 @@ spring:
       ddl-auto: update  # 로컬: 엔티티 변경 시 자동 반영
     show-sql: true
 
-  # 로컬 DB 기본값 (Docker MySQL)
+  # 로컬 DB 기본값 (환경변수 우선, 없으면 localhost)
   datasource:
-    url: jdbc:mysql://localhost:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: ${DB_URL:jdbc:mysql://localhost:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul}
 
 # ========================================
 # Google Cloud (로컬에서는 비활성화)
