@@ -598,12 +598,12 @@ CREATE TABLE delivery (
     CONSTRAINT chk_delivery_status CHECK (status IN ('PENDING', 'PREPARING', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED'))
 ) ENGINE=InnoDB COMMENT='배송';
 
-CREATE TABLE photo_restoration (    -- Vision AI 사용
+CREATE TABLE photo_restoration (    -- .Replicate AI 사용
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     original_url    VARCHAR(500)    NOT NULL,   -- 원본 이미지
+    mask_url        VARCHAR(500)    NOT NULL,   -- 마스크 이미지 (프론트에서 전송)
     restored_url    VARCHAR(500)    NULL,       -- 복원된 이미지
-    mask_data       TEXT            NULL,       -- 마스킹 영역 데이터 (JSON)
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',  -- PENDING, PROCESSING, COMPLETED, FAILED
     -- 토큰 관련
     token_used      INT UNSIGNED    NOT NULL DEFAULT 1,         -- 사용된 토큰 수
