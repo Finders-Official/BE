@@ -51,7 +51,7 @@ public class TokenService {
         );
         tokenHistoryRepository.save(history);
 
-        log.info("[TokenService] Used tokens: memberId={}, amount={}, balanceAfter={}, relatedType={}, relatedId={}",
+        log.info("[TokenService.useTokens] Used tokens: memberId={}, amount={}, balanceAfter={}, relatedType={}, relatedId={}",
                 memberId, amount, balanceAfter, relatedType, relatedId);
     }
 
@@ -68,7 +68,7 @@ public class TokenService {
         );
         tokenHistoryRepository.save(history);
 
-        log.info("[TokenService] Refunded tokens: memberId={}, amount={}, balanceAfter={}, relatedType={}, relatedId={}",
+        log.info("[TokenService.refundTokens] Refunded tokens: memberId={}, amount={}, balanceAfter={}, relatedType={}, relatedId={}",
                 memberId, amount, balanceAfter, relatedType, relatedId);
     }
 

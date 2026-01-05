@@ -22,7 +22,7 @@ public class ReplicateClient {
     private final ReplicateProperties properties;
 
     public ReplicateResponse.Prediction createInpaintingPrediction(String imageUrl, String maskUrl) {
-        log.info("[ReplicateClient] Creating inpainting prediction");
+        log.info("[ReplicateClient.createInpaintingPrediction] Creating inpainting prediction");
 
         ReplicateRequest.CreatePrediction request = ReplicateRequest.CreatePrediction.of(
                 properties.modelVersion(),
@@ -40,7 +40,7 @@ public class ReplicateClient {
                     .bodyToMono(ReplicateResponse.Prediction.class)
                     .block();
 
-            log.info("[ReplicateClient] Prediction created: id={}, status={}",
+            log.info("[ReplicateClient.createInpaintingPrediction] Prediction created: id={}, status={}",
                     response != null ? response.id() : null,
                     response != null ? response.status() : null);
 
@@ -48,13 +48,13 @@ public class ReplicateClient {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("[ReplicateClient] Failed to create prediction: {}", e.getMessage(), e);
+            log.error("[ReplicateClient.createInpaintingPrediction] Failed to create prediction: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, e);
         }
     }
 
     public ReplicateResponse.Prediction getPrediction(String predictionId) {
-        log.debug("[ReplicateClient] Getting prediction: id={}", predictionId);
+        log.debug("[ReplicateClient.getPrediction] Getting prediction: id={}", predictionId);
 
         try {
             return replicateWebClient.get()
@@ -66,7 +66,7 @@ public class ReplicateClient {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("[ReplicateClient] Failed to get prediction: {}", e.getMessage(), e);
+            log.error("[ReplicateClient.getPrediction] Failed to get prediction: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, e);
         }
     }
@@ -74,7 +74,7 @@ public class ReplicateClient {
     private Mono<? extends Throwable> handleError(ClientResponse response) {
         return response.bodyToMono(String.class)
                 .flatMap(body -> {
-                    log.error("[ReplicateClient] API error: status={}, body={}",
+                    log.error("[ReplicateClient.handleError] API error: status={}, body={}",
                             response.statusCode(), body);
                     return Mono.error(new CustomException(ErrorCode.EXTERNAL_API_ERROR,
                             "Replicate API error: " + response.statusCode()));
