@@ -28,8 +28,8 @@ public class PhotoLabBusinessHour extends BaseTimeEntity {
     private PhotoLab photoLab;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "day_of_week", nullable = false, length = 3)
-    private DayOfWeek dayOfWeek;
+    @Column(name = "day_of_week", nullable = false, length = 10)
+    private DayOfWeek dayOfWeek; // java.time.DayOfWeek
 
     @Column(name = "open_time")
     private LocalTime openTime;
