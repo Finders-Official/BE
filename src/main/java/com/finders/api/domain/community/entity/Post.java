@@ -56,8 +56,5 @@ public class Post extends BaseEntity {
         this.title = title;
         this.content = content;
         this.labReview = labReview;
-        this.likeCount = 0;
-        this.commentCount = 0;
-        this.status = CommunityStatus.ACTIVE;
     }
 }
