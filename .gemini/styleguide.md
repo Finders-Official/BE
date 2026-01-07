@@ -11,7 +11,7 @@
 
 ## Architecture
 
-이 프로젝트는 **DDD(Domain-Driven Design)** 기반의 계층형 아키텍처를 사용한다.
+이 프로젝트는 **도메인 기반 계층형 아키텍처 (Package by Feature + Layered Architecture)**를 사용한다.
 
 ### Layer Structure
 
