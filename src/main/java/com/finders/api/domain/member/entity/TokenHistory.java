@@ -66,4 +66,38 @@ public class TokenHistory extends BaseEntity {
         this.relatedId = relatedId;
         this.description = description;
     }
+
+    // === 팩토리 메서드 ===
+
+    /**
+     * 토큰 사용 이력 생성
+     */
+    public static TokenHistory createUseHistory(Member member, int amount, int balanceAfter,
+                                                TokenRelatedType relatedType, Long relatedId, String description) {
+        return TokenHistory.builder()
+                .member(member)
+                .type(TokenHistoryType.USE)
+                .amount(-amount) // 사용은 음수로 저장
+                .balanceAfter(balanceAfter)
+                .relatedType(relatedType)
+                .relatedId(relatedId)
+                .description(description)
+                .build();
+    }
+
+    /**
+     * 토큰 환불 이력 생성
+     */
+    public static TokenHistory createRefundHistory(Member member, int amount, int balanceAfter,
+                                                   TokenRelatedType relatedType, Long relatedId, String description) {
+        return TokenHistory.builder()
+                .member(member)
+                .type(TokenHistoryType.REFUND)
+                .amount(amount) // 환불은 양수로 저장
+                .balanceAfter(balanceAfter)
+                .relatedType(relatedType)
+                .relatedId(relatedId)
+                .description(description)
+                .build();
+    }
 }

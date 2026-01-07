@@ -84,6 +84,12 @@ public enum ErrorCode implements BaseCode {
     PHOTO_RESTORE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO_501", "사진 복구에 실패했습니다."),
 
     // ========================================
+    // Token
+    // ========================================
+    INSUFFICIENT_TOKEN(HttpStatus.PAYMENT_REQUIRED, "TOKEN_402", "토큰이 부족합니다."),
+    TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "TOKEN_404", "토큰 정보를 찾을 수 없습니다."),
+
+    // ========================================
     // External API
     // ========================================
     EXTERNAL_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_503", "외부 API 호출에 실패했습니다."),
