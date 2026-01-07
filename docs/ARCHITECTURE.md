@@ -2,7 +2,10 @@
 
 ## Overview
 
-Finders API는 **DDD(Domain-Driven Design)** 기반의 계층형 아키텍처를 사용합니다.
+Finders API는 **도메인 기반 계층형 아키텍처 (Package by Feature + Layered Architecture)**를 사용합니다.
+
+> **참고**: 이 아키텍처는 DDD의 일부 전술적 패턴(Entity 비즈니스 메서드, 팩토리 메서드 등)을 적용하지만,
+> 순수 DDD(Aggregate, Value Object, Domain Event, Bounded Context 등)와는 다릅니다.
 
 ## Layer Structure
 

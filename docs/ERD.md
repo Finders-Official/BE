@@ -173,6 +173,7 @@ TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 | `scanned_photo` | `image_url` | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}` |
 | `post_image` | `image_url` | public | `posts/{postId}/{uuid}.{ext}` |
 | `photo_restoration` | `original_url` | **private** | `restorations/{memberId}/original/{uuid}.{ext}` |
+| `photo_restoration` | `mask_url` | **private** | `restorations/{memberId}/mask/{uuid}.{ext}` |
 | `photo_restoration` | `restored_url` | **private** | `restorations/{memberId}/restored/{uuid}.{ext}` |
 | `promotion` | `image_url` | public | `promotions/{promotionId}/{uuid}.{ext}` |
 
@@ -597,15 +598,18 @@ CREATE TABLE delivery (
     CONSTRAINT chk_delivery_status CHECK (status IN ('PENDING', 'PREPARING', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED'))
 ) ENGINE=InnoDB COMMENT='배송';
 
-CREATE TABLE photo_restoration (    -- Vision AI 사용
+CREATE TABLE photo_restoration (    -- Replicate AI 사용
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     original_url    VARCHAR(500)    NOT NULL,   -- 원본 이미지
+    mask_url        VARCHAR(500)    NOT NULL,   -- 마스크 이미지 (프론트에서 전송)
     restored_url    VARCHAR(500)    NULL,       -- 복원된 이미지
-    mask_data       TEXT            NULL,       -- 마스킹 영역 데이터 (JSON)
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',  -- PENDING, PROCESSING, COMPLETED, FAILED
+    replicate_prediction_id VARCHAR(100) NULL,  -- Replicate API prediction ID (webhook 매칭용)
     -- 토큰 관련
-    token_used      INT UNSIGNED    NOT NULL DEFAULT 1,         -- 사용된 토큰 수
+    token_used      INT UNSIGNED    NOT NULL DEFAULT 1,         -- 사용된 토큰 수 (복원 완료 시 차감)
+    -- 에러 정보
+    error_message   VARCHAR(500)    NULL,       -- 실패 시 에러 메시지
     -- 피드백 (AI 품질 개선용)
     feedback_rating VARCHAR(10)     NULL,       -- GOOD, BAD
     feedback_comment VARCHAR(500)   NULL,       -- 피드백 코멘트 (선택)
@@ -613,6 +617,7 @@ CREATE TABLE photo_restoration (    -- Vision AI 사용
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_restoration_member (member_id, status),
+    INDEX idx_restoration_prediction (replicate_prediction_id),
     CONSTRAINT fk_restoration_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_restoration_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')),
     CONSTRAINT chk_feedback_rating CHECK (feedback_rating IS NULL OR feedback_rating IN ('GOOD', 'BAD'))
@@ -907,7 +912,8 @@ CREATE TABLE payment (  -- 포트원 V2 결제 연동
 | 2.2.5 | 2026-01-03 | `photo_lab` 테이블에 `rating` 칼럼 삭제, `work_count` 칼럼 추가 (작업 총 횟수, 월간 작업 횟수에 사용, 기본값 0)                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 2.2.6 | 2026-01-03 | `scanned_photo` 경로 변경: `orders/` → `temp/orders/` (30일 자동 삭제 통합 관리), Lifecycle 섹션 보강                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 2.2.7 | 2026-01-04 | `DayOfWeek` enum 삭제, java.time.DayOfTime 으로 대체.(MONDAY, TUESDAY, WEDNESDAY,THURSDAY, FRIDAY, SATURDAY, SUNDAY)                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 2.2.8 | 2026-01-05 | `member` 테이블에서 `nickname` 컬럼명 `name`으로 변경, `refresh_token_hash로` 컬럼명 변경(해시 저장), `member_user`에 `nickname` 컬럼 추가, `member_address` 테이블에서 현재 필요하지 않은 `recipient_name`, `phone` 컬럼 nullable로 변경(불필요 시 추후 삭제 예정)                                                                                                                                                                                                                                                                                                                             |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 2.2.9 | 2026-01-05 | `terms` 타입 SERVICE, PRIVACY, LOCATION, NOTIFICATION으로 재정의                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 2.2.8 | 2026-01-05 | `member` 테이블에서 `nickname` 컬럼명 `name`으로 변경, `refresh_token_hash로` 컬럼명 변경(해시 저장), `member_user`에 `nickname` 컬럼 추가, `member_address` 테이블에서 현재 필요하지 않은 `recipient_name`, `phone` 컬럼 nullable로 변경(불필요 시 추후 삭제 예정)                                                                                                                                                                                                                                                                                                                             |
+| 2.2.9 | 2026-01-05 | `terms` 타입 SERVICE, PRIVACY, LOCATION, NOTIFICATION으로 재정의                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 2.3.0 | 2026-01-06 | **AI 사진 복원 스키마 보완**: `photo_restoration` 테이블에 `replicate_prediction_id`, `error_message` 컬럼 추가, GCS 경로 규칙에 `mask_url` 추가, 토큰 차감 시점 변경 (요청 시 → 복원 완료 시) |
 | 2.3.1 | 2026-01-06 | photo_lab_business_hour.day_of_week VARCHAR(3) → VARCHAR(10) 변경 (java.time.DayOfWeek 수용)|
 | 2.4.0 | 2026-01-06 | **포트원 V2 결제 전환**: 토스 페이먼츠에서 포트원 V2로 전환, `PaymentStatus` 변경(READY/PENDING/VIRTUAL_ACCOUNT_ISSUED/PAID/FAILED/PARTIAL_CANCELLED/CANCELLED), `PaymentMethod` 영문 코드로 변경(CARD/TRANSFER/VIRTUAL_ACCOUNT/GIFT_CERTIFICATE/MOBILE/EASY_PAY), `EasyPayProvider` → `PgProvider`로 변경, payment 테이블 필드 재설계(`order_id` → `payment_id`, `payment_key` → `transaction_id`, `pg_tx_id` 추가, `approved_at` → `paid_at`)|
