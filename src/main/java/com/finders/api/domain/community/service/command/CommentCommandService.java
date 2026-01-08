@@ -5,5 +5,5 @@ import com.finders.api.domain.member.entity.Member;
 
 public interface CommentCommandService {
     Long createComment(Long postId, PostRequest.CreateCommentDTO request, Member member);
-    void deleteComment(Long CommentId, Member member);
+    void deleteComment(Long commentId, Member member);
 }

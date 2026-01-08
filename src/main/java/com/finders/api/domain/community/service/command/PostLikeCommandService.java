@@ -5,7 +5,7 @@ import com.finders.api.domain.member.entity.Member;
 
 public interface PostLikeCommandService {
 
-    PostLikeResponse.PostLikeDTO createPostLike(Long postId, Member member);
+    PostLikeResponse.PostLikeResDTO createPostLike(Long postId, Member member);
 
-    PostLikeResponse.PostUnlikeDTO deletePostLike(Long postId, Member member);
+    PostLikeResponse.PostLikeResDTO deletePostLike(Long postId, Member member);
 }

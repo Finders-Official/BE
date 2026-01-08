@@ -83,4 +83,21 @@ public class Post extends BaseEntity {
         this.commentCount = 0;
         this.status = CommunityStatus.ACTIVE;
     }
+
+    public static Post toEntity(com.finders.api.domain.community.dto.request.PostRequest.CreatePostDTO request,
+                                Member member,
+                                PhotoLab photoLab) {
+        return Post.builder()
+                .member(member)
+                .photoLab(photoLab)
+                .isSelfDeveloped(request.isSelfDeveloped())
+                .title(request.title())
+                .content(request.content())
+                .labReview(request.reviewContent())
+                .build();
+    }
+
+    public void softDelete() {
+        this.status = CommunityStatus.DELETED;
+    }
 }

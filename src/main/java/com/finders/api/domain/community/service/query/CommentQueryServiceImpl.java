@@ -1,6 +1,5 @@
 package com.finders.api.domain.community.service.query;
 
-import com.finders.api.domain.community.converter.CommentConverter;
 import com.finders.api.domain.community.dto.response.CommentResponse;
 import com.finders.api.domain.community.entity.Comment;
 import com.finders.api.domain.community.entity.Post;
@@ -30,6 +29,5 @@ public class CommentQueryServiceImpl implements CommentQueryService {
 
         List<Comment> comments = commentRepository.findAllByPostOrderByCreatedAtDesc(post);
 
-        return CommentConverter.toCommentListDTO(comments, member.getId());
-    }
+        return CommentResponse.CommentListDTO.from(comments, member.getId());    }
 }

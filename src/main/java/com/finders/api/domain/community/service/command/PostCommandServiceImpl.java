@@ -1,10 +1,10 @@
 package com.finders.api.domain.community.service.command;
 
-import com.finders.api.domain.community.converter.PostConverter;
 import com.finders.api.domain.community.dto.request.PostRequest;
 import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,10 @@ public class PostCommandServiceImpl implements PostCommandService {
 
     @Override
     public Long createPost(PostRequest.CreatePostDTO request, Member member) {
-        Post post = PostConverter.toPost(request, member);
+        // PhotoLabRepository 연결 예정
+        PhotoLab photoLab = null;
+
+        Post post = Post.toEntity(request, member, photoLab);
 
         return postRepository.save(post).getId();
     }
@@ -34,6 +37,6 @@ public class PostCommandServiceImpl implements PostCommandService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        postRepository.delete(post);
+        post.softDelete();
     }
 }
