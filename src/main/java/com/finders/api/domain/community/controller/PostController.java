@@ -1,11 +1,24 @@
 package com.finders.api.domain.community.controller;
 
+import com.finders.api.domain.community.dto.request.PostRequest;
+import com.finders.api.domain.community.dto.response.CommentResponse;
+import com.finders.api.domain.community.dto.response.PostLikeResponse;
+import com.finders.api.domain.community.dto.response.PostResponse;
+import com.finders.api.domain.community.service.command.CommentCommandService;
+import com.finders.api.domain.community.service.command.PostCommandService;
+import com.finders.api.domain.community.service.command.PostLikeCommandService;
+import com.finders.api.domain.community.service.query.CommentQueryService;
+import com.finders.api.domain.community.service.query.PostQueryService;
+import com.finders.api.domain.member.entity.Member;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 
 @Tag(name = "Community", description = "사진 수다 관련 API")
 @RestController
@@ -13,61 +26,95 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/posts")
 public class PostController {
 
+    private final PostCommandService postCommandService;
+    private final PostQueryService postQueryService;
+    private final CommentCommandService commentCommandService;
+    private final CommentQueryService commentQueryService;
+    private final PostLikeCommandService postLikeCommandService;
+
     // 게시글 관련
-    @Operation(summary = "피드 목록 조회", description = "전체 게시글 목록을 최신순으로 조회합니다.")
+    @Operation(summary = "피드 목록 조회")
     @GetMapping
-    public ApiResponse<String> getPosts() {
-        return ApiResponse.success(SuccessCode.POST_FOUND, "피드 목록 조회 성공");
+    public ApiResponse<PostResponse.PostPreViewListDTO> getPosts(@RequestParam(defaultValue = "0") Integer page) {
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPostList(page));
     }
 
     @Operation(summary = "게시물 작성", description = "게시글 등록 API입니다.")
     @PostMapping
-    public ApiResponse<String> createPost() {
-        return ApiResponse.success(SuccessCode.POST_CREATED, "게시물 작성 성공");
+    public ApiResponse<Long> createPost(
+            @AuthenticationPrincipal Member member,
+            @Valid @RequestBody PostRequest.CreatePostDTO request
+    ) {
+        return ApiResponse.success(SuccessCode.POST_CREATED, postCommandService.createPost(request, member));
     }
 
     @Operation(summary = "게시물 상세 조회", description = "특정 ID의 게시글 상세 정보를 조회합니다.")
     @GetMapping("/{postId}")
-    public ApiResponse<String> getPostDetail(@PathVariable Long postId) {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postId + "번 게시물 상세 조회 성공");
+    public ApiResponse<PostResponse.PostDetailResDTO> getPostDetail(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal Member member
+    ) {
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPostDetail(postId, member));
     }
 
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
     @DeleteMapping("/{postId}")
-    public ApiResponse<String> deletePost(@PathVariable Long postId) {
-        return ApiResponse.success(SuccessCode.OK, postId + "번 게시글 삭제 성공");
+    public ApiResponse<Void> deletePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal Member member
+    ) {
+        postCommandService.deletePost(postId, member);
+        return ApiResponse.success(SuccessCode.OK, null);
     }
 
     // 댓글 관련
     @Operation(summary = "게시물 댓글 조회", description = "특정 게시글에 달린 댓글 목록을 조회합니다.")
     @GetMapping("/{postId}/comments")
-    public ApiResponse<String> getComments(@PathVariable Long postId) {
-        return ApiResponse.success(SuccessCode.OK, postId + "번 게시물의 댓글 목록 조회 성공");
+    public ApiResponse<CommentResponse.CommentListDTO> getComments(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal Member member
+    ) {
+        return ApiResponse.success(SuccessCode.OK, commentQueryService.getCommentsByPost(postId, member));
     }
 
     @Operation(summary = "게시물 댓글 작성", description = "특정 게시글에 새로운 댓글을 남깁니다.")
     @PostMapping("/{postId}/comments")
-    public ApiResponse<String> createComment(@PathVariable Long postId) {
-        return ApiResponse.success(SuccessCode.CREATED, postId + "번 게시물에 댓글 작성 성공");
+    public ApiResponse<Long> createComment(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal Member member,
+            @Valid @RequestBody PostRequest.CreateCommentDTO request
+    ) {
+        return ApiResponse.success(SuccessCode.CREATED, commentCommandService.createComment(postId, request, member));
     }
 
     @Operation(summary = "게시물 댓글 삭제", description = "댓글을 삭제합니다.")
     @DeleteMapping("/{postId}/comments/{commentId}")
-    public ApiResponse<String> deleteComment(@PathVariable Long postId ,@PathVariable Long commentId) {
-        return ApiResponse.success(SuccessCode.OK, commentId + "번 댓글 삭제 성공");
+    public ApiResponse<Void> deleteComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal Member member
+    ) {
+        commentCommandService.deleteComment(commentId, member);
+        return ApiResponse.success(SuccessCode.OK, null);
     }
 
     // 좋아요 관련
     @Operation(summary = "게시물 좋아요", description = "게시글에 좋아요를 누릅니다.")
     @PostMapping("/{postId}/likes")
-    public ApiResponse<String> addLike(@PathVariable Long postId) {
-        return ApiResponse.success(SuccessCode.OK, postId + "번 게시물 좋아요 성공");
+    public ApiResponse<PostLikeResponse.PostLikeDTO> addLike(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal Member member
+    ) {
+        return ApiResponse.success(SuccessCode.OK, postLikeCommandService.createPostLike(postId, member));
     }
 
     @Operation(summary = "게시물 좋아요 취소", description = "게시글 좋아요를 취소합니다.")
     @DeleteMapping("/{postId}/likes")
-    public ApiResponse<String> cancelLike(@PathVariable Long postId) {
-        return ApiResponse.success(SuccessCode.OK, postId + "번 게시물 좋아요 취소 성공");
+    public ApiResponse<PostLikeResponse.PostUnlikeDTO> cancelLike(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal Member member
+    ) {
+        return ApiResponse.success(SuccessCode.OK, postLikeCommandService.deletePostLike(postId, member));
     }
 
 //    // 현상소 관련

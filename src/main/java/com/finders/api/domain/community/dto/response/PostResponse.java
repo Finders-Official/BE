@@ -1,0 +1,96 @@
+package com.finders.api.domain.community.dto.response;
+
+import com.finders.api.domain.community.entity.Post;
+import lombok.Builder;
+import org.springframework.data.domain.Page;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PostResponse {
+
+    // 피드 목록 조회
+    @Builder
+    public record PostsResDTO(
+            Long postId,
+            String title,
+            String imageUrl
+    ) {
+        public static PostsResDTO from(Post post) {
+            return PostsResDTO.builder()
+                    .postId(post.getId())
+                    .title(post.getTitle())
+                    .imageUrl(null)
+                    .build();
+        }
+    }
+
+    // 게시글 상세 조회
+    @Builder
+    public record PostDetailResDTO(
+            Long postId,
+            String profileImageUrl,
+            String nickname,
+            LocalDateTime createdAt,
+            String title,
+            String content,
+            List<String> imageUrls,
+            Integer likeCount,
+            boolean isLiked,
+            boolean isSelfDeveloped,
+            boolean isMine,
+            Integer commentCount,
+            LabReviewResDTO labReview
+    ) {
+        public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine) {
+            return PostDetailResDTO.builder()
+                    .postId(post.getId())
+                    .profileImageUrl(post.getMember().getProfileImage())
+                    .nickname(post.getMember().getName())
+                    .createdAt(post.getCreatedAt())
+                    .title(post.getTitle())
+                    .content(post.getContent())
+                    .imageUrls(new ArrayList<>())
+                    .likeCount(post.getLikeCount())
+                    .isLiked(isLiked)
+                    .isSelfDeveloped(post.isSelfDeveloped())
+                    .isMine(isMine)
+                    .commentCount(post.getCommentCount())
+                    .labReview(post.getPhotoLab() != null ? LabReviewResDTO.from(post) : null)
+                    .build();
+        }
+    }
+
+    // 현상소 리뷰
+    @Builder
+    public record LabReviewResDTO(
+            Long labId,
+            String labName,
+            String content
+    ) {
+        public static LabReviewResDTO from(Post post) {
+            return LabReviewResDTO.builder()
+                    .labId(post.getPhotoLab().getId())
+                    .labName(post.getPhotoLab().getName())
+                    .content(post.getLabReview())
+                    .build();
+        }
+    }
+
+    // 피드 목록 리스트를 감싸는 DTO
+    @Builder
+    public record PostPreViewListDTO(
+            List<PostsResDTO> postList,
+            boolean hasNext
+    ) {
+        public static PostPreViewListDTO from(Page<Post> postPage) {
+            return PostPreViewListDTO.builder()
+                    .postList(postPage.getContent().stream()
+                            .map(PostsResDTO::from)
+                            .toList())
+                    .hasNext(postPage.hasNext())
+                    .build();
+        }
+    }
+}
