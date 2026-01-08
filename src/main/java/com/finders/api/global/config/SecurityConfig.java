@@ -88,7 +88,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://finders-chi.vercel.app",
+                "https://finders.it.kr",
+                "https://www.finders.it.kr",
                 "http://localhost:3000",
                 "http://localhost:5173"
         ));
