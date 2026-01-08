@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "PhotoLab", description = "현상소 등록/관리 API")
 @RestController
-@RequestMapping("/photo-labs")
+@RequestMapping("owner/photo-labs")
 @RequiredArgsConstructor
 public class PhotoLabController {
 
