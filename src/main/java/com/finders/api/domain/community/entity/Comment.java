@@ -41,4 +41,12 @@ public class Comment extends BaseEntity {
         this.member = member;
         this.status = CommunityStatus.ACTIVE;
     }
+
+    public static Comment toEntity(String content, Post post, Member member) {
+        return Comment.builder()
+                .content(content)
+                .post(post)
+                .member(member)
+                .build();
+    }
 }

@@ -21,7 +21,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
     private final PostLikeRepository postLikeRepository;
 
     @Override
-    public PostLikeResponse.PostLikeDTO createPostLike(Long postId, Member member) {
+    public PostLikeResponse.PostLikeResDTO createPostLike(Long postId, Member member) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -33,14 +33,14 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
 
         post.increaseLikeCount();
 
-        return PostLikeResponse.PostLikeDTO.builder()
+        return PostLikeResponse.PostLikeResDTO.builder()
                 .likeCount(post.getLikeCount())
                 .isLiked(true)
                 .build();
     }
 
     @Override
-    public PostLikeResponse.PostUnlikeDTO deletePostLike(Long postId, Member member) {
+    public PostLikeResponse.PostLikeResDTO deletePostLike(Long postId, Member member) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -50,7 +50,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
         postLikeRepository.delete(postLike);
         post.decreaseLikeCount();
 
-        return PostLikeResponse.PostUnlikeDTO.builder()
+        return PostLikeResponse.PostLikeResDTO.builder()
                 .likeCount(post.getLikeCount())
                 .isLiked(false)
                 .build();

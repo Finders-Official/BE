@@ -1,6 +1,5 @@
 package com.finders.api.domain.community.service.command;
 
-import com.finders.api.domain.community.converter.CommentConverter;
 import com.finders.api.domain.community.dto.request.PostRequest;
 import com.finders.api.domain.community.entity.Comment;
 import com.finders.api.domain.community.entity.Post;
@@ -26,7 +25,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        Comment comment = CommentConverter.toComment(request.content(), post, member);
+        Comment comment = Comment.toEntity(request.content(), post, member);
 
         post.increaseCommentCount();
 

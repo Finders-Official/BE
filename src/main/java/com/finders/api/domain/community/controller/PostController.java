@@ -88,9 +88,8 @@ public class PostController {
     }
 
     @Operation(summary = "게시물 댓글 삭제", description = "댓글을 삭제합니다.")
-    @DeleteMapping("/{postId}/comments/{commentId}")
+    @DeleteMapping("/comments/{commentId}")
     public ApiResponse<Void> deleteComment(
-            @PathVariable Long postId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal Member member
     ) {
@@ -101,7 +100,7 @@ public class PostController {
     // 좋아요 관련
     @Operation(summary = "게시물 좋아요", description = "게시글에 좋아요를 누릅니다.")
     @PostMapping("/{postId}/likes")
-    public ApiResponse<PostLikeResponse.PostLikeDTO> addLike(
+    public ApiResponse<PostLikeResponse.PostLikeResDTO> addLike(
             @PathVariable Long postId,
             @AuthenticationPrincipal Member member
     ) {
@@ -110,7 +109,7 @@ public class PostController {
 
     @Operation(summary = "게시물 좋아요 취소", description = "게시글 좋아요를 취소합니다.")
     @DeleteMapping("/{postId}/likes")
-    public ApiResponse<PostLikeResponse.PostUnlikeDTO> cancelLike(
+    public ApiResponse<PostLikeResponse.PostLikeResDTO> cancelLike(
             @PathVariable Long postId,
             @AuthenticationPrincipal Member member
     ) {
