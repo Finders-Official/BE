@@ -10,6 +10,7 @@ import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort; // 💡 Sort 임포트 추가
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,9 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     @Override
     public PostResponse.PostPreViewListDTO getPostList(Integer page) {
-        Page<Post> postPage = postRepository.findAll(PageRequest.of(page, DEFAULT_PAGE_SIZE));
+        Page<Post> postPage = postRepository.findAll(
+                PageRequest.of(page, DEFAULT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
 
         return PostResponse.PostPreViewListDTO.from(postPage);
     }
