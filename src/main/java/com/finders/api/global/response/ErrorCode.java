@@ -41,6 +41,7 @@ public enum ErrorCode implements BaseCode {
     // Provider 요청/검증 (kakao, apple 등)
     AUTH_UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_410", "지원하지 않는 소셜 로그인 제공자입니다."),
     AUTH_INVALID_PROVIDER_REQUEST(HttpStatus.BAD_REQUEST, "AUTH_411", "소셜 로그인 요청 정보가 올바르지 않습니다."),
+    AUTH_INVALID_ROLE(HttpStatus.FORBIDDEN, "AUTH_430", "해당 서비스에 접근 권한이 없는 계정 타입입니다."),
 
     // OAuth 로그인
     AUTH_OAUTH_FAILED(HttpStatus.BAD_REQUEST, "AUTH_400", "소셜 로그인에 실패했습니다."),
@@ -63,6 +64,7 @@ public enum ErrorCode implements BaseCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_404", "회원을 찾을 수 없습니다."),
     MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER_409", "이미 존재하는 회원입니다."),
     MEMBER_NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_410", "이미 사용 중인 닉네임입니다."),
+    MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화된 계정입니다."),
 
     // ========================================
     // Store (현상소)
