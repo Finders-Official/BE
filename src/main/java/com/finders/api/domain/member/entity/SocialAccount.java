@@ -40,10 +40,14 @@ public class SocialAccount extends BaseEntity {
     @Column(name = "provider_id", nullable = false, length = 100)
     private String providerId;
 
+    @Column(name = "social_email", length = 100)
+    private String socialEmail;
+
     @Builder
     private SocialAccount(MemberUser user, SocialProvider provider, String providerId, String socialEmail) {
         this.user = user;
         this.provider = provider;
         this.providerId = providerId;
+        this.socialEmail = socialEmail;
     }
 }
