@@ -53,4 +53,8 @@ public abstract class Member extends BaseEntity {
         this.profileImage = profileImage;
         this.status = MemberStatus.ACTIVE;
     }
+
+    public void updateRefreshTokenHash(String refreshTokenHash) {
+        this.refreshTokenHash = refreshTokenHash;
+    }
 }
