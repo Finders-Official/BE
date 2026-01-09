@@ -1,5 +1,6 @@
 package com.finders.api.domain.member.entity;
 
+import com.finders.api.domain.member.enums.MemberType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -34,14 +35,13 @@ public class MemberOwner extends Member {
             String name,
             String email,
             String phone,
-            String profileImage,
             String passwordHash,
             String businessNumber,
             String bankName,
             String bankAccountNumber,
             String bankAccountHolder
     ) {
-        super(name, email, phone, profileImage);
+        super(name, email, phone, MemberType.OWNER);
         this.passwordHash = passwordHash;
         this.businessNumber = businessNumber;
         this.bankName = bankName;
