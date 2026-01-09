@@ -43,7 +43,11 @@ public class SecurityConfig {
             // H2 Console (local only)
             "/h2-console/**",
             // Storage Test (local only - @Profile("local")로 프로덕션 비활성화)
-            "/storage/test/**"
+            "/storage/test/**",
+            // Webhooks (외부 서비스 콜백)
+            "/webhooks/**",
+            // TODO: Auth API 구현 후 제거 - 개발 테스트용
+            "/restorations/**"
     };
 
     @Bean
@@ -84,7 +88,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://finders-chi.vercel.app",
+                "https://finders.it.kr",
+                "https://www.finders.it.kr",
                 "http://localhost:3000",
                 "http://localhost:5173"
         ));

@@ -28,7 +28,7 @@ docker compose down -v        # Stop and reset data
 
 ## Architecture
 
-DDD 기반 계층형 아키텍처 (Controller → Service → Repository → Entity)
+도메인 기반 계층형 아키텍처 (Package by Feature + Layered Architecture)
 
 ```
 src/main/java/com/finders/api/

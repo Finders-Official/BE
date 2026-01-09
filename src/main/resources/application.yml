@@ -14,13 +14,14 @@ spring:
   # ========================================
   # Database (MySQL)
   # ========================================
+  # 환경변수 SPRING_DATASOURCE_* 로 자동 오버라이드됨
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL:jdbc:mysql://localhost:3306/finders}
-    username: ${DB_USER:finders}
-    password: ${DB_PASSWORD:finders123}
+    url: jdbc:mysql://localhost:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    username: finders
+    password: finders123
     hikari:
-      maximum-pool-size: ${DB_POOL_SIZE:10}
+      maximum-pool-size: 10
       minimum-idle: 5
       connection-timeout: 30000
 
@@ -114,6 +115,17 @@ springdoc:
     path: /v3/api-docs
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+
+# ========================================
+# Replicate AI 설정
+# ========================================
+replicate:
+  api-key: ${REPLICATE_API_KEY:}
+  base-url: https://api.replicate.com/v1
+  model-version: ${REPLICATE_MODEL_VERSION:}
+  webhook-base-url: ${WEBHOOK_BASE_URL:http://localhost:8080/api}
+  timeout-seconds: 120
+  max-retries: 60
 
 # ========================================
 # Logging 설정
