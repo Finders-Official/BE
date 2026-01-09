@@ -11,6 +11,7 @@ import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 import static com.finders.api.domain.reservation.policy.ReservationPolicy.TIME_INTERVAL_MINUTES;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -48,11 +50,11 @@ public class ReservationQueryServiceImpl implements ReservationQueryService {
 
         // 휴무면 빈 리스트
         if (bh.isClosed()) {
-            return ReservationResponse.AvailableTimes.builder()
-                    .storeId(photoLabId)
-                    .reservationDate(date)
-                    .availableTimes(List.of())
-                    .build();
+            return ReservationResponse.AvailableTimes.of(
+                    photoLabId,
+                    date,
+                    List.of()
+            );
         }
 
         // 1) 영업시간 기반 후보 시간 생성
@@ -75,11 +77,11 @@ public class ReservationQueryServiceImpl implements ReservationQueryService {
                 .filter(t -> !fullyBookedTimes.contains(t))
                 .toList();
 
-        return ReservationResponse.AvailableTimes.builder()
-                .storeId(photoLabId)
-                .reservationDate(date)
-                .availableTimes(availableTimes)
-                .build();
+        return ReservationResponse.AvailableTimes.of(
+                photoLabId,
+                date,
+                availableTimes
+        );
     }
 
     @Override
