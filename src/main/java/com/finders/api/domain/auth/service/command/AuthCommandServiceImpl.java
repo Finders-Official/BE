@@ -117,7 +117,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             MemberUser user = memberUserRepository.findById(memberId)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-            if (passwordEncoder.matches(hashToken(refreshToken), user.getRefreshTokenHash())) {
+            if (refreshTokenHasher.matches(refreshToken, user.getRefreshTokenHash())) {
                 user.updateRefreshTokenHash(null);
             }
         } catch (Exception e) {
@@ -130,16 +130,6 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             return SocialProvider.valueOf(provider);
         } catch (Exception e) {
             throw new CustomException(ErrorCode.AUTH_UNSUPPORTED_PROVIDER);
-        }
-    }
-
-    private String hashToken(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (Exception e) {
-            throw new RuntimeException("Hashing failed", e);
         }
     }
 }

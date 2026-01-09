@@ -16,7 +16,6 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,13 +33,12 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final MemberAgreementRepository memberAgreementRepository;
     private final TermsRepository termsRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenHasher refreshTokenHasher;
 
     // 인증번호 대조용 저장소 (3분)
     private final Map<String, VerificationData> phoneVerificationStorage = new ConcurrentHashMap<>();
     // 인증 완료 증빙 토큰 저장소 (10분)
     private final Map<String, VerifiedPhoneInfo> verifiedTokenStorage = new ConcurrentHashMap<>();
-
-    private final PasswordEncoder passwordEncoder;
 
     // 휴대폰 인증번호 요청
     @Override
@@ -134,8 +132,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         String accessToken = jwtTokenProvider.createAccessToken(savedUser.getId(), "USER");
         String refreshToken = jwtTokenProvider.createRefreshToken(savedUser.getId());
 
-        String preHashedToken = hashToken(refreshToken);
-        savedUser.updateRefreshTokenHash(passwordEncoder.encode(preHashedToken));
+        refreshTokenHasher.saveRefreshToken(savedUser.getId(), refreshToken);
 
         return new MemberResponse.SignupResult(
                 accessToken,
@@ -200,17 +197,6 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         if (!allMandatoryAgreed) {
             throw new CustomException(ErrorCode.MEMBER_MANDATORY_TERMS_NOT_AGREED);
-        }
-    }
-
-    // 리프레시 토큰을 안전하게 압축
-    private String hashToken(String token) {
-        try {
-            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            return java.util.Base64.getEncoder().encodeToString(hash);
-        } catch (java.security.NoSuchAlgorithmException e) {
-            throw new RuntimeException("토큰 해싱 알고리즘을 찾을 수 없습니다.", e);
         }
     }
 }
