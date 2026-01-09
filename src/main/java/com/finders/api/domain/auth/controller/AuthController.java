@@ -1,9 +1,8 @@
 package com.finders.api.domain.auth.controller;
 
 import com.finders.api.domain.auth.dto.AuthRequest;
+import com.finders.api.domain.auth.dto.AuthResponse;
 import com.finders.api.domain.auth.service.command.AuthCommandService;
-import com.finders.api.domain.member.dto.response.MemberResponse;
-import com.finders.api.domain.member.service.command.MemberCommandService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthCommandService authCommandService;
-    private final MemberCommandService memberCommandService;
 
     @Operation(
             summary = "소셜 로그인",
@@ -37,10 +35,10 @@ public class AuthController {
             description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다."
     )
     @PostMapping("/reissue")
-    public ApiResponse<MemberResponse.TokenInfo> reissue(
+    public ApiResponse<AuthResponse.TokenInfo> reissue(
             @Valid @RequestBody AuthRequest.TokenReissue request
     ) {
-        MemberResponse.TokenInfo data = memberCommandService.reissueToken(request.refreshToken());
+        AuthResponse.TokenInfo data = authCommandService.reissueToken(request.refreshToken());
         return ApiResponse.success(SuccessCode.AUTH_TOKEN_REFRESHED, data); // "토큰이 갱신되었습니다."
     }
 

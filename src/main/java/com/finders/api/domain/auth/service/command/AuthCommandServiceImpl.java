@@ -21,13 +21,8 @@ import com.finders.api.infra.oauth.OAuthClient;
 import com.finders.api.infra.oauth.OAuthClientFactory;
 import com.finders.api.infra.oauth.model.OAuthUserInfo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +36,6 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenHasher refreshTokenHasher;
     private final SignupTokenProvider signupTokenProvider;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -107,6 +101,40 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         AuthResponse.LoginSuccess data = AuthResponse.LoginSuccess.of(accessToken, refreshToken, user);
 
         return ApiResponse.success(SuccessCode.AUTH_LOGIN_SUCCESS, data);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse.TokenInfo reissueToken(String refreshToken) {
+        try {
+            Long memberId = jwtTokenProvider.getMemberIdFromToken(refreshToken);
+
+            MemberUser user = memberUserRepository.findById(memberId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+            if(!refreshTokenHasher.matches(refreshToken, user.getRefreshTokenHash())) {
+                throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+            }
+
+            // 새로운 AccessToken, RefreshToken 발급
+            String newAccessToken = jwtTokenProvider.createAccessToken(memberId, user.getRole().name());
+            String newRefreshToken = jwtTokenProvider.createRefreshToken(memberId);
+
+            refreshTokenHasher.saveRefreshToken(memberId, newRefreshToken);
+
+            long expiresIn = jwtTokenProvider.getAccessTokenExpiryMs() / 1000;
+
+            return new AuthResponse.TokenInfo(
+                    newAccessToken,
+                    newRefreshToken, // 이 필드가 추가되어야 합니다.
+                    expiresIn
+            );
+
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new CustomException(ErrorCode.AUTH_EXPIRED_TOKEN);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+        }
     }
 
     @Override
