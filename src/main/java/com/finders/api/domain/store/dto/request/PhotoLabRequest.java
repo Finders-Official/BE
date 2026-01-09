@@ -1,4 +1,4 @@
-package com.finders.api.domain.store.dto;
+package com.finders.api.domain.store.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

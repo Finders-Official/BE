@@ -1,4 +1,4 @@
-package com.finders.api.domain.store.dto;
+package com.finders.api.domain.store.dto.response;
 
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.enums.PhotoLabStatus;

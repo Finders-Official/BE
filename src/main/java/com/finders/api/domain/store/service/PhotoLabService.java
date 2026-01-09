@@ -1,8 +1,8 @@
 package com.finders.api.domain.store.service;
 
 import com.finders.api.domain.member.entity.MemberOwner;
-import com.finders.api.domain.store.dto.PhotoLabRequest;
-import com.finders.api.domain.store.dto.PhotoLabResponse;
+import com.finders.api.domain.store.dto.request.PhotoLabRequest;
+import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
