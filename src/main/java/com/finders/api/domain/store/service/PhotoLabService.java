@@ -1,13 +1,13 @@
-package com.finders.api.domain.store.service;
+﻿package com.finders.api.domain.store.service;
 
 import com.finders.api.domain.member.entity.MemberOwner;
+import com.finders.api.domain.member.repository.MemberOwnerRepository;
 import com.finders.api.domain.store.dto.request.PhotoLabRequest;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,16 +22,14 @@ import java.math.BigDecimal;
 public class PhotoLabService {
 
     private final PhotoLabRepository photoLabRepository;
-    private final EntityManager entityManager;
+    private final MemberOwnerRepository memberOwnerRepository;
 
     @Transactional
     public PhotoLabResponse.Create createPhotoLab(PhotoLabRequest.Create request) {
         log.info("[PhotoLabService.createPhotoLab] ownerId: {}", request.ownerId());
 
-        MemberOwner owner = entityManager.find(MemberOwner.class, request.ownerId());
-        if (owner == null) {
-            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-        }
+        MemberOwner owner = memberOwnerRepository.findById(request.ownerId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         PhotoLab photoLab = PhotoLab.builder()
                 .owner(owner)
