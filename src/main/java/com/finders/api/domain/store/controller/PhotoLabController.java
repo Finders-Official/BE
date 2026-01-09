@@ -25,7 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "PhotoLab_OWNER", description = "현상소 등록/관리 API")
 @RestController
-@RequestMapping("owner/photo-labs")
+@RequestMapping("/owner/photo-labs")
 @RequiredArgsConstructor
 public class PhotoLabController {
 
