@@ -28,6 +28,20 @@ public class KakaoOAuthClient implements OAuthClient {
 
     @Override
     public OAuthUserInfo getUserInfo(String accessToken) {
+        // ------------------------------------------------------------------
+        // 로컬 테스트용 모킹 (실제 카카오 서버 호출을 건너뜀)
+        // ------------------------------------------------------------------
+        if ("string".equals(accessToken) || "test_token".equals(accessToken)) {
+            return OAuthUserInfo.builder()
+                    .provider(SocialProvider.KAKAO)
+                    .providerId("999999999") // DB에 없는 새로운 ID로 설정
+                    .name("테스트유저")
+                    .nickname("파인더스")
+                    .profileImage("https://test-image.com")
+                    .email("test@kakao.com")
+                    .build();
+        }
+
         try {
             Map<?, ?> body = kakaoRestClient.get()
                     .uri("/v2/user/me")
