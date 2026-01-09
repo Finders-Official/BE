@@ -2,6 +2,7 @@ package com.finders.api.domain.community.service.command;
 
 import com.finders.api.domain.community.dto.request.PostRequest;
 import com.finders.api.domain.community.entity.Post;
+import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.store.entity.PhotoLab;
@@ -32,6 +33,10 @@ public class PostCommandServiceImpl implements PostCommandService {
     public void deletePost(Long postId, Member member) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        if (post.getStatus() != CommunityStatus.ACTIVE) {
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
 
         if (!post.getMember().getId().equals(member.getId())) {
             throw new CustomException(ErrorCode.FORBIDDEN);
