@@ -15,7 +15,4 @@ public interface MemberCommandService {
 
     // 소셜 회원가입 완료
     MemberResponse.SignupResult signupSocialComplete(SignupTokenPayload payload, MemberRequest.SocialSignupComplete request);
-
-    // 토큰 재발급
-    MemberResponse.TokenInfo reissueToken(String refreshToken);
 }

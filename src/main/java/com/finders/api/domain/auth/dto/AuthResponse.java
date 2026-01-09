@@ -48,4 +48,10 @@ public class AuthResponse {
             String nickname,
             String profileImage
     ) {}
+
+    public record TokenInfo(
+            String accessToken,
+            String refreshToken,
+            long accessTokenExpiresIn
+    ) {}
 }
