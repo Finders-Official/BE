@@ -36,9 +36,6 @@ public abstract class Member extends BaseEntity {
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "profile_image", length = 500)
-    private String profileImage;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private MemberStatus status;
@@ -46,12 +43,12 @@ public abstract class Member extends BaseEntity {
     @Column(name = "refresh_token_hash", length = 500)
     private String refreshTokenHash;
 
-    protected Member(String name, String email, String phone, String profileImage) {
+    protected Member(String name, String email, String phone, MemberType role) {
         this.name = name;
         this.email = email;
         this.phone = phone;
-        this.profileImage = profileImage;
         this.status = MemberStatus.ACTIVE;
+        this.role = role;
     }
 
     public void updateRefreshTokenHash(String refreshTokenHash) {
