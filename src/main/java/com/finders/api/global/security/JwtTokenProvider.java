@@ -96,6 +96,21 @@ public class JwtTokenProvider {
         return false;
     }
 
+    // 토큰에서 memberId 추출
+    public Long getMemberIdFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return Long.valueOf(claims.getSubject());
+    }
+
+    public long getAccessTokenExpiryMs() {
+        return this.accessTtlMs;
+    }
+
     private Claims parseClaims(String token) {
         try {
             return Jwts.parser()
