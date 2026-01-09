@@ -51,7 +51,7 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
         // 정원 초과 방지 + 증가
         slot.increaseReservedCountOrThrow();
 
-        Reservation reservation = Reservation.reserve(user,slot, photoLab, request);
+        Reservation reservation = Reservation.reserve(user, slot, photoLab, request);
         Reservation saved = reservationRepository.save(reservation);
 
         return ReservationResponse.Created.builder()
@@ -62,7 +62,8 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
     @Override
     public ReservationResponse.Cancel cancelReservation(Long photoLabId, Long reservationId, Long memberId) {
 
-
+        Reservation reservation = reservationRepository.findByIdAndPhotoLabIdAndUserId(memberId,reservationId, photoLabId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
         if (reservation.getStatus() == ReservationStatus.CANCELED) {
             return ReservationResponse.Cancel.builder()
