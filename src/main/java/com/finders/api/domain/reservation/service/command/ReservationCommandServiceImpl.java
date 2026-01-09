@@ -14,6 +14,7 @@ import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import java.time.LocalTime;
 
 import static com.finders.api.domain.reservation.policy.ReservationPolicy.DEFAULT_MAX_CAPACITY;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -35,6 +37,8 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
 
     @Override
     public ReservationResponse.Created createReservation(Long photoLabId, Long memberId, ReservationRequest.Create request) {
+
+        log.info("[ReservationCommandServiceImpl.createReservation] photoLabId: {}, memberId: {}", photoLabId, memberId);
 
         PhotoLab photoLab = photoLabRepository.findById(photoLabId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
@@ -54,21 +58,17 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
         Reservation reservation = Reservation.reserve(user, slot, photoLab, request);
         Reservation saved = reservationRepository.save(reservation);
 
-        return ReservationResponse.Created.builder()
-                .reservationId(saved.getId())
-                .build();
+        return ReservationResponse.Created.of(saved.getId());
     }
 
     @Override
     public ReservationResponse.Cancel cancelReservation(Long photoLabId, Long reservationId, Long memberId) {
 
-        Reservation reservation = reservationRepository.findByIdAndPhotoLabIdAndUserId(memberId,reservationId, photoLabId)
+        Reservation reservation = reservationRepository.findByIdAndPhotoLabIdAndUserId(reservationId, photoLabId,memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
         if (reservation.getStatus() == ReservationStatus.CANCELED) {
-            return ReservationResponse.Cancel.builder()
-                    .photoLabId(photoLabId)
-                    .build();
+            return ReservationResponse.Cancel.of(photoLabId);
         }
 
         reservation.cancel();
@@ -78,9 +78,7 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
 
         lockedSlot.decreaseReservedCountSafely();
 
-        return ReservationResponse.Cancel.builder()
-                .photoLabId(photoLabId)
-                .build();
+        return ReservationResponse.Cancel.of(photoLabId);
     }
 
     private ReservationSlot getOrCreateSlotWithLock(PhotoLab photoLab, LocalDate date, LocalTime time) {
@@ -97,6 +95,11 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
                         );
                         reservationSlotRepository.save(slot);
                     } catch (DataIntegrityViolationException ignored) {
+                        // 동시성 이슈로 이미 동일한 슬롯이 생성된 경우
+                        log.debug(
+                                "ReservationSlot already exists due to concurrent creation. photoLabId={}, date={}, time={}",
+                                photoLab.getId(), date, time
+                        );
                     }
 
                     return reservationSlotRepository
