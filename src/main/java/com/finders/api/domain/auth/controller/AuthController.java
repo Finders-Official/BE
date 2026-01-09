@@ -43,4 +43,16 @@ public class AuthController {
         MemberResponse.TokenInfo data = memberCommandService.reissueToken(request.refreshToken());
         return ApiResponse.success(SuccessCode.AUTH_TOKEN_REFRESHED, data); // "토큰이 갱신되었습니다."
     }
+
+    @Operation(
+            summary = "로그아웃",
+            description = "RefreshToken을 무효화해 로그아웃 처리합니다."
+    )
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(
+            @Valid @RequestBody AuthRequest.TokenReissue request
+    ) {
+        authCommandService.logout(request.refreshToken());
+        return ApiResponse.success(SuccessCode.AUTH_LOGOUT_SUCCESS, null);
+    }
 }

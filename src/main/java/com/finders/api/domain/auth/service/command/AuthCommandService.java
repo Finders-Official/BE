@@ -5,4 +5,7 @@ import com.finders.api.global.response.ApiResponse;
 
 public interface AuthCommandService {
     ApiResponse<?> socialLogin(AuthRequest.SocialLogin request);
+
+    // 로그아웃
+    void logout(String token);
 }
