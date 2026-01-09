@@ -41,8 +41,8 @@ public class CommentCommandServiceImpl implements CommentCommandService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
+        comment.softDelete();
         Post post = comment.getPost();
-        commentRepository.delete(comment);
         post.decreaseCommentCount();
     }
 }
