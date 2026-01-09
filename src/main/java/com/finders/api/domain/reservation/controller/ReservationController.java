@@ -43,7 +43,7 @@ public class ReservationController {
             @DateTimeFormat(iso = ISO.DATE) LocalDate date
     ) {
         ReservationResponse.AvailableTimes response = reservationQueryService.getAvailableTimes(photoLabId, date);
-        return ApiResponse.ok(response);
+        return ApiResponse.success(SuccessCode.OK, response);
     }
 
     @Operation(
