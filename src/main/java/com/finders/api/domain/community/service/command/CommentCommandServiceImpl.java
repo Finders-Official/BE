@@ -3,6 +3,7 @@ package com.finders.api.domain.community.service.command;
 import com.finders.api.domain.community.dto.request.PostRequest;
 import com.finders.api.domain.community.entity.Comment;
 import com.finders.api.domain.community.entity.Post;
+import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.CommentRepository;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.Member;
@@ -22,7 +23,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
 
     @Override
     public Long createComment(Long postId, PostRequest.CreateCommentDTO request, Member member) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         Comment comment = Comment.toEntity(request.content(), post, member);
@@ -36,6 +37,10 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     public void deleteComment(Long commentId, Member member) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        if (comment.getStatus() != CommunityStatus.ACTIVE) {
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
 
         if (!comment.getMember().getId().equals(member.getId())) {
             throw new CustomException(ErrorCode.FORBIDDEN);
