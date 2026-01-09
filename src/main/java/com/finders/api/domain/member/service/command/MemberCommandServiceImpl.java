@@ -144,6 +144,34 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         );
     }
 
+    @Override
+    @Transactional
+    public MemberResponse.TokenInfo reissueToken(String refreshToken) {
+        try {
+            Long memberId = jwtTokenProvider.getMemberIdFromToken(refreshToken);
+
+            MemberUser user = memberUserRepository.findById(memberId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+            // DB 해시값 비교 (SHA-256 + BCrypt)
+            String hashedIncomingToken = hashToken(refreshToken);
+            if (!passwordEncoder.matches(hashedIncomingToken, user.getRefreshTokenHash())) {
+                throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+            }
+
+            // 새로운 AccessToken 발급
+            String newAccessToken = jwtTokenProvider.createAccessToken(memberId, user.getRole().name());
+            long expiresIn = jwtTokenProvider.getAccessTokenExpiryMs() / 1000;
+
+            return new MemberResponse.TokenInfo(newAccessToken, expiresIn);
+
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new CustomException(ErrorCode.AUTH_EXPIRED_TOKEN);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+        }
+    }
+
     private void validateVPT(String phone, String token) {
         VerifiedPhoneInfo info = verifiedTokenStorage.get(token);
 

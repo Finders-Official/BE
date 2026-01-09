@@ -20,4 +20,9 @@ public class MemberResponse {
             return new MemberSummary(user.getId(), user.getNickname());
         }
     }
+
+    public record TokenInfo(
+            String accessToken,
+            long accessTokenExpiresIn
+    ) {}
 }
