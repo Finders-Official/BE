@@ -60,7 +60,7 @@ jwt:
   secret: ${JWT_SECRET:local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256}
   access-token-expiry: ${JWT_ACCESS_EXPIRY:3600000}      # 1시간
   refresh-token-expiry: ${JWT_REFRESH_EXPIRY:604800000}  # 7일
-  signup-token-expiry: ${JWT_SIGNUP_EXPIRY:120000}       # 20분
+  signup-token-expiry: ${JWT_SIGNUP_EXPIRY:1200000}       # 20분
 
 # ========================================
 # OAuth2 설정
