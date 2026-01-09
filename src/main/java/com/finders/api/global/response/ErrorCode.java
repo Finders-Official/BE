@@ -57,6 +57,12 @@ public enum ErrorCode implements BaseCode {
     AUTH_TERMS_NOT_AGREED(HttpStatus.FORBIDDEN, "AUTH_413", "필수 약관에 동의하지 않았습니다."),
     AUTH_ADDITIONAL_INFO_REQUIRED(HttpStatus.FORBIDDEN, "AUTH_414", "추가 정보 입력이 필요합니다."),
 
+    // 휴대폰 인증
+    AUTH_PHONE_TOO_MANY_REQUESTS(HttpStatus.BAD_REQUEST, "AUTH_415", "인증번호 요청이 너무 많습니다."),
+    AUTH_PHONE_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "AUTH_420", "인증번호가 올바르지 않습니다."),
+    AUTH_PHONE_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH_421", "인증번호가 만료되었거나 존재하지 않습니다."),
+    AUTH_PHONE_MAX_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AUTH_422", "인증 시도 횟수를 초과했습니다."),
+    AUTH_PHONE_ALREADY_VERIFIED(HttpStatus.CONFLICT, "AUTH_423", "이미 인증이 완료된 요청입니다."),
 
     // ========================================
     // Member
@@ -65,6 +71,13 @@ public enum ErrorCode implements BaseCode {
     MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER_409", "이미 존재하는 회원입니다."),
     MEMBER_NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_410", "이미 사용 중인 닉네임입니다."),
     MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화된 계정입니다."),
+
+    // 휴대폰 인증 증빙 관련 (VPT 검증)
+    MEMBER_PHONE_VERIFY_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER_420", "휴대폰 인증이 필요합니다."),
+    MEMBER_PHONE_VERIFY_FAILED(HttpStatus.BAD_REQUEST, "MEMBER_421", "휴대폰 인증에 실패했습니다."),
+
+    // 약관 관련
+    MEMBER_MANDATORY_TERMS_NOT_AGREED(HttpStatus.FORBIDDEN, "MEMBER_430", "필수 약관에 동의하지 않았습니다."),
 
     // ========================================
     // Store (현상소)

@@ -26,11 +26,16 @@ public enum SuccessCode implements BaseCode {
     AUTH_TOKEN_REFRESHED(HttpStatus.OK, "AUTH_202", "토큰이 갱신되었습니다."),
     AUTH_SIGNUP_REQUIRED(HttpStatus.OK, "AUTH_202", "회원가입이 필요합니다."),
 
+    // 휴대폰 인증
+    AUTH_PHONE_VERIFIED(HttpStatus.OK, "AUTH_203", "휴대폰 인증이 완료되었습니다."),
+    AUTH_PHONE_CODE_SENT(HttpStatus.OK, "AUTH_204", "인증번호가 발송되었습니다."),
+
     // ========================================
     // Member
     // ========================================
     MEMBER_CREATED(HttpStatus.CREATED, "MEMBER_201", "회원가입이 완료되었습니다."),
     MEMBER_FOUND(HttpStatus.OK, "MEMBER_200", "회원 조회에 성공했습니다."),
+    MEMBER_200(HttpStatus.OK, "MEMBER_200", "닉네임 중복 확인 결과입니다."),
     MEMBER_UPDATED(HttpStatus.OK, "MEMBER_201", "회원 정보가 수정되었습니다."),
     MEMBER_DELETED(HttpStatus.OK, "MEMBER_202", "회원 탈퇴가 완료되었습니다."),
     MEMBER_ME_FOUND(HttpStatus.OK, "MEMBER_203", "내 정보 조회에 성공했습니다."),
