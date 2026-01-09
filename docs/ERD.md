@@ -221,24 +221,24 @@ USE finders;
 CREATE TABLE member (   -- Base 테이블 (공통 필드만)
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     role           VARCHAR(20)     NOT NULL,   -- Discriminator: USER, OWNER, ADMIN (JPA가 자동 관리)
-    name            VARCHAR(20)     NOT NULL,   -- 카카오 비즈앱 통해서 가져오거나 직접 입력 (실명)
+    name            VARCHAR(20)     NOT NULL,   -- 실명
     email           VARCHAR(100)    NULL,       -- 카카오 비즈앱 통해서 가져옴
     phone           VARCHAR(20)     NULL,       -- 카카오 비즈앱 통해서 가져옴
-    profile_image   VARCHAR(500)    NULL,       -- 카카오 비즈앱 통해서 가져옴
     status          VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',
     refresh_token_hash   VARCHAR(500)    NULL,       -- JWT Refresh Token Hash (모든 역할 공통)
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME        NULL,
     PRIMARY KEY (id),
-    INDEX idx_member_dtype (dtype),
-    CONSTRAINT chk_member_dtype CHECK (dtype IN ('USER', 'OWNER', 'ADMIN')),
+    INDEX idx_member_role (role),
+    CONSTRAINT chk_member_dtype CHECK (role IN ('USER', 'OWNER', 'ADMIN')),
     CONSTRAINT chk_member_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'WITHDRAWN'))
 ) ENGINE=InnoDB COMMENT='회원 Base (Joined Table 상속)';
 
 CREATE TABLE member_user (  -- User 전용 테이블 (소셜 로그인 사용자)
     member_id       BIGINT          NOT NULL,   -- PK & FK → member.id
     nickname        VARCHAR(20)     NOT NULL,   -- 카카오 비즈앱 통해서 가져오거나 입력 (닉네임)
+    profile_image   VARCHAR(500)    NULL,       -- 카카오 비즈앱 통해서 가져옴
     token_balance   INT UNSIGNED    NOT NULL DEFAULT 3,     -- 보유 토큰 (회원가입 시 3개 지급)
     last_token_refresh_at DATETIME  NULL,                   -- 마지막 무료 토큰 리프레시 일시
     PRIMARY KEY (member_id),
@@ -911,4 +911,5 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
 | 2.2.8 | 2026-01-05 | `member` 테이블에서 `nickname` 컬럼명 `name`으로 변경, `refresh_token_hash로` 컬럼명 변경(해시 저장), `member_user`에 `nickname` 컬럼 추가, `member_address` 테이블에서 현재 필요하지 않은 `recipient_name`, `phone` 컬럼 nullable로 변경(불필요 시 추후 삭제 예정)                                                                                                                                                                                                                                                                                                                              |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 2.2.9 | 2026-01-05 | `terms` 타입 SERVICE, PRIVACY, LOCATION, NOTIFICATION으로 재정의                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 2.3.1 | 2026-01-06 | photo_lab_business_hour.day_of_week VARCHAR(3) → VARCHAR(10) 변경 (java.time.DayOfWeek 수용)                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| 2.3.2 | 2026-01-08 | `member` 테이블의 `dtype` 컬럼명 `role`로 수정, `social_account` 테이블에 email 컬럼 추가                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 2.3.2 | 2026-01-08 | `member` 테이블의 `dtype` 컬럼명 `role`로 수정, `social_account` 테이블에 email 컬럼 추가                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 2.3.3 | 2026-01-08 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
