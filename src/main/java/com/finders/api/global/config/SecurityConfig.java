@@ -46,7 +46,11 @@ public class SecurityConfig {
             // Storage Test (local only - @Profile("local")로 프로덕션 비활성화)
             "/storage/test/**",
             // 소셜 로그인 시작점
-            "/auth/social/login"
+            "/auth/social/login",
+            // 토큰 재발급
+            "/auth/reissue",
+            // 로그아웃
+            "/auth/logout"
     };
 
     @Bean
