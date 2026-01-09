@@ -49,4 +49,8 @@ public class Comment extends BaseEntity {
                 .member(member)
                 .build();
     }
+
+    public void softDelete() {
+        this.status = CommunityStatus.DELETED;
+    }
 }
