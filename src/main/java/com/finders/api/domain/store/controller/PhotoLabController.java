@@ -1,9 +1,9 @@
 package com.finders.api.domain.store.controller;
 
-import com.finders.api.domain.store.dto.PhotoLabDocumentResponse;
-import com.finders.api.domain.store.dto.PhotoLabImageResponse;
-import com.finders.api.domain.store.dto.PhotoLabRequest;
-import com.finders.api.domain.store.dto.PhotoLabResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabDocumentResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabImageResponse;
+import com.finders.api.domain.store.dto.request.PhotoLabRequest;
+import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.enums.DocumentType;
 import com.finders.api.domain.store.service.PhotoLabDocumentService;
 import com.finders.api.domain.store.service.PhotoLabImageService;

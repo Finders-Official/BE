@@ -1,6 +1,6 @@
 package com.finders.api.domain.store.service;
 
-import com.finders.api.domain.store.dto.PhotoLabImageResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabImageResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
