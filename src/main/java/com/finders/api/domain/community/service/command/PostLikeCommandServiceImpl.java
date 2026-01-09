@@ -22,7 +22,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
 
     @Override
     public PostLikeResponse.PostLikeResDTO createPostLike(Long postId, Member member) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         if (postLikeRepository.existsByPostAndMember(post, member)) {
@@ -41,7 +41,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
 
     @Override
     public PostLikeResponse.PostLikeResDTO deletePostLike(Long postId, Member member) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         PostLike postLike = postLikeRepository.findByPostAndMember(post, member)
