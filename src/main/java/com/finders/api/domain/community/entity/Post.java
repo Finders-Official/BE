@@ -1,7 +1,7 @@
 package com.finders.api.domain.community.entity;
 
 import com.finders.api.domain.community.enums.CommunityStatus;
-import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -21,8 +21,8 @@ public class Post extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @JoinColumn(name = "member_user_id", nullable = false)
+    private MemberUser memberUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "photo_lab_id")
@@ -71,9 +71,9 @@ public class Post extends BaseEntity {
     private CommunityStatus status = CommunityStatus.ACTIVE;
 
     @Builder
-    private Post(Member member, PhotoLab photoLab, boolean isSelfDeveloped,
+    private Post(MemberUser memberUser, PhotoLab photoLab, boolean isSelfDeveloped,
                  String title, String content, String labReview) {
-        this.member = member;
+        this.memberUser = memberUser;
         this.photoLab = photoLab;
         this.isSelfDeveloped = isSelfDeveloped;
         this.title = title;
@@ -85,10 +85,10 @@ public class Post extends BaseEntity {
     }
 
     public static Post toEntity(com.finders.api.domain.community.dto.request.PostRequest.CreatePostDTO request,
-                                Member member,
+                                MemberUser memberUser,
                                 PhotoLab photoLab) {
         return Post.builder()
-                .member(member)
+                .memberUser(memberUser)
                 .photoLab(photoLab)
                 .isSelfDeveloped(request.isSelfDeveloped())
                 .title(request.title())

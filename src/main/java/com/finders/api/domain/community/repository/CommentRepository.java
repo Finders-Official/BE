@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    @Query("SELECT c FROM Comment c JOIN FETCH c.member " +
+    @Query("SELECT c FROM Comment c JOIN FETCH c.memberUser " +
             "WHERE c.post = :post AND c.status = 'ACTIVE' "+
             "ORDER BY c.createdAt DESC")
     List<Comment> findAllByPostOrderByCreatedAtDesc(@Param("post") Post post);

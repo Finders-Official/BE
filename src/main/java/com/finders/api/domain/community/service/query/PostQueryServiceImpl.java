@@ -5,7 +5,7 @@ import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostQueryRepository;
 import com.finders.api.domain.community.repository.PostRepository;
-import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +27,12 @@ public class PostQueryServiceImpl implements PostQueryService {
     private final PostQueryRepository postQueryRepository;
 
     @Override
-    public PostResponse.PostDetailResDTO getPostDetail(Long postId, Member member) {
+    public PostResponse.PostDetailResDTO getPostDetail(Long postId, MemberUser memberUser) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        boolean isLiked = postLikeRepository.existsByPostAndMember(post, member);
-        boolean isMine = post.getMember().getId().equals(member.getId());
+        boolean isLiked = postLikeRepository.existsByPostAndMemberUser(post, memberUser);
+        boolean isMine = post.getMemberUser().getId().equals(memberUser.getId());
 
         return PostResponse.PostDetailResDTO.from(post, isLiked, isMine);
     }
