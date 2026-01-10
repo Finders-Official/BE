@@ -116,6 +116,13 @@ public class PostController {
         return ApiResponse.success(SuccessCode.OK, postLikeCommandService.deletePostLike(postId, member));
     }
 
+    // HM-010 커뮤니티 사진 미리 보기
+    @Operation(summary = "커뮤니티 사진 미리 보기", description = "메인 페이지에서 인기 게시물 10개를 조회합니다.")
+    @GetMapping("/preview")
+    public ApiResponse<PostResponse.PostPreViewListDTO> getPopularPosts() {
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts());
+    }
+
 //    // 현상소 관련
 //    @Operation(summary = "현상소 검색", description = "게시글 작성 시 연결할 현상소를 검색합니다.")
 //    @GetMapping("/labs")

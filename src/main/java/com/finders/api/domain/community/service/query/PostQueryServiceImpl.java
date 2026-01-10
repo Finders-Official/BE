@@ -3,6 +3,7 @@ package com.finders.api.domain.community.service.query;
 import com.finders.api.domain.community.dto.response.PostResponse;
 import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.repository.PostLikeRepository;
+import com.finders.api.domain.community.repository.PostQueryRepository;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.global.exception.CustomException;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.Sort; // 💡 Sort 임포트 추가
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,6 +25,7 @@ public class PostQueryServiceImpl implements PostQueryService {
     private static final int DEFAULT_PAGE_SIZE = 10;
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final PostQueryRepository postQueryRepository;
 
     @Override
     public PostResponse.PostDetailResDTO getPostDetail(Long postId, Member member) {
@@ -41,5 +45,17 @@ public class PostQueryServiceImpl implements PostQueryService {
         );
 
         return PostResponse.PostPreViewListDTO.from(postPage);
+    }
+
+    @Override
+    public PostResponse.PostPreViewListDTO getPopularPosts() {
+        List<Post> posts = postQueryRepository.findTop10PopularPosts();
+
+        return PostResponse.PostPreViewListDTO.builder()
+                .postList(posts.stream()
+                        .map(PostResponse.PostsResDTO::from)
+                        .toList())
+                .hasNext(false)
+                .build();
     }
 }
