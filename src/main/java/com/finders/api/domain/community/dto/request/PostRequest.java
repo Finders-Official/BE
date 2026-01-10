@@ -12,15 +12,18 @@ public class PostRequest {
     @Builder
     public record CreatePostDTO(
             @NotBlank(message = "제목은 필수입니다.")
-            @Size(max = 200, message = "제목은 200자를 넘을 수 없습니다.")
+            @Size(min = 2, max = 30, message = "제목은 최소 2자, 최대 30자 이내여야 합니다.")
             String title,
 
             @NotBlank(message = "내용은 필수입니다.")
+            @Size(min = 20, max = 300, message = "본문은 최소 20자, 최대 300자 이내여야 합니다.")
             String content,
 
             List<MultipartFile> images,
             boolean isSelfDeveloped,
             Long labId,
+
+            @Size(min = 20, max = 300, message = "리뷰는 최소 20자, 최대 300자 이내여야 합니다.")
             String reviewContent
     ){}
 
