@@ -492,6 +492,27 @@ CREATE TABLE reservation (
     CONSTRAINT chk_reservation_status CHECK (status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'))
 ) ENGINE=InnoDB COMMENT='예약';
 
+CREATE TABLE reservation_slot (
+                                  id               BIGINT       NOT NULL AUTO_INCREMENT,
+                                  photo_lab_id     BIGINT       NOT NULL,
+                                  reservation_date DATE         NOT NULL,
+                                  reservation_time TIME         NOT NULL,
+                                  max_capacity     INT          NOT NULL,
+                                  reserved_count   INT          NOT NULL DEFAULT 0,
+                                  created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                  updated_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                  deleted_at       DATETIME     NULL,
+                                  PRIMARY KEY (id),
+
+                                  UNIQUE KEY uk_slot_lab_date_time (photo_lab_id, reservation_date, reservation_time),
+                                  INDEX idx_slot_lab_date (photo_lab_id, reservation_date),
+
+                                  CONSTRAINT fk_slot_lab
+                                      FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id) ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='예약 슬롯(정원 관리)';
+
+
+
 -- ============================================
 -- 4. PHOTO (현상/스캔/인화)
 -- ============================================
@@ -917,3 +938,4 @@ CREATE TABLE payment (  -- 포트원 V2 결제 연동
 | 2.3.0 | 2026-01-06 | **AI 사진 복원 스키마 보완**: `photo_restoration` 테이블에 `replicate_prediction_id`, `error_message` 컬럼 추가, GCS 경로 규칙에 `mask_url` 추가, 토큰 차감 시점 변경 (요청 시 → 복원 완료 시) |
 | 2.3.1 | 2026-01-06 | photo_lab_business_hour.day_of_week VARCHAR(3) → VARCHAR(10) 변경 (java.time.DayOfWeek 수용)|
 | 2.4.0 | 2026-01-06 | **포트원 V2 결제 전환**: 토스 페이먼츠에서 포트원 V2로 전환, `PaymentStatus` 변경(READY/PENDING/VIRTUAL_ACCOUNT_ISSUED/PAID/FAILED/PARTIAL_CANCELLED/CANCELLED), `PaymentMethod` 영문 코드로 변경(CARD/TRANSFER/VIRTUAL_ACCOUNT/GIFT_CERTIFICATE/MOBILE/EASY_PAY), `EasyPayProvider` → `PgProvider`로 변경, payment 테이블 필드 재설계(`order_id` → `payment_id`, `payment_key` → `transaction_id`, `pg_tx_id` 추가, `approved_at` → `paid_at`)|
+| 2.4.1 | 2026-01-07 | **예약 슬롯 엔티티 추가**: `reservation_slot` 테이블 신규 도입. 현상소(`photo_lab`) + 날짜 + 시간 단위의 예약 정원(`max_capacity`, `reserved_count`)을 관리하도록 구조 분리. 동시 예약 시 정원 초과를 방지하기 위해 슬롯 단위 락 기반 처리 적용. |
