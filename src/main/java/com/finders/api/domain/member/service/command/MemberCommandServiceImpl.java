@@ -46,7 +46,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     public MemberPhoneResponse.SentInfo sendPhoneVerificationCode(MemberPhoneRequest.SendCode request) {
 
         String requestId = UUID.randomUUID().toString();
-        String code = String.valueOf((int)(Math.random() * 899999) + 100000);   // 6자리 랜덤 번호
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        String code = String.valueOf(random.nextInt(900000) + 100000); // 6자리 랜덤 번호
 
         // 유효 시간 3분 설정
         VerificationData data = new VerificationData(request.phone(), code, LocalDateTime.now().plusMinutes(3));
