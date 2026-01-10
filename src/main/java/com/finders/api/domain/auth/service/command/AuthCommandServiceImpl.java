@@ -62,17 +62,17 @@ public class AuthCommandServiceImpl implements AuthCommandService {
 
             String signupToken = signupTokenProvider.createSignupToken(payload);
 
-            AuthResponse.SignupRequired data = AuthResponse.SignupRequired.builder()
-                    .isNewMember(true)
-                    .signupToken(signupToken)
-                    .socialProfile(AuthResponse.SocialProfile.builder()
-                            .provider(provider.name())
-                            .providerId(userInfo.providerId())
-                            .name(userInfo.name())
-                            .nickname(userInfo.nickname())
-                            .profileImage(userInfo.profileImage())
-                            .build())
-                    .build();
+            AuthResponse.SignupRequired data = new AuthResponse.SignupRequired(
+                    true,
+                    signupToken,
+                    new AuthResponse.SocialProfile(
+                            provider.name(),
+                            userInfo.providerId(),
+                            userInfo.name(),
+                            userInfo.nickname(),
+                            userInfo.profileImage()
+                    )
+            );
 
             return ApiResponse.success(SuccessCode.AUTH_SIGNUP_REQUIRED, data);
         }
