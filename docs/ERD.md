@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.3.1 | 2026-01-06
+> v2.4.0 | 2026-01-06
 
 ---
 
@@ -42,7 +42,7 @@
 | **common** | `notice`                  | 공지사항 |
 | | `promotion`               | 프로모션/배너 |
 | | `notification`            | 알림 |
-| | `payment`                 | 결제 정보 (토스 페이먼츠) |
+| | `payment`                 | 결제 정보 (포트원 V2) |
 
 ---
 
@@ -128,22 +128,21 @@ DocumentType: BUSINESS_LICENSE, BUSINESS_PERMIT
 RestorationStatus: PENDING, PROCESSING, COMPLETED, FAILED
 FeedbackRating: GOOD, BAD
 
-// 결제/토큰 (v2.2.0 토스 페이먼츠 전환)
-PaymentStatus:          // 토스 페이먼츠 표준
-  READY                 // 결제창 열림 (인증 전)
-  IN_PROGRESS           // 결제 진행 중 (인증 완료, 승인 대기)
-  WAITING_FOR_DEPOSIT   // 가상계좌 입금 대기
-  DONE                  // 결제 완료
-  CANCELED              // 전액 취소
-  PARTIAL_CANCELED      // 부분 취소
-  ABORTED               // 결제 실패
-  EXPIRED               // 시간 만료
+// 결제/토큰 (v2.4.0 포트원 V2 전환)
+PaymentStatus:          // 포트원 V2 표준
+  READY                 // 결제 대기
+  PENDING               // 결제 진행 중
+  VIRTUAL_ACCOUNT_ISSUED // 가상계좌 발급됨
+  PAID                  // 결제 완료
+  FAILED                // 결제 실패
+  PARTIAL_CANCELLED     // 부분 취소
+  CANCELLED             // 전액 취소
 
-PaymentMethod:          // 토스 method 값 (한글)
-  카드, 간편결제, 가상계좌, 계좌이체, 휴대폰, 상품권
+PaymentMethod:          // 포트원 V2 결제수단
+  CARD, TRANSFER, VIRTUAL_ACCOUNT, GIFT_CERTIFICATE, MOBILE, EASY_PAY
 
-EasyPayProvider:        // 간편결제 제공자
-  토스페이, 카카오페이, 네이버페이, 삼성페이, 애플페이, 페이코
+PgProvider:             // PG사/간편결제 제공자 (주요)
+  TOSSPAYMENTS, KCP, INICIS, NICE, KAKAOPAY, NAVERPAY, TOSSPAY
 
 OrderType: TOKEN_PURCHASE, DEVELOPMENT_ORDER, PRINT_ORDER
 TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
@@ -174,6 +173,7 @@ TokenHistoryType: SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
 | `scanned_photo` | `image_url` | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}` |
 | `post_image` | `image_url` | public | `posts/{postId}/{uuid}.{ext}` |
 | `photo_restoration` | `original_url` | **private** | `restorations/{memberId}/original/{uuid}.{ext}` |
+| `photo_restoration` | `mask_url` | **private** | `restorations/{memberId}/mask/{uuid}.{ext}` |
 | `photo_restoration` | `restored_url` | **private** | `restorations/{memberId}/restored/{uuid}.{ext}` |
 | `promotion` | `image_url` | public | `promotions/{promotionId}/{uuid}.{ext}` |
 
@@ -599,15 +599,18 @@ CREATE TABLE delivery (
     CONSTRAINT chk_delivery_status CHECK (status IN ('PENDING', 'PREPARING', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED'))
 ) ENGINE=InnoDB COMMENT='배송';
 
-CREATE TABLE photo_restoration (    -- Vision AI 사용
+CREATE TABLE photo_restoration (    -- Replicate AI 사용
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     original_url    VARCHAR(500)    NOT NULL,   -- 원본 이미지
+    mask_url        VARCHAR(500)    NOT NULL,   -- 마스크 이미지 (프론트에서 전송)
     restored_url    VARCHAR(500)    NULL,       -- 복원된 이미지
-    mask_data       TEXT            NULL,       -- 마스킹 영역 데이터 (JSON)
     status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING',  -- PENDING, PROCESSING, COMPLETED, FAILED
+    replicate_prediction_id VARCHAR(100) NULL,  -- Replicate API prediction ID (webhook 매칭용)
     -- 토큰 관련
-    token_used      INT UNSIGNED    NOT NULL DEFAULT 1,         -- 사용된 토큰 수
+    token_used      INT UNSIGNED    NOT NULL DEFAULT 1,         -- 사용된 토큰 수 (복원 완료 시 차감)
+    -- 에러 정보
+    error_message   VARCHAR(500)    NULL,       -- 실패 시 에러 메시지
     -- 피드백 (AI 품질 개선용)
     feedback_rating VARCHAR(10)     NULL,       -- GOOD, BAD
     feedback_comment VARCHAR(500)   NULL,       -- 피드백 코멘트 (선택)
@@ -615,6 +618,7 @@ CREATE TABLE photo_restoration (    -- Vision AI 사용
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX idx_restoration_member (member_id, status),
+    INDEX idx_restoration_prediction (replicate_prediction_id),
     CONSTRAINT fk_restoration_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_restoration_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')),
     CONSTRAINT chk_feedback_rating CHECK (feedback_rating IS NULL OR feedback_rating IN ('GOOD', 'BAD'))
@@ -788,35 +792,33 @@ CREATE TABLE notification ( -- 회원별 개인 알림(앱 푸시/ 알림센터)
     CONSTRAINT chk_notification_type CHECK (notification_type IN ('ORDER', 'RESERVATION', 'COMMUNITY', 'MARKETING', 'NOTICE'))
 ) ENGINE=InnoDB COMMENT='알림';
 
-CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
+CREATE TABLE payment (  -- 포트원 V2 결제 연동
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     member_id       BIGINT          NOT NULL,
     -- 주문 정보
     order_type      VARCHAR(20)     NOT NULL,   -- TOKEN_PURCHASE, DEVELOPMENT_ORDER, PRINT_ORDER
     related_order_id BIGINT         NULL,       -- development_order.id 또는 print_order.id (토큰 구매 시 NULL)
-    order_id        VARCHAR(64)     NOT NULL,   -- 토스에 전송할 주문번호 (우리가 생성, 6~64자)
+    payment_id      VARCHAR(64)     NOT NULL,   -- 결제 건 ID (우리가 생성, 포트원에 전달)
     order_name      VARCHAR(100)    NOT NULL,   -- 주문명 (예: "AI 복원 토큰 10개")
     -- 금액 정보
     amount          INT UNSIGNED    NOT NULL,   -- 결제 요청 금액
-    balance_amount  INT UNSIGNED    NULL,       -- 취소 후 남은 금액
     token_amount    INT UNSIGNED    NULL,       -- 구매한 토큰 수 (TOKEN_PURCHASE 시)
-    -- 토스 페이먼츠 (승인 후 저장)
-    payment_key     VARCHAR(200)    NULL,       -- 토스 결제 고유키
-    last_transaction_key VARCHAR(64) NULL,      -- 마지막 거래 키 (취소/조회 시)
+    -- 포트원 V2 (승인 후 저장)
+    transaction_id  VARCHAR(100)    NULL,       -- 포트원 채번 ID (V1의 imp_uid에 해당)
+    pg_tx_id        VARCHAR(100)    NULL,       -- PG사 거래 ID
+    pg_provider     VARCHAR(30)     NULL,       -- PG사 (TOSSPAYMENTS, KCP, KAKAOPAY 등)
     -- 결제 수단
-    method          VARCHAR(30)     NULL,       -- 카드, 간편결제, 가상계좌, 계좌이체, 휴대폰
-    easy_pay_provider VARCHAR(20)   NULL,       -- 간편결제 제공자 (토스페이, 카카오페이 등)
-    status          VARCHAR(20)     NOT NULL DEFAULT 'READY',
-    -- 카드 정보
+    method          VARCHAR(30)     NULL,       -- CARD, TRANSFER, VIRTUAL_ACCOUNT, MOBILE, EASY_PAY
+    status          VARCHAR(30)     NOT NULL DEFAULT 'READY',
+    -- 카드 정보 (CARD, EASY_PAY 결제 시)
     card_company    VARCHAR(20)     NULL,       -- 카드사 (삼성, 현대 등)
     card_number     VARCHAR(20)     NULL,       -- 마스킹된 카드번호 (1234****5678)
-    approve_no      VARCHAR(8)      NULL,       -- 승인번호 (환불/분쟁 시 필수)
+    approve_no      VARCHAR(20)     NULL,       -- 승인번호 (환불/분쟁 시 필수)
     installment_months INT          NULL,       -- 할부 개월수 (0=일시불)
     receipt_url     VARCHAR(500)    NULL,       -- 영수증 URL
     -- 시간 정보
     requested_at    DATETIME        NULL,       -- 결제 요청 시각
-    approved_at     DATETIME        NULL,       -- 결제 승인 시각
-    expires_at      DATETIME        NULL,       -- 타임아웃 (요청 후 10분)
+    paid_at         DATETIME        NULL,       -- 결제 완료 시각
     -- 실패/취소 정보
     fail_code       VARCHAR(50)     NULL,
     fail_message    VARCHAR(200)    NULL,
@@ -827,22 +829,25 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_order_id (order_id),
-    UNIQUE KEY uk_payment_key (payment_key),
+    UNIQUE KEY uk_payment_id (payment_id),
+    UNIQUE KEY uk_transaction_id (transaction_id),
     INDEX idx_payment_member (member_id, status),
     INDEX idx_payment_order_type (order_type, related_order_id),
     INDEX idx_payment_status (status),
     CONSTRAINT fk_payment_member FOREIGN KEY (member_id) REFERENCES member(id),
     CONSTRAINT chk_payment_status CHECK (status IN (
-        'READY', 'IN_PROGRESS', 'WAITING_FOR_DEPOSIT', 'DONE',
-        'CANCELED', 'PARTIAL_CANCELED', 'ABORTED', 'EXPIRED'
+        'READY', 'PENDING', 'VIRTUAL_ACCOUNT_ISSUED', 'PAID',
+        'FAILED', 'PARTIAL_CANCELLED', 'CANCELLED'
     )),
     CONSTRAINT chk_order_type CHECK (order_type IN ('TOKEN_PURCHASE', 'DEVELOPMENT_ORDER', 'PRINT_ORDER')),
+    CONSTRAINT chk_payment_method CHECK (method IS NULL OR method IN (
+        'CARD', 'TRANSFER', 'VIRTUAL_ACCOUNT', 'GIFT_CERTIFICATE', 'MOBILE', 'EASY_PAY'
+    )),
     CONSTRAINT chk_payment_data CHECK (
         (order_type = 'TOKEN_PURCHASE' AND token_amount IS NOT NULL AND related_order_id IS NULL) OR
         (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER') AND related_order_id IS NOT NULL AND token_amount IS NULL)
     )
-) ENGINE=InnoDB COMMENT='결제 (토스 페이먼츠)';
+) ENGINE=InnoDB COMMENT='결제 (포트원 V2)';
 ```
 
 ---
@@ -910,6 +915,9 @@ CREATE TABLE payment (  -- 토스 페이먼츠 결제 연동
 | 2.2.7 | 2026-01-04 | `DayOfWeek` enum 삭제, java.time.DayOfTime 으로 대체.(MONDAY, TUESDAY, WEDNESDAY,THURSDAY, FRIDAY, SATURDAY, SUNDAY)                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | 2.2.8 | 2026-01-05 | `member` 테이블에서 `nickname` 컬럼명 `name`으로 변경, `refresh_token_hash로` 컬럼명 변경(해시 저장), `member_user`에 `nickname` 컬럼 추가, `member_address` 테이블에서 현재 필요하지 않은 `recipient_name`, `phone` 컬럼 nullable로 변경(불필요 시 추후 삭제 예정)                                                                                                                                                                                                                                                                                                                              |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 2.2.9 | 2026-01-05 | `terms` 타입 SERVICE, PRIVACY, LOCATION, NOTIFICATION으로 재정의                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 2.3.0 | 2026-01-06 | **AI 사진 복원 스키마 보완**: `photo_restoration` 테이블에 `replicate_prediction_id`, `error_message` 컬럼 추가, GCS 경로 규칙에 `mask_url` 추가, 토큰 차감 시점 변경 (요청 시 → 복원 완료 시) |
 | 2.3.1 | 2026-01-06 | photo_lab_business_hour.day_of_week VARCHAR(3) → VARCHAR(10) 변경 (java.time.DayOfWeek 수용)                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| 2.3.2 | 2026-01-08 | `member` 테이블의 `dtype` 컬럼명 `role`로 수정, `social_account` 테이블에 email 컬럼 추가                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| 2.3.3 | 2026-01-08 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2.4.0 | 2026-01-06 | **포트원 V2 결제 전환**: 토스 페이먼츠에서 포트원 V2로 전환, `PaymentStatus` 변경(READY/PENDING/VIRTUAL_ACCOUNT_ISSUED/PAID/FAILED/PARTIAL_CANCELLED/CANCELLED), `PaymentMethod` 영문 코드로 변경(CARD/TRANSFER/VIRTUAL_ACCOUNT/GIFT_CERTIFICATE/MOBILE/EASY_PAY), `EasyPayProvider` → `PgProvider`로 변경, payment 테이블 필드 재설계(`order_id` → `payment_id`, `payment_key` → `transaction_id`, `pg_tx_id` 추가, `approved_at` → `paid_at`)|
+| 2.4.1 | 2026-01-08 | `member` 테이블의 `dtype` 컬럼명 `role`로 수정, `social_account` 테이블에 email 컬럼 추가                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 2.4.2 | 2026-01-08 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+
