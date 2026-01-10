@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MemberCommandServiceImpl implements MemberCommandService {
 
     private final MemberUserRepository memberUserRepository;
