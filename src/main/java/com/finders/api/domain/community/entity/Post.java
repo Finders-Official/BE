@@ -4,6 +4,7 @@ import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -28,7 +29,7 @@ public class Post extends BaseEntity {
 //    private Store store;
 
     @Column(nullable = false)
-    private Boolean isSelfDeveloped = false; // 자가 현상 여부 기본값으로 false
+    private boolean isSelfDeveloped = false; // 자가 현상 여부 기본값으로 false
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -48,4 +49,12 @@ public class Post extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CommunityStatus status = CommunityStatus.ACTIVE;
+
+    @Builder
+    private Post(boolean isSelfDeveloped, String title, String content, String labReview) {
+        this.isSelfDeveloped = isSelfDeveloped;
+        this.title = title;
+        this.content = content;
+        this.labReview = labReview;
+    }
 }

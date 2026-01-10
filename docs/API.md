@@ -6,7 +6,7 @@
 | Environment | URL |
 |-------------|-----|
 | Local | `http://localhost:8080/api` |
-| Production | `https://finders-api.log8.kr/api` |
+| Production | `https://api.finders.it.kr/api` |
 
 ## Response Format
 
