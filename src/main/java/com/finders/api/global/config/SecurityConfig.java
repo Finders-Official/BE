@@ -50,7 +50,11 @@ public class SecurityConfig {
             // 토큰 재발급
             "/auth/reissue",
             // 로그아웃
-            "/auth/logout"
+            "/auth/logout",
+            // Webhooks (외부 서비스 콜백)
+            "/webhooks/**",
+            // TODO: Auth API 구현 후 제거 - 개발 테스트용
+            "/restorations/**"
     };
 
     @Bean
@@ -100,7 +104,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://finders-chi.vercel.app",
+                "https://finders.it.kr",
+                "https://www.finders.it.kr",
                 "http://localhost:3000",
                 "http://localhost:5173"
         ));

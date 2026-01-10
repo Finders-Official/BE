@@ -60,6 +60,18 @@ public enum SuccessCode implements BaseCode {
     PHOTO_RESTORED(HttpStatus.OK, "PHOTO_200", "사진 복구가 완료되었습니다."),
 
     // ========================================
+    // Restoration (AI 복원)
+    // ========================================
+    RESTORATION_CREATED(HttpStatus.ACCEPTED, "RESTORATION_202", "복원 요청이 생성되었습니다."),
+    RESTORATION_FOUND(HttpStatus.OK, "RESTORATION_200", "복원 결과 조회에 성공했습니다."),
+
+    // ========================================
+    // Token
+    // ========================================
+    TOKEN_BALANCE_FOUND(HttpStatus.OK, "TOKEN_200", "토큰 잔액 조회에 성공했습니다."),
+    TOKEN_HISTORY_FOUND(HttpStatus.OK, "TOKEN_201", "토큰 이력 조회에 성공했습니다."),
+
+    // ========================================
     // Community
     // ========================================
     POST_CREATED(HttpStatus.CREATED, "POST_201", "게시글이 등록되었습니다."),
