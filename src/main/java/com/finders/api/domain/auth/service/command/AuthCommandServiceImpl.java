@@ -148,7 +148,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             if (refreshTokenHasher.matches(refreshToken, user.getRefreshTokenHash())) {
                 user.updateRefreshTokenHash(null);
             }
-        } catch (Exception e) {
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
             throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
         }
     }
