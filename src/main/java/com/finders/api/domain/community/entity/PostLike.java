@@ -1,6 +1,6 @@
 package com.finders.api.domain.community.entity;
 
-import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,19 +20,19 @@ public class PostLike extends BaseTimeEntity {
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @JoinColumn(name = "member_user_id", nullable = false)
+    private MemberUser memberUser;
 
     @Builder
-    private PostLike(Post post, Member member) {
+    private PostLike(Post post, MemberUser memberUser) {
         this.post = post;
-        this.member = member;
+        this.memberUser = memberUser;
     }
 
-    public static PostLike create(Post post, Member member) {
+    public static PostLike create(Post post, MemberUser memberUser) {
         return PostLike.builder()
                 .post(post)
-                .member(member)
+                .memberUser(memberUser)
                 .build();
     }
 }

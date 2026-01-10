@@ -6,7 +6,7 @@ import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.CommentRepository;
 import com.finders.api.domain.community.repository.PostRepository;
-import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +22,11 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     private final CommentRepository commentRepository;
 
     @Override
-    public Long createComment(Long postId, PostRequest.CreateCommentDTO request, Member member) {
+    public Long createComment(Long postId, PostRequest.CreateCommentDTO request, MemberUser memberUser) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        Comment comment = Comment.toEntity(request.content(), post, member);
+        Comment comment = Comment.toEntity(request.content(), post, memberUser);
 
         post.increaseCommentCount();
 
@@ -34,7 +34,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     }
 
     @Override
-    public void deleteComment(Long commentId, Member member) {
+    public void deleteComment(Long commentId, MemberUser memberUser) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -42,7 +42,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
             throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
-        if (!comment.getMember().getId().equals(member.getId())) {
+        if (!comment.getMemberUser().getId().equals(memberUser.getId())) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 

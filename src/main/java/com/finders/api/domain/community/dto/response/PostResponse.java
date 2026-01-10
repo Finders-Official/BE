@@ -46,8 +46,8 @@ public class PostResponse {
         public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine) {
             return PostDetailResDTO.builder()
                     .postId(post.getId())
-                    .profileImageUrl(post.getMember().getProfileImage())
-                    .nickname(post.getMember().getName())
+                    .profileImageUrl(post.getMemberUser().getProfileImage())
+                    .nickname(post.getMemberUser().getName())
                     .createdAt(post.getCreatedAt())
                     .title(post.getTitle())
                     .content(post.getContent())

@@ -1,7 +1,7 @@
 package com.finders.api.domain.community.entity;
 
 import com.finders.api.domain.community.enums.CommunityStatus;
-import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -24,8 +24,8 @@ public class Comment extends BaseEntity {
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @JoinColumn(name = "member_user_id", nullable = false)
+    private MemberUser memberUser;
 
     @Column(nullable = false, length = 1000)
     private String content;
@@ -35,18 +35,18 @@ public class Comment extends BaseEntity {
     private CommunityStatus status = CommunityStatus.ACTIVE;
 
     @Builder
-    private Comment(String content, Post post, Member member) {
+    private Comment(String content, Post post, MemberUser memberUser) {
         this.content = content;
         this.post = post;
-        this.member = member;
+        this.memberUser = memberUser;
         this.status = CommunityStatus.ACTIVE;
     }
 
-    public static Comment toEntity(String content, Post post, Member member) {
+    public static Comment toEntity(String content, Post post, MemberUser memberUser) {
         return Comment.builder()
                 .content(content)
                 .post(post)
-                .member(member)
+                .memberUser(memberUser)
                 .build();
     }
 
