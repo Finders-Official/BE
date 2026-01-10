@@ -30,3 +30,7 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+
+auth:
+  mock:
+    enabled: true  # 로컬에서는 모킹 활성화
