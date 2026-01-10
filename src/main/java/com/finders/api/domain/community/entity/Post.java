@@ -31,13 +31,13 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private boolean isSelfDeveloped = false; // 자가 현상 여부 기본값으로 false
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, length = 30)
     private String title;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(length = 500)
+    @Column(length = 300)
     private String labReview;
 
     @Column(nullable = false)
