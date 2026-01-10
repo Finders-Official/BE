@@ -7,4 +7,6 @@ public interface PostQueryService {
     PostResponse.PostPreViewListDTO getPostList(Integer page);
 
     PostResponse.PostDetailResDTO getPostDetail(Long postId, Member member);
+
+    PostResponse.PostPreViewListDTO getPopularPosts();
 }

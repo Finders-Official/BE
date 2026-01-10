@@ -22,4 +22,13 @@ public class PostQueryRepository {
                 .orderBy(post.createdAt.desc())
                 .fetch();
     }
+
+    public List<Post> findTop10PopularPosts() {
+        return queryFactory
+                .selectFrom(post)
+                .where(post.status.eq(CommunityStatus.ACTIVE))
+                .orderBy(post.likeCount.desc(), post.createdAt.desc()) // 좋아요 순, 같으면 최신순
+                .limit(10)
+                .fetch();
+    }
 }
