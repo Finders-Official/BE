@@ -45,31 +45,33 @@ public class KakaoOAuthClient implements OAuthClient {
         }
 
         try {
-            Map<?, ?> body = kakaoRestClient.get()
+            KakaoUserMeResponse response = kakaoRestClient.get()
                     .uri("/v2/user/me")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                     .accept(MediaType.APPLICATION_JSON)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+                    .body(KakaoUserMeResponse.class);
 
-            String providerId = String.valueOf(body.get("id"));
-
-            // 1. 카카오 계정 정보 레이어 접근
-            Map<String, Object> kakaoAccount = (Map<String, Object>) body.get("kakao_account");
-            Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
-
-            // 2. 닉네임 및 프로필 이미지 (우선순위: profile > properties)
-            String nickname = (String) profile.getOrDefault("nickname", body.get("properties"));
-            if (nickname == null) {
-                Map<String, Object> properties = (Map<String, Object>) body.get("properties");
-                nickname = (String) properties.get("nickname");
+            if (response == null) {
+                throw new CustomException(ErrorCode.EXTERNAL_API_ERROR);
             }
 
-            String profileImage = (String) profile.get("profile_image_url");
+            String providerId = String.valueOf(response.id());
+            var kakaoAccount = response.kakaoAccount();
+            var profile = (kakaoAccount != null) ? kakaoAccount.profile() : null;
+            var properties = response.properties();
 
-            // 3. 실명 및 이메일 추출
-            String name = (String) kakaoAccount.get("name");
-            String email = (String) kakaoAccount.get("email");
+            // 닉네임 추출 (우선순위: profile > properties)
+            String nickname = null;
+            if (profile != null) nickname = profile.nickname();
+            if (nickname == null && properties != null) nickname = properties.nickname();
+
+            // 프로필 이미지 추출
+            String profileImage = (profile != null) ? profile.profileImageUrl() : null;
+
+            // 실명 및 이메일 추출
+            String name = (kakaoAccount != null) ? kakaoAccount.name() : null;
+            String email = (kakaoAccount != null) ? kakaoAccount.email() : null;
 
             return OAuthUserInfo.builder()
                     .provider(SocialProvider.KAKAO)
