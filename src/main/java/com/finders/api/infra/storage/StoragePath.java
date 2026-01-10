@@ -49,6 +49,9 @@ public enum StoragePath {
     /** AI 복원 원본: restorations/{memberId}/original/{uuid}.{ext} */
     RESTORATION_ORIGINAL("restorations/%d/original/%s", false),
 
+    /** AI 복원 마스크: restorations/{memberId}/mask/{uuid}.{ext} */
+    RESTORATION_MASK("restorations/%d/mask/%s", false),
+
     /** AI 복원 결과: restorations/{memberId}/restored/{uuid}.{ext} */
     RESTORATION_RESTORED("restorations/%d/restored/%s", false);
 
