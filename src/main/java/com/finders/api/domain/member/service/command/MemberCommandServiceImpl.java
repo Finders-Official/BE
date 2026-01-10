@@ -17,6 +17,7 @@ import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.security.JwtTokenProvider;
 import com.finders.api.global.security.RefreshTokenHasher;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -54,8 +56,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         VerificationData data = new VerificationData(request.phone(), code, LocalDateTime.now().plusMinutes(3));
         phoneVerificationStorage.put(requestId, data);
 
-        System.out.println("인증번호 발송 대상: " + request.phone());
-        System.out.println("발급된 인증번호: " + code);
+        log.info("[MemberCommandServiceImpl.sendPhoneVerificationCode] 인증번호 발송 대상: {}, 발급된 인증번호: {}", request.phone(), code);
 
         // TODO: 실제 SMS 전송
 
