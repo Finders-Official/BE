@@ -33,7 +33,6 @@ public class AuthResponse {
         }
     }
 
-    @Builder
     public record SignupRequired(
             boolean isNewMember,
             String signupToken,
