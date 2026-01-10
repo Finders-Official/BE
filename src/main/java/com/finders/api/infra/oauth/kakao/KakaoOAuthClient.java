@@ -6,6 +6,7 @@ import com.finders.api.global.response.ErrorCode;
 import com.finders.api.infra.oauth.OAuthClient;
 import com.finders.api.infra.oauth.model.OAuthUserInfo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,6 +22,9 @@ public class KakaoOAuthClient implements OAuthClient {
 
     private final RestClient kakaoRestClient;
 
+    @Value("${auth.mock.enabled:false}")
+    private boolean isMockEnabled;
+
     @Override
     public SocialProvider provider() {
         return SocialProvider.KAKAO;
@@ -28,10 +32,8 @@ public class KakaoOAuthClient implements OAuthClient {
 
     @Override
     public OAuthUserInfo getUserInfo(String accessToken) {
-        // ------------------------------------------------------------------
-        // 로컬 테스트용 모킹 (실제 카카오 서버 호출을 건너뜀)
-        // ------------------------------------------------------------------
-        if ("string".equals(accessToken) || "test_token".equals(accessToken)) {
+        // 로컬 환경이고 특정 토큰일 때만 모킹 작동
+        if (isMockEnabled && ("string".equals(accessToken) || "test_token".equals(accessToken))) {
             return OAuthUserInfo.builder()
                     .provider(SocialProvider.KAKAO)
                     .providerId("999999999") // DB에 없는 새로운 ID로 설정
