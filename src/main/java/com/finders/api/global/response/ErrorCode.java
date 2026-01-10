@@ -83,6 +83,7 @@ public enum ErrorCode implements BaseCode {
     // Store (현상소)
     // ========================================
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE_404", "현상소를 찾을 수 없습니다."),
+    BUSINESS_HOUR_NOT_FOUND(HttpStatus.NOT_FOUND, "BUSINESS_HOUR_404", "현상소의 영업시간을 찾을 수 없습니다."),
 
     // ========================================
     // Reservation (예약)
@@ -90,6 +91,8 @@ public enum ErrorCode implements BaseCode {
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RESERVATION_404", "예약을 찾을 수 없습니다."),
     RESERVATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "RESERVATION_409", "해당 시간에 이미 예약이 있습니다."),
     RESERVATION_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "RESERVATION_400", "예약을 취소할 수 없습니다."),
+    RESERVATION_FULL(HttpStatus.CONFLICT, "RESERVATION_409_FULL", "해당 시간대의 예약이 모두 마감되었습니다."),
+    RESERVATION_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "RESERVATION_SLOT_404", "예약 슬롯을 찾을 수 없습니다."),
 
     // ========================================
     // Photo
