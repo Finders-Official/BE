@@ -102,14 +102,11 @@ public class PostResponse {
     }
 
     // 미리보기 리스트를 감싸는 DTO
-    @Builder
     public record PostPreviewListDTO(
             List<PostPreviewDTO> previewList
     ) {
         public static PostPreviewListDTO from(List<PostPreviewDTO> previewDTOs) {
-            return PostPreviewListDTO.builder()
-                    .previewList(previewDTOs)
-                    .build();
+            return new PostPreviewListDTO(previewDTOs);
         }
     }
 }
