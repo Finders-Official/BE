@@ -26,8 +26,6 @@ public class PhotoLab extends BaseEntity {
 
     /**
      * FK → member(id)
-     * TODO: Member 엔티티 실제 패키지 경로에 맞게 import/타입 조정
-     * 상위 import문에 주석 제거로 처리
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)

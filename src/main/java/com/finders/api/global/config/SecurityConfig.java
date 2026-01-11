@@ -1,7 +1,6 @@
 package com.finders.api.global.config;
 
-import com.finders.api.global.security.JwtAccessDeniedHandler;
-import com.finders.api.global.security.JwtAuthenticationEntryPoint;
+import com.finders.api.global.security.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +11,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -30,6 +30,9 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
+    private final JwtTokenProvider jwtTokenProvider;
+    private final SignupTokenProvider signupTokenProvider;
+
     // 인증 없이 접근 가능한 경로
     private static final String[] PUBLIC_ENDPOINTS = {
             // Swagger
@@ -38,12 +41,20 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             // Actuator
             "/actuator/health",
-            // Auth
-            "/auth/**",
             // H2 Console (local only)
             "/h2-console/**",
             // Storage Test (local only - @Profile("local")로 프로덕션 비활성화)
             "/storage/test/**",
+            // 소셜 로그인 시작점
+            "/auth/social/login",
+            // 토큰 재발급
+            "/auth/reissue",
+            // 로그아웃
+            "/auth/logout",
+            // Webhooks (외부 서비스 콜백)
+            "/webhooks/**",
+            // TODO: Auth API 구현 후 제거 - 개발 테스트용
+            "/restorations/**",
             // HM-010 커뮤니티 사진 미리 보기
             "/posts/preview"
     };
@@ -73,11 +84,20 @@ public class SecurityConfig {
                 // 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest().authenticated()
-                );
+                        // GUEST, USER 모두 허용
+                        .requestMatchers(
+                                "/members/phone/**",
+                                "/users/nickname/check"
+                        ).hasAnyRole("USER", "GUEST")
+                        // GUEST만 허용
+                        .requestMatchers("/members/social/signup/complete").hasRole("GUEST")
+                        // USER만 허용
+                        .anyRequest().hasRole("USER")
+                )
 
-        // TODO: JWT 필터 추가
-        // .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // JWT 필터 추가
+                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, signupTokenProvider),
+                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -86,7 +106,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://finders-chi.vercel.app",
+                "https://finders.it.kr",
+                "https://www.finders.it.kr",
                 "http://localhost:3000",
                 "http://localhost:5173"
         ));
