@@ -31,7 +31,7 @@ public class SocialAccount extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    private MemberUser user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -40,10 +40,14 @@ public class SocialAccount extends BaseEntity {
     @Column(name = "provider_id", nullable = false, length = 100)
     private String providerId;
 
+    @Column(name = "social_email", length = 100)
+    private String socialEmail;
+
     @Builder
-    private SocialAccount(Member member, SocialProvider provider, String providerId) {
-        this.member = member;
+    private SocialAccount(MemberUser user, SocialProvider provider, String providerId, String socialEmail) {
+        this.user = user;
         this.provider = provider;
         this.providerId = providerId;
+        this.socialEmail = socialEmail;
     }
 }

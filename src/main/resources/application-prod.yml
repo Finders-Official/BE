@@ -47,3 +47,7 @@ management:
     web:
       exposure:
         include: health
+
+auth:
+  mock:
+    enabled: false # 운영에서는 비활성화

@@ -1,5 +1,6 @@
 package com.finders.api.domain.member.entity;
 
+import com.finders.api.domain.member.enums.MemberType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -24,6 +25,9 @@ public class MemberUser extends Member {
     @Column(name = "nickname", nullable = false, length = 20)
     private String nickname;
 
+    @Column(name = "profile_image", length = 500)
+    private String profileImage;
+
     @Column(name = "token_balance", nullable = false)
     private Integer tokenBalance;
 
@@ -38,8 +42,9 @@ public class MemberUser extends Member {
             String profileImage,
             String nickname
     ) {
-        super(name, email, phone, profileImage);
+        super(name, email, phone, MemberType.USER);
         this.nickname = nickname;
+        this.profileImage = profileImage;
         this.tokenBalance = 3;
         this.lastTokenRefreshAt = null;
     }
