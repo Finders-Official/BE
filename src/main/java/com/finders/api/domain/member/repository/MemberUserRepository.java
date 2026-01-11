@@ -5,11 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-/**
- * MemberUser Repository
- */
 public interface MemberUserRepository extends JpaRepository<MemberUser, Long> {
-
     /**
      * 닉네임으로 회원 조회
      */
