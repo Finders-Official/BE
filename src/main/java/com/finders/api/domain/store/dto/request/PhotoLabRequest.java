@@ -11,7 +11,7 @@ public class PhotoLabRequest {
             Long ownerId,
 
             @NotBlank(message = "현상소 이름은 필수입니다.")
-            @Size(max = 80, message = "현상소 이름은 80자 이하여야 합니다.")
+            @Size(max = 100, message = "현상소 이름은 100자 이하여야 합니다.")
             String name,
 
             @NotBlank(message = "주소는 필수입니다.")
