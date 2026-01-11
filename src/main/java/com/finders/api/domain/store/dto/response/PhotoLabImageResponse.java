@@ -10,7 +10,7 @@ public class PhotoLabImageResponse {
             Long id,
             Long photoLabId,
             String imageUrl,
-            String imageKey,
+            String objectPath,
             Integer displayOrder,
             boolean isMain
     ) {
@@ -19,7 +19,7 @@ public class PhotoLabImageResponse {
                     .id(image.getId())
                     .photoLabId(image.getPhotoLab().getId())
                     .imageUrl(imageUrl)
-                    .imageKey(image.getImageUrl())
+                    .objectPath(image.getImageUrl())
                     .displayOrder(image.getDisplayOrder())
                     .isMain(image.isMain())
                     .build();
