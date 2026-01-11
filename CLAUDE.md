@@ -10,8 +10,8 @@ Finders API - 필름 현상소 연결 플랫폼 백엔드. Java 21 + Spring Boot
 
 | 목적 | 참조 문서 |
 |------|----------|
-| **코드 작성** | [docs/CODE_STYLE.md](docs/CODE_STYLE.md) |
-| **Git (브랜치/커밋)** | [docs/CONVENTIONS.md](docs/CONVENTIONS.md) |
+| **코드 작성** | [docs/development/CODE_STYLE.md](docs/development/CODE_STYLE.md) |
+| **Git (브랜치/커밋)** | [docs/development/CONVENTIONS.md](docs/development/CONVENTIONS.md) |
 | **이슈 생성** | [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) |
 | **PR 생성** | [.github/pull_request_template.md](.github/pull_request_template.md) |
 
