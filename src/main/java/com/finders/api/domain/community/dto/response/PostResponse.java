@@ -2,10 +2,8 @@ package com.finders.api.domain.community.dto.response;
 
 import com.finders.api.domain.community.entity.Post;
 import lombok.Builder;
-import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 public class PostResponse {
@@ -17,11 +15,11 @@ public class PostResponse {
             String title,
             String imageUrl
     ) {
-        public static PostsResDTO from(Post post) {
+        public static PostsResDTO from(Post post, String imageUrl) {
             return PostsResDTO.builder()
                     .postId(post.getId())
                     .title(post.getTitle())
-                    .imageUrl(null)
+                    .imageUrl(imageUrl)
                     .build();
         }
     }
@@ -43,15 +41,15 @@ public class PostResponse {
             Integer commentCount,
             LabReviewResDTO labReview
     ) {
-        public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine) {
+        public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine, String profileImageUrl, List<String> imageUrls) {
             return PostDetailResDTO.builder()
                     .postId(post.getId())
-                    .profileImageUrl(post.getMemberUser().getProfileImage())
+                    .profileImageUrl(profileImageUrl)
                     .nickname(post.getMemberUser().getName())
                     .createdAt(post.getCreatedAt())
                     .title(post.getTitle())
                     .content(post.getContent())
-                    .imageUrls(new ArrayList<>())
+                    .imageUrls(imageUrls)
                     .likeCount(post.getLikeCount())
                     .isLiked(isLiked)
                     .isSelfDeveloped(post.isSelfDeveloped())
@@ -89,10 +87,10 @@ public class PostResponse {
             Integer commentCount,
             boolean isLiked
     ) {
-        public static PostPreviewDTO from(Post post, boolean isLiked) {
+        public static PostPreviewDTO from(Post post, boolean isLiked, String imageUrl) {
             return PostPreviewDTO.builder()
                     .postId(post.getId())
-                    .imageUrl(null)
+                    .imageUrl(imageUrl)
                     .title(post.getTitle())
                     .likeCount(post.getLikeCount())
                     .commentCount(post.getCommentCount())

@@ -8,10 +8,8 @@ import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,9 +22,12 @@ import java.util.Set;
 public class PostQueryServiceImpl implements PostQueryService {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
+
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostQueryRepository postQueryRepository;
+    private final StorageService storageService;
 
     @Override
     public PostResponse.PostDetailResDTO getPostDetail(Long postId, MemberUser memberUser) {
@@ -36,7 +37,13 @@ public class PostQueryServiceImpl implements PostQueryService {
         boolean isLiked = (memberUser != null) && postLikeRepository.existsByPostAndMemberUser(post, memberUser);
         boolean isMine = (memberUser != null) && post.getMemberUser().getId().equals(memberUser.getId());
 
-        return PostResponse.PostDetailResDTO.from(post, isLiked, isMine);
+        String profileImageUrl = getFullUrl(post.getMemberUser().getProfileImage());
+
+        List<String> imageUrls = post.getPostImageList().stream()
+                .map(img -> getFullUrl(img.getImageUrl()))
+                .toList();
+
+        return PostResponse.PostDetailResDTO.from(post, isLiked, isMine, profileImageUrl, imageUrls);
     }
 
     @Override
@@ -44,7 +51,11 @@ public class PostQueryServiceImpl implements PostQueryService {
         List<Post> posts = postQueryRepository.findAllForFeed(page, DEFAULT_PAGE_SIZE);
 
         List<PostResponse.PostPreviewDTO> dtos = posts.stream()
-                .map(post -> PostResponse.PostPreviewDTO.from(post, false))
+                .map(post -> {
+                    String mainImageUrl = post.getPostImageList().isEmpty() ? null
+                            : getFullUrl(post.getPostImageList().get(0).getImageUrl());
+                    return PostResponse.PostPreviewDTO.from(post, false, mainImageUrl);
+                })
                 .toList();
 
         return PostResponse.PostPreviewListDTO.from(dtos);
@@ -64,10 +75,19 @@ public class PostQueryServiceImpl implements PostQueryService {
         List<PostResponse.PostPreviewDTO> previewDTOs = posts.stream()
                 .map(post -> {
                     boolean isLiked = finalLikedPostIds.contains(post.getId());
-                    return PostResponse.PostPreviewDTO.from(post, isLiked);
+                    String mainImageUrl = post.getPostImageList().isEmpty() ? null
+                            : getFullUrl(post.getPostImageList().get(0).getImageUrl());
+
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImageUrl);
                 })
                 .toList();
 
+        // 4. 리스트를 감싸서 반환
         return PostResponse.PostPreviewListDTO.from(previewDTOs);
+    }
+
+    private String getFullUrl(String path) {
+        if (path == null || path.isBlank()) return null;
+        return storageService.getSignedUrl(path, SIGNED_URL_EXPIRY_MINUTES).url();
     }
 }
