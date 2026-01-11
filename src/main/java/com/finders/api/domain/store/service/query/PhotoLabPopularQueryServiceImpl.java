@@ -1,0 +1,85 @@
+package com.finders.api.domain.store.service.query;
+
+import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
+import com.finders.api.domain.store.entity.PhotoLab;
+import com.finders.api.domain.store.entity.PhotoLabImage;
+import com.finders.api.domain.store.entity.PhotoLabKeyword;
+import com.finders.api.domain.store.repository.PhotoLabImageRepository;
+import com.finders.api.domain.store.repository.PhotoLabKeywordRepository;
+import com.finders.api.domain.store.repository.PhotoLabRepository;
+import com.finders.api.infra.storage.StorageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryService {
+
+    private final PhotoLabRepository photoLabRepository;
+    private final PhotoLabImageRepository photoLabImageRepository;
+    private final PhotoLabKeywordRepository photoLabKeywordRepository;
+    private final StorageService storageService;
+
+    @Override
+    public List<PhotoLabPopularResponse.Card> getPopularPhotoLabs() {
+        List<PhotoLab> photoLabs = photoLabRepository.findTop8ByOrderByReservationCountDescIdAsc();
+        if (photoLabs.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> photoLabIds = photoLabs.stream()
+                .map(PhotoLab::getId)
+                .toList();
+
+        Map<Long, String> mainImageUrlByPhotoLabId = buildMainImageUrlMap(photoLabIds);
+        Map<Long, List<String>> keywordsByPhotoLabId = buildKeywordMap(photoLabIds);
+
+        return photoLabs.stream()
+                .map(photoLab -> new PhotoLabPopularResponse.Card(
+                        photoLab.getId(),
+                        photoLab.getName(),
+                        mainImageUrlByPhotoLabId.get(photoLab.getId()),
+                        keywordsByPhotoLabId.getOrDefault(photoLab.getId(), List.of()),
+                        photoLab.getWorkCount()
+                ))
+                .toList();
+    }
+
+    private Map<Long, String> buildMainImageUrlMap(List<Long> photoLabIds) {
+        List<PhotoLabImage> mainImages = photoLabImageRepository.findMainImagesByPhotoLabIds(photoLabIds);
+        if (mainImages.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<Long, String> result = new HashMap<>();
+        for (PhotoLabImage image : mainImages) {
+            Long photoLabId = image.getPhotoLab().getId();
+            if (result.containsKey(photoLabId)) {
+                continue;
+            }
+            result.put(photoLabId, storageService.getPublicUrl(image.getImageUrl()));
+        }
+        return result;
+    }
+
+    private Map<Long, List<String>> buildKeywordMap(List<Long> photoLabIds) {
+        List<PhotoLabKeyword> keywords = photoLabKeywordRepository.findByPhotoLabIds(photoLabIds);
+        if (keywords.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return keywords.stream()
+                .collect(Collectors.groupingBy(
+                        keyword -> keyword.getPhotoLab().getId(),
+                        Collectors.mapping(PhotoLabKeyword::getKeyword, Collectors.toList())
+                ));
+    }
+}
