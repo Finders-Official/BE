@@ -1,4 +1,4 @@
-package com.finders.api.domain.store.service;
+﻿package com.finders.api.domain.store.service;
 
 import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.repository.MemberOwnerRepository;
@@ -25,10 +25,10 @@ public class PhotoLabService {
     private final MemberOwnerRepository memberOwnerRepository;
 
     @Transactional
-    public PhotoLabResponse.Create createPhotoLab(PhotoLabRequest.Create request) {
-        log.info("[PhotoLabService.createPhotoLab] ownerId: {}", request.ownerId());
+    public PhotoLabResponse.Create createPhotoLab(Long ownerId, PhotoLabRequest.Create request) {
+        log.info("[PhotoLabService.createPhotoLab] ownerId: {}", ownerId);
 
-        MemberOwner owner = memberOwnerRepository.findById(request.ownerId())
+        MemberOwner owner = memberOwnerRepository.findById(ownerId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         PhotoLab photoLab = PhotoLab.builder()
@@ -49,3 +49,4 @@ public class PhotoLabService {
         return PhotoLabResponse.Create.from(photoLab);
     }
 }
+

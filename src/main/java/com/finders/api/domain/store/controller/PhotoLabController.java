@@ -1,4 +1,4 @@
-package com.finders.api.domain.store.controller;
+﻿package com.finders.api.domain.store.controller;
 
 import com.finders.api.domain.store.dto.response.PhotoLabDocumentResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabImageResponse;
@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,17 +37,19 @@ public class PhotoLabController {
     @Operation(summary = "현상소 기본사항 등록 API")
     @PostMapping
     public ApiResponse<PhotoLabResponse.Create> createPhotoLab(
+            @AuthenticationPrincipal Long ownerId,
             @Valid @RequestBody PhotoLabRequest.Create request
     ) {
         return ApiResponse.success(
                 SuccessCode.CREATED,
-                photoLabService.createPhotoLab(request)
+                photoLabService.createPhotoLab(ownerId, request)
         );
     }
 
     @Operation(summary = "현상소 이미지 등록 API")
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PhotoLabImageResponse.Create> uploadPhotoLabImage(
+            @AuthenticationPrincipal Long ownerId,
             @RequestParam Long photoLabId,
             @RequestPart("file") MultipartFile file,
             @RequestParam(required = false) Integer displayOrder,
@@ -54,20 +57,22 @@ public class PhotoLabController {
     ) {
         return ApiResponse.success(
                 SuccessCode.STORAGE_UPLOADED,
-                photoLabImageService.uploadImage(photoLabId, file, displayOrder, isMain)
+                photoLabImageService.uploadImage(ownerId, photoLabId, file, displayOrder, isMain)
         );
     }
 
     @Operation(summary = "현상소 사업자 등록 서류 업로드 API")
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PhotoLabDocumentResponse.Create> uploadPhotoLabDocument(
+            @AuthenticationPrincipal Long ownerId,
             @RequestParam Long photoLabId,
             @RequestParam DocumentType documentType,
             @RequestPart("file") MultipartFile file
     ) {
         return ApiResponse.success(
                 SuccessCode.STORAGE_UPLOADED,
-                photoLabDocumentService.uploadDocument(photoLabId, documentType, file)
+                photoLabDocumentService.uploadDocument(ownerId, photoLabId, documentType, file)
         );
     }
 }
+

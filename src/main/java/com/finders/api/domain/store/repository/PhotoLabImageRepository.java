@@ -1,4 +1,4 @@
-package com.finders.api.domain.store.repository;
+﻿package com.finders.api.domain.store.repository;
 
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +12,8 @@ public interface PhotoLabImageRepository extends JpaRepository<PhotoLabImage, Lo
     @Query("update PhotoLabImage image set image.isMain = false " +
             "where image.photoLab.id = :photoLabId and image.isMain = true")
     int clearMainByPhotoLabId(@Param("photoLabId") Long photoLabId);
+
+    @Query("select coalesce(max(image.displayOrder), -1) from PhotoLabImage image where image.photoLab.id = :photoLabId")
+    Integer findMaxDisplayOrderByPhotoLabId(@Param("photoLabId") Long photoLabId);
 }
+

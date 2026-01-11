@@ -1,4 +1,4 @@
-package com.finders.api.domain.store.dto.request;
+﻿package com.finders.api.domain.store.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,9 +7,6 @@ import jakarta.validation.constraints.Size;
 
 public class PhotoLabRequest {
     public record Create(
-            @NotNull(message = "오너 ID는 필수입니다.")
-            Long ownerId,
-
             @NotBlank(message = "현상소 이름은 필수입니다.")
             @Size(max = 100, message = "현상소 이름은 100자 이하여야 합니다.")
             String name,
@@ -43,3 +40,5 @@ public class PhotoLabRequest {
     ) {
     }
 }
+
+
