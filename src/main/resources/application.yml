@@ -116,6 +116,7 @@ springdoc:
     path: /v3/api-docs
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+  use-fqn: true
 
 # ========================================
 # Replicate AI 설정
