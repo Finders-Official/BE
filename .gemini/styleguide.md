@@ -31,6 +31,8 @@ com.finders.api/
 ├── domain/{domain}/
 │   ├── controller/
 │   ├── service/
+│   │   ├── command/      # CUD 서비스 (interface + impl)
+│   │   └── query/        # 조회 서비스 (interface + impl)
 │   ├── repository/
 │   ├── entity/
 │   ├── dto/
@@ -67,13 +69,16 @@ com.finders.api.domain.Members
 | Type | Suffix | Example |
 |------|--------|---------|
 | Controller | `Controller` | `MemberController` |
-| Service | `Service` | `MemberService` |
+| Service (Query) | `QueryService`, `QueryServiceImpl` | `MemberQueryService`, `MemberQueryServiceImpl` |
+| Service (Command) | `CommandService`, `CommandServiceImpl` | `MemberCommandService`, `MemberCommandServiceImpl` |
 | Repository (JPA) | `Repository` | `MemberRepository` |
 | Repository (QueryDSL) | `QueryRepository` | `MemberQueryRepository` |
 | Entity | (없음) | `Member` |
 | DTO | `Request`, `Response` | `MemberRequest`, `MemberResponse` |
 | Exception | `Exception` | `CustomException` |
 | Config | `Config` | `SecurityConfig` |
+
+> **Service CQRS 패턴**: 신규 도메인은 Query/Command를 분리하여 구현한다. 기존 도메인은 점진적으로 마이그레이션 예정.
 
 ### Method
 
@@ -264,14 +269,17 @@ public class MemberResponse {
 
 ### Controller
 
+> Controller는 Query/Command Service를 모두 주입받아 사용한다.
+
 ```java
 @Tag(name = "Member", description = "회원 API")
 @RestController
-@RequestMapping("/members")
 @RequiredArgsConstructor
+@RequestMapping("/members")
 public class MemberController {
 
-    private final MemberService memberService;
+    private final MemberQueryService memberQueryService;
+    private final MemberCommandService memberCommandService;
 
     @Operation(summary = "회원 조회")
     @GetMapping("/{memberId}")
@@ -280,61 +288,117 @@ public class MemberController {
     ) {
         return ApiResponse.success(
                 SuccessCode.MEMBER_FOUND,
-                memberService.getMember(memberId)
+                memberQueryService.getMember(memberId)
         );
     }
 
-    @Operation(summary = "현상소 목록 조회")
-    @GetMapping
-    public PagedResponse<StoreResponse.Summary> getStores(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+    @Operation(summary = "회원 생성")
+    @PostMapping
+    public ApiResponse<Long> createMember(
+            @Valid @RequestBody MemberRequest.Create request
     ) {
-        return storeService.getStores(PageRequest.of(page, size));
+        return ApiResponse.success(
+                SuccessCode.MEMBER_CREATED,
+                memberCommandService.createMember(request)
+        );
     }
 }
 ```
 
 **Controller 규칙:**
 - `@Tag`, `@Operation` 어노테이션으로 Swagger 문서화
+- Query/Command Service를 분리하여 주입
 - 단건 응답: `ApiResponse<T>` 사용
 - 목록 응답: `PagedResponse<T>` 사용
 - `SuccessCode`/`ErrorCode` enum 사용
 
-### Service
+### Service (CQRS 패턴)
+
+> **CQRS**: 조회(Query)와 명령(Command)을 분리하여 책임을 명확히 한다.
+
+#### 패키지 구조
+```
+service/
+├── command/
+│   ├── {Domain}CommandService.java      (interface)
+│   └── {Domain}CommandServiceImpl.java  (구현체)
+└── query/
+    ├── {Domain}QueryService.java        (interface)
+    └── {Domain}QueryServiceImpl.java    (구현체)
+```
+
+#### Query Service (조회 전용)
 
 ```java
-@Slf4j
+// Interface
+public interface MemberQueryService {
+    MemberResponse.Detail getMember(Long memberId);
+}
+
+// Implementation
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MemberService {
+public class MemberQueryServiceImpl implements MemberQueryService {
 
     private final MemberRepository memberRepository;
 
+    @Override
     public MemberResponse.Detail getMember(Long memberId) {
-        log.info("[MemberService.getMember] memberId: {}", memberId);
-
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         return MemberResponse.Detail.from(member);
     }
+}
+```
 
-    @Transactional
-    public MemberResponse.Detail updateMember(Long memberId, MemberRequest.Update request) {
-        log.info("[MemberService.updateMember] memberId: {}", memberId);
-        // 수정 로직
+#### Command Service (CUD 전용)
+
+```java
+// Interface
+public interface MemberCommandService {
+    Long createMember(MemberRequest.Create request);
+    void updateMember(Long memberId, MemberRequest.Update request);
+    void deleteMember(Long memberId);
+}
+
+// Implementation
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class MemberCommandServiceImpl implements MemberCommandService {
+
+    private final MemberRepository memberRepository;
+
+    @Override
+    public Long createMember(MemberRequest.Create request) {
+        Member member = Member.builder()
+                .nickname(request.nickname())
+                .email(request.email())
+                .build();
+
+        return memberRepository.save(member).getId();
+    }
+
+    @Override
+    public void deleteMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        member.softDelete();
     }
 }
 ```
 
 **Service 규칙:**
-- 클래스에 `@Transactional(readOnly = true)` 기본 적용
-- 수정/삭제 메서드에만 `@Transactional` 추가
-- `@Slf4j`로 로깅, `[클래스명.메서드명]` 형식 사용
+- QueryServiceImpl: `@Transactional(readOnly = true)` 클래스 레벨
+- CommandServiceImpl: `@Transactional` 클래스 레벨
+- Interface + Impl 패턴 사용
 - `CustomException`으로 예외 처리
 - `orElseThrow()` 패턴 사용 (`.get()` 금지)
+
+> **참고:** 기존 도메인(member, auth, store 등)은 점진적으로 CQRS 패턴으로 마이그레이션 예정이며, 신규 도메인은 새 패턴을 따른다.
 
 ### Repository
 
@@ -502,3 +566,5 @@ log.error("[CustomException] code: {}, message: {}", errorCode.getCode(), e.getM
 | `refactor` | 코드 리팩토링 |
 | `test` | 테스트 코드 |
 | `chore` | 빌드/설정 변경 |
+| `rename` | 파일/폴더 이름 변경 또는 이동 |
+| `remove` | 파일 삭제 |
