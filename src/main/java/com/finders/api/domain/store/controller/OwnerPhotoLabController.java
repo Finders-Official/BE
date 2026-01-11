@@ -24,11 +24,11 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "PhotoLab_OWNER", description = "현상소 등록/관리 API")
+@Tag(name = "PhotoLab_OWNER", description = "현상소 등록 API")
 @RestController
 @RequestMapping("/owner/photo-labs")
 @RequiredArgsConstructor
-public class PhotoLabController {
+public class OwnerPhotoLabController {
 
     private final PhotoLabService photoLabService;
     private final PhotoLabImageService photoLabImageService;
