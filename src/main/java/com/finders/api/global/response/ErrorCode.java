@@ -41,6 +41,7 @@ public enum ErrorCode implements BaseCode {
     // Provider 요청/검증 (kakao, apple 등)
     AUTH_UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_410", "지원하지 않는 소셜 로그인 제공자입니다."),
     AUTH_INVALID_PROVIDER_REQUEST(HttpStatus.BAD_REQUEST, "AUTH_411", "소셜 로그인 요청 정보가 올바르지 않습니다."),
+    AUTH_INVALID_ROLE(HttpStatus.FORBIDDEN, "AUTH_430", "해당 서비스에 접근 권한이 없는 계정 타입입니다."),
 
     // OAuth 로그인
     AUTH_OAUTH_FAILED(HttpStatus.BAD_REQUEST, "AUTH_400", "소셜 로그인에 실패했습니다."),
@@ -56,6 +57,12 @@ public enum ErrorCode implements BaseCode {
     AUTH_TERMS_NOT_AGREED(HttpStatus.FORBIDDEN, "AUTH_413", "필수 약관에 동의하지 않았습니다."),
     AUTH_ADDITIONAL_INFO_REQUIRED(HttpStatus.FORBIDDEN, "AUTH_414", "추가 정보 입력이 필요합니다."),
 
+    // 휴대폰 인증
+    AUTH_PHONE_TOO_MANY_REQUESTS(HttpStatus.BAD_REQUEST, "AUTH_415", "인증번호 요청이 너무 많습니다."),
+    AUTH_PHONE_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "AUTH_420", "인증번호가 올바르지 않습니다."),
+    AUTH_PHONE_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH_421", "인증번호가 만료되었거나 존재하지 않습니다."),
+    AUTH_PHONE_MAX_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AUTH_422", "인증 시도 횟수를 초과했습니다."),
+    AUTH_PHONE_ALREADY_VERIFIED(HttpStatus.CONFLICT, "AUTH_423", "이미 인증이 완료된 요청입니다."),
 
     // ========================================
     // Member
@@ -63,11 +70,20 @@ public enum ErrorCode implements BaseCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_404", "회원을 찾을 수 없습니다."),
     MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER_409", "이미 존재하는 회원입니다."),
     MEMBER_NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_410", "이미 사용 중인 닉네임입니다."),
+    MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화된 계정입니다."),
+
+    // 휴대폰 인증 증빙 관련 (VPT 검증)
+    MEMBER_PHONE_VERIFY_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER_420", "휴대폰 인증이 필요합니다."),
+    MEMBER_PHONE_VERIFY_FAILED(HttpStatus.BAD_REQUEST, "MEMBER_421", "휴대폰 인증에 실패했습니다."),
+
+    // 약관 관련
+    MEMBER_MANDATORY_TERMS_NOT_AGREED(HttpStatus.FORBIDDEN, "MEMBER_430", "필수 약관에 동의하지 않았습니다."),
 
     // ========================================
     // Store (현상소)
     // ========================================
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE_404", "현상소를 찾을 수 없습니다."),
+    BUSINESS_HOUR_NOT_FOUND(HttpStatus.NOT_FOUND, "BUSINESS_HOUR_404", "현상소의 영업시간을 찾을 수 없습니다."),
 
     // ========================================
     // Reservation (예약)
@@ -75,6 +91,8 @@ public enum ErrorCode implements BaseCode {
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RESERVATION_404", "예약을 찾을 수 없습니다."),
     RESERVATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "RESERVATION_409", "해당 시간에 이미 예약이 있습니다."),
     RESERVATION_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "RESERVATION_400", "예약을 취소할 수 없습니다."),
+    RESERVATION_FULL(HttpStatus.CONFLICT, "RESERVATION_409_FULL", "해당 시간대의 예약이 모두 마감되었습니다."),
+    RESERVATION_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "RESERVATION_SLOT_404", "예약 슬롯을 찾을 수 없습니다."),
 
     // ========================================
     // Photo
@@ -82,6 +100,12 @@ public enum ErrorCode implements BaseCode {
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "PHOTO_404", "사진을 찾을 수 없습니다."),
     PHOTO_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO_500", "사진 업로드에 실패했습니다."),
     PHOTO_RESTORE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO_501", "사진 복구에 실패했습니다."),
+
+    // ========================================
+    // Token
+    // ========================================
+    INSUFFICIENT_TOKEN(HttpStatus.PAYMENT_REQUIRED, "TOKEN_402", "토큰이 부족합니다."),
+    TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "TOKEN_404", "토큰 정보를 찾을 수 없습니다."),
 
     // ========================================
     // External API

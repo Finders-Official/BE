@@ -11,9 +11,8 @@ spring:
       ddl-auto: update  # 로컬: 엔티티 변경 시 자동 반영
     show-sql: true
 
-  # 로컬 DB 기본값 (Docker MySQL)
-  datasource:
-    url: jdbc:mysql://localhost:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+  # 로컬 DB 기본값 (SPRING_DATASOURCE_* 환경변수로 자동 오버라이드)
+  # datasource 설정은 application.yml 기본값 또는 환경변수 사용
 
 # ========================================
 # Google Cloud (로컬에서는 비활성화)
@@ -30,3 +29,7 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+
+auth:
+  mock:
+    enabled: true  # 로컬에서는 모킹 활성화

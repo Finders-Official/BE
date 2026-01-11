@@ -5,7 +5,7 @@ import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.entity.PostLike;
 import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostRepository;
-import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +21,15 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
     private final PostLikeRepository postLikeRepository;
 
     @Override
-    public PostLikeResponse.PostLikeResDTO createPostLike(Long postId, Member member) {
-        Post post = postRepository.findById(postId)
+    public PostLikeResponse.PostLikeResDTO createPostLike(Long postId, MemberUser memberUser) {
+        Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        if (postLikeRepository.existsByPostAndMember(post, member)) {
+        if (postLikeRepository.existsByPostAndMemberUser(post, memberUser)) {
             throw new CustomException(ErrorCode.CONFLICT);
         }
 
-        postLikeRepository.save(PostLike.create(post, member));
+        postLikeRepository.save(PostLike.create(post, memberUser));
 
         post.increaseLikeCount();
 
@@ -40,11 +40,11 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
     }
 
     @Override
-    public PostLikeResponse.PostLikeResDTO deletePostLike(Long postId, Member member) {
-        Post post = postRepository.findById(postId)
+    public PostLikeResponse.PostLikeResDTO deletePostLike(Long postId, MemberUser memberUser) {
+        Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        PostLike postLike = postLikeRepository.findByPostAndMember(post, member)
+        PostLike postLike = postLikeRepository.findByPostAndMemberUser(post, memberUser)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         postLikeRepository.delete(postLike);

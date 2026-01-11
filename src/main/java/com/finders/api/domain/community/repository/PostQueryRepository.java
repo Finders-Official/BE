@@ -15,11 +15,13 @@ public class PostQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<Post> findAllForFeed() {
+    public List<Post> findAllForFeed(int page, int size) {
         return queryFactory
                 .selectFrom(post)
                 .where(post.status.eq(CommunityStatus.ACTIVE))
                 .orderBy(post.createdAt.desc())
+                .offset((long) page * size)
+                .limit(size)
                 .fetch();
     }
 
