@@ -6,6 +6,7 @@ import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.store.entity.PhotoLab;
+import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostCommandServiceImpl implements PostCommandService {
 
     private final PostRepository postRepository;
+    private final PhotoLabRepository photoLabRepository;
 
     @Override
     public Long createPost(PostRequest.CreatePostDTO request, MemberUser memberUser) {
-        // PhotoLabRepository 연결 예정
         PhotoLab photoLab = null;
+
+        if (request.labId() != null) {
+            photoLab = photoLabRepository.findById(request.labId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+        }
 
         Post post = Post.toEntity(request, memberUser, photoLab);
 
