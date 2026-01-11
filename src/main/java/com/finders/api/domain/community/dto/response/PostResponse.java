@@ -78,18 +78,37 @@ public class PostResponse {
         }
     }
 
-    // 피드 목록 리스트를 감싸는 DTO
+    // 홈페이지 사진 수다 사진 미리보기
+    // 개별 항목 DTO
     @Builder
-    public record PostPreViewListDTO(
-            List<PostsResDTO> postList,
-            boolean hasNext
+    public record PostPreviewDTO(
+            Long postId,
+            String imageUrl,
+            String title,
+            Integer likeCount,
+            Integer commentCount,
+            boolean isLiked
     ) {
-        public static PostPreViewListDTO from(Page<Post> postPage) {
-            return PostPreViewListDTO.builder()
-                    .postList(postPage.getContent().stream()
-                            .map(PostsResDTO::from)
-                            .toList())
-                    .hasNext(postPage.hasNext())
+        public static PostPreviewDTO from(Post post, boolean isLiked) {
+            return PostPreviewDTO.builder()
+                    .postId(post.getId())
+                    .imageUrl(null)
+                    .title(post.getTitle())
+                    .likeCount(post.getLikeCount())
+                    .commentCount(post.getCommentCount())
+                    .isLiked(isLiked)
+                    .build();
+        }
+    }
+
+    // 미리보기 리스트를 감싸는 DTO
+    @Builder
+    public record PostPreviewListDTO(
+            List<PostPreviewDTO> previewList
+    ) {
+        public static PostPreviewListDTO from(List<PostPreviewDTO> previewDTOs) {
+            return PostPreviewListDTO.builder()
+                    .previewList(previewDTOs)
                     .build();
         }
     }

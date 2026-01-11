@@ -43,7 +43,9 @@ public class SecurityConfig {
             // H2 Console (local only)
             "/h2-console/**",
             // Storage Test (local only - @Profile("local")로 프로덕션 비활성화)
-            "/storage/test/**"
+            "/storage/test/**",
+            // HM-010 커뮤니티 사진 미리 보기
+            "/posts/preview"
     };
 
     @Bean

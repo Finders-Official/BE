@@ -39,23 +39,29 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
-    public PostResponse.PostPreViewListDTO getPostList(Integer page) {
+    public PostResponse.PostPreviewListDTO getPostList(Integer page) {
         Page<Post> postPage = postRepository.findAll(
                 PageRequest.of(page, DEFAULT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
         );
 
-        return PostResponse.PostPreViewListDTO.from(postPage);
+        List<PostResponse.PostPreviewDTO> dtos = postPage.getContent().stream()
+                .map(post -> PostResponse.PostPreviewDTO.from(post, false))
+                .toList();
+
+        return PostResponse.PostPreviewListDTO.from(dtos);
     }
 
     @Override
-    public PostResponse.PostPreViewListDTO getPopularPosts() {
+    public PostResponse.PostPreviewListDTO getPopularPosts(Member member) {
         List<Post> posts = postQueryRepository.findTop10PopularPosts();
 
-        return PostResponse.PostPreViewListDTO.builder()
-                .postList(posts.stream()
-                        .map(PostResponse.PostsResDTO::from)
-                        .toList())
-                .hasNext(false)
-                .build();
+        List<PostResponse.PostPreviewDTO> previewDTOs = posts.stream()
+                .map(post -> {
+                    boolean isLiked = (member != null) && postLikeRepository.existsByPostAndMember(post, member);
+                    return PostResponse.PostPreviewDTO.from(post, isLiked);
+                })
+                .toList();
+
+        return PostResponse.PostPreviewListDTO.from(previewDTOs);
     }
 }

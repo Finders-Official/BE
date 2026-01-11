@@ -35,7 +35,7 @@ public class PostController {
     // 게시글 관련
     @Operation(summary = "피드 목록 조회")
     @GetMapping
-    public ApiResponse<PostResponse.PostPreViewListDTO> getPosts(@RequestParam(defaultValue = "0") Integer page) {
+    public ApiResponse<PostResponse.PostPreviewListDTO> getPosts(@RequestParam(defaultValue = "0") Integer page) {
         return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPostList(page));
     }
 
@@ -119,8 +119,10 @@ public class PostController {
     // HM-010 커뮤니티 사진 미리 보기
     @Operation(summary = "커뮤니티 사진 미리 보기", description = "메인 페이지에서 인기 게시물 10개를 조회합니다.")
     @GetMapping("/preview")
-    public ApiResponse<PostResponse.PostPreViewListDTO> getPopularPosts() {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts());
+    public ApiResponse<PostResponse.PostPreviewListDTO> getPopularPosts(
+            @AuthenticationPrincipal Member member
+    ) {
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(member));
     }
 
 //    // 현상소 관련
