@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,10 +41,10 @@ public class PostController {
     }
 
     @Operation(summary = "게시물 작성", description = "게시글 등록 API입니다.")
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<Long> createPost(
             @AuthenticationPrincipal MemberUser memberUser,
-            @Valid @RequestBody PostRequest.CreatePostDTO request
+            @ModelAttribute @Valid PostRequest.CreatePostDTO request
     ) {
         return ApiResponse.success(SuccessCode.POST_CREATED, postCommandService.createPost(request, memberUser));
     }

@@ -2,13 +2,17 @@ package com.finders.api.domain.community.service.command;
 
 import com.finders.api.domain.community.dto.request.PostRequest;
 import com.finders.api.domain.community.entity.Post;
+import com.finders.api.domain.community.entity.PostImage;
 import com.finders.api.domain.community.enums.CommunityStatus;
+import com.finders.api.domain.community.repository.PostImageRepository;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StoragePath;
+import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +24,8 @@ public class PostCommandServiceImpl implements PostCommandService {
 
     private final PostRepository postRepository;
     private final PhotoLabRepository photoLabRepository;
+    private final PostImageRepository postImageRepository;
+    private final StorageService storageService;
 
     @Override
     public Long createPost(PostRequest.CreatePostDTO request, MemberUser memberUser) {
@@ -31,8 +37,27 @@ public class PostCommandServiceImpl implements PostCommandService {
         }
 
         Post post = Post.toEntity(request, memberUser, photoLab);
+        post = postRepository.save(post);
 
-        return postRepository.save(post).getId();
+        if (request.images() != null && !request.images().isEmpty()) {
+            for (int i = 0; i < request.images().size(); i++) {
+                var uploadResponse = storageService.uploadPublic(
+                        request.images().get(i),
+                        StoragePath.POST_IMAGE,
+                        post.getId()
+                );
+
+                PostImage postImage = PostImage.builder()
+                        .post(post)
+                        .imageUrl(uploadResponse.objectPath())
+                        .displayOrder(i)
+                        .build();
+
+                postImageRepository.save(postImage);
+            }
+        }
+
+        return post.getId();
     }
 
     @Override
