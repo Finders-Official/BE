@@ -1,4 +1,4 @@
-package com.finders.api.domain.store.service;
+﻿package com.finders.api.domain.store.service;
 
 import com.finders.api.domain.store.dto.response.PhotoLabDocumentResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
@@ -29,6 +29,7 @@ public class PhotoLabDocumentService {
 
     @Transactional
     public PhotoLabDocumentResponse.Create uploadDocument(
+            Long ownerId,
             Long photoLabId,
             DocumentType documentType,
             MultipartFile file
@@ -38,6 +39,10 @@ public class PhotoLabDocumentService {
 
         PhotoLab photoLab = photoLabRepository.findById(photoLabId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        if (ownerId == null || !photoLab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
 
         validateFile(file);
 
@@ -66,3 +71,4 @@ public class PhotoLabDocumentService {
         }
     }
 }
+

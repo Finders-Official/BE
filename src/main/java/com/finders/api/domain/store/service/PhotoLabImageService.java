@@ -1,4 +1,4 @@
-package com.finders.api.domain.store.service;
+﻿package com.finders.api.domain.store.service;
 
 import com.finders.api.domain.store.dto.response.PhotoLabImageResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
@@ -28,6 +28,7 @@ public class PhotoLabImageService {
 
     @Transactional
     public PhotoLabImageResponse.Create uploadImage(
+            Long ownerId,
             Long photoLabId,
             MultipartFile file,
             Integer displayOrder,
@@ -39,8 +40,14 @@ public class PhotoLabImageService {
         PhotoLab photoLab = photoLabRepository.findById(photoLabId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
+        if (ownerId == null || !photoLab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
         validateFile(file);
         validateDisplayOrder(displayOrder);
+
+        Integer resolvedDisplayOrder = resolveDisplayOrder(photoLabId, displayOrder);
 
         StorageResponse.Upload upload = storageService.uploadPublic(
                 file,
@@ -55,7 +62,7 @@ public class PhotoLabImageService {
         PhotoLabImage photoLabImage = PhotoLabImage.builder()
                 .photoLab(photoLab)
                 .imageUrl(upload.objectPath())
-                .displayOrder(displayOrder)
+                .displayOrder(resolvedDisplayOrder)
                 .isMain(isMain)
                 .build();
 
@@ -80,6 +87,15 @@ public class PhotoLabImageService {
                     "Only image/* content types are allowed."
             );
         }
+    }
+
+    private Integer resolveDisplayOrder(Long photoLabId, Integer displayOrder) {
+        if (displayOrder != null) {
+            return displayOrder;
+        }
+
+        Integer maxDisplayOrder = photoLabImageRepository.findMaxDisplayOrderByPhotoLabId(photoLabId);
+        return maxDisplayOrder + 1;
     }
 
     private void validateDisplayOrder(Integer displayOrder) {
