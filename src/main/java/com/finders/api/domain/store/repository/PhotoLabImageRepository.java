@@ -1,4 +1,4 @@
-﻿package com.finders.api.domain.store.repository;
+package com.finders.api.domain.store.repository;
 
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import org.springframework.data.jpa.repository.JpaRepository;

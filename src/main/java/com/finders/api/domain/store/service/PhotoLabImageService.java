@@ -1,4 +1,4 @@
-﻿package com.finders.api.domain.store.service;
+package com.finders.api.domain.store.service;
 
 import com.finders.api.domain.store.dto.response.PhotoLabImageResponse;
 import com.finders.api.domain.store.entity.PhotoLab;

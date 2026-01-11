@@ -1,4 +1,4 @@
-﻿package com.finders.api.domain.store.controller;
+package com.finders.api.domain.store.controller;
 
 import com.finders.api.domain.store.dto.response.PhotoLabDocumentResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabImageResponse;
