@@ -116,6 +116,7 @@ springdoc:
     path: /v3/api-docs
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+  use-fqn: true   # DTO 클래스 이름 충돌을 방지하기 위해 FQN(Fully Qualified Name) 사용
 
 # ========================================
 # Replicate AI 설정
