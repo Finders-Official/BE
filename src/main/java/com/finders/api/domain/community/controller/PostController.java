@@ -120,9 +120,9 @@ public class PostController {
     @Operation(summary = "커뮤니티 사진 미리 보기", description = "메인 페이지에서 인기 게시물 10개를 조회합니다.")
     @GetMapping("/preview")
     public ApiResponse<PostResponse.PostPreviewListDTO> getPopularPosts(
-            @AuthenticationPrincipal Member member
+            @AuthenticationPrincipal MemberUser memberUser
     ) {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(member));
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(memberUser));
     }
 
 //    // 현상소 관련
