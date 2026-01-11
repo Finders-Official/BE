@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -40,11 +41,9 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     @Override
     public PostResponse.PostPreviewListDTO getPostList(Integer page) {
-        Page<Post> postPage = postRepository.findAll(
-                PageRequest.of(page, DEFAULT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
-        );
+        List<Post> posts = postQueryRepository.findAllForFeed(page, DEFAULT_PAGE_SIZE);
 
-        List<PostResponse.PostPreviewDTO> dtos = postPage.getContent().stream()
+        List<PostResponse.PostPreviewDTO> dtos = posts.stream()
                 .map(post -> PostResponse.PostPreviewDTO.from(post, false))
                 .toList();
 
@@ -55,9 +54,16 @@ public class PostQueryServiceImpl implements PostQueryService {
     public PostResponse.PostPreviewListDTO getPopularPosts(MemberUser memberUser) {
         List<Post> posts = postQueryRepository.findTop10PopularPosts();
 
+        Set<Long> likedPostIds = java.util.Collections.emptySet();
+        if (memberUser != null) {
+            List<Long> postIds = posts.stream().map(Post::getId).toList();
+            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberUser.getId(), postIds);
+        }
+
+        final Set<Long> finalLikedPostIds = likedPostIds;
         List<PostResponse.PostPreviewDTO> previewDTOs = posts.stream()
                 .map(post -> {
-                    boolean isLiked = (memberUser != null) && postLikeRepository.existsByPostAndMemberUser(post, memberUser);
+                    boolean isLiked = finalLikedPostIds.contains(post.getId());
                     return PostResponse.PostPreviewDTO.from(post, isLiked);
                 })
                 .toList();
