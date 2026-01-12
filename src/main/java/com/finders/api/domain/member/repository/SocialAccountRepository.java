@@ -11,5 +11,5 @@ import java.util.Optional;
 public interface SocialAccountRepository extends JpaRepository<SocialAccount, Long> {
     Optional<SocialAccount> findByProviderAndProviderId(SocialProvider socialProvider, String providerId);
 
-    List<SocialAccount> findAllByMember(Member member);
+    List<SocialAccount> findAllByUser(Member member);
 }

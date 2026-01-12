@@ -37,7 +37,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         MemberResponse.UserDetail userDetail = null;
         if (realMember instanceof MemberUser memberUser) {
-            List<MemberResponse.SocialAccountInfo> socialAccounts = socialAccountRepository.findAllByMember(member)
+            List<MemberResponse.SocialAccountInfo> socialAccounts = socialAccountRepository.findAllByUser(member)
                     .stream()
                     .map(sa -> new MemberResponse.SocialAccountInfo(sa.getProvider().name(), sa.getSocialEmail()))
                     .toList();
