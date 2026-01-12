@@ -25,6 +25,10 @@ public class KakaoOAuthClient implements OAuthClient {
     @Value("${auth.mock.enabled:false}")
     private boolean isMockEnabled;
 
+    @Value("${oauth2.kakao.client-id}") private String clientId;
+    @Value("${oauth2.kakao.client-secret}") private String clientSecret;
+    @Value("${oauth2.kakao.redirect-uri}") private String redirectUri;
+
     @Override
     public SocialProvider provider() {
         return SocialProvider.KAKAO;
@@ -87,6 +91,26 @@ public class KakaoOAuthClient implements OAuthClient {
                 throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
             }
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR);
+        }
+    }
+
+    public String getAccessToken(String code) {
+        try {
+            KakaoTokenResponse response = RestClient.create().post()
+                    .uri("https://kauth.kakao.com/oauth/token")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body("grant_type=authorization_code" +
+                            "&client_id=" + clientId +
+                            "&client_secret=" + clientSecret +
+                            "&redirect_uri=" + redirectUri +
+                            "&code=" + code)
+                    .retrieve()
+                    .body(KakaoTokenResponse.class);
+
+            if (response == null) throw new CustomException(ErrorCode.EXTERNAL_API_ERROR);
+            return response.accessToken();
         } catch (Exception e) {
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR);
         }
