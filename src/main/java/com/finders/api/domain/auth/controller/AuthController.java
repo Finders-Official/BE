@@ -7,13 +7,9 @@ import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.io.IOException;
 
 @Tag(name = "인증(Auth)", description = "인증 및 토큰 관련 API")
 @RestController
