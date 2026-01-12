@@ -54,7 +54,9 @@ public class SecurityConfig {
             // Webhooks (외부 서비스 콜백)
             "/webhooks/**",
             // TODO: Auth API 구현 후 제거 - 개발 테스트용
-            "/restorations/**"
+            "/restorations/**",
+            // HM-010 커뮤니티 사진 미리 보기
+            "/posts/preview"
     };
 
     @Bean

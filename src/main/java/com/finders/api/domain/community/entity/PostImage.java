@@ -2,12 +2,12 @@ package com.finders.api.domain.community.entity;
 
 import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "post_image")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostImage extends BaseTimeEntity {
