@@ -16,10 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "회원(Member)", description = "회원가입 완료, 휴대폰 본인 인증 및 사용자 관련 API")
@@ -61,14 +58,8 @@ public class MemberController {
     ) {
         if (principal == null) throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
 
-        String authority = "";
-        if (principal instanceof User user) {
-            authority = user.getAuthorities().iterator().next().getAuthority();
-        } else if (principal instanceof SignupTokenPayload) {
-            authority = "ROLE_GUEST";
-        }
-
-        boolean isSignupFlow = "ROLE_GUEST".equals(authority);
+        // AuthUser 또는 SignupTokenPayload에 따라 권한 확인
+        boolean isSignupFlow = (principal instanceof SignupTokenPayload);
 
         return ApiResponse.success(SuccessCode.AUTH_PHONE_VERIFIED,
                 memberCommandService.verifyPhoneCode(request, isSignupFlow));
@@ -79,28 +70,22 @@ public class MemberController {
             throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
         }
 
-        String authority = "";
+        String role = "";
 
-        // 1. Principal 타입에 따라 권한(Role) 추출
-        if (principal instanceof User user) {
-            // JwtTokenProvider를 통해 들어온 경우 (AccessToken)
-            authority = user.getAuthorities().iterator().next().getAuthority();
-        }
-        else if (principal instanceof SignupTokenPayload) {
-            // SignupTokenProvider를 통해 들어온 경우 (SignupToken)
-            // SignupTokenProvider.getAuthentication에서 ROLE_GUEST를 넣어주므로 이를 활용합니다.
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            authority = auth.getAuthorities().iterator().next().getAuthority();
+        if (principal instanceof AuthUser authUser) {
+            role = authUser.role(); // "USER", "OWNER", "ADMIN" 등
+        } else if (principal instanceof SignupTokenPayload) {
+            role = "GUEST";
         }
 
         // 2. 목적(Purpose)에 따른 권한 검증
         // 회원가입 단계(SIGNUP)인데 GUEST 권한이 없는 경우
-        if ("SIGNUP".equals(purpose) && !"ROLE_GUEST".equals(authority)) {
+        if ("SIGNUP".equals(purpose) && !"GUEST".equals(role)) {
             throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
         }
 
-        // 서비스 이용 단계(MY_PAGE 등)인데 USER 권한이 없는 경우
-        if ("MY_PAGE".equals(purpose) && !"ROLE_USER".equals(authority)) {
+        // 서비스 이용 단계(MY_PAGE 등)는 GUEST를 제외한 모든 정식 회원(USER, OWNER, ADMIN) 가능
+        if ("MY_PAGE".equals(purpose) && "GUEST".equals(role)) {
             throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
         }
     }
