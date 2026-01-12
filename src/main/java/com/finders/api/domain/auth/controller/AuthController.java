@@ -7,9 +7,13 @@ import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
 
 @Tag(name = "인증(Auth)", description = "인증 및 토큰 관련 API")
 @RestController
@@ -20,7 +24,7 @@ public class AuthController {
     private final AuthCommandService authCommandService;
 
     @Operation(
-            summary = "소셜 로그인",
+            summary = "소셜 로그인(모바일 Native SDK)",
             description = "유저용 소셜 로그인 요청입니다."
     )
     @PostMapping("/social/login")
@@ -28,6 +32,17 @@ public class AuthController {
             @Valid @RequestBody AuthRequest.SocialLogin request
     ) {
         return authCommandService.socialLogin(request);
+    }
+
+    @Operation(
+            summary = "소셜 로그인 (웹 브라우저)",
+            description = "유저용 소셜 로그인 요청입니다."
+    )
+    @PostMapping("/social/login/code") // GET -> POST로 변경
+    public ApiResponse<?> socialCodeLogin(
+            @Valid @RequestBody AuthRequest.SocialCodeLogin request
+    ) {
+        return authCommandService.processSocialCodeLogin(request);
     }
 
     @Operation(
