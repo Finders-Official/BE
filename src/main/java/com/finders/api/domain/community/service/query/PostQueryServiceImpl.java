@@ -10,6 +10,8 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,12 +84,35 @@ public class PostQueryServiceImpl implements PostQueryService {
                 })
                 .toList();
 
-        // 4. 리스트를 감싸서 반환
         return PostResponse.PostPreviewListDTO.from(previewDTOs);
     }
 
     private String getFullUrl(String path) {
         if (path == null || path.isBlank()) return null;
         return storageService.getSignedUrl(path, SIGNED_URL_EXPIRY_MINUTES).url();
+    }
+
+    // 커뮤니티 게시글 검색
+    @Override
+    public PostResponse.PostPreviewListDTO searchPosts(String keyword, MemberUser memberUser, Pageable pageable) {
+        Page<Post> posts = postRepository.searchPostsByKeyword(keyword, pageable);
+
+        Set<Long> likedPostIds = java.util.Collections.emptySet();
+        if (memberUser != null) {
+            List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
+            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberUser.getId(), postIds);
+        }
+
+        final Set<Long> finalLikedPostIds = likedPostIds;
+        List<PostResponse.PostPreviewDTO> dtos = posts.getContent().stream()
+                .map(post -> {
+                    boolean isLiked = finalLikedPostIds.contains(post.getId());
+                    String mainImageUrl = post.getPostImageList().isEmpty() ? null
+                            : getFullUrl(post.getPostImageList().get(0).getImageUrl());
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImageUrl);
+                })
+                .toList();
+
+        return PostResponse.PostPreviewListDTO.from(dtos);
     }
 }
