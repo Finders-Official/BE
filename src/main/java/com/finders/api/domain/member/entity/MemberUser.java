@@ -49,6 +49,14 @@ public class MemberUser extends Member {
         this.lastTokenRefreshAt = null;
     }
 
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
     // === 토큰 비즈니스 메서드 ===
 
     /**

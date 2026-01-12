@@ -15,4 +15,7 @@ public interface MemberCommandService {
 
     // 소셜 회원가입 완료
     MemberResponse.SignupResult signupSocialComplete(SignupTokenPayload payload, MemberRequest.SocialSignupComplete request);
+    
+    // 내 정보 수정
+    void updateProfile(Long memberId, MemberRequest.UpdateProfile request);
 }
