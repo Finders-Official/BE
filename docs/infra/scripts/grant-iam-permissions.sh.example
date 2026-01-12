@@ -1,31 +1,34 @@
 #!/bin/bash
 
 # =============================================================================
-# GCP IAM 권한 부여 스크립트
+# GCP IAM 권한 부여 스크립트 (템플릿)
 #
-# 사용법: ./grant-iam-permissions.sh
-# 실행 전: TEAM_MEMBERS, PHOTO_TEAM_MEMBERS 배열에 이메일 추가
+# 사용법:
+#   1. 이 파일을 grant-iam-permissions.sh로 복사
+#   2. TODO 부분에 실제 값 입력
+#   3. ./grant-iam-permissions.sh 실행
 # =============================================================================
 
 set -e
 
 # -----------------------------------------------------------------------------
-# 설정
+# 설정 (TODO: 실제 값으로 변경)
 # -----------------------------------------------------------------------------
 
-PROJECT_ID="project-37afc2aa-d3d3-4a1a-8cd"
+PROJECT_ID="your-gcp-project-id"                              # TODO: GCP 프로젝트 ID
+SERVICE_ACCOUNT="your-service-account@project.iam.gserviceaccount.com"  # TODO: 서비스 계정
 
-# 전체 팀원 이메일 (로그 뷰어 + 모니터링 뷰어 권한)
+# 전체 팀원 이메일 (로그 뷰어 + 모니터링 뷰어 + 서비스 계정 Impersonation 권한)
 TEAM_MEMBERS=(
-    # "팀원1@gmail.com"
-    # "팀원2@gmail.com"
     # TODO: 팀원 이메일 추가
+    # "teammate1@gmail.com"
+    # "teammate2@gmail.com"
 )
 
 # 사진 담당 팀원 이메일 (GCS 권한 추가)
 PHOTO_TEAM_MEMBERS=(
-    # "사진담당자@gmail.com"
     # TODO: 사진 담당자 이메일 추가
+    # "photo-team@gmail.com"
 )
 
 # -----------------------------------------------------------------------------
@@ -43,6 +46,17 @@ grant_role() {
         --role="${role}" \
         --quiet > /dev/null 2>&1
     echo "    ✓ 완료"
+}
+
+grant_sa_impersonation() {
+    local email=$1
+
+    echo "  → 서비스 계정 Impersonation 권한 부여 중..."
+    gcloud iam service-accounts add-iam-policy-binding "$SERVICE_ACCOUNT" \
+        --member="user:${email}" \
+        --role="roles/iam.serviceAccountTokenCreator" \
+        --quiet > /dev/null 2>&1
+    echo "    ✓ 완료 (Presigned URL 로컬 테스트 가능)"
 }
 
 # -----------------------------------------------------------------------------
@@ -70,6 +84,7 @@ for email in "${TEAM_MEMBERS[@]}"; do
     echo "👤 ${email}"
     grant_role "$email" "roles/logging.viewer" "로그 뷰어"
     grant_role "$email" "roles/monitoring.viewer" "모니터링 뷰어"
+    grant_sa_impersonation "$email"
 done
 
 echo ""

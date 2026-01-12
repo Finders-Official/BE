@@ -89,6 +89,51 @@ tail -n 100 /var/log/spring-boot/application.log
 grep -i error /var/log/spring-boot/application.log
 ```
 
+## 로컬 개발 환경 설정 (Presigned URL 테스트)
+
+GCS Presigned URL을 로컬에서 테스트하려면 서비스 계정 Impersonation 설정이 필요합니다.
+
+### 1. gcloud CLI 설치
+
+아직 설치하지 않았다면 [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)를 설치하세요.
+
+### 2. 로그인 및 프로젝트 설정
+
+```bash
+# Google 계정으로 로그인
+gcloud auth login
+
+# 프로젝트 설정
+gcloud config set project project-37afc2aa-d3d3-4a1a-8cd
+```
+
+### 3. 서비스 계정 Impersonation 설정
+
+Presigned URL 생성을 위해 서비스 계정을 Impersonate 합니다:
+
+```bash
+gcloud auth application-default login \
+  --impersonate-service-account=517500643080-compute@developer.gserviceaccount.com
+```
+
+> **참고**: 이 권한이 없다면 프로젝트 관리자에게 `roles/iam.serviceAccountTokenCreator` 권한을 요청하세요.
+
+### 4. 애플리케이션 실행
+
+```bash
+./gradlew bootRun
+```
+
+이제 로컬에서 Presigned URL 생성 및 GCS 업로드/다운로드 테스트가 가능합니다!
+
+### 주의사항
+
+- Impersonation 인증은 **1시간 후 만료**됩니다. 만료 시 3번 단계를 다시 실행하세요.
+- 테스트 시 실제 GCS 버킷(`finders-private`, `finders-public`)에 접근합니다.
+- 테스트 파일은 `temp/` 경로에 업로드하면 30일 후 자동 삭제됩니다.
+
+---
+
 ## 문제 해결
 
 ### "권한이 없습니다" 오류

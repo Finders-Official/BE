@@ -129,3 +129,10 @@ fix: 이미지 업로드 시 NPE 수정 (#45)
 ```
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `rename`, `remove`
+
+### 커밋 메시지 규칙
+
+**절대로 커밋 메시지에 다음을 포함하지 마세요:**
+- `Generated with Claude Code`
+- `Co-Authored-By: Claude`
+- AI가 생성했다는 어떤 표시도 금지
