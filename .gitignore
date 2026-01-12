@@ -90,3 +90,4 @@ docker-compose.override.yml
 # ========================================
 docs/INFRASTRUCTURE.md
 docs/infra/scripts/grant-iam-permissions.sh
+docs/infra/dashboards/
