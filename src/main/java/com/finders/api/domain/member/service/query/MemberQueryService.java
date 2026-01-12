@@ -1,5 +1,6 @@
 package com.finders.api.domain.member.service.query;
 
+import com.finders.api.domain.member.dto.request.MemberRequest;
 import com.finders.api.domain.member.dto.response.MemberResponse;
 
 public interface MemberQueryService {

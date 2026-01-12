@@ -116,4 +116,22 @@ public class MemberController {
         MemberResponse.MyProfile profile = memberQueryService.getMyProfile(authUser.memberId());
         return ApiResponse.success(SuccessCode.MEMBER_ME_FOUND, profile);
     }
+
+    @Operation(
+            summary = "내 정보 수정",
+            description = "로그인한 사용자의 정보를 수정합니다."
+    )
+    @PatchMapping("/me")
+    public ApiResponse<MemberResponse.MyProfile> updateProfile(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestBody @Valid MemberRequest.UpdateProfile request
+    ) {
+        // 데이터 수정
+        memberCommandService.updateProfile(authUser.memberId(), request);
+
+        // 수정된 최신 데이터 조회 (화면에 보여줄 데이터 조립)
+        MemberResponse.MyProfile updatedProfile = memberQueryService.getMyProfile(authUser.memberId());
+
+        return ApiResponse.success(SuccessCode.MEMBER_UPDATED, updatedProfile);
+    }
 }

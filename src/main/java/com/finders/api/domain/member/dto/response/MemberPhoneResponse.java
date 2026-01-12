@@ -33,8 +33,8 @@ public class MemberPhoneResponse {
             return new VerificationResult(true, token, phone, expires);
         }
         // 마이페이지용
-        public static VerificationResult myPage(boolean verified, String phone) {
-            return new VerificationResult(verified, null, phone, null);
+        public static VerificationResult myPage(String token, String phone, int expires) {
+            return new VerificationResult(true, token, phone, expires);
         }
     }
 }
