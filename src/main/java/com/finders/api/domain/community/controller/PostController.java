@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,15 +36,15 @@ public class PostController {
     // 게시글 관련
     @Operation(summary = "피드 목록 조회")
     @GetMapping
-    public ApiResponse<PostResponse.PostPreViewListDTO> getPosts(@RequestParam(defaultValue = "0") Integer page) {
+    public ApiResponse<PostResponse.PostPreviewListDTO> getPosts(@RequestParam(defaultValue = "0") Integer page) {
         return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPostList(page));
     }
 
     @Operation(summary = "게시물 작성", description = "게시글 등록 API입니다.")
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<Long> createPost(
             @AuthenticationPrincipal MemberUser memberUser,
-            @Valid @RequestBody PostRequest.CreatePostDTO request
+            @ModelAttribute @Valid PostRequest.CreatePostDTO request
     ) {
         return ApiResponse.success(SuccessCode.POST_CREATED, postCommandService.createPost(request, memberUser));
     }
@@ -114,6 +115,15 @@ public class PostController {
             @AuthenticationPrincipal MemberUser memberUser
     ) {
         return ApiResponse.success(SuccessCode.OK, postLikeCommandService.deletePostLike(postId, memberUser));
+    }
+
+    // HM-010 커뮤니티 사진 미리 보기
+    @Operation(summary = "커뮤니티 사진 미리 보기", description = "메인 페이지에서 인기 게시물 10개를 조회합니다.")
+    @GetMapping("/preview")
+    public ApiResponse<PostResponse.PostPreviewListDTO> getPopularPosts(
+            @AuthenticationPrincipal MemberUser memberUser
+    ) {
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(memberUser));
     }
 
 //    // 현상소 관련
