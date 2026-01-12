@@ -6,10 +6,12 @@ import com.finders.api.domain.member.dto.request.MemberRequest;
 import com.finders.api.domain.member.dto.response.MemberPhoneResponse;
 import com.finders.api.domain.member.dto.response.MemberResponse;
 import com.finders.api.domain.member.service.command.MemberCommandService;
+import com.finders.api.domain.member.service.query.MemberQueryService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.SuccessCode;
+import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberCommandService memberCommandService;
+    private final MemberQueryService memberQueryService;
 
     @Operation(
             summary = "휴대폰 인증번호 요청",
@@ -115,5 +118,17 @@ public class MemberController {
         MemberResponse.SignupResult data = memberCommandService.signupSocialComplete(payload, request);
 
         return ApiResponse.success(SuccessCode.MEMBER_CREATED, data);
+    }
+
+    @Operation(
+            summary = "마이페이지(내 정보) 조회",
+            description = "로그인한 사용자의 기본 정보 및 프로필 데이터를 조회합니다."
+    )
+    @GetMapping("/me")
+    public ApiResponse<MemberResponse.MyProfile> getMyProfile(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        MemberResponse.MyProfile profile = memberQueryService.getMyProfile(authUser.memberId());
+        return ApiResponse.success(SuccessCode.MEMBER_ME_FOUND, profile);
     }
 }
