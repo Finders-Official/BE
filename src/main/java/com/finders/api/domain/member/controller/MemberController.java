@@ -5,6 +5,7 @@ import com.finders.api.domain.member.dto.request.MemberPhoneRequest;
 import com.finders.api.domain.member.dto.request.MemberRequest;
 import com.finders.api.domain.member.dto.response.MemberPhoneResponse;
 import com.finders.api.domain.member.dto.response.MemberResponse;
+import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.service.command.MemberCommandService;
 import com.finders.api.domain.member.service.query.MemberQueryService;
 import com.finders.api.global.exception.CustomException;
@@ -126,11 +127,11 @@ public class MemberController {
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody @Valid MemberRequest.UpdateProfile request
     ) {
-        // 데이터 수정
-        memberCommandService.updateProfile(authUser.memberId(), request);
+        // 데이터 수정 -> 수정된 엔티티 반환
+        Member updatedMember = memberCommandService.updateProfile(authUser.memberId(), request);
 
-        // 수정된 최신 데이터 조회 (화면에 보여줄 데이터 조립)
-        MemberResponse.MyProfile updatedProfile = memberQueryService.getMyProfile(authUser.memberId());
+        // 수정된 엔티티 -> DTO로 변환
+        MemberResponse.MyProfile updatedProfile = memberQueryService.getMyProfile(updatedMember);
 
         return ApiResponse.success(SuccessCode.MEMBER_UPDATED, updatedProfile);
     }
