@@ -32,12 +32,20 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     public MemberResponse.MyProfile getMyProfile(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        return convertToMyProfileDTO(member);
+    }
 
+    @Override
+    public MemberResponse.MyProfile getMyProfile(Member member) {
+        return convertToMyProfileDTO(member);
+    }
+
+    private MemberResponse.MyProfile convertToMyProfileDTO(Member member) {
         Member realMember = (Member) Hibernate.unproxy(member);
 
         MemberResponse.UserDetail userDetail = null;
         if (realMember instanceof MemberUser memberUser) {
-            List<MemberResponse.SocialAccountInfo> socialAccounts = socialAccountRepository.findAllByUser(member)
+            List<MemberResponse.SocialAccountInfo> socialAccounts = socialAccountRepository.findAllByUser(memberUser)
                     .stream()
                     .map(sa -> new MemberResponse.SocialAccountInfo(sa.getProvider().name(), sa.getSocialEmail()))
                     .toList();
@@ -52,11 +60,11 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         return new MemberResponse.MyProfile(
                 new MemberResponse.MemberInfo(
-                        member.getId(),
-                        member.getName(),
-                        member.getPhone(),
-                        member.getRole().name(),
-                        member.getStatus().name()
+                        realMember.getId(),
+                        realMember.getName(),
+                        realMember.getPhone(),
+                        realMember.getRole().name(),
+                        realMember.getStatus().name()
                 ),
                 new MemberResponse.EditableInfo(true, true, true),
                 new MemberResponse.RoleData(userDetail, null, null)

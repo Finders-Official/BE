@@ -149,7 +149,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
     @Override
     @Transactional
-    public void updateProfile(Long memberId, MemberRequest.UpdateProfile request) {
+    public Member updateProfile(Long memberId, MemberRequest.UpdateProfile request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -180,6 +180,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 memberUser.updateProfileImage(request.profileImageUrl());
             }
         }
+
+        return realMember;
     }
 
     private void validateVPT(String phone, String token) {
