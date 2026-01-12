@@ -21,12 +21,16 @@ com.finders.api.domain.Members (X)
 | Type | Suffix | Example |
 |------|--------|---------|
 | Controller | `Controller` | `MemberController` |
-| Service | `Service` | `MemberService` |
-| Repository | `Repository` | `MemberRepository` |
+| Service (Query) | `QueryService`, `QueryServiceImpl` | `MemberQueryService`, `MemberQueryServiceImpl` |
+| Service (Command) | `CommandService`, `CommandServiceImpl` | `MemberCommandService`, `MemberCommandServiceImpl` |
+| Repository (JPA) | `Repository` | `MemberRepository` |
+| Repository (QueryDSL) | `QueryRepository` | `MemberQueryRepository` |
 | Entity | (없음) | `Member` |
 | DTO | `Request`, `Response` | `MemberRequest`, `MemberResponse` |
 | Exception | `Exception` | `CustomException` |
 | Config | `Config` | `SecurityConfig` |
+
+> **Service CQRS 패턴**: 신규 도메인은 Query/Command를 분리하여 구현합니다. 기존 도메인은 점진적으로 마이그레이션 예정입니다.
 
 ### Method
 - camelCase 사용

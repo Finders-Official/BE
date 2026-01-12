@@ -10,6 +10,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Table(name = "post")
@@ -65,6 +68,10 @@ public class Post extends BaseEntity {
             this.commentCount--;
         }
     }
+
+    @OneToMany(mappedBy = "post")
+    @OrderBy("displayOrder ASC")
+    private List<PostImage> postImageList = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
