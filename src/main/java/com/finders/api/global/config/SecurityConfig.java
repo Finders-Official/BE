@@ -56,7 +56,8 @@ public class SecurityConfig {
             // TODO: Auth API 구현 후 제거 - 개발 테스트용
             "/restorations/**",
             // HM-010 커뮤니티 사진 미리 보기
-            "/posts/preview"
+            "/posts/preview",
+            "/dev/login"
     };
 
     @Bean
