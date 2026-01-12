@@ -26,5 +26,13 @@ public interface PhotoLabImageRepository extends JpaRepository<PhotoLabImage, Lo
             order by image.photoLab.id asc, image.displayOrder asc, image.id asc
             """)
     List<PhotoLabImage> findMainImagesByPhotoLabIds(@Param("photoLabIds") List<Long> photoLabIds);
+
+    @Query("""
+            select image
+            from PhotoLabImage image
+            where image.photoLab.id in :photoLabIds
+            order by image.photoLab.id asc, image.displayOrder asc, image.id asc
+            """)
+    List<PhotoLabImage> findByPhotoLabIds(@Param("photoLabIds") List<Long> photoLabIds);
 }
 
