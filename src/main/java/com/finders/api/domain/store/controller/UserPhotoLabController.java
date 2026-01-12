@@ -2,17 +2,23 @@ package com.finders.api.domain.store.controller;
 
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
+import com.finders.api.domain.store.service.PhotoLabFavoriteService;
 import com.finders.api.domain.store.service.query.PhotoLabPopularQueryService;
 import com.finders.api.domain.store.service.query.PhotoLabQueryService;
+import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.PagedResponse;
+import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.domain.member.entity.MemberUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,8 +33,9 @@ import java.util.List;
 public class UserPhotoLabController {
     private final PhotoLabPopularQueryService photoLabPopularQueryService;
     private final PhotoLabQueryService photoLabQueryService;
+    private final PhotoLabFavoriteService photoLabFavoriteService;
 
-    @Operation(summary = "인기 현상소 조회 API")
+    @Operation(summary = "인기 현상소 조회 API")//, description = ""
     @GetMapping("/popular")
     public ApiResponse<List<PhotoLabPopularResponse.Card>> getPopularPhotoLabs() {
         return ApiResponse.success(
@@ -62,5 +69,31 @@ public class UserPhotoLabController {
                 lat,
                 lng
         );
+    }
+
+    @Operation(summary = "현상소 즐겨찾기 추가 API")
+    @PostMapping("/{photoLabId}/favorites")
+    public ApiResponse<Void> addFavorite(
+            @PathVariable Long photoLabId,
+            @AuthenticationPrincipal MemberUser memberUser
+    ) {
+        if (memberUser == null) {
+            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+        }
+        photoLabFavoriteService.addFavorite(memberUser.getId(), photoLabId);
+        return ApiResponse.success(SuccessCode.OK, null);
+    }
+
+    @Operation(summary = "현상소 즐겨찾기 삭제 API")
+    @DeleteMapping("/{photoLabId}/favorites")
+    public ApiResponse<Void> removeFavorite(
+            @PathVariable Long photoLabId,
+            @AuthenticationPrincipal MemberUser memberUser
+    ) {
+        if (memberUser == null) {
+            throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
+        }
+        photoLabFavoriteService.removeFavorite(memberUser.getId(), photoLabId);
+        return ApiResponse.success(SuccessCode.OK, null);
     }
 }
