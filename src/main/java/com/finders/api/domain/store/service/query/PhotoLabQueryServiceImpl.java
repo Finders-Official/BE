@@ -7,7 +7,7 @@ import com.finders.api.domain.store.entity.PhotoLabKeyword;
 import com.finders.api.domain.member.repository.MemberAgreementRepository;
 import com.finders.api.domain.store.repository.FavoritePhotoLabRepository;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
-import com.finders.api.domain.store.repository.PhotoLabKeywordQueryRepository;
+import com.finders.api.domain.store.repository.PhotoLabKeywordRepository;
 import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
 import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.global.response.PagedResponse;
@@ -33,7 +33,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     private final PhotoLabQueryRepository photoLabQueryRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
-    private final PhotoLabKeywordQueryRepository photoLabKeywordQueryRepository;
+    private final PhotoLabKeywordRepository photoLabKeywordRepository;
     private final FavoritePhotoLabRepository favoritePhotoLabRepository;
     private final MemberAgreementRepository memberAgreementRepository;
     private final StorageService storageService;
@@ -112,7 +112,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     }
 
     private Map<Long, List<String>> buildKeywordMap(List<Long> photoLabIds) {
-        List<PhotoLabKeyword> keywords = photoLabKeywordQueryRepository.findByPhotoLabIds(photoLabIds);
+        List<PhotoLabKeyword> keywords = photoLabKeywordRepository.findByPhotoLabIdIn(photoLabIds);
         if (keywords.isEmpty()) {
             return Collections.emptyMap();
         }

@@ -71,7 +71,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
     }
 
     private Map<Long, List<String>> buildKeywordMap(List<Long> photoLabIds) {
-        List<PhotoLabKeyword> keywords = photoLabKeywordRepository.findByPhotoLabIds(photoLabIds);
+        List<PhotoLabKeyword> keywords = photoLabKeywordRepository.findByPhotoLabIdIn(photoLabIds);
         if (keywords.isEmpty()) {
             return Collections.emptyMap();
         }
