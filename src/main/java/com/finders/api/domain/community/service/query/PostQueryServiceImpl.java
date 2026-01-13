@@ -6,6 +6,7 @@ import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostQueryRepository;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.infra.storage.StorageService;
@@ -114,5 +115,41 @@ public class PostQueryServiceImpl implements PostQueryService {
                 .toList();
 
         return PostResponse.PostPreviewListDTO.from(dtos);
+    }
+
+    // 현상소 검색
+    @Override
+    public PostResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable) {
+        Page<PhotoLab> labs = postRepository.searchByName(keyword, pageable);
+
+        List<PostResponse.PhotoLabSearchDTO> dtos = labs.getContent().stream()
+                .map(lab -> {
+                    String distanceStr = null;
+
+                    if (latitude != null && longitude != null && lab.getLatitude() != null && lab.getLongitude() != null) {
+                        double distance = calculateDistance(
+                                latitude,
+                                longitude,
+                                lab.getLatitude().doubleValue(),
+                                lab.getLongitude().doubleValue()
+                        );
+                        distanceStr = String.format("%.1fkm", distance);
+                    }
+
+                    return PostResponse.PhotoLabSearchDTO.from(lab, distanceStr);
+                })
+                .toList();
+
+        return PostResponse.PhotoLabSearchListDTO.from(dtos);
+    }
+
+    // 현상소 검색 직선 거리 계산
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double theta = lon1 - lon2;
+        double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2))
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
+        dist = Math.acos(dist);
+        dist = Math.toDegrees(dist);
+        return dist * 60 * 1.1515 * 1.609344;
     }
 }

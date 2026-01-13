@@ -12,4 +12,7 @@ public interface PostQueryService {
     PostResponse.PostPreviewListDTO getPopularPosts(MemberUser memberUser);
 
     PostResponse.PostPreviewListDTO searchPosts(String keyword, MemberUser memberUser, Pageable pageable);
+
+    // 현상소 검색
+    PostResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable);
 }
