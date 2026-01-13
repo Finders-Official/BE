@@ -16,11 +16,11 @@ public class CommentResponse {
             LocalDateTime createdAt,
             boolean isMine
     ) {
-        public static CommentResDTO from(Comment comment, Long currentMemberId) {
+        public static CommentResDTO from(Comment comment, Long currentMemberId, String profileImageUrl) {
             return CommentResDTO.builder()
                     .commentId(comment.getId())
                     .nickname(comment.getMemberUser().getName())
-                    .profileImageUrl(comment.getMemberUser().getProfileImage())
+                    .profileImageUrl(profileImageUrl)
                     .content(comment.getContent())
                     .createdAt(comment.getCreatedAt())
                     .isMine(comment.getMemberUser().getId().equals(currentMemberId))
@@ -34,12 +34,10 @@ public class CommentResponse {
             Integer listSize,
             boolean hasNext
     ) {
-        public static CommentListDTO from(List<Comment> comments, Long currentMemberId) {
+        public static CommentListDTO from(List<CommentResDTO> commentResDTO) {
             return CommentListDTO.builder()
-                    .commentList(comments.stream()
-                            .map(comment -> CommentResDTO.from(comment, currentMemberId))
-                            .toList())
-                    .listSize(comments.size())
+                    .commentList(commentResDTO)
+                    .listSize(commentResDTO.size())
                     .hasNext(false)
                     .build();
         }

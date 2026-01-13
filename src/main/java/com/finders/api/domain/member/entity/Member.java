@@ -54,4 +54,8 @@ public abstract class Member extends BaseEntity {
     public void updateRefreshTokenHash(String refreshTokenHash) {
         this.refreshTokenHash = refreshTokenHash;
     }
+
+    public void updatePhone(String phone) {
+        this.phone = phone;
+    }
 }
