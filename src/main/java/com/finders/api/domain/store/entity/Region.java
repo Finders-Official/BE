@@ -1,6 +1,6 @@
 package com.finders.api.domain.store.entity;
 
-import com.finders.api.global.entity.BaseEntity;
+import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Region extends BaseEntity {
+public class Region extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
