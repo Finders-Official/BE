@@ -9,6 +9,7 @@ import com.finders.api.domain.store.repository.FavoritePhotoLabRepository;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
 import com.finders.api.domain.store.repository.PhotoLabKeywordQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
+import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.infra.storage.StorageService;
@@ -154,6 +155,6 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         if (lat == null || lng == null || memberId == null) {
             return false;
         }
-        return memberAgreementRepository.existsLocationAgreement(memberId);
+        return memberAgreementRepository.existsByMember_IdAndTerms_TypeAndIsAgreed(memberId, TermsType.LOCATION, true);
     }
 }
