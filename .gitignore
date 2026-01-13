@@ -89,3 +89,5 @@ docker-compose.override.yml
 # Infrastructure (민감 정보)
 # ========================================
 docs/INFRASTRUCTURE.md
+docs/infra/scripts/grant-iam-permissions.sh
+docs/infra/dashboards/

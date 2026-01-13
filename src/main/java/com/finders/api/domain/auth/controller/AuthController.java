@@ -20,7 +20,7 @@ public class AuthController {
     private final AuthCommandService authCommandService;
 
     @Operation(
-            summary = "소셜 로그인",
+            summary = "소셜 로그인(모바일 Native SDK)",
             description = "유저용 소셜 로그인 요청입니다."
     )
     @PostMapping("/social/login")
@@ -28,6 +28,17 @@ public class AuthController {
             @Valid @RequestBody AuthRequest.SocialLogin request
     ) {
         return authCommandService.socialLogin(request);
+    }
+
+    @Operation(
+            summary = "소셜 로그인 (웹 브라우저)",
+            description = "유저용 소셜 로그인 요청입니다."
+    )
+    @PostMapping("/social/login/code") // GET -> POST로 변경
+    public ApiResponse<?> socialCodeLogin(
+            @Valid @RequestBody AuthRequest.SocialCodeLogin request
+    ) {
+        return authCommandService.processSocialCodeLogin(request);
     }
 
     @Operation(

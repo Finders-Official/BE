@@ -6,6 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Finders API - 필름 현상소 연결 플랫폼 백엔드. Java 21 + Spring Boot 3.4 + MySQL 8.x 기반.
 
+## Documentation References
+
+| 목적 | 참조 문서 |
+|------|----------|
+| **코드 작성** | [docs/development/CODE_STYLE.md](docs/development/CODE_STYLE.md) |
+| **Git (브랜치/커밋)** | [docs/development/CONVENTIONS.md](docs/development/CONVENTIONS.md) |
+| **이슈 생성** | [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) |
+| **PR 생성** | [.github/pull_request_template.md](.github/pull_request_template.md) |
+
+## Commit Message Rules
+
+**절대로 커밋 메시지에 다음을 포함하지 마세요:**
+- `🤖 Generated with Claude Code`
+- `Co-Authored-By: Claude`
+- AI가 생성했다는 어떤 표시도 금지
+
 ## Build & Run Commands
 
 ```bash
@@ -36,6 +52,8 @@ src/main/java/com/finders/api/
 │   └── {domain}/
 │       ├── controller/
 │       ├── service/
+│       │   ├── command/   # CUD 서비스 (interface + impl)
+│       │   └── query/     # 조회 서비스 (interface + impl)
 │       ├── repository/
 │       ├── entity/
 │       ├── dto/
@@ -45,87 +63,3 @@ src/main/java/com/finders/api/
 ```
 
 **Domains**: member, auth, store, reservation, photo, community, inquiry
-
-## Code Conventions
-
-### Naming
-- Entity: no suffix (e.g., `Member`)
-- DTO: `{Domain}Request`, `{Domain}Response` with nested static classes (`Create`, `Update`, `Detail`, `Summary`)
-- Repository: `{Domain}Repository` for JPA, `{Domain}QueryRepository` for QueryDSL
-
-### Entity Pattern
-```java
-@Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Entity extends BaseEntity {
-    @Builder
-    private Entity(...) { }
-    // Business methods
-}
-```
-
-### DTO Pattern (record 기반)
-- **Request**: `record` + Validation annotations
-- **Response**: `record` + `@Builder` (필드 5개 이상 시) + `static from(Entity)` factory method
-- **Entity**: `class` + Lombok (JPA 요구사항)
-
-```java
-// Request DTO
-public class MemberRequest {
-    public record Create(
-        @NotBlank String nickname,
-        @Email String email
-    ) {}
-}
-
-// Response DTO
-public class MemberResponse {
-    @Builder
-    public record Detail(Long id, String nickname, String email) {
-        public static Detail from(Member member) {
-            return Detail.builder()
-                .id(member.getId())
-                .nickname(member.getNickname())
-                .email(member.getEmail())
-                .build();
-        }
-    }
-}
-```
-
-### Service Pattern
-```java
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class Service {
-    @Transactional  // Only on write methods
-    public Response create(...) { }
-}
-```
-
-### API Response
-All endpoints return `ApiResponse<T>` with `SuccessCode`/`ErrorCode`:
-```java
-return ApiResponse.success(SuccessCode.MEMBER_FOUND, data);
-throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
-```
-
-## Git Conventions
-
-### Branch
-```
-<type>/<description>-#<issue_number>
-feat/signup-api-#14
-fix/image-upload-#23
-```
-
-### Commit
-```
-<type>: <subject> (#<issue_number>)
-feat: 회원가입 API 구현 (#14)
-fix: 이미지 업로드 시 NPE 수정 (#45)
-```
-
-Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `rename`, `remove`
