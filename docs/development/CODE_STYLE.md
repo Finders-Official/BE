@@ -248,14 +248,17 @@ public class MemberResponse {
 
 ### Controller
 
+> Controller는 Query/Command Service를 모두 주입받아 사용합니다.
+
 ```java
 @Tag(name = "Member", description = "회원 API")
 @RestController
-@RequestMapping("/members")
 @RequiredArgsConstructor
+@RequestMapping("/members")
 public class MemberController {
 
-    private final MemberService memberService;
+    private final MemberQueryService memberQueryService;
+    private final MemberCommandService memberCommandService;
 
     @Operation(summary = "회원 조회")
     @GetMapping("/{memberId}")
@@ -264,19 +267,29 @@ public class MemberController {
     ) {
         return ApiResponse.success(
                 SuccessCode.MEMBER_FOUND,
-                memberService.getMember(memberId)
+                memberQueryService.getMember(memberId)
         );
     }
 
     @Operation(summary = "회원 생성")
     @PostMapping
-    public ApiResponse<MemberResponse.Detail> createMember(
+    public ApiResponse<Long> createMember(
             @Valid @RequestBody MemberRequest.Create request
     ) {
         return ApiResponse.success(
                 SuccessCode.MEMBER_CREATED,
-                memberService.createMember(request)
+                memberCommandService.createMember(request)
         );
+    }
+
+    @Operation(summary = "회원 정보 수정")
+    @PatchMapping("/{memberId}")
+    public ApiResponse<Void> updateMember(
+            @PathVariable Long memberId,
+            @Valid @RequestBody MemberRequest.Update request
+    ) {
+        memberCommandService.updateMember(memberId, request);
+        return ApiResponse.success(SuccessCode.MEMBER_UPDATED, null);
     }
 }
 ```
@@ -285,35 +298,81 @@ public class MemberController {
 |-----------|------|------|
 | `@Tag` | 1 | Swagger 문서화 |
 | `@RestController` | 2 | |
-| `@RequestMapping` | 3 | |
-| `@RequiredArgsConstructor` | 4 | |
+| `@RequiredArgsConstructor` | 3 | |
+| `@RequestMapping` | 4 | |
 | `@Operation` | 메서드 1 | summary 필수 |
 | `@GetMapping` 등 | 메서드 2 | |
 
 ---
 
-### Service
+### Service (CQRS 패턴)
+
+> **CQRS (Command Query Responsibility Segregation)**: 조회(Query)와 명령(Command)을 분리하여 책임을 명확히 합니다.
+
+#### 패키지 구조
+```
+service/
+├── command/
+│   ├── {Domain}CommandService.java      (interface)
+│   └── {Domain}CommandServiceImpl.java  (구현체)
+└── query/
+    ├── {Domain}QueryService.java        (interface)
+    └── {Domain}QueryServiceImpl.java    (구현체)
+```
+
+#### Query Service (조회 전용)
 
 ```java
-@Slf4j
+// Interface
+public interface MemberQueryService {
+    MemberResponse.Detail getMember(Long memberId);
+    List<MemberResponse.Summary> getMembers();
+}
+
+// Implementation
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MemberService {
+public class MemberQueryServiceImpl implements MemberQueryService {
 
     private final MemberRepository memberRepository;
+    private final MemberQueryRepository memberQueryRepository;
 
+    @Override
     public MemberResponse.Detail getMember(Long memberId) {
-        log.info("[MemberService.getMember] memberId: {}", memberId);
-
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         return MemberResponse.Detail.from(member);
     }
 
-    @Transactional  // 쓰기 작업만
-    public MemberResponse.Detail createMember(MemberRequest.Create request) {
+    @Override
+    public List<MemberResponse.Summary> getMembers() {
+        return memberQueryRepository.findAllSummary();
+    }
+}
+```
+
+#### Command Service (CUD 전용)
+
+```java
+// Interface
+public interface MemberCommandService {
+    Long createMember(MemberRequest.Create request);
+    void updateMember(Long memberId, MemberRequest.Update request);
+    void deleteMember(Long memberId);
+}
+
+// Implementation
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class MemberCommandServiceImpl implements MemberCommandService {
+
+    private final MemberRepository memberRepository;
+
+    @Override
+    public Long createMember(MemberRequest.Create request) {
         if (memberRepository.existsByEmail(request.email())) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
@@ -323,23 +382,53 @@ public class MemberService {
                 .email(request.email())
                 .build();
 
-        memberRepository.save(member);
-        return MemberResponse.Detail.from(member);
+        return memberRepository.save(member).getId();
+    }
+
+    @Override
+    public void updateMember(Long memberId, MemberRequest.Update request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        member.updateNickname(request.nickname());
+    }
+
+    @Override
+    public void deleteMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        member.softDelete();
     }
 }
 ```
 
+#### Service 어노테이션 정리
+
+| 구분 | 클래스 레벨 트랜잭션 | 용도 |
+|------|---------------------|------|
+| QueryServiceImpl | `@Transactional(readOnly = true)` | 조회 전용 (Read) |
+| CommandServiceImpl | `@Transactional` | 생성/수정/삭제 (CUD) |
+
 | 어노테이션 | 위치 | 비고 |
 |-----------|------|------|
-| `@Slf4j` | 클래스 | 로깅 시 |
-| `@Service` | 클래스 | 필수 |
-| `@RequiredArgsConstructor` | 클래스 | 필수 |
-| `@Transactional(readOnly = true)` | 클래스 | 기본값 |
-| `@Transactional` | 쓰기 메서드 | CUD만 |
+| `@Service` | 구현체 클래스 | 필수 |
+| `@RequiredArgsConstructor` | 구현체 클래스 | 필수 |
+| `@Transactional(readOnly = true)` | QueryServiceImpl 클래스 | 조회 최적화 |
+| `@Transactional` | CommandServiceImpl 클래스 | CUD 작업 |
+
+> **참고:** 기존 도메인(member, auth, store 등)은 점진적으로 CQRS 패턴으로 마이그레이션 예정이며, 신규 도메인은 새 패턴을 따릅니다.
 
 ---
 
 ### Repository
+
+> **JPA Repository**는 `interface`로, **QueryDSL Repository**는 `class`로 작성합니다.
+
+| 구분 | 타입 | 네이밍 | 용도 |
+|------|------|--------|------|
+| JPA Repository | `interface` | `{Domain}Repository` | 기본 CRUD, 단순 쿼리 |
+| QueryDSL Repository | `class` | `{Domain}QueryRepository` | 복잡한 동적 쿼리 |
 
 #### JPA Repository
 ```java

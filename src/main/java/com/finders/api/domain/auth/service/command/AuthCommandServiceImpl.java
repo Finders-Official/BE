@@ -37,6 +37,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     private final RefreshTokenHasher refreshTokenHasher;
     private final SignupTokenProvider signupTokenProvider;
 
+    // 프론트엔드가 준 AccessToken으로 로그인
     @Override
     @Transactional
     public ApiResponse<?> socialLogin(AuthRequest.SocialLogin request) {
@@ -45,6 +46,26 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         OAuthClient client = oAuthClientFactory.getOAuthClient(provider);
         OAuthUserInfo userInfo = client.getUserInfo(request.accessToken());
 
+        return resolveSocialLogin(provider, userInfo);
+    }
+
+    // 카카오 인가 코드로 로그인
+    @Override
+    @Transactional
+    public ApiResponse<?> processSocialCodeLogin(AuthRequest.SocialCodeLogin request) {
+        SocialProvider provider = parseProvider(request.provider());
+
+        OAuthClient client = oAuthClientFactory.getOAuthClient(provider);
+
+        String socialAccessToken = client.getAccessToken(request.code());
+        OAuthUserInfo userInfo = client.getUserInfo(socialAccessToken);
+
+        // 공통 로그인 로직 실행
+        return resolveSocialLogin(provider, userInfo);
+    }
+
+    // 신규/기존 회원 판별 및 응답 생성
+    private ApiResponse<?> resolveSocialLogin(SocialProvider provider, OAuthUserInfo userInfo) {
         SocialAccount socialAccount = socialAccountRepository
                 .findByProviderAndProviderId(provider, userInfo.providerId())
                 .orElse(null);
@@ -78,7 +99,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         }
 
         // 기존 회원: 로그인 처리
-        var user = socialAccount.getUser();
+        MemberUser user = socialAccount.getUser();
 
         if (user.isDeleted()) {
             throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);

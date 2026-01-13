@@ -43,13 +43,13 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
         Map<Long, List<String>> keywordsByPhotoLabId = buildKeywordMap(photoLabIds);
 
         return photoLabs.stream()
-                .map(photoLab -> new PhotoLabPopularResponse.Card(
-                        photoLab.getId(),
-                        photoLab.getName(),
-                        mainImageUrlByPhotoLabId.get(photoLab.getId()),
-                        keywordsByPhotoLabId.getOrDefault(photoLab.getId(), List.of()),
-                        photoLab.getWorkCount()
-                ))
+                .map(photoLab -> PhotoLabPopularResponse.Card.builder()
+                        .photoLabId(photoLab.getId())
+                        .name(photoLab.getName())
+                        .mainImageUrl(mainImageUrlByPhotoLabId.get(photoLab.getId()))
+                        .keywords(keywordsByPhotoLabId.getOrDefault(photoLab.getId(), List.of()))
+                        .workCount(photoLab.getWorkCount())
+                        .build())
                 .toList();
     }
 
@@ -71,7 +71,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
     }
 
     private Map<Long, List<String>> buildKeywordMap(List<Long> photoLabIds) {
-        List<PhotoLabKeyword> keywords = photoLabKeywordRepository.findByPhotoLabIds(photoLabIds);
+        List<PhotoLabKeyword> keywords = photoLabKeywordRepository.findByPhotoLabIdIn(photoLabIds);
         if (keywords.isEmpty()) {
             return Collections.emptyMap();
         }

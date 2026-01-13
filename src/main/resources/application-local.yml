@@ -33,3 +33,11 @@ logging:
 auth:
   mock:
     enabled: true  # 로컬에서는 모킹 활성화
+
+# ========================================
+# CORS 설정
+# ========================================
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://localhost:5173

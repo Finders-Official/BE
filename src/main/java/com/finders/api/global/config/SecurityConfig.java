@@ -2,6 +2,8 @@ package com.finders.api.global.config;
 
 import com.finders.api.global.security.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,6 +25,7 @@ import java.util.List;
  * Spring Security 설정
  */
 @Configuration
+@EnableConfigurationProperties(CorsProperties.class)
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -32,6 +35,7 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final SignupTokenProvider signupTokenProvider;
+    private final CorsProperties corsProperties;
 
     // 인증 없이 접근 가능한 경로
     private static final String[] PUBLIC_ENDPOINTS = {
@@ -47,6 +51,7 @@ public class SecurityConfig {
             "/storage/test/**",
             // 소셜 로그인 시작점
             "/auth/social/login",
+            "/auth/social/login/code",
             // 토큰 재발급
             "/auth/reissue",
             // 로그아웃
@@ -54,7 +59,10 @@ public class SecurityConfig {
             // Webhooks (외부 서비스 콜백)
             "/webhooks/**",
             // TODO: Auth API 구현 후 제거 - 개발 테스트용
-            "/restorations/**"
+            "/restorations/**",
+            // HM-010 커뮤니티 사진 미리 보기
+            "/posts/preview",
+            "/dev/login"
     };
 
     @Bean
@@ -103,12 +111,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://finders.it.kr",
-                "https://www.finders.it.kr",
-                "http://localhost:3000",
-                "http://localhost:5173"
-        ));
+        configuration.setAllowedOrigins(corsProperties.allowedOrigins());
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
