@@ -1,15 +1,18 @@
 package com.finders.api.domain.auth.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 
 public class AuthRequest {
 
     public record SocialLogin(
-            @NotBlank String provider,
+            @NotBlank(message = "소셜 프로바이더는 필수입니다.") String provider,
+            @NotBlank(message = "accessToken은 필수입니다.") String accessToken
+    ) {}
 
-            @JsonProperty("accessToken")
-            @NotBlank String accessToken
+
+    public record SocialCodeLogin(
+            @NotBlank(message = "소셜 프로바이더는 필수입니다.") String provider,
+            @NotBlank(message = "인가 코드는 필수입니다.") String code
     ) {}
 
     public record TokenReissue(

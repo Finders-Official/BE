@@ -25,7 +25,8 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
 
-        log.warn("[JwtAccessDeniedHandler.handle] 403 Forbidden: {}", request.getRequestURI());
+        log.warn("[JwtAccessDeniedHandler.handle] 403 Forbidden: {}, error: {}",
+                request.getRequestURI(), accessDeniedException.getMessage());
 
         // 1. 상태 코드 설정 (HTTP 403)
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);

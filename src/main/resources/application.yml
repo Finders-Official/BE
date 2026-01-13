@@ -70,7 +70,7 @@ oauth2:
   kakao:
     client-id: ${KAKAO_CLIENT_ID:}
     client-secret: ${KAKAO_CLIENT_SECRET:}
-    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8080/api/auth/kakao/callback}
+    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:5173/auth/kakao/callback}
   apple:
     client-id: ${APPLE_CLIENT_ID:}
     team-id: ${APPLE_TEAM_ID:}
@@ -136,3 +136,9 @@ logging:
   level:
     root: INFO
     com.finders: DEBUG
+
+# ========================================
+# CORS 설정
+# ========================================
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}

@@ -1,10 +1,7 @@
 package com.finders.api.domain.member.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 
 import java.util.List;
 
@@ -31,5 +28,13 @@ public class MemberRequest {
     public record AgreementRequest(
             @NotNull Long termsId,
             @NotNull Boolean isAgreed
+    ) {}
+
+    public record UpdateProfile(
+            @Size(min = 2, max = 8, message = "닉네임은 2~8자 사이여야 합니다.")
+            String nickname,
+            String phone,
+            String verifiedPhoneToken,
+            String profileImageUrl
     ) {}
 }
