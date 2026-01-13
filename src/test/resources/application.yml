@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=MySQL
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;NON_KEYWORDS=ROLE
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -13,12 +13,19 @@ spring:
       write-dates-as-timestamps: false
 
   jpa:
+    # Hibernate가 테이블을 생성(DDL)한 후 data.sql을 실행하도록 지연
+    defer-datasource-initialization: true
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+
+  sql:
+    init:
+      mode: always
 
 jwt:
   secret: test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm
@@ -29,7 +36,7 @@ oauth2:
   kakao:
     client-id: test-kakao-client-id
     client-secret: test-kakao-secret
-    redirect-uri: http://localhost:8080/api/auth/kakao/callback
+    redirect-uri: http://localhost:5173/auth/kakao/callback
   apple:
     client-id: test-apple-client-id
     team-id: test-team-id
@@ -41,3 +48,8 @@ google:
     vision:
       enabled: false
     project-id: test-project
+
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://localhost:5173

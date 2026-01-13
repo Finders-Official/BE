@@ -1,0 +1,37 @@
+package com.finders.api.domain.community.repository;
+
+import com.finders.api.domain.community.entity.Post;
+import com.finders.api.domain.community.enums.CommunityStatus;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+import static com.finders.api.domain.community.entity.QPost.post;
+
+@Repository
+@RequiredArgsConstructor
+public class PostQueryRepository {
+
+    private final JPAQueryFactory queryFactory;
+    private static final int POPULAR_POSTS_LIMIT = 10;
+
+    public List<Post> findAllForFeed(int page, int size) {
+        return queryFactory
+                .selectFrom(post)
+                .where(post.status.eq(CommunityStatus.ACTIVE))
+                .orderBy(post.createdAt.desc())
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+    }
+
+    public List<Post> findTop10PopularPosts() {
+        return queryFactory
+                .selectFrom(post)
+                .where(post.status.eq(CommunityStatus.ACTIVE))
+                .orderBy(post.likeCount.desc(), post.createdAt.desc()) // 좋아요 순, 같으면 최신순
+                .limit(POPULAR_POSTS_LIMIT)
+                .fetch();
+    }
+}

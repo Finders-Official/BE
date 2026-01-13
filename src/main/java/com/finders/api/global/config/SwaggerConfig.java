@@ -24,14 +24,29 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        String securitySchemeName = "bearerAuth";
+        String userToken = "AccessToken";
+        String signupToken = "SignupToken";
 
         return new OpenAPI()
                 .info(apiInfo())
                 .servers(servers())
-                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                .addSecurityItem(new SecurityRequirement().addList(userToken))
+                .addSecurityItem(new SecurityRequirement().addList(signupToken))
                 .components(new Components()
-                        .addSecuritySchemes(securitySchemeName, securityScheme()));
+                        .addSecuritySchemes(userToken, new SecurityScheme()
+                                .name(userToken)
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
+                                .in(SecurityScheme.In.HEADER)
+                                .description("일반 회원 AccessToken (USER 권한)"))
+                        .addSecuritySchemes(signupToken, new SecurityScheme()
+                                .name(signupToken)
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
+                                .in(SecurityScheme.In.HEADER)
+                                .description("회원가입용 SignupToken (GUEST 권한)")));
     }
 
     private Info apiInfo() {
@@ -47,21 +62,11 @@ public class SwaggerConfig {
     private List<Server> servers() {
         return switch (activeProfile) {
             case "prod" -> List.of(
-                    new Server().url("https://finders-api.log8.kr/api").description("Production Server")
+                    new Server().url("https://api.finders.it.kr/api").description("Production Server")
             );
             default -> List.of(
                     new Server().url("http://localhost:8080/api").description("Local Server")
             );
         };
-    }
-
-    private SecurityScheme securityScheme() {
-        return new SecurityScheme()
-                .name("bearerAuth")
-                .type(SecurityScheme.Type.HTTP)
-                .scheme("bearer")
-                .bearerFormat("JWT")
-                .in(SecurityScheme.In.HEADER)
-                .description("JWT 토큰을 입력하세요. (Bearer 제외)");
     }
 }

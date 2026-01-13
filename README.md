@@ -126,8 +126,8 @@ src/main/java/com/finders/api/
 
 ### Code Style
 
-- 상세 코드 스타일: [docs/CODE_STYLE.md](docs/CODE_STYLE.md)
-- 네이밍/Git 컨벤션: [docs/CONVENTIONS.md](docs/CONVENTIONS.md)
+- 상세 코드 스타일: [docs/development/CODE_STYLE.md](docs/development/CODE_STYLE.md)
+- 네이밍/Git 컨벤션: [docs/development/CONVENTIONS.md](docs/development/CONVENTIONS.md)
 
 | 핵심 기술 | 설명 |
 |----------|------|
@@ -137,11 +137,19 @@ src/main/java/com/finders/api/
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md) - 아키텍처 설계
-- [Code Style](docs/CODE_STYLE.md) - 코드 스타일 가이드
-- [Conventions](docs/CONVENTIONS.md) - 네이밍/Git 컨벤션
-- [ERD](docs/ERD.md) - 데이터베이스 설계서
-- [API](docs/API.md) - API 명세
+### Architecture
+- [Architecture](docs/architecture/ARCHITECTURE.md) - 시스템 아키텍처
+- [ERD](docs/architecture/ERD.md) - 데이터베이스 설계서
+- [Infrastructure](docs/architecture/INFRASTRUCTURE.md) - 인프라 구성
+
+### Development
+- [Code Style](docs/development/CODE_STYLE.md) - 코드 스타일 가이드
+- [Conventions](docs/development/CONVENTIONS.md) - 네이밍/Git 컨벤션
+- [API](docs/development/API.md) - API 명세
+
+### Guides
+- [GCS Setup](docs/guides/GCS-setup.md) - GCS 설정 가이드
+- [StorageService](docs/guides/StorageService.md) - StorageService 사용법
 
 ## License
 
