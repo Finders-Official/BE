@@ -68,9 +68,13 @@ public class JwtTokenProvider {
         }
 
         String authority = "ROLE_" + role;
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(authority));
 
-        UserDetails principal = new User(String.valueOf(memberId), "",
-                List.of(new SimpleGrantedAuthority(authority)));
+        AuthUser principal = AuthUser.builder()
+                .memberId(Long.valueOf(memberId))
+                .role(role)
+                .authorities(authorities)
+                .build();
 
         return new UsernamePasswordAuthenticationToken(principal, token, principal.getAuthorities());
     }
