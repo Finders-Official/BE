@@ -80,17 +80,17 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         Set<Long> favoriteLabIds = buildFavoriteSet(memberId, photoLabIds);
 
         List<PhotoLabListResponse.Card> cards = photoLabPage.getContent().stream()
-                .map(photoLab -> new PhotoLabListResponse.Card(
-                        photoLab.getId(),
-                        photoLab.getName(),
-                        imageUrlsByLabId.getOrDefault(photoLab.getId(), List.of()),
-                        keywordsByLabId.getOrDefault(photoLab.getId(), List.of()),
-                        photoLab.getAddress(),
-                        distanceKmOrNull(lat, lng, photoLab),
-                        favoriteLabIds.contains(photoLab.getId()),
-                        photoLab.getWorkCount(),
-                        photoLab.getAvgWorkTime()
-                ))
+                .map(photoLab -> PhotoLabListResponse.Card.builder()
+                        .photoLabId(photoLab.getId())
+                        .name(photoLab.getName())
+                        .imageUrls(imageUrlsByLabId.getOrDefault(photoLab.getId(), List.of()))
+                        .keywords(keywordsByLabId.getOrDefault(photoLab.getId(), List.of()))
+                        .address(photoLab.getAddress())
+                        .distanceKm(distanceKmOrNull(lat, lng, photoLab))
+                        .isFavorite(favoriteLabIds.contains(photoLab.getId()))
+                        .workCount(photoLab.getWorkCount())
+                        .avgWorkTime(photoLab.getAvgWorkTime())
+                        .build())
                 .toList();
 
         return PagedResponse.of(SuccessCode.STORE_LIST_FOUND, cards, photoLabPage);
