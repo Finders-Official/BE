@@ -51,7 +51,7 @@ public class GcsStorageService implements StorageService {
                     .setContentType(file.getContentType())
                     .build();
 
-            storage.create(blobInfo, file.getInputStream());
+            storage.createFrom(blobInfo, file.getInputStream());
 
             String url = isPublic ? getPublicUrl(objectPath) : null;
 
