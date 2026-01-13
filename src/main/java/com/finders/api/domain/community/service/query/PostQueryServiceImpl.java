@@ -27,6 +27,12 @@ public class PostQueryServiceImpl implements PostQueryService {
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
 
+    // 현상소 검색 관련
+    private static final String DISTANCE_FORMAT_KM = "%.1fkm";
+    private static final int MINUTES_IN_DEGREE = 60;
+    private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.1515;
+    private static final double KILOMETERS_PER_STATUTE_MILE = 1.609344;
+
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostQueryRepository postQueryRepository;
@@ -133,7 +139,7 @@ public class PostQueryServiceImpl implements PostQueryService {
                                 lab.getLatitude().doubleValue(),
                                 lab.getLongitude().doubleValue()
                         );
-                        distanceStr = String.format("%.1fkm", distance);
+                        distanceStr = String.format(DISTANCE_FORMAT_KM, distance);
                     }
 
                     return PostResponse.PhotoLabSearchDTO.from(lab, distanceStr);
@@ -150,6 +156,6 @@ public class PostQueryServiceImpl implements PostQueryService {
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
         dist = Math.acos(dist);
         dist = Math.toDegrees(dist);
-        return dist * 60 * 1.1515 * 1.609344;
+        return dist * MINUTES_IN_DEGREE * STATUTE_MILES_PER_NAUTICAL_MILE * KILOMETERS_PER_STATUTE_MILE;
     }
 }

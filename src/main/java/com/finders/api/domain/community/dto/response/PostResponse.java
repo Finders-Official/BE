@@ -129,14 +129,11 @@ public class PostResponse {
     }
 
     // 현상소 검색 리스트를 감싸는 DTO
-    @Builder
     public record PhotoLabSearchListDTO(
             List<PhotoLabSearchDTO> photoLabSearchList
     ) {
         public static PhotoLabSearchListDTO from(List<PhotoLabSearchDTO> dtos) {
-            return PhotoLabSearchListDTO.builder()
-                    .photoLabSearchList(dtos)
-                    .build();
+            return new PhotoLabSearchListDTO(dtos);
         }
     }
 }
