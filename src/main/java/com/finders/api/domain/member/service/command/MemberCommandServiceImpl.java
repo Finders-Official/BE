@@ -7,8 +7,10 @@ import com.finders.api.domain.member.dto.request.MemberRequest;
 import com.finders.api.domain.member.dto.response.MemberPhoneResponse;
 import com.finders.api.domain.member.dto.VerificationData;
 import com.finders.api.domain.member.dto.response.MemberResponse;
+import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberAgreementRepository;
+import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.terms.entity.MemberAgreement;
 import com.finders.api.domain.terms.repository.TermsRepository;
@@ -18,6 +20,7 @@ import com.finders.api.global.security.JwtTokenProvider;
 import com.finders.api.global.security.RefreshTokenHasher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberCommandServiceImpl implements MemberCommandService {
-
+    private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
     private final MemberAgreementRepository memberAgreementRepository;
     private final TermsRepository termsRepository;
@@ -79,16 +82,15 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         phoneVerificationStorage.remove(request.requestId());
 
-        if (isSignupFlow) {
-            // 회원가입용: 증빙 토큰 생성
-            String verifiedPhoneToken = "vpt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-            verifiedTokenStorage.put(verifiedPhoneToken,
-                    new VerifiedPhoneInfo(data.phone(), LocalDateTime.now().plusMinutes(10)));
+        // 증빙 토큰 생성 및 저장
+        String verifiedPhoneToken = "vpt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        verifiedTokenStorage.put(verifiedPhoneToken,
+                new VerifiedPhoneInfo(data.phone(), LocalDateTime.now().plusMinutes(10)));
 
+        if (isSignupFlow) {
             return MemberPhoneResponse.VerificationResult.signup(verifiedPhoneToken, data.phone(), 600);
         } else {
-            // 마이페이지용: 성공 여부만 반환
-            return MemberPhoneResponse.VerificationResult.myPage(true, data.phone());
+            return MemberPhoneResponse.VerificationResult.myPage(verifiedPhoneToken, data.phone(), 600);
         }
     }
 
@@ -143,6 +145,43 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 refreshToken,
                 new MemberResponse.MemberSummary(memberUser.getId(), memberUser.getNickname())
         );
+    }
+
+    @Override
+    @Transactional
+    public Member updateProfile(Long memberId, MemberRequest.UpdateProfile request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Member realMember = (Member) Hibernate.unproxy(member);
+
+        // 전화번호 수정
+        if (request.phone() != null) {
+            // 전화번호 변경 시 토큰 검증
+            if (request.verifiedPhoneToken() == null) {
+                throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED);
+            }
+            validateVPT(request.phone(), request.verifiedPhoneToken());
+            realMember.updatePhone(request.phone());
+        }
+
+        if (realMember instanceof MemberUser memberUser) {
+            // 닉네임 수정
+            if (request.nickname() != null) {
+                if (!request.nickname().equals(memberUser.getNickname()) &&
+                    memberUserRepository.existsByNickname(request.nickname())) {
+                    throw new CustomException(ErrorCode.MEMBER_NICKNAME_DUPLICATED);
+                }
+                memberUser.updateNickname(request.nickname());
+            }
+
+            // 프로필 이미지 수정
+            if (request.profileImageUrl() != null) {
+                memberUser.updateProfileImage(request.profileImageUrl());
+            }
+        }
+
+        return realMember;
     }
 
     private void validateVPT(String phone, String token) {
