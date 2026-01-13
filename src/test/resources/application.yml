@@ -36,7 +36,7 @@ oauth2:
   kakao:
     client-id: test-kakao-client-id
     client-secret: test-kakao-secret
-    redirect-uri: http://localhost:8080/api/auth/kakao/callback
+    redirect-uri: http://localhost:5173/auth/kakao/callback
   apple:
     client-id: test-apple-client-id
     team-id: test-team-id
