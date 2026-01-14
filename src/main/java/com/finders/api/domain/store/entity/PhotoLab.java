@@ -25,11 +25,15 @@ public class PhotoLab extends BaseEntity {
     private Long id;
 
     /**
-     * FK → member(id)
+     * FK → member(id)q
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private MemberOwner owner;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "region_id", nullable = false)
+    private Region region;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -83,6 +87,7 @@ public class PhotoLab extends BaseEntity {
     @Builder
     private PhotoLab(
             MemberOwner owner,
+            Region region,
             String name,
             String description,
             String phone,
@@ -101,6 +106,7 @@ public class PhotoLab extends BaseEntity {
             String qrCodeUrl
     ) {
         this.owner = owner;
+        this.region = region;
         this.name = name;
         this.description = description;
         this.phone = phone;

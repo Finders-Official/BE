@@ -1,5 +1,8 @@
 package com.finders.api.infra.storage;
 
+import com.finders.api.infra.storage.StorageResponse.SignedUrl;
+import java.util.List;
+import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -55,4 +58,22 @@ public interface StorageService {
      * @return 직접 접근 가능한 URL
      */
     String getPublicUrl(String objectPath);
+
+    /**
+     *  업로드(PUT)용 Signed URL 생성 (Private 버킷 전용)
+     *
+     * @param objectPath    업로드할 파일 경로
+     * @param expiryMinutes 만료 시간 (분), null이면 기본값 사용
+     * @return PUT Signed URL
+     */
+    StorageResponse.SignedUrl getSignedUploadUrl(String objectPath, Integer expiryMinutes);
+
+    /**
+     * 배치로 한번에 Signed URL 생성
+     * @param objectPaths 업로드할 파일 경로 List
+     * @param expiryMinutes  만료 시간 (분), null이면 기본값 사용
+     * @return
+     */
+    Map<String, SignedUrl> getSignedUrls(List<String> objectPaths, Integer expiryMinutes);
+
 }

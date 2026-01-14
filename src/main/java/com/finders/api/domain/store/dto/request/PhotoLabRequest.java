@@ -1,8 +1,8 @@
 package com.finders.api.domain.store.dto.request;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 public class PhotoLabRequest {
@@ -27,6 +27,9 @@ public class PhotoLabRequest {
             @Size(max = 500, message = "설명은 500자 이하여야 합니다.")
             String description,
 
+            @NotNull(message = "지역은 필수입니다.")
+            Long regionId,
+
             @NotNull(message = "위도는 필수입니다.")
             Double latitude,
 
@@ -40,5 +43,3 @@ public class PhotoLabRequest {
     ) {
     }
 }
-
-
