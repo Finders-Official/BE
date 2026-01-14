@@ -4,6 +4,7 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -108,6 +109,32 @@ public class GcsStorageService implements StorageService {
     @Override
     public String getPublicUrl(String objectPath) {
         return String.format("%s/%s", properties.getPublicBaseUrl(), objectPath);
+    }
+
+
+    /**
+     * 업로드(PUT)용 Signed URL
+     * - private 버킷에 프론트가 직접 PUT 업로드할 때 사용
+     */
+    @Override
+    public StorageResponse.SignedUrl getSignedUploadUrl(String objectPath, Integer expiryMinutes) {
+        int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
+
+        BlobInfo blobInfo = BlobInfo.newBuilder(properties.privateBucket(), objectPath).build();
+
+        URL signedUrl = storage.signUrl(
+                blobInfo,
+                expiry,
+                TimeUnit.MINUTES,
+                Storage.SignUrlOption.withV4Signature(),
+                Storage.SignUrlOption.httpMethod(HttpMethod.PUT)
+        );
+
+        long expiresAt = System.currentTimeMillis() / 1000 + (expiry * 60L);
+
+        log.debug("[GcsStorageService.getSignedUploadUrl] path={}, expiryMinutes={}", objectPath, expiry);
+
+        return new StorageResponse.SignedUrl(signedUrl.toString(), expiresAt);
     }
 
     // ========================================
