@@ -86,6 +86,6 @@ public class AuthController {
             @RequestBody @Valid AuthRequest.OwnerLoginRequest request
     ) {
         AuthResponse.OwnerLoginResponse response = authCommandService.loginOwner(request);
-        return ApiResponse.success(SuccessCode.OK, response);
+        return ApiResponse.success(SuccessCode.AUTH_LOGIN_SUCCESS, response);
     }
 }
