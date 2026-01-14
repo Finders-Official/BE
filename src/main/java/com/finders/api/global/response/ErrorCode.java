@@ -64,6 +64,9 @@ public enum ErrorCode implements BaseCode {
     AUTH_PHONE_MAX_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AUTH_422", "인증 시도 횟수를 초과했습니다."),
     AUTH_PHONE_ALREADY_VERIFIED(HttpStatus.CONFLICT, "AUTH_423", "이미 인증이 완료된 요청입니다."),
 
+    // 로그인 실패
+    AUTH_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH_401", "이메일 또는 비밀번호가 일치하지 않습니다."),
+
     // ========================================
     // Member
     // ========================================

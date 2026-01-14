@@ -68,4 +68,25 @@ public class AuthResponse {
             );
         }
     }
+
+    public record OwnerLoginResponse(
+            String accessToken,
+            String refreshToken,
+            OwnerInfo ownerInfo
+    ) {
+        public static OwnerLoginResponse of(String accessToken, String refreshToken, MemberOwner owner) {
+            return new OwnerLoginResponse(
+                    accessToken,
+                    refreshToken,
+                    new OwnerInfo(owner.getId(), owner.getEmail(), owner.getName(), "OWNER")
+            );
+        }
+    }
+
+    public record OwnerInfo(
+            Long id,
+            String email,
+            String name,
+            String role
+    ) {}
 }

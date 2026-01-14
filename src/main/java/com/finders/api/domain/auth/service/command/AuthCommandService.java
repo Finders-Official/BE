@@ -17,4 +17,7 @@ public interface AuthCommandService {
 
     // 사장님 회원가입
     AuthResponse.OwnerSignupResponse signupOwner(AuthRequest.OwnerSignupRequest request);
+
+    // 사장님 로그인
+    AuthResponse.OwnerLoginResponse loginOwner(AuthRequest.OwnerLoginRequest request);
 }
