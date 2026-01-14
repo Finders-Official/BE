@@ -6,7 +6,6 @@ import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.CommentRepository;
 import com.finders.api.domain.community.repository.PostRepository;
-import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.infra.storage.StorageService;
@@ -29,7 +28,7 @@ public class CommentQueryServiceImpl implements CommentQueryService {
 
 
     @Override
-    public CommentResponse.CommentListDTO getCommentsByPost(Long postId, MemberUser memberUser) {
+    public CommentResponse.CommentListDTO getCommentsByPost(Long postId, Long memberId) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -38,7 +37,7 @@ public class CommentQueryServiceImpl implements CommentQueryService {
         List<CommentResponse.CommentResDTO> commentResDTO = comments.stream()
                 .map(comment -> {
                     String profileUrl = getFullUrl(comment.getMemberUser().getProfileImage());
-                    return CommentResponse.CommentResDTO.from(comment, memberUser.getId(), profileUrl);
+                    return CommentResponse.CommentResDTO.from(comment, memberId, profileUrl);
                 })
                 .toList();
 
