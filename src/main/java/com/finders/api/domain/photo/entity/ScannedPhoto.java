@@ -35,4 +35,17 @@ public class ScannedPhoto extends BaseTimeEntity {
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
+    public static ScannedPhoto create(
+            DevelopmentOrder order,
+            String imageKey,
+            String fileName,
+            Integer displayOrder
+    ) {
+        ScannedPhoto photo = new ScannedPhoto();
+        photo.order = order;
+        photo.imageKey = imageKey;
+        photo.fileName = fileName;
+        photo.displayOrder = displayOrder;
+        return photo;
+    }
 }
