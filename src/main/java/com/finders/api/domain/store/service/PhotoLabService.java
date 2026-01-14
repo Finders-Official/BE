@@ -5,7 +5,9 @@ import com.finders.api.domain.member.repository.MemberOwnerRepository;
 import com.finders.api.domain.store.dto.request.PhotoLabRequest;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
+import com.finders.api.domain.store.entity.Region;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
+import com.finders.api.domain.store.repository.RegionRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class PhotoLabService {
 
     private final PhotoLabRepository photoLabRepository;
     private final MemberOwnerRepository memberOwnerRepository;
+    private final RegionRepository regionRepository;
 
     @Transactional
     public PhotoLabResponse.Create createPhotoLab(Long ownerId, PhotoLabRequest.Create request) {
@@ -31,8 +34,12 @@ public class PhotoLabService {
         MemberOwner owner = memberOwnerRepository.findById(ownerId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
+        Region region = regionRepository.findById(request.regionId())
+                .orElseThrow(() -> new CustomException(ErrorCode.REGION_NOT_FOUND));
+
         PhotoLab photoLab = PhotoLab.builder()
                 .owner(owner)
+                .region(region)
                 .name(request.name())
                 .description(request.description())
                 .phone(request.phone())
