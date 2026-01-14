@@ -166,7 +166,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     // 커뮤니티 현상소 검색
     @Override
-    public PhotoLabResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable, Long memberId) {
+    public PhotoLabResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable) {
         Page<PhotoLab> labs = photoLabRepository.searchByName(keyword, pageable);
 
         List<PhotoLabResponse.PhotoLabSearchDTO> dtos = labs.getContent().stream()
