@@ -2,10 +2,13 @@ package com.finders.api.infra.storage;
 
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StorageResponse.SignedUrl;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -135,6 +138,19 @@ public class GcsStorageService implements StorageService {
         log.debug("[GcsStorageService.getSignedUploadUrl] path={}, expiryMinutes={}", objectPath, expiry);
 
         return new StorageResponse.SignedUrl(signedUrl.toString(), expiresAt);
+    }
+
+    @Override
+    public Map<String, SignedUrl> getSignedUrls(List<String> objectPaths, Integer expiryMinutes) {
+        int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
+
+        return objectPaths.stream()
+                .filter(p -> p != null && !p.isBlank())
+                .distinct()
+                .collect(java.util.stream.Collectors.toMap(
+                        p -> p,
+                        p -> getSignedUrl(p, expiry) // 내부에서 signUrl 수행
+                ));
     }
 
     // ========================================
