@@ -14,4 +14,7 @@ public interface AuthCommandService {
 
     // 로그아웃
     void logout(String token);
+
+    // 사장님 회원가입
+    AuthResponse.OwnerSignupResponse signupOwner(AuthRequest.OwnerSignupRequest request);
 }

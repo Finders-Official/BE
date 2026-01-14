@@ -70,6 +70,7 @@ public enum ErrorCode implements BaseCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_404", "회원을 찾을 수 없습니다."),
     MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER_409", "이미 존재하는 회원입니다."),
     MEMBER_NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_410", "이미 사용 중인 닉네임입니다."),
+    MEMBER_EMAIL_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_411", "이미 사용 중인 이메일입니다."),
     MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화된 계정입니다."),
 
     // 휴대폰 인증 증빙 관련 (VPT 검증)
