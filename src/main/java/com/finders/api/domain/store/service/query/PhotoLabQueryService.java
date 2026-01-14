@@ -23,5 +23,5 @@ public interface PhotoLabQueryService {
     );
 
     // 커뮤니티 현상소 검색
-    PhotoLabResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable, Long memberId);
+    PhotoLabResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable);
 }

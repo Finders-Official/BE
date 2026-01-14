@@ -79,8 +79,6 @@ public class PostQueryServiceImpl implements PostQueryService {
     public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
         List<Post> posts = postQueryRepository.findTop10PopularPosts();
 
-        MemberUser memberUser = (memberId != null) ? memberUserRepository.findById(memberId).orElse(null) : null;
-
         Set<Long> likedPostIds = java.util.Collections.emptySet();
         if (memberId != null) {
             List<Long> postIds = posts.stream().map(Post::getId).toList();
