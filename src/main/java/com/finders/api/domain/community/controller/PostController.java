@@ -16,6 +16,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -126,10 +129,29 @@ public class PostController {
         return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(memberUser));
     }
 
-//    // 현상소 관련
-//    @Operation(summary = "현상소 검색", description = "게시글 작성 시 연결할 현상소를 검색합니다.")
-//    @GetMapping("/labs")
-//    public ApiResponse<String> searchLabs(@RequestParam(required = false) String query) {
-//        return ApiResponse.success(SuccessCode.STORE_LIST_FOUND, "현상소 검색 성공: " + query);
-//    }
+    // 커뮤니티 게시물 검색
+    @Operation(summary = "사진 수다 게시글 검색", description = "사진 수다 페이지에서 게시글을 검색합니다.")
+    @GetMapping("/search")
+    public ApiResponse<PostResponse.PostPreviewListDTO> searchPosts(
+            @RequestParam(name = "keyword") String keyword,
+            @AuthenticationPrincipal MemberUser memberUser,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.searchPosts(keyword, memberUser, pageable));
+    }
+
+    // 현상소 검색
+    @Operation(summary = "현상소 검색", description = "게시글 작성 시 연결할 현상소를 검색합니다. 위도/경도가 없으면 거리 없이 주소만 나옵니다.")
+    @GetMapping("/labs")
+    public ApiResponse<PostResponse.PhotoLabSearchListDTO> searchLabs(
+            @RequestParam(name = "keyword") String keyword,
+            @RequestParam(name = "latitude", required = false) Double latitude,
+            @RequestParam(name = "longitude", required = false) Double longitude,
+            @PageableDefault(size = 8) Pageable pageable
+    ) {
+        return ApiResponse.success(
+                SuccessCode.STORE_LIST_FOUND,
+                postQueryService.searchPhotoLabs(keyword, latitude, longitude, pageable)
+        );
+    }
 }
