@@ -1,6 +1,7 @@
 package com.finders.api.domain.auth.dto;
 
 import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
 import lombok.Builder;
 
@@ -53,4 +54,18 @@ public class AuthResponse {
             String refreshToken,
             long accessTokenExpiresIn
     ) {}
+
+    public record OwnerSignupResponse(
+            Long id,
+            String email,
+            String name
+    ) {
+        public static OwnerSignupResponse from(MemberOwner owner) {
+            return new OwnerSignupResponse(
+                    owner.getId(),
+                    owner.getEmail(),
+                    owner.getName()
+            );
+        }
+    }
 }

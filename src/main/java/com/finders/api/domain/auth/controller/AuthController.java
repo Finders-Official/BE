@@ -64,4 +64,16 @@ public class AuthController {
         authCommandService.logout(request.refreshToken());
         return ApiResponse.success(SuccessCode.AUTH_LOGOUT_SUCCESS, null);
     }
+
+    @Operation(
+            summary = "사장님 회원가입",
+            description = "이메일과 사업자 정보를 통해 회원가입합니다."
+    )
+    @PostMapping("/owner/signup")
+    public ApiResponse<Void> signupOwner(
+            @RequestBody @Valid AuthRequest.OwnerSignupRequest request
+    ) {
+        authCommandService.signupOwner(request);
+        return ApiResponse.success(SuccessCode.MEMBER_CREATED, null);
+    }
 }
