@@ -63,6 +63,7 @@ public class SecurityConfig {
             "/restorations/**",
             // HM-010 커뮤니티 사진 미리 보기
             "/posts/preview",
+            // 개발용 토큰 발급
             "/dev/login",
             "/owner/**"
     };
