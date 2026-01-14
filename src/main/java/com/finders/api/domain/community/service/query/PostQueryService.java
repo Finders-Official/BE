@@ -11,7 +11,4 @@ public interface PostQueryService {
     PostResponse.PostPreviewListDTO getPopularPosts(Long memberId);
 
     PostResponse.PostPreviewListDTO searchPosts(String keyword, Long memberId, Pageable pageable);
-
-    // 현상소 검색
-    PostResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable, Long memberId);
 }

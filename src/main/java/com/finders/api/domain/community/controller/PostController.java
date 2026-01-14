@@ -142,20 +142,4 @@ public class PostController {
     ) {
         return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.searchPosts(keyword, authUser.memberId(), pageable));
     }
-
-    // 현상소 검색
-    @Operation(summary = "현상소 검색", description = "게시글 작성 시 연결할 현상소를 검색합니다. 위도/경도가 없으면 거리 없이 주소만 나옵니다.")
-    @GetMapping("/labs")
-    public ApiResponse<PostResponse.PhotoLabSearchListDTO> searchLabs(
-            @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(name = "keyword") String keyword,
-            @RequestParam(name = "latitude", required = false) Double latitude,
-            @RequestParam(name = "longitude", required = false) Double longitude,
-            @PageableDefault(size = 8) Pageable pageable
-            ) {
-        return ApiResponse.success(
-                SuccessCode.STORE_LIST_FOUND,
-                postQueryService.searchPhotoLabs(keyword, latitude, longitude, pageable,  authUser.memberId())
-        );
-    }
 }
