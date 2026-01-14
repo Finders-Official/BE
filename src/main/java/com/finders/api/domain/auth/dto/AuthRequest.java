@@ -31,4 +31,9 @@ public class AuthRequest {
             @NotBlank String bankAccountNumber,
             @NotBlank String bankAccountHolder
     ) {}
+
+    public record OwnerLoginRequest(
+            @NotBlank @Email String email,
+            @NotBlank String password
+    ) {}
 }

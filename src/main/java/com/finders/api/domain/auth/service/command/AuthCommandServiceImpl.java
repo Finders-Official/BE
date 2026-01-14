@@ -9,6 +9,7 @@ import com.finders.api.domain.member.entity.SocialAccount;
 import com.finders.api.domain.member.enums.MemberStatus;
 import com.finders.api.domain.member.enums.MemberType;
 import com.finders.api.domain.member.enums.SocialProvider;
+import com.finders.api.domain.member.repository.MemberOwnerRepository;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.member.repository.SocialAccountRepository;
@@ -37,6 +38,8 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     private final SocialAccountRepository socialAccountRepository;
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
+    private final MemberOwnerRepository memberOwnerRepository;
+
     private final MemberCommandService memberCommandService;
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -192,6 +195,24 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         MemberOwner savedOwner = memberCommandService.saveMemberOwner(request, encodedPassword);
 
         return AuthResponse.OwnerSignupResponse.from(savedOwner);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse.OwnerLoginResponse loginOwner(AuthRequest.OwnerLoginRequest request) {
+        MemberOwner owner = memberOwnerRepository.findByEmail(request.email())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.password(), owner.getPasswordHash())) {
+            throw new CustomException(ErrorCode.AUTH_LOGIN_FAILED);
+        }
+
+        String accessToken = jwtTokenProvider.createAccessToken(owner.getId(), "OWNER");
+        String refreshToken = jwtTokenProvider.createRefreshToken(owner.getId());
+
+        refreshTokenHasher.saveRefreshToken(owner.getId(), refreshToken);
+
+        return AuthResponse.OwnerLoginResponse.of(accessToken, refreshToken, owner);
     }
 
     private SocialProvider parseProvider(String provider) {
