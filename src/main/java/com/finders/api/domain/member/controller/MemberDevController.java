@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/dev")
 @RequiredArgsConstructor
-@Profile("local") // 실제 서버(prod)에서는 작동하지 않도록 보호
+//@Profile("local") // TODO: 추후 로컬에서만 작동하도록 변경
 public class MemberDevController {
 
     private final JwtTokenProvider jwtTokenProvider;
