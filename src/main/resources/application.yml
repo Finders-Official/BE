@@ -142,3 +142,6 @@ logging:
 # ========================================
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+
+dev:
+  secret-key: ${LOGIN_SECRET_KEY:local-dummy-key}
