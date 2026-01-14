@@ -80,6 +80,11 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     // ========================================
+    // Environment (.env 파일 로드 - 로컬 개발용)
+    // ========================================
+    developmentOnly 'me.paulschwarz:springboot3-dotenv:5.1.0'
+
+    // ========================================
     // Test
     // ========================================
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
