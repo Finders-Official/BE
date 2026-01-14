@@ -70,11 +70,11 @@ public class AuthController {
             description = "이메일과 사업자 정보를 통해 회원가입합니다."
     )
     @PostMapping("/owner/signup")
-    public ApiResponse<Void> signupOwner(
+    public ApiResponse<AuthResponse.OwnerSignupResponse> signupOwner(
             @RequestBody @Valid AuthRequest.OwnerSignupRequest request
     ) {
-        authCommandService.signupOwner(request);
-        return ApiResponse.success(SuccessCode.MEMBER_CREATED, null);
+        AuthResponse.OwnerSignupResponse response = authCommandService.signupOwner(request);
+        return ApiResponse.success(SuccessCode.MEMBER_CREATED, response);
     }
 
     @Operation(
