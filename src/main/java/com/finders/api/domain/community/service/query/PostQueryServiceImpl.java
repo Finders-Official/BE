@@ -6,6 +6,7 @@ import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostQueryRepository;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
@@ -37,14 +38,17 @@ public class PostQueryServiceImpl implements PostQueryService {
     private final PostLikeRepository postLikeRepository;
     private final PostQueryRepository postQueryRepository;
     private final StorageService storageService;
+    private final MemberUserRepository memberUserRepository;
 
     @Override
-    public PostResponse.PostDetailResDTO getPostDetail(Long postId, MemberUser memberUser) {
+    public PostResponse.PostDetailResDTO getPostDetail(Long postId, Long memberId) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
+        MemberUser memberUser = (memberId != null) ? memberUserRepository.findById(memberId).orElse(null) : null;
+
         boolean isLiked = (memberUser != null) && postLikeRepository.existsByPostAndMemberUser(post, memberUser);
-        boolean isMine = (memberUser != null) && post.getMemberUser().getId().equals(memberUser.getId());
+        boolean isMine = (memberId != null) && post.getMemberUser().getId().equals(memberId);
 
         String profileImageUrl = getFullUrl(post.getMemberUser().getProfileImage());
 
@@ -56,14 +60,22 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
-    public PostResponse.PostPreviewListDTO getPostList(Integer page) {
+    public PostResponse.PostPreviewListDTO getPostList(Integer page, Long memberId) {
         List<Post> posts = postQueryRepository.findAllForFeed(page, DEFAULT_PAGE_SIZE);
 
+        Set<Long> likedPostIds = java.util.Collections.emptySet();
+        if (memberId != null && !posts.isEmpty()) {
+            List<Long> postIds = posts.stream().map(Post::getId).toList();
+            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
+        }
+
+        final Set<Long> finalLikedPostIds = likedPostIds;
         List<PostResponse.PostPreviewDTO> dtos = posts.stream()
                 .map(post -> {
+                    boolean isLiked = finalLikedPostIds.contains(post.getId());
                     String mainImageUrl = post.getPostImageList().isEmpty() ? null
                             : getFullUrl(post.getPostImageList().get(0).getImageUrl());
-                    return PostResponse.PostPreviewDTO.from(post, false, mainImageUrl);
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImageUrl);
                 })
                 .toList();
 
@@ -71,13 +83,15 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
-    public PostResponse.PostPreviewListDTO getPopularPosts(MemberUser memberUser) {
+    public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
         List<Post> posts = postQueryRepository.findTop10PopularPosts();
 
+        MemberUser memberUser = (memberId != null) ? memberUserRepository.findById(memberId).orElse(null) : null;
+
         Set<Long> likedPostIds = java.util.Collections.emptySet();
-        if (memberUser != null) {
+        if (memberId != null) {
             List<Long> postIds = posts.stream().map(Post::getId).toList();
-            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberUser.getId(), postIds);
+            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
         }
 
         final Set<Long> finalLikedPostIds = likedPostIds;
@@ -101,13 +115,13 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     // 커뮤니티 게시글 검색
     @Override
-    public PostResponse.PostPreviewListDTO searchPosts(String keyword, MemberUser memberUser, Pageable pageable) {
+    public PostResponse.PostPreviewListDTO searchPosts(String keyword, Long memberId, Pageable pageable) {
         Page<Post> posts = postRepository.searchPostsByKeyword(keyword, pageable);
 
         Set<Long> likedPostIds = java.util.Collections.emptySet();
-        if (memberUser != null) {
+        if (memberId != null) {
             List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
-            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberUser.getId(), postIds);
+            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
         }
 
         final Set<Long> finalLikedPostIds = likedPostIds;
@@ -125,7 +139,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     // 현상소 검색
     @Override
-    public PostResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable) {
+    public PostResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable, Long memberId) {
         Page<PhotoLab> labs = postRepository.searchByName(keyword, pageable);
 
         List<PostResponse.PhotoLabSearchDTO> dtos = labs.getContent().stream()
