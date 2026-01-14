@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.4.0 | 2026-01-06
+> v2.4.4 | 2026-01-12
 
 ---
 
@@ -20,6 +20,7 @@
 | | `terms`                   | 약관 버전 관리 |
 | | `token_history`           | AI 토큰 충전/사용 내역 - User 전용 |
 | **store** | `photo_lab`               | 현상소 정보 |
+| | `region`                  | 지역 (시/도, 시/군/구) |
 | | `photo_lab_image`         | 현상소 이미지 |
 | | `photo_lab_keyword`       | 현상소 키워드/태그 |
 | | `photo_lab_notice`        | 현상소 공지사항 |
@@ -366,9 +367,23 @@ CREATE TABLE token_history (    -- AI 토큰 충전/사용 내역
 -- 2. STORE (현상소)
 -- ============================================
 
+CREATE TABLE region (
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    sigungu         VARCHAR(50)     NOT NULL,   -- 시/군/구
+    sido            BIGINT          NULL,       -- 상위 시/도 (region.id)
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at      DATETIME        NULL,
+    PRIMARY KEY (id),
+    INDEX idx_region_sido (sido),
+    UNIQUE KEY uk_region_sigungu_sido (sigungu, sido),
+    CONSTRAINT fk_region_sido FOREIGN KEY (sido) REFERENCES region(id)
+) ENGINE=InnoDB COMMENT='지역 (시/도, 시/군/구)';
+
 CREATE TABLE photo_lab (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
     owner_id        BIGINT          NOT NULL,   -- FK → member_owner.member_id (Owner 전용)
+    region_id       BIGINT          NOT NULL,   -- FK region.id (시/군/구)
     name            VARCHAR(100)    NOT NULL,
     description     TEXT            NULL,
     phone           VARCHAR(20)     NULL,
@@ -393,6 +408,7 @@ CREATE TABLE photo_lab (
     INDEX idx_lab_location (latitude, longitude),
     FULLTEXT INDEX ft_lab_name (name),
     CONSTRAINT fk_lab_owner FOREIGN KEY (owner_id) REFERENCES member(id),
+    CONSTRAINT fk_lab_region FOREIGN KEY (region_id) REFERENCES region(id),
     CONSTRAINT chk_lab_status CHECK (status IN ('PENDING', 'ACTIVE', 'SUSPENDED', 'CLOSED'))
 ) ENGINE=InnoDB COMMENT='현상소';
 
@@ -942,3 +958,4 @@ CREATE TABLE payment (  -- 포트원 V2 결제 연동
 | 2.4.1 | 2026-01-07 | **예약 슬롯 엔티티 추가**: `reservation_slot` 테이블 신규 도입. 현상소(`photo_lab`) + 날짜 + 시간 단위의 예약 정원(`max_capacity`, `reserved_count`)을 관리하도록 구조 분리. 동시 예약 시 정원 초과를 방지하기 위해 슬롯 단위 락 기반 처리 적용. |
 | 2.4.2 | 2026-01-08 | `member` 테이블의 `dtype` 컬럼명 `role`로 수정, `social_account` 테이블에 email 컬럼 추가                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 2.4.3 | 2026-01-08 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2.4.4 | 2026-01-12 | `region` table (sido/sigungu) 추가 및 `photo_lab.region_id` FK 참조 설정
