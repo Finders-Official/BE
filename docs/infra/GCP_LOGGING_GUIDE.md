@@ -127,9 +127,13 @@ gcloud auth application-default login \
 
 ### 4. 애플리케이션 실행
 
+**터미널에서 실행:**
 ```bash
 ./gradlew bootRun
 ```
+
+**IntelliJ에서 실행하는 경우:**
+> ADC 설정 후 **IntelliJ를 완전히 재시작**해야 합니다. (프로젝트 닫기가 아닌 IntelliJ 종료 후 재시작)
 
 ### 5. Swagger에서 테스트
 
@@ -176,6 +180,15 @@ http://localhost:8080/swagger-ui.html 접속 → **[TEST] Storage** 섹션
 - `[TEST] Storage` API는 **local 프로필에서만** 활성화됩니다.
 
 ### 트러블슈팅
+
+#### "401 Unauthorized" 오류
+- ADC 설정이 안 되어 있습니다 → 3번 단계 실행
+- IntelliJ 사용 시 → IntelliJ 완전히 재시작 (종료 후 다시 시작)
+- 기존 ADC가 잘못된 경우:
+  ```bash
+  gcloud auth application-default revoke  # 기존 설정 삭제
+  # 3번 단계 다시 실행
+  ```
 
 #### "403 Forbidden" 오류
 - Impersonation이 만료되었을 수 있습니다 → 3번 단계 다시 실행
