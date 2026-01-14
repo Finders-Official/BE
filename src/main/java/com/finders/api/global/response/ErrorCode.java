@@ -83,6 +83,7 @@ public enum ErrorCode implements BaseCode {
     // Store (현상소)
     // ========================================
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE_404", "현상소를 찾을 수 없습니다."),
+    REGION_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_404", "지역을 찾을 수 없습니다."),
     BUSINESS_HOUR_NOT_FOUND(HttpStatus.NOT_FOUND, "BUSINESS_HOUR_404", "현상소의 영업시간을 찾을 수 없습니다."),
 
     // ========================================
@@ -100,12 +101,20 @@ public enum ErrorCode implements BaseCode {
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "PHOTO_404", "사진을 찾을 수 없습니다."),
     PHOTO_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO_500", "사진 업로드에 실패했습니다."),
     PHOTO_RESTORE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO_501", "사진 복구에 실패했습니다."),
+    PHOTO_FILES_REQUIRED(HttpStatus.BAD_REQUEST, "PHOTO_400_FILES_REQUIRED", "스캔 이미지 파일은 필수입니다."),
+    PHOTO_OWNER_MISMATCH(HttpStatus.FORBIDDEN, "PHOTO_403_OWNER_MISMATCH", "해당 현상소의 오너가 아닙니다."),
+    PHOTO_RESERVATION_MISMATCH(HttpStatus.BAD_REQUEST, "PHOTO_400_RESERVATION_MISMATCH", "해당 현상소의 예약이 아닙니다."),
+    PHOTO_ORDER_ALREADY_EXISTS(HttpStatus.CONFLICT, "PHOTO_409_ORDER_EXISTS", "이미 해당 예약으로 현상 주문이 생성되었습니다."),
+    PHOTO_MEMBER_REQUIRED(HttpStatus.BAD_REQUEST, "PHOTO_400_MEMBER_REQUIRED", "현장 접수 시 회원 정보가 필요합니다."),
+    PHOTO_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "PHOTO_404_ORDER_NOT_FOUND", "현상 주문을 찾을 수 없습니다."),
+    PHOTO_ORDER_PHOTOLAB_MISMATCH(HttpStatus.BAD_REQUEST, "PHOTO_400_ORDER_PHOTOLAB_MISMATCH", "해당 현상소의 주문이 아닙니다."),
 
     // ========================================
     // Token
     // ========================================
     INSUFFICIENT_TOKEN(HttpStatus.PAYMENT_REQUIRED, "TOKEN_402", "토큰이 부족합니다."),
     TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "TOKEN_404", "토큰 정보를 찾을 수 없습니다."),
+
 
     // ========================================
     // External API

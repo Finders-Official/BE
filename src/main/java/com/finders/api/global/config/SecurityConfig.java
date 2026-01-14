@@ -63,7 +63,9 @@ public class SecurityConfig {
             "/restorations/**",
             // HM-010 커뮤니티 사진 미리 보기
             "/posts/preview",
-            "/dev/login"
+            // 개발용 토큰 발급
+            "/dev/login",
+            "/owner/**"
     };
 
     @Bean
@@ -103,8 +105,8 @@ public class SecurityConfig {
                 )
 
                 // JWT 필터 추가
-                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, signupTokenProvider),
-                         UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, signupTokenProvider),
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
