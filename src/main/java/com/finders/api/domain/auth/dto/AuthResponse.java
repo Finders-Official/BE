@@ -3,6 +3,7 @@ package com.finders.api.domain.auth.dto;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.member.enums.MemberType;
 import lombok.Builder;
 
 public class AuthResponse {
@@ -78,7 +79,7 @@ public class AuthResponse {
             return new OwnerLoginResponse(
                     accessToken,
                     refreshToken,
-                    new OwnerInfo(owner.getId(), owner.getEmail(), owner.getName(), "OWNER")
+                    new OwnerInfo(owner.getId(), owner.getEmail(), owner.getName(), owner.getRole())
             );
         }
     }
@@ -87,6 +88,6 @@ public class AuthResponse {
             Long id,
             String email,
             String name,
-            String role
+            MemberType role
     ) {}
 }
