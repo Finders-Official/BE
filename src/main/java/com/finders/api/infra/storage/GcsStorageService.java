@@ -35,6 +35,7 @@ public class GcsStorageService implements StorageService {
     private static final List<String> STORAGE_SCOPES = List.of(
             "https://www.googleapis.com/auth/devstorage.read_only"
     );
+    private static final int IMPERSONATED_CREDENTIALS_LIFETIME_SECONDS = 3600;
 
     private final Storage storage;
     private final StorageProperties properties;
@@ -58,18 +59,18 @@ public class GcsStorageService implements StorageService {
                         properties.serviceAccountEmail(),
                         null,
                         STORAGE_SCOPES,
-                        3600
+                        IMPERSONATED_CREDENTIALS_LIFETIME_SECONDS
                 );
-                log.info("[GcsStorageService] IAM Signing 활성화: {}", properties.serviceAccountEmail());
+                log.info("[GcsStorageService.initSigner] IAM Signing 활성화: {}", properties.serviceAccountEmail());
             } else if (credentials instanceof ServiceAccountSigner) {
                 // 로컬 환경: JSON 키 파일 사용 시
                 this.signer = (ServiceAccountSigner) credentials;
-                log.info("[GcsStorageService] ServiceAccount 키 파일로 서명");
+                log.info("[GcsStorageService.initSigner] ServiceAccount 키 파일로 서명");
             } else {
-                log.warn("[GcsStorageService] Signed URL 생성 불가: serviceAccountEmail 미설정");
+                log.warn("[GcsStorageService.initSigner] Signed URL 생성 불가: serviceAccountEmail 미설정");
             }
         } catch (IOException e) {
-            log.error("[GcsStorageService] Signer 초기화 실패: {}", e.getMessage());
+            log.error("[GcsStorageService.initSigner] Signer 초기화 실패: {}", e.getMessage());
         }
     }
 
@@ -133,10 +134,7 @@ public class GcsStorageService implements StorageService {
 
     @Override
     public StorageResponse.SignedUrl getSignedUrl(String objectPath, Integer expiryMinutes) {
-        if (signer == null) {
-            throw new CustomException(ErrorCode.STORAGE_SIGNED_URL_FAILED,
-                    "Signed URL 생성 불가: Signer가 초기화되지 않았습니다");
-        }
+        validateSignerInitialized();
 
         int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
 
@@ -169,10 +167,7 @@ public class GcsStorageService implements StorageService {
      */
     @Override
     public StorageResponse.SignedUrl getSignedUploadUrl(String objectPath, Integer expiryMinutes) {
-        if (signer == null) {
-            throw new CustomException(ErrorCode.STORAGE_SIGNED_URL_FAILED,
-                    "Signed URL 생성 불가: Signer가 초기화되지 않았습니다");
-        }
+        validateSignerInitialized();
 
         int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
 
@@ -210,6 +205,13 @@ public class GcsStorageService implements StorageService {
     // ========================================
     // Private Helper Methods
     // ========================================
+
+    private void validateSignerInitialized() {
+        if (signer == null) {
+            throw new CustomException(ErrorCode.STORAGE_SIGNED_URL_FAILED,
+                    "Signed URL 생성 불가: Signer가 초기화되지 않았습니다");
+        }
+    }
 
     private String generateFilename(String originalFilename) {
         String extension = extractExtension(originalFilename);
