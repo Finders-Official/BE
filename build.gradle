@@ -70,6 +70,11 @@ dependencies {
     implementation 'com.google.cloud:google-cloud-logging-logback'
 
     // ========================================
+    // Sentry (Error Monitoring)
+    // ========================================
+    implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.28.0'
+
+    // ========================================
     // WebClient (Replicate API)
     // ========================================
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
