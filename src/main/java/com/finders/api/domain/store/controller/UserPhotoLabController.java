@@ -10,7 +10,7 @@ import com.finders.api.domain.store.service.query.PhotoLabQueryService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
-import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ public class UserPhotoLabController {
     @Operation(summary = "현상소 목록 조회 API")
     @GetMapping
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
-            @AuthenticationPrincipal MemberUser memberUser,
+            @AuthenticationPrincipal AuthUser user,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) List<Long> tagIds,
             @RequestParam(required = false) Long regionId,
@@ -57,7 +57,7 @@ public class UserPhotoLabController {
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng
     ) {
-        Long memberId = memberUser != null ? memberUser.getId() : null;
+        Long memberId = user != null ? user.memberId() : null;
         PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
                 .memberId(memberId)
                 .query(q)
@@ -77,11 +77,11 @@ public class UserPhotoLabController {
     @PostMapping("/{photoLabId}/favorites")
     public ApiResponse<PhotoLabFavoriteResponse.Status> addFavorite(
             @PathVariable Long photoLabId,
-            @AuthenticationPrincipal MemberUser memberUser
+            @AuthenticationPrincipal AuthUser user
     ) {
         return ApiResponse.success(
                 SuccessCode.OK,
-                photoLabFavoriteCommandService.addFavorite(photoLabId, memberUser)
+                photoLabFavoriteCommandService.addFavorite(photoLabId, user != null ? user.memberId() : null)
         );
     }
 
@@ -89,11 +89,11 @@ public class UserPhotoLabController {
     @DeleteMapping("/{photoLabId}/favorites")
     public ApiResponse<PhotoLabFavoriteResponse.Status> removeFavorite(
             @PathVariable Long photoLabId,
-            @AuthenticationPrincipal MemberUser memberUser
+            @AuthenticationPrincipal AuthUser user
     ) {
         return ApiResponse.success(
                 SuccessCode.OK,
-                photoLabFavoriteCommandService.removeFavorite(photoLabId, memberUser)
+                photoLabFavoriteCommandService.removeFavorite(photoLabId, user != null ? user.memberId() : null)
         );
     }
 }

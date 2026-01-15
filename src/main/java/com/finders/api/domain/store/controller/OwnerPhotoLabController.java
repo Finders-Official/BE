@@ -10,10 +10,12 @@ import com.finders.api.domain.store.service.PhotoLabImageService;
 import com.finders.api.domain.store.service.PhotoLabService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
+import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,21 +37,23 @@ public class OwnerPhotoLabController {
     private final PhotoLabDocumentService photoLabDocumentService;
 
     @Operation(summary = "현상소 기본사항 등록 API")
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping
     public ApiResponse<PhotoLabResponse.Create> createPhotoLab(
-            @AuthenticationPrincipal Long ownerId,
+            @AuthenticationPrincipal AuthUser owner,
             @Valid @RequestBody PhotoLabRequest.Create request
     ) {
         return ApiResponse.success(
                 SuccessCode.CREATED,
-                photoLabService.createPhotoLab(ownerId, request)
+                photoLabService.createPhotoLab(owner != null ? owner.memberId() : null, request)
         );
     }
 
     @Operation(summary = "현상소 이미지 등록 API")
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PhotoLabImageResponse.Create> uploadPhotoLabImage(
-            @AuthenticationPrincipal Long ownerId,
+            @AuthenticationPrincipal AuthUser owner,
             @RequestParam Long photoLabId,
             @RequestPart("file") MultipartFile file,
             @RequestParam(required = false) Integer displayOrder,
@@ -57,21 +61,22 @@ public class OwnerPhotoLabController {
     ) {
         return ApiResponse.success(
                 SuccessCode.STORAGE_UPLOADED,
-                photoLabImageService.uploadImage(ownerId, photoLabId, file, displayOrder, isMain)
+                photoLabImageService.uploadImage(owner != null ? owner.memberId() : null, photoLabId, file, displayOrder, isMain)
         );
     }
 
     @Operation(summary = "현상소 사업자 등록 서류 업로드 API")
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<PhotoLabDocumentResponse.Create> uploadPhotoLabDocument(
-            @AuthenticationPrincipal Long ownerId,
+            @AuthenticationPrincipal AuthUser owner,
             @RequestParam Long photoLabId,
             @RequestParam DocumentType documentType,
             @RequestPart("file") MultipartFile file
     ) {
         return ApiResponse.success(
                 SuccessCode.STORAGE_UPLOADED,
-                photoLabDocumentService.uploadDocument(ownerId, photoLabId, documentType, file)
+                photoLabDocumentService.uploadDocument(owner != null ? owner.memberId() : null, photoLabId, documentType, file)
         );
     }
 }

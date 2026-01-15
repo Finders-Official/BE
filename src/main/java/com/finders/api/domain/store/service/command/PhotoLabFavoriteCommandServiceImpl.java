@@ -2,6 +2,7 @@ package com.finders.api.domain.store.service.command;
 
 import com.finders.api.domain.member.entity.FavoritePhotoLab;
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabFavoriteRepository;
@@ -19,17 +20,21 @@ public class PhotoLabFavoriteCommandServiceImpl implements PhotoLabFavoriteComma
 
     private final PhotoLabRepository photoLabRepository;
     private final PhotoLabFavoriteRepository photoLabFavoriteRepository;
+    private final MemberUserRepository memberUserRepository;
 
     @Override
-    public PhotoLabFavoriteResponse.Status addFavorite(Long photoLabId, MemberUser memberUser) {
-        validateMember(memberUser);
+    public PhotoLabFavoriteResponse.Status addFavorite(Long photoLabId, Long memberId) {
+        validateMember(memberId);
 
         PhotoLab photoLab = photoLabRepository.findById(photoLabId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
-        if (photoLabFavoriteRepository.existsByMember_IdAndPhotoLab_Id(memberUser.getId(), photoLabId)) {
+        if (photoLabFavoriteRepository.existsByMember_IdAndPhotoLab_Id(memberId, photoLabId)) {
             throw new CustomException(ErrorCode.CONFLICT);
         }
+
+        MemberUser memberUser = memberUserRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         photoLabFavoriteRepository.save(new FavoritePhotoLab(memberUser, photoLab));
 
@@ -40,11 +45,11 @@ public class PhotoLabFavoriteCommandServiceImpl implements PhotoLabFavoriteComma
     }
 
     @Override
-    public PhotoLabFavoriteResponse.Status removeFavorite(Long photoLabId, MemberUser memberUser) {
-        validateMember(memberUser);
+    public PhotoLabFavoriteResponse.Status removeFavorite(Long photoLabId, Long memberId) {
+        validateMember(memberId);
 
         FavoritePhotoLab favorite = photoLabFavoriteRepository
-                .findByMember_IdAndPhotoLab_Id(memberUser.getId(), photoLabId)
+                .findByMember_IdAndPhotoLab_Id(memberId, photoLabId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         photoLabFavoriteRepository.delete(favorite);
@@ -55,8 +60,8 @@ public class PhotoLabFavoriteCommandServiceImpl implements PhotoLabFavoriteComma
                 .build();
     }
 
-    private void validateMember(MemberUser memberUser) {
-        if (memberUser == null) {
+    private void validateMember(Long memberId) {
+        if (memberId == null) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
     }
