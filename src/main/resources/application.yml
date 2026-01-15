@@ -131,6 +131,16 @@ replicate:
   max-retries: 60
 
 # ========================================
+# Sentry 설정 (에러 모니터링)
+# ========================================
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SPRING_PROFILES_ACTIVE:local}
+  traces-sample-rate: 1.0
+  send-default-pii: false
+  in-app-includes: com.finders  # 스택트레이스에서 우리 코드 하이라이트
+
+# ========================================
 # Logging 설정
 # ========================================
 logging:
