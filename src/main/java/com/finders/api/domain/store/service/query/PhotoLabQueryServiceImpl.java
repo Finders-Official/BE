@@ -12,6 +12,7 @@ import com.finders.api.domain.store.repository.PhotoLabFavoriteRepository;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
+import com.finders.api.domain.store.repository.*;
 import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
