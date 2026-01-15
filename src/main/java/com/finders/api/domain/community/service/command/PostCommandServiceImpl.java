@@ -7,6 +7,7 @@ import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.PostImageRepository;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
@@ -26,9 +27,13 @@ public class PostCommandServiceImpl implements PostCommandService {
     private final PhotoLabRepository photoLabRepository;
     private final PostImageRepository postImageRepository;
     private final StorageService storageService;
+    private final MemberUserRepository memberUserRepository;
 
     @Override
-    public Long createPost(PostRequest.CreatePostDTO request, MemberUser memberUser) {
+    public Long createPost(PostRequest.CreatePostDTO request, Long memberId) {
+        MemberUser memberUser = memberUserRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
         PhotoLab photoLab = null;
 
         if (request.labId() != null) {
@@ -61,7 +66,7 @@ public class PostCommandServiceImpl implements PostCommandService {
     }
 
     @Override
-    public void deletePost(Long postId, MemberUser memberUser) {
+    public void deletePost(Long postId, Long memberId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -69,7 +74,7 @@ public class PostCommandServiceImpl implements PostCommandService {
             throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
-        if (!post.getMemberUser().getId().equals(memberUser.getId())) {
+        if (!post.getMemberUser().getId().equals(memberId)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 

@@ -1,7 +1,6 @@
 package com.finders.api.domain.community.repository;
 
 import com.finders.api.domain.community.entity.Post;
-import com.finders.api.domain.store.entity.PhotoLab;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,10 +24,4 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "OR p.content LIKE %:keyword% " +
             "OR pl.name LIKE %:keyword%)")
     Page<Post> searchPostsByKeyword(@Param("keyword") String keyword, Pageable pageable);
-
-    // 현상소 검색
-    @Query("SELECT pl FROM PhotoLab pl " +
-            "WHERE pl.status = 'ACTIVE' " +
-            "AND pl.name LIKE %:keyword%")
-    Page<PhotoLab> searchByName(@Param("keyword") String keyword, Pageable pageable);
 }

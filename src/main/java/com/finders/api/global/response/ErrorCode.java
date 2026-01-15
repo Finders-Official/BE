@@ -64,12 +64,16 @@ public enum ErrorCode implements BaseCode {
     AUTH_PHONE_MAX_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AUTH_422", "인증 시도 횟수를 초과했습니다."),
     AUTH_PHONE_ALREADY_VERIFIED(HttpStatus.CONFLICT, "AUTH_423", "이미 인증이 완료된 요청입니다."),
 
+    // 로그인 실패
+    AUTH_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH_401", "이메일 또는 비밀번호가 일치하지 않습니다."),
+
     // ========================================
     // Member
     // ========================================
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_404", "회원을 찾을 수 없습니다."),
     MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER_409", "이미 존재하는 회원입니다."),
     MEMBER_NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_410", "이미 사용 중인 닉네임입니다."),
+    MEMBER_EMAIL_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_411", "이미 사용 중인 이메일입니다."),
     MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화된 계정입니다."),
 
     // 휴대폰 인증 증빙 관련 (VPT 검증)
@@ -130,7 +134,8 @@ public enum ErrorCode implements BaseCode {
     STORAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORAGE_404", "파일을 찾을 수 없습니다."),
     STORAGE_INVALID_PATH(HttpStatus.BAD_REQUEST, "STORAGE_400", "잘못된 저장 경로입니다."),
     STORAGE_INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "STORAGE_401", "허용되지 않는 파일 형식입니다."),
-    STORAGE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "STORAGE_402", "파일 크기가 제한을 초과했습니다.");
+    STORAGE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "STORAGE_402", "파일 크기가 제한을 초과했습니다."),
+    STORAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_502", "Signed URL 생성에 실패했습니다.");
 
     private final HttpStatus status;
     private final String code;
