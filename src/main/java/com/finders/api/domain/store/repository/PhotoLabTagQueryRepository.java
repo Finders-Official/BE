@@ -22,6 +22,7 @@ public class PhotoLabTagQueryRepository {
 
         return queryFactory
                 .selectFrom(photoLabTag)
+                .join(photoLabTag.tag).fetchJoin()
                 .where(photoLabTag.photoLab.id.in(photoLabIds))
                 .fetch();
     }
