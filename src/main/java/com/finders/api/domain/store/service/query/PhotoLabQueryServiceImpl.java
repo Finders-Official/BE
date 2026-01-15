@@ -4,7 +4,7 @@ import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabTag;
-import com.finders.api.domain.member.repository.MemberAgreementRepository;
+import com.finders.api.domain.member.service.query.MemberQueryService;
 import com.finders.api.domain.store.repository.FavoritePhotoLabRepository;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
@@ -35,7 +35,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final PhotoLabImageRepository photoLabImageRepository;
     private final PhotoLabTagQueryRepository photoLabTagQueryRepository;
     private final FavoritePhotoLabRepository favoritePhotoLabRepository;
-    private final MemberAgreementRepository memberAgreementRepository;
+    private final MemberQueryService memberQueryService;
     private final StorageService storageService;
 
     @Override
@@ -151,6 +151,6 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         if (lat == null || lng == null || memberId == null) {
             return false;
         }
-        return memberAgreementRepository.existsByMember_IdAndTerms_TypeAndIsAgreed(memberId, TermsType.LOCATION, true);
+        return memberQueryService.hasAgreedToTerms(memberId, TermsType.LOCATION);
     }
 }
