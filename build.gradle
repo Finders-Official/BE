@@ -63,10 +63,11 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
     // ========================================
-    // Google Cloud Storage
+    // Google Cloud Platform
     // ========================================
     implementation platform('com.google.cloud:libraries-bom:26.51.0')
     implementation 'com.google.cloud:google-cloud-storage'
+    implementation 'com.google.cloud:google-cloud-logging-logback'
 
     // ========================================
     // WebClient (Replicate API)
