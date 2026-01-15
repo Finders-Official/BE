@@ -1,7 +1,6 @@
 package com.finders.api.domain.community.dto.response;
 
 import com.finders.api.domain.community.entity.Post;
-import com.finders.api.domain.store.entity.PhotoLab;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -106,34 +105,6 @@ public class PostResponse {
     ) {
         public static PostPreviewListDTO from(List<PostPreviewDTO> previewDTOs) {
             return new PostPreviewListDTO(previewDTOs);
-        }
-    }
-
-    // 현상소 검색
-    // 개별 항목 DTO
-    @Builder
-    public record PhotoLabSearchDTO(
-            Long labId,
-            String name,
-            String address,
-            String distance
-    ) {
-        public static PhotoLabSearchDTO from(PhotoLab photoLab, String distance) {
-            return PhotoLabSearchDTO.builder()
-                    .labId(photoLab.getId())
-                    .name(photoLab.getName())
-                    .address(photoLab.getAddress())
-                    .distance(distance)
-                    .build();
-        }
-    }
-
-    // 현상소 검색 리스트를 감싸는 DTO
-    public record PhotoLabSearchListDTO(
-            List<PhotoLabSearchDTO> photoLabSearchList
-    ) {
-        public static PhotoLabSearchListDTO from(List<PhotoLabSearchDTO> dtos) {
-            return new PhotoLabSearchListDTO(dtos);
         }
     }
 }

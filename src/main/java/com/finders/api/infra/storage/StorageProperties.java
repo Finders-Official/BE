@@ -20,7 +20,14 @@ public record StorageProperties(
         /**
          * Signed URL 만료 시간 (분, 기본값: 60분)
          */
-        Integer signedUrlExpiryMinutes
+        Integer signedUrlExpiryMinutes,
+
+        /**
+         * Signed URL 생성에 사용할 서비스 계정 이메일
+         * - GCE 환경에서 IAM Signing 사용 시 필수
+         * - 로컬 환경(JSON 키 파일)에서는 설정 불필요
+         */
+        String serviceAccountEmail
 ) {
     public StorageProperties {
         if (signedUrlExpiryMinutes == null) {
