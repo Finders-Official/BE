@@ -10,13 +10,11 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-
-    @Query("SELECT c FROM Comment c JOIN FETCH c.memberUser " +
-            "WHERE c.post = :post AND c.status = 'ACTIVE' "+
+    @Query("SELECT c FROM Comment c " +
+            "JOIN FETCH c.memberUser " +
+            "WHERE c.post = :post AND c.status = :status " +
             "ORDER BY c.createdAt DESC")
-    List<Comment> findAllByPostOrderByCreatedAtDesc(@Param("post") Post post);
-
-    long countByPostAndStatus(Post post, CommunityStatus status);
-
-    List<Comment> findAllByPostAndStatusOrderByCreatedAtDesc(Post post, CommunityStatus status);
+    List<Comment> findAllByPostAndStatusOrderByCreatedAtDesc(
+            @Param("post") Post post,
+            @Param("status") CommunityStatus status);
 }

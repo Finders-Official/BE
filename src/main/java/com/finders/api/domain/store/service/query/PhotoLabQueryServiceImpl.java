@@ -1,20 +1,19 @@
 package com.finders.api.domain.store.service.query;
 
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabKeyword;
 import com.finders.api.domain.member.repository.MemberAgreementRepository;
-import com.finders.api.domain.store.repository.FavoritePhotoLabRepository;
-import com.finders.api.domain.store.repository.PhotoLabImageRepository;
-import com.finders.api.domain.store.repository.PhotoLabKeywordQueryRepository;
-import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
+import com.finders.api.domain.store.repository.*;
 import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +36,13 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final FavoritePhotoLabRepository favoritePhotoLabRepository;
     private final MemberAgreementRepository memberAgreementRepository;
     private final StorageService storageService;
+
+    // 커뮤니티 현상소 검색 관련
+    private final PhotoLabRepository photoLabRepository;
+    private static final String DISTANCE_FORMAT_KM = "%.1fkm";
+    private static final int MINUTES_IN_DEGREE = 60;
+    private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.1515;
+    private static final double KILOMETERS_PER_STATUTE_MILE = 1.609344;
 
     @Override
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
@@ -156,5 +162,41 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
             return false;
         }
         return memberAgreementRepository.existsByMember_IdAndTerms_TypeAndIsAgreed(memberId, TermsType.LOCATION, true);
+    }
+
+    // 커뮤니티 현상소 검색
+    @Override
+    public PhotoLabResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable) {
+        Page<PhotoLab> labs = photoLabRepository.searchByName(keyword, pageable);
+
+        List<PhotoLabResponse.PhotoLabSearchDTO> dtos = labs.getContent().stream()
+                .map(lab -> {
+                    String distanceStr = null;
+
+                    if (latitude != null && longitude != null && lab.getLatitude() != null && lab.getLongitude() != null) {
+                        double distance = calculateDistance(
+                                latitude,
+                                longitude,
+                                lab.getLatitude().doubleValue(),
+                                lab.getLongitude().doubleValue()
+                        );
+                        distanceStr = String.format(DISTANCE_FORMAT_KM, distance);
+                    }
+
+                    return PhotoLabResponse.PhotoLabSearchDTO.from(lab, distanceStr);
+                })
+                .toList();
+
+        return PhotoLabResponse.PhotoLabSearchListDTO.from(dtos);
+    }
+
+    // 현상소 검색 직선 거리 계산
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double theta = lon1 - lon2;
+        double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2))
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
+        dist = Math.acos(dist);
+        dist = Math.toDegrees(dist);
+        return dist * MINUTES_IN_DEGREE * STATUTE_MILES_PER_NAUTICAL_MILE * KILOMETERS_PER_STATUTE_MILE;
     }
 }
