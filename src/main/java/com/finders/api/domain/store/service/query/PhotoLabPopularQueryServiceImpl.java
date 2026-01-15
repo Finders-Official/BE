@@ -79,7 +79,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
         return keywords.stream()
                 .collect(Collectors.groupingBy(
                         keyword -> keyword.getPhotoLab().getId(),
-                        Collectors.mapping(PhotoLabKeyword::getKeyword, Collectors.toList())
+                        Collectors.mapping(item -> item.getKeyword().getName(), Collectors.toList())
                 ));
     }
 }

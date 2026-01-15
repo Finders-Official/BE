@@ -88,7 +88,7 @@ public class PhotoLabQueryRepository {
                 .selectOne()
                 .from(photoLabKeyword)
                 .where(photoLabKeyword.photoLab.eq(photoLab)
-                        .and(photoLabKeyword.id.in(keywordIds)))
+                        .and(photoLabKeyword.keyword.id.in(keywordIds)))
                 .exists();
     }
 
