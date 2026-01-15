@@ -64,12 +64,16 @@ public enum ErrorCode implements BaseCode {
     AUTH_PHONE_MAX_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AUTH_422", "인증 시도 횟수를 초과했습니다."),
     AUTH_PHONE_ALREADY_VERIFIED(HttpStatus.CONFLICT, "AUTH_423", "이미 인증이 완료된 요청입니다."),
 
+    // 로그인 실패
+    AUTH_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH_401", "이메일 또는 비밀번호가 일치하지 않습니다."),
+
     // ========================================
     // Member
     // ========================================
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER_404", "회원을 찾을 수 없습니다."),
     MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER_409", "이미 존재하는 회원입니다."),
     MEMBER_NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_410", "이미 사용 중인 닉네임입니다."),
+    MEMBER_EMAIL_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_411", "이미 사용 중인 이메일입니다."),
     MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화된 계정입니다."),
 
     // 휴대폰 인증 증빙 관련 (VPT 검증)

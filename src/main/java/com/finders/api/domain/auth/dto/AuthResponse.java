@@ -1,7 +1,9 @@
 package com.finders.api.domain.auth.dto;
 
 import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.member.enums.MemberType;
 import lombok.Builder;
 
 public class AuthResponse {
@@ -52,5 +54,40 @@ public class AuthResponse {
             String accessToken,
             String refreshToken,
             long accessTokenExpiresIn
+    ) {}
+
+    public record OwnerSignupResponse(
+            Long id,
+            String email,
+            String name
+    ) {
+        public static OwnerSignupResponse from(MemberOwner owner) {
+            return new OwnerSignupResponse(
+                    owner.getId(),
+                    owner.getEmail(),
+                    owner.getName()
+            );
+        }
+    }
+
+    public record OwnerLoginResponse(
+            String accessToken,
+            String refreshToken,
+            OwnerInfo ownerInfo
+    ) {
+        public static OwnerLoginResponse of(String accessToken, String refreshToken, MemberOwner owner) {
+            return new OwnerLoginResponse(
+                    accessToken,
+                    refreshToken,
+                    new OwnerInfo(owner.getId(), owner.getEmail(), owner.getName(), owner.getRole())
+            );
+        }
+    }
+
+    public record OwnerInfo(
+            Long id,
+            String email,
+            String name,
+            MemberType role
     ) {}
 }

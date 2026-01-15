@@ -1,5 +1,9 @@
 package com.finders.api.domain.member.controller;
 
+import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.enums.MemberType;
+import com.finders.api.domain.member.repository.MemberRepository;
+import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.SuccessCode;
@@ -19,15 +23,22 @@ import org.springframework.web.bind.annotation.*;
 public class LocalDevMemberController {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final MemberRepository memberRepository;
 
-    @Operation(summary = "로컬 개발용 토큰 발급", description = "로컬 환경에서는 보안 키 없이 ID와 Role(USER/OWNER)을 입력하여 토큰을 발급받습니다.")
+    @Operation(summary = "로컬 개발용 토큰 발급", description = "로컬 환경에서는 보안 키 없이 ID를 입력하여 토큰을 발급받습니다.")
     @GetMapping("/login")
     public ApiResponse<String> devLogin(
-            @RequestParam Long memberId,
-            @RequestParam(defaultValue = "USER") String role // 기본값을 USER로 설정
+            @RequestParam Long memberId
     ) {
-        // role 값을 대문자로 변환하여 전달 (USER, OWNER 등)
-        String token = jwtTokenProvider.createAccessToken(memberId, role.toUpperCase());
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.getRole() != MemberType.USER) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        String token = jwtTokenProvider.createAccessToken(memberId, "USER");
+
         return ApiResponse.success(SuccessCode.OK, "AccessToken: " + token);
     }
 }
