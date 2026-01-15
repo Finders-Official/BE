@@ -6,6 +6,7 @@ import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabTag;
+import com.finders.api.domain.store.repository.*;
 import com.finders.api.domain.member.service.query.MemberQueryService;
 import com.finders.api.domain.store.repository.PhotoLabFavoriteRepository;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
