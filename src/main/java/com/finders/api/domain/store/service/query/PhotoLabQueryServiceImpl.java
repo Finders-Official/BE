@@ -1,16 +1,13 @@
 package com.finders.api.domain.store.service.query;
 
+import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabTag;
-import com.finders.api.domain.member.repository.MemberAgreementRepository;
+import com.finders.api.domain.member.service.query.MemberQueryService;
 import com.finders.api.domain.store.repository.*;
-import com.finders.api.domain.store.repository.FavoritePhotoLabRepository;
-import com.finders.api.domain.store.repository.PhotoLabImageRepository;
-import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
-import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
 import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
@@ -21,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +34,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final PhotoLabImageRepository photoLabImageRepository;
     private final PhotoLabTagQueryRepository photoLabTagQueryRepository;
     private final FavoritePhotoLabRepository favoritePhotoLabRepository;
-    private final MemberAgreementRepository memberAgreementRepository;
+    private final MemberQueryService memberQueryService;
     private final StorageService storageService;
 
     // 커뮤니티 현상소 검색 관련
@@ -49,31 +45,21 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private static final double KILOMETERS_PER_STATUTE_MILE = 1.609344;
 
     @Override
-    public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
-            Long memberId,
-            String query,
-            List<Long> tagIds,
-            Long regionId,
-            LocalDate date,
-            Integer page,
-            Integer size,
-            Double lat,
-            Double lng
-    ) {
-        int pageNumber = page != null && page >= 0 ? page : 0;
-        int pageSize = size != null && size > 0 ? size : 20;
+    public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(PhotoLabSearchCondition condition) {
+        int pageNumber = condition.page() >= 0 ? condition.page() : 0;
+        int pageSize = condition.size() > 0 ? condition.size() : 20;
 
-        boolean useDistance = shouldUseDistance(memberId, lat, lng);
+        boolean useDistance = shouldUseDistance(condition.memberId(), condition.lat(), condition.lng());
 
         Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
-                query,
-                tagIds,
-                regionId,
-                date,
+                condition.query(),
+                condition.tagIds(),
+                condition.regionId(),
+                condition.date(),
                 pageNumber,
                 pageSize,
-                lat,
-                lng,
+                condition.lat(),
+                condition.lng(),
                 useDistance
         );
 
@@ -87,20 +73,16 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         Map<Long, List<String>> imageUrlsByLabId = buildImageUrlMap(photoLabIds);
         Map<Long, List<String>> tagsByLabId = buildTagMap(photoLabIds);
-        Set<Long> favoriteLabIds = buildFavoriteSet(memberId, photoLabIds);
+        Set<Long> favoriteLabIds = buildFavoriteSet(condition.memberId(), photoLabIds);
 
         List<PhotoLabListResponse.Card> cards = photoLabPage.getContent().stream()
-                .map(photoLab -> PhotoLabListResponse.Card.builder()
-                        .photoLabId(photoLab.getId())
-                        .name(photoLab.getName())
-                        .imageUrls(imageUrlsByLabId.getOrDefault(photoLab.getId(), List.of()))
-                        .tags(tagsByLabId.getOrDefault(photoLab.getId(), List.of()))
-                        .address(photoLab.getAddress())
-                        .distanceKm(distanceKmOrNull(lat, lng, photoLab))
-                        .isFavorite(favoriteLabIds.contains(photoLab.getId()))
-                        .workCount(photoLab.getWorkCount())
-                        .avgWorkTime(photoLab.getAvgWorkTime())
-                        .build())
+                .map(photoLab -> PhotoLabListResponse.Card.from(
+                        photoLab,
+                        imageUrlsByLabId.getOrDefault(photoLab.getId(), List.of()),
+                        tagsByLabId.getOrDefault(photoLab.getId(), List.of()),
+                        distanceKmOrNull(condition.lat(), condition.lng(), photoLab),
+                        favoriteLabIds.contains(photoLab.getId())
+                ))
                 .toList();
 
         return PagedResponse.of(SuccessCode.STORE_LIST_FOUND, cards, photoLabPage);
@@ -165,7 +147,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         if (lat == null || lng == null || memberId == null) {
             return false;
         }
-        return memberAgreementRepository.existsByMember_IdAndTerms_TypeAndIsAgreed(memberId, TermsType.LOCATION, true);
+        return memberQueryService.hasAgreedToTerms(memberId, TermsType.LOCATION);
     }
 
     // 커뮤니티 현상소 검색

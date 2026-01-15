@@ -1,5 +1,6 @@
 package com.finders.api.domain.store.controller;
 
+import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
@@ -55,17 +56,19 @@ public class UserPhotoLabController {
             @RequestParam(required = false) Double lng
     ) {
         Long memberId = memberUser != null ? memberUser.getId() : null;
-        return photoLabQueryService.getPhotoLabs(
-                memberId,
-                q,
-                tagIds,
-                regionId,
-                date,
-                page,
-                size,
-                lat,
-                lng
-        );
+        PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
+                .memberId(memberId)
+                .query(q)
+                .tagIds(tagIds)
+                .regionId(regionId)
+                .date(date)
+                .page(page)
+                .size(size)
+                .lat(lat)
+                .lng(lng)
+                .build();
+
+        return photoLabQueryService.getPhotoLabs(condition);
     }
 
     // 커뮤니티 현상소 검색

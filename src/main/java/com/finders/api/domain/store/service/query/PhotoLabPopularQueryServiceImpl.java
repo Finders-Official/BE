@@ -5,7 +5,7 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabTag;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
-import com.finders.api.domain.store.repository.PhotoLabTagRepository;
+import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
 
     private final PhotoLabRepository photoLabRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
-    private final PhotoLabTagRepository photoLabTagRepository;
+    private final PhotoLabTagQueryRepository photoLabTagQueryRepository;
     private final StorageService storageService;
 
     @Override
@@ -43,13 +43,11 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
         Map<Long, List<String>> tagsByPhotoLabId = buildTagMap(photoLabIds);
 
         return photoLabs.stream()
-                .map(photoLab -> PhotoLabPopularResponse.Card.builder()
-                        .photoLabId(photoLab.getId())
-                        .name(photoLab.getName())
-                        .mainImageUrl(mainImageUrlByPhotoLabId.get(photoLab.getId()))
-                        .tags(tagsByPhotoLabId.getOrDefault(photoLab.getId(), List.of()))
-                        .workCount(photoLab.getWorkCount())
-                        .build())
+                .map(photoLab -> PhotoLabPopularResponse.Card.from(
+                        photoLab,
+                        mainImageUrlByPhotoLabId.get(photoLab.getId()),
+                        tagsByPhotoLabId.getOrDefault(photoLab.getId(), List.of())
+                ))
                 .toList();
     }
 
@@ -71,7 +69,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
     }
 
     private Map<Long, List<String>> buildTagMap(List<Long> photoLabIds) {
-        List<PhotoLabTag> tags = photoLabTagRepository.findByPhotoLabIds(photoLabIds);
+        List<PhotoLabTag> tags = photoLabTagQueryRepository.findByPhotoLabIds(photoLabIds);
         if (tags.isEmpty()) {
             return Collections.emptyMap();
         }
