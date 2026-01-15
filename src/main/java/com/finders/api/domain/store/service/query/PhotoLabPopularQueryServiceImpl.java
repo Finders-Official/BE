@@ -43,13 +43,11 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
         Map<Long, List<String>> tagsByPhotoLabId = buildTagMap(photoLabIds);
 
         return photoLabs.stream()
-                .map(photoLab -> PhotoLabPopularResponse.Card.builder()
-                        .photoLabId(photoLab.getId())
-                        .name(photoLab.getName())
-                        .mainImageUrl(mainImageUrlByPhotoLabId.get(photoLab.getId()))
-                        .tags(tagsByPhotoLabId.getOrDefault(photoLab.getId(), List.of()))
-                        .workCount(photoLab.getWorkCount())
-                        .build())
+                .map(photoLab -> PhotoLabPopularResponse.Card.from(
+                        photoLab,
+                        mainImageUrlByPhotoLabId.get(photoLab.getId()),
+                        tagsByPhotoLabId.getOrDefault(photoLab.getId(), List.of())
+                ))
                 .toList();
     }
 
