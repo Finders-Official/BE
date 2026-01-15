@@ -34,6 +34,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    logging:
+      driver: gcplogs
+      options:
+        gcp-log-cmd: "true"
+        labels: "app,env"
+    labels:
+      app: "finders-api"
+      env: "prod"
 
 networks:
   default:

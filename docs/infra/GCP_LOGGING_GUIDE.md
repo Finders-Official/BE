@@ -26,16 +26,16 @@
 
 ### 기본 필터 사용
 
-#### 애플리케이션 로그 조회
+#### 애플리케이션 로그 조회 (Docker gcplogs)
 ```
-resource.type="gce_instance"
-logName="projects/project-37afc2aa-d3d3-4a1a-8cd/logs/spring-boot"
+resource.type="global"
+logName="projects/project-37afc2aa-d3d3-4a1a-8cd/logs/gcplogs-docker-driver"
 ```
 
 #### 에러 로그만 조회
 ```
-resource.type="gce_instance"
-severity>=ERROR
+resource.type="global"
+textPayload=~"ERROR|Exception"
 ```
 
 #### 특정 시간대 로그 조회
@@ -46,10 +46,10 @@ severity>=ERROR
 
 | 용도 | 필터 |
 |------|------|
-| 전체 앱 로그 | `resource.type="gce_instance"` |
-| ERROR 이상 | `severity>=ERROR` |
+| 전체 앱 로그 | `resource.type="global" logName=~"gcplogs-docker-driver"` |
+| ERROR 이상 | `textPayload=~"ERROR"` |
 | 특정 키워드 | `textPayload=~"키워드"` |
-| HTTP 요청 | `httpRequest.requestUrl=~"/api/"` |
+| 특정 API 에러 | `textPayload=~"/api/posts"` |
 
 ### 필터 저장하기
 1. 필터 입력 후 **저장** 버튼 클릭
