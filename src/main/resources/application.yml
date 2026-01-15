@@ -91,6 +91,7 @@ google:
       public-bucket: ${GCS_PUBLIC_BUCKET:finders-public}
       private-bucket: ${GCS_PRIVATE_BUCKET:finders-private}
       signed-url-expiry-minutes: ${GCS_SIGNED_URL_EXPIRY:60}
+      service-account-email: ${GCS_SERVICE_ACCOUNT_EMAIL:}
 
 # ========================================
 # Actuator 설정
