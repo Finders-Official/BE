@@ -24,18 +24,31 @@
 
 ## 로그 조회 방법
 
+### 로그 구조
+- **Cloud Logging Logback Appender** 사용
+- **Structured JSON** 형식으로 전송 (로그 레벨 → Severity 자동 매핑)
+- **logback-spring.xml** 설정 기반
+
 ### 기본 필터 사용
 
 #### 애플리케이션 로그 조회
 ```
-resource.type="gce_instance"
-logName="projects/project-37afc2aa-d3d3-4a1a-8cd/logs/spring-boot"
+resource.type="global"
+logName="projects/project-37afc2aa-d3d3-4a1a-8cd/logs/java.log"
 ```
 
 #### 에러 로그만 조회
 ```
-resource.type="gce_instance"
+resource.type="global"
+logName=~"java.log"
 severity>=ERROR
+```
+
+#### 특정 클래스 로그 조회
+```
+resource.type="global"
+logName=~"java.log"
+jsonPayload.logger_name=~"com.finders.api"
 ```
 
 #### 특정 시간대 로그 조회
@@ -46,10 +59,20 @@ severity>=ERROR
 
 | 용도 | 필터 |
 |------|------|
-| 전체 앱 로그 | `resource.type="gce_instance"` |
-| ERROR 이상 | `severity>=ERROR` |
-| 특정 키워드 | `textPayload=~"키워드"` |
-| HTTP 요청 | `httpRequest.requestUrl=~"/api/"` |
+| 전체 앱 로그 | `logName=~"java.log"` |
+| ERROR 이상 | `logName=~"java.log" severity>=ERROR` |
+| 특정 키워드 | `logName=~"java.log" jsonPayload.message=~"키워드"` |
+| 특정 로거 | `logName=~"java.log" jsonPayload.logger_name=~"GcsStorageService"` |
+
+### Severity 레벨 매핑
+
+| Java Level | Cloud Logging Severity |
+|------------|------------------------|
+| TRACE | DEBUG |
+| DEBUG | DEBUG |
+| INFO | INFO |
+| WARN | WARNING |
+| ERROR | ERROR |
 
 ### 필터 저장하기
 1. 필터 입력 후 **저장** 버튼 클릭
@@ -70,24 +93,29 @@ severity>=ERROR
 
 ## SSH 접속 (대안)
 
-GCP 콘솔에서 직접 서버에 SSH 접속하여 로그를 확인할 수도 있습니다.
+Cloud Logging이 기본이지만, Docker 로그를 직접 확인할 수도 있습니다.
 
 ### 접속 방법
 1. **Compute Engine** → **VM 인스턴스** 이동
 2. 해당 인스턴스의 **SSH** 버튼 클릭
 3. 브라우저에서 터미널 열림
 
-### 로그 파일 직접 확인
+### Docker 로그 확인
 ```bash
-# 애플리케이션 로그 (실시간)
-tail -f /var/log/spring-boot/application.log
+# 실시간 로그 (실행 중인 컨테이너)
+docker logs -f finders-api
 
 # 최근 100줄
-tail -n 100 /var/log/spring-boot/application.log
+docker logs --tail 100 finders-api
 
 # 에러만 필터링
-grep -i error /var/log/spring-boot/application.log
+docker logs finders-api 2>&1 | grep -i error
+
+# 타임스탬프 포함
+docker logs -t finders-api
 ```
+
+> **참고**: 컨테이너 재시작 시 이전 로그가 사라질 수 있습니다. 영구 보관이 필요하면 Cloud Logging을 사용하세요.
 
 ## 로컬 개발 환경 설정 (Presigned URL 테스트)
 
