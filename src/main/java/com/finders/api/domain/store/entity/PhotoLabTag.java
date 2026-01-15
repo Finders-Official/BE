@@ -17,14 +17,14 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-        name = "photo_lab_keyword",
+        name = "photo_lab_tag",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_lab_keyword", columnNames = {"photo_lab_id", "keyword_id"})
+                @UniqueConstraint(name = "uk_lab_tag", columnNames = {"photo_lab_id", "tag_id"})
         }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PhotoLabKeyword extends BaseTimeEntity {
+public class PhotoLabTag extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,12 +35,12 @@ public class PhotoLabKeyword extends BaseTimeEntity {
     private PhotoLab photoLab;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "keyword_id", nullable = false)
-    private Keyword keyword;
+    @JoinColumn(name = "tag_id", nullable = false)
+    private Tag tag;
 
     @Builder
-    private PhotoLabKeyword(PhotoLab photoLab, Keyword keyword) {
+    private PhotoLabTag(PhotoLab photoLab, Tag tag) {
         this.photoLab = photoLab;
-        this.keyword = keyword;
+        this.tag = tag;
     }
 }

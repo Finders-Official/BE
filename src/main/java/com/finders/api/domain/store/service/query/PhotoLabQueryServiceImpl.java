@@ -3,11 +3,11 @@ package com.finders.api.domain.store.service.query;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
-import com.finders.api.domain.store.entity.PhotoLabKeyword;
+import com.finders.api.domain.store.entity.PhotoLabTag;
 import com.finders.api.domain.member.repository.MemberAgreementRepository;
 import com.finders.api.domain.store.repository.FavoritePhotoLabRepository;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
-import com.finders.api.domain.store.repository.PhotoLabKeywordQueryRepository;
+import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
 import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.global.response.PagedResponse;
@@ -33,7 +33,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     private final PhotoLabQueryRepository photoLabQueryRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
-    private final PhotoLabKeywordQueryRepository photoLabKeywordQueryRepository;
+    private final PhotoLabTagQueryRepository photoLabTagQueryRepository;
     private final FavoritePhotoLabRepository favoritePhotoLabRepository;
     private final MemberAgreementRepository memberAgreementRepository;
     private final StorageService storageService;
@@ -42,7 +42,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
             Long memberId,
             String query,
-            List<Long> keywordIds,
+            List<Long> tagIds,
             Long regionId,
             LocalDate date,
             Integer page,
@@ -57,7 +57,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
                 query,
-                keywordIds,
+                tagIds,
                 regionId,
                 date,
                 pageNumber,
@@ -76,7 +76,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .toList();
 
         Map<Long, List<String>> imageUrlsByLabId = buildImageUrlMap(photoLabIds);
-        Map<Long, List<String>> keywordsByLabId = buildKeywordMap(photoLabIds);
+        Map<Long, List<String>> tagsByLabId = buildTagMap(photoLabIds);
         Set<Long> favoriteLabIds = buildFavoriteSet(memberId, photoLabIds);
 
         List<PhotoLabListResponse.Card> cards = photoLabPage.getContent().stream()
@@ -84,7 +84,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                         .photoLabId(photoLab.getId())
                         .name(photoLab.getName())
                         .imageUrls(imageUrlsByLabId.getOrDefault(photoLab.getId(), List.of()))
-                        .keywords(keywordsByLabId.getOrDefault(photoLab.getId(), List.of()))
+                        .tags(tagsByLabId.getOrDefault(photoLab.getId(), List.of()))
                         .address(photoLab.getAddress())
                         .distanceKm(distanceKmOrNull(lat, lng, photoLab))
                         .isFavorite(favoriteLabIds.contains(photoLab.getId()))
@@ -111,16 +111,16 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         return result;
     }
 
-    private Map<Long, List<String>> buildKeywordMap(List<Long> photoLabIds) {
-        List<PhotoLabKeyword> keywords = photoLabKeywordQueryRepository.findByPhotoLabIds(photoLabIds);
-        if (keywords.isEmpty()) {
+    private Map<Long, List<String>> buildTagMap(List<Long> photoLabIds) {
+        List<PhotoLabTag> tags = photoLabTagQueryRepository.findByPhotoLabIds(photoLabIds);
+        if (tags.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        return keywords.stream()
+        return tags.stream()
                 .collect(Collectors.groupingBy(
-                        keyword -> keyword.getPhotoLab().getId(),
-                        Collectors.mapping(item -> item.getKeyword().getName(), Collectors.toList())
+                        tag -> tag.getPhotoLab().getId(),
+                        Collectors.mapping(item -> item.getTag().getName(), Collectors.toList())
                 ));
     }
 
