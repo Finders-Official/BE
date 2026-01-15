@@ -10,7 +10,7 @@ public class PhotoLabPopularResponse {
             Long photoLabId,
             String name,
             String mainImageUrl,
-            List<String> keywords,
+            List<String> tags,
             Integer workCount
     ) {
     }

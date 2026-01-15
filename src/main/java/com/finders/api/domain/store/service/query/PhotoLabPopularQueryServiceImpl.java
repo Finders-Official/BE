@@ -3,9 +3,9 @@ package com.finders.api.domain.store.service.query;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
-import com.finders.api.domain.store.entity.PhotoLabKeyword;
+import com.finders.api.domain.store.entity.PhotoLabTag;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
-import com.finders.api.domain.store.repository.PhotoLabKeywordRepository;
+import com.finders.api.domain.store.repository.PhotoLabTagRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
 
     private final PhotoLabRepository photoLabRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
-    private final PhotoLabKeywordRepository photoLabKeywordRepository;
+    private final PhotoLabTagRepository photoLabTagRepository;
     private final StorageService storageService;
 
     @Override
@@ -40,14 +40,14 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
                 .toList();
 
         Map<Long, String> mainImageUrlByPhotoLabId = buildMainImageUrlMap(photoLabIds);
-        Map<Long, List<String>> keywordsByPhotoLabId = buildKeywordMap(photoLabIds);
+        Map<Long, List<String>> tagsByPhotoLabId = buildTagMap(photoLabIds);
 
         return photoLabs.stream()
                 .map(photoLab -> PhotoLabPopularResponse.Card.builder()
                         .photoLabId(photoLab.getId())
                         .name(photoLab.getName())
                         .mainImageUrl(mainImageUrlByPhotoLabId.get(photoLab.getId()))
-                        .keywords(keywordsByPhotoLabId.getOrDefault(photoLab.getId(), List.of()))
+                        .tags(tagsByPhotoLabId.getOrDefault(photoLab.getId(), List.of()))
                         .workCount(photoLab.getWorkCount())
                         .build())
                 .toList();
@@ -70,16 +70,16 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
         return result;
     }
 
-    private Map<Long, List<String>> buildKeywordMap(List<Long> photoLabIds) {
-        List<PhotoLabKeyword> keywords = photoLabKeywordRepository.findByPhotoLabIds(photoLabIds);
-        if (keywords.isEmpty()) {
+    private Map<Long, List<String>> buildTagMap(List<Long> photoLabIds) {
+        List<PhotoLabTag> tags = photoLabTagRepository.findByPhotoLabIds(photoLabIds);
+        if (tags.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        return keywords.stream()
+        return tags.stream()
                 .collect(Collectors.groupingBy(
-                        keyword -> keyword.getPhotoLab().getId(),
-                        Collectors.mapping(PhotoLabKeyword::getKeyword, Collectors.toList())
+                        tag -> tag.getPhotoLab().getId(),
+                        Collectors.mapping(item -> item.getTag().getName(), Collectors.toList())
                 ));
     }
 }

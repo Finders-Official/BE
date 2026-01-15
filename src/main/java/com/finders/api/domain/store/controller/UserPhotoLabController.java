@@ -46,7 +46,7 @@ public class UserPhotoLabController {
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
             @AuthenticationPrincipal MemberUser memberUser,
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) List<Long> keywordIds,
+            @RequestParam(required = false) List<Long> tagIds,
             @RequestParam(required = false) Long regionId,
             @RequestParam(required = false) LocalDate date,
             @RequestParam(defaultValue = "0") Integer page,
@@ -58,7 +58,7 @@ public class UserPhotoLabController {
         return photoLabQueryService.getPhotoLabs(
                 memberId,
                 q,
-                keywordIds,
+                tagIds,
                 regionId,
                 date,
                 page,
