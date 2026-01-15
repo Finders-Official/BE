@@ -41,8 +41,8 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     @Override
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(PhotoLabSearchCondition condition) {
-        int pageNumber = condition.page() != null && condition.page() >= 0 ? condition.page() : 0;
-        int pageSize = condition.size() != null && condition.size() > 0 ? condition.size() : 20;
+        int pageNumber = condition.page() >= 0 ? condition.page() : 0;
+        int pageSize = condition.size() > 0 ? condition.size() : 20;
 
         boolean useDistance = shouldUseDistance(condition.memberId(), condition.lat(), condition.lng());
 
