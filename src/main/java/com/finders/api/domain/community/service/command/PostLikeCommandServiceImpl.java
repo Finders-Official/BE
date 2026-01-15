@@ -6,6 +6,7 @@ import com.finders.api.domain.community.entity.PostLike;
 import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostRepository;
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,15 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final MemberUserRepository memberUserRepository;
 
     @Override
-    public PostLikeResponse.PostLikeResDTO createPostLike(Long postId, MemberUser memberUser) {
+    public PostLikeResponse.PostLikeResDTO createPostLike(Long postId, Long memberId) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        MemberUser memberUser = memberUserRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (postLikeRepository.existsByPostAndMemberUser(post, memberUser)) {
             throw new CustomException(ErrorCode.CONFLICT);
@@ -40,9 +45,12 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
     }
 
     @Override
-    public PostLikeResponse.PostLikeResDTO deletePostLike(Long postId, MemberUser memberUser) {
+    public PostLikeResponse.PostLikeResDTO deletePostLike(Long postId, Long memberId) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        MemberUser memberUser = memberUserRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         PostLike postLike = postLikeRepository.findByPostAndMemberUser(post, memberUser)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
