@@ -1,5 +1,6 @@
 package com.finders.api.domain.store.service.query;
 
+import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
@@ -39,31 +40,21 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final StorageService storageService;
 
     @Override
-    public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
-            Long memberId,
-            String query,
-            List<Long> tagIds,
-            Long regionId,
-            LocalDate date,
-            Integer page,
-            Integer size,
-            Double lat,
-            Double lng
-    ) {
-        int pageNumber = page != null && page >= 0 ? page : 0;
-        int pageSize = size != null && size > 0 ? size : 20;
+    public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(PhotoLabSearchCondition condition) {
+        int pageNumber = condition.page() != null && condition.page() >= 0 ? condition.page() : 0;
+        int pageSize = condition.size() != null && condition.size() > 0 ? condition.size() : 20;
 
-        boolean useDistance = shouldUseDistance(memberId, lat, lng);
+        boolean useDistance = shouldUseDistance(condition.memberId(), condition.lat(), condition.lng());
 
         Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
-                query,
-                tagIds,
-                regionId,
-                date,
+                condition.query(),
+                condition.tagIds(),
+                condition.regionId(),
+                condition.date(),
                 pageNumber,
                 pageSize,
-                lat,
-                lng,
+                condition.lat(),
+                condition.lng(),
                 useDistance
         );
 
@@ -77,14 +68,14 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         Map<Long, List<String>> imageUrlsByLabId = buildImageUrlMap(photoLabIds);
         Map<Long, List<String>> tagsByLabId = buildTagMap(photoLabIds);
-        Set<Long> favoriteLabIds = buildFavoriteSet(memberId, photoLabIds);
+        Set<Long> favoriteLabIds = buildFavoriteSet(condition.memberId(), photoLabIds);
 
         List<PhotoLabListResponse.Card> cards = photoLabPage.getContent().stream()
                 .map(photoLab -> PhotoLabListResponse.Card.from(
                         photoLab,
                         imageUrlsByLabId.getOrDefault(photoLab.getId(), List.of()),
                         tagsByLabId.getOrDefault(photoLab.getId(), List.of()),
-                        distanceKmOrNull(lat, lng, photoLab),
+                        distanceKmOrNull(condition.lat(), condition.lng(), photoLab),
                         favoriteLabIds.contains(photoLab.getId())
                 ))
                 .toList();
