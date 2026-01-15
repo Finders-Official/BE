@@ -1,8 +1,10 @@
 package com.finders.api.domain.store.controller;
 
 import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
+import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
+import com.finders.api.domain.store.service.command.PhotoLabFavoriteCommandService;
 import com.finders.api.domain.store.service.query.PhotoLabPopularQueryService;
 import com.finders.api.domain.store.service.query.PhotoLabQueryService;
 import com.finders.api.global.response.ApiResponse;
@@ -17,6 +19,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +33,7 @@ import java.util.List;
 public class UserPhotoLabController {
     private final PhotoLabPopularQueryService photoLabPopularQueryService;
     private final PhotoLabQueryService photoLabQueryService;
+    private final PhotoLabFavoriteCommandService photoLabFavoriteCommandService;
 
     @Operation(summary = "인기 현상소 조회 API")
     @GetMapping("/popular")
@@ -65,5 +71,29 @@ public class UserPhotoLabController {
                 .build();
 
         return photoLabQueryService.getPhotoLabs(condition);
+    }
+
+    @Operation(summary = "현상소 즐겨찾기 추가 API")
+    @PostMapping("/{photoLabId}/favorites")
+    public ApiResponse<PhotoLabFavoriteResponse.Status> addFavorite(
+            @PathVariable Long photoLabId,
+            @AuthenticationPrincipal MemberUser memberUser
+    ) {
+        return ApiResponse.success(
+                SuccessCode.OK,
+                photoLabFavoriteCommandService.addFavorite(photoLabId, memberUser)
+        );
+    }
+
+    @Operation(summary = "현상소 즐겨찾기 삭제 API")
+    @DeleteMapping("/{photoLabId}/favorites")
+    public ApiResponse<PhotoLabFavoriteResponse.Status> removeFavorite(
+            @PathVariable Long photoLabId,
+            @AuthenticationPrincipal MemberUser memberUser
+    ) {
+        return ApiResponse.success(
+                SuccessCode.OK,
+                photoLabFavoriteCommandService.removeFavorite(photoLabId, memberUser)
+        );
     }
 }

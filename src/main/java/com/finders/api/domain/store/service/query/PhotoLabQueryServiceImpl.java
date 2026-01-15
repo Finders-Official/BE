@@ -6,7 +6,7 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabTag;
 import com.finders.api.domain.member.service.query.MemberQueryService;
-import com.finders.api.domain.store.repository.FavoritePhotoLabRepository;
+import com.finders.api.domain.store.repository.PhotoLabFavoriteRepository;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
@@ -35,7 +35,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final PhotoLabQueryRepository photoLabQueryRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
     private final PhotoLabTagQueryRepository photoLabTagQueryRepository;
-    private final FavoritePhotoLabRepository favoritePhotoLabRepository;
+    private final PhotoLabFavoriteRepository photoLabFavoriteRepository;
     private final MemberQueryService memberQueryService;
     private final StorageService storageService;
 
@@ -115,7 +115,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         if (memberId == null || photoLabIds == null || photoLabIds.isEmpty()) {
             return Set.of();
         }
-        List<Long> favoriteIds = favoritePhotoLabRepository.findFavoritePhotoLabIds(memberId, photoLabIds);
+        List<Long> favoriteIds = photoLabFavoriteRepository.findFavoritePhotoLabIds(memberId, photoLabIds);
         return Set.copyOf(favoriteIds);
     }
 
