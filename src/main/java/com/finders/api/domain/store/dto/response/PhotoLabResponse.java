@@ -5,6 +5,7 @@ import com.finders.api.domain.store.enums.PhotoLabStatus;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class PhotoLabResponse {
 
@@ -42,6 +43,34 @@ public class PhotoLabResponse {
                     .maxReservationsPerHour(photoLab.getMaxReservationsPerHour())
                     .createdAt(photoLab.getCreatedAt())
                     .build();
+        }
+    }
+
+    // 커뮤니티 현상소 검색
+    // 개별 항목 DTO
+    @Builder
+    public record PhotoLabSearchDTO(
+            Long labId,
+            String name,
+            String address,
+            String distance
+    ) {
+        public static PhotoLabSearchDTO from(PhotoLab photoLab, String distance) {
+            return PhotoLabSearchDTO.builder()
+                    .labId(photoLab.getId())
+                    .name(photoLab.getName())
+                    .address(photoLab.getAddress())
+                    .distance(distance)
+                    .build();
+        }
+    }
+
+    // 현상소 검색 리스트를 감싸는 DTO
+    public record PhotoLabSearchListDTO(
+            List<PhotoLabSearchDTO> photoLabSearchList
+    ) {
+        public static PhotoLabSearchListDTO from(List<PhotoLabSearchDTO> dtos) {
+            return new PhotoLabSearchListDTO(dtos);
         }
     }
 }
