@@ -3,13 +3,17 @@ package com.finders.api.domain.auth.service.command;
 import com.finders.api.domain.auth.dto.AuthRequest;
 import com.finders.api.domain.auth.dto.AuthResponse;
 import com.finders.api.domain.auth.dto.SignupTokenPayload;
+import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.entity.SocialAccount;
 import com.finders.api.domain.member.enums.MemberStatus;
 import com.finders.api.domain.member.enums.MemberType;
 import com.finders.api.domain.member.enums.SocialProvider;
+import com.finders.api.domain.member.repository.MemberOwnerRepository;
+import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.member.repository.SocialAccountRepository;
+import com.finders.api.domain.member.service.command.MemberCommandService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.ErrorCode;
@@ -21,6 +25,7 @@ import com.finders.api.infra.oauth.OAuthClient;
 import com.finders.api.infra.oauth.OAuthClientFactory;
 import com.finders.api.infra.oauth.model.OAuthUserInfo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,11 +36,16 @@ public class AuthCommandServiceImpl implements AuthCommandService {
 
     private final OAuthClientFactory oAuthClientFactory;
     private final SocialAccountRepository socialAccountRepository;
+    private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
+    private final MemberOwnerRepository memberOwnerRepository;
+
+    private final MemberCommandService memberCommandService;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenHasher refreshTokenHasher;
     private final SignupTokenProvider signupTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     // 프론트엔드가 준 AccessToken으로 로그인
     @Override
@@ -172,6 +182,37 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
             throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
         }
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse.OwnerSignupResponse signupOwner(AuthRequest.OwnerSignupRequest request) {
+        if (memberRepository.existsByEmail(request.email())) {
+            throw new CustomException(ErrorCode.MEMBER_EMAIL_DUPLICATED);
+        }
+
+        String encodedPassword = passwordEncoder.encode(request.password());
+        MemberOwner savedOwner = memberCommandService.saveMemberOwner(request, encodedPassword);
+
+        return AuthResponse.OwnerSignupResponse.from(savedOwner);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse.OwnerLoginResponse loginOwner(AuthRequest.OwnerLoginRequest request) {
+        MemberOwner owner = memberOwnerRepository.findByEmail(request.email())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.password(), owner.getPasswordHash())) {
+            throw new CustomException(ErrorCode.AUTH_LOGIN_FAILED);
+        }
+
+        String accessToken = jwtTokenProvider.createAccessToken(owner.getId(), "OWNER");
+        String refreshToken = jwtTokenProvider.createRefreshToken(owner.getId());
+
+        refreshTokenHasher.saveRefreshToken(owner.getId(), refreshToken);
+
+        return AuthResponse.OwnerLoginResponse.of(accessToken, refreshToken, owner);
     }
 
     private SocialProvider parseProvider(String provider) {

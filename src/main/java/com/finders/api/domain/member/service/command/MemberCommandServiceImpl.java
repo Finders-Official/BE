@@ -1,5 +1,6 @@
 package com.finders.api.domain.member.service.command;
 
+import com.finders.api.domain.auth.dto.AuthRequest;
 import com.finders.api.domain.auth.dto.SignupTokenPayload;
 import com.finders.api.domain.member.dto.VerifiedPhoneInfo;
 import com.finders.api.domain.member.dto.request.MemberPhoneRequest;
@@ -8,8 +9,10 @@ import com.finders.api.domain.member.dto.response.MemberPhoneResponse;
 import com.finders.api.domain.member.dto.VerificationData;
 import com.finders.api.domain.member.dto.response.MemberResponse;
 import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberAgreementRepository;
+import com.finders.api.domain.member.repository.MemberOwnerRepository;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.terms.entity.MemberAgreement;
@@ -37,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MemberCommandServiceImpl implements MemberCommandService {
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
+    private final MemberOwnerRepository memberOwnerRepository;
     private final MemberAgreementRepository memberAgreementRepository;
     private final TermsRepository termsRepository;
     private final JwtTokenProvider jwtTokenProvider;
@@ -182,6 +186,22 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         }
 
         return realMember;
+    }
+
+    @Override
+    public MemberOwner saveMemberOwner(AuthRequest.OwnerSignupRequest request, String encodedPassword) {
+        MemberOwner owner = MemberOwner.builder()
+                .name(request.name())
+                .email(request.email())
+                .phone(request.phone())
+                .passwordHash(encodedPassword)
+                .businessNumber(request.businessNumber())
+                .bankName(request.bankName())
+                .bankAccountNumber(request.bankAccountNumber())
+                .bankAccountHolder(request.bankAccountHolder())
+                .build();
+
+        return memberOwnerRepository.save(owner);
     }
 
     private void validateVPT(String phone, String token) {

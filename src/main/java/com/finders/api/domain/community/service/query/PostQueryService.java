@@ -1,18 +1,14 @@
 package com.finders.api.domain.community.service.query;
 
 import com.finders.api.domain.community.dto.response.PostResponse;
-import com.finders.api.domain.member.entity.MemberUser;
 import org.springframework.data.domain.Pageable;
 
 public interface PostQueryService {
-    PostResponse.PostPreviewListDTO getPostList(Integer page);
+    PostResponse.PostPreviewListDTO getPostList(Integer page, Long memberId);
 
-    PostResponse.PostDetailResDTO getPostDetail(Long postId, MemberUser memberUser);
+    PostResponse.PostDetailResDTO getPostDetail(Long postId, Long memberId);
 
-    PostResponse.PostPreviewListDTO getPopularPosts(MemberUser memberUser);
+    PostResponse.PostPreviewListDTO getPopularPosts(Long memberId);
 
-    PostResponse.PostPreviewListDTO searchPosts(String keyword, MemberUser memberUser, Pageable pageable);
-
-    // 현상소 검색
-    PostResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable);
+    PostResponse.PostPreviewListDTO searchPosts(String keyword, Long memberId, Pageable pageable);
 }

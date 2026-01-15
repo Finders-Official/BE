@@ -1,11 +1,13 @@
 package com.finders.api.domain.member.service.command;
 
+import com.finders.api.domain.auth.dto.AuthRequest;
 import com.finders.api.domain.auth.dto.SignupTokenPayload;
 import com.finders.api.domain.member.dto.request.MemberPhoneRequest;
 import com.finders.api.domain.member.dto.request.MemberRequest;
 import com.finders.api.domain.member.dto.response.MemberPhoneResponse;
 import com.finders.api.domain.member.dto.response.MemberResponse;
 import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.entity.MemberOwner;
 
 public interface MemberCommandService {
     // 휴대폰 인증번호 요청
@@ -19,4 +21,7 @@ public interface MemberCommandService {
 
     // 내 정보 수정
     Member updateProfile(Long memberId, MemberRequest.UpdateProfile request);
+    
+    // 사장님 회원 저장
+    MemberOwner saveMemberOwner(AuthRequest.OwnerSignupRequest request, String encodedPassword);
 }
