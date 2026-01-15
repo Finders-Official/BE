@@ -11,7 +11,7 @@ public interface PhotoLabQueryService {
     PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
             Long memberId,
             String query,
-            List<Long> keywordIds,
+            List<Long> tagIds,
             Long regionId,
             LocalDate date,
             Integer page,

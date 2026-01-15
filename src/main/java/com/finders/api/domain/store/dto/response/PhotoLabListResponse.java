@@ -10,7 +10,7 @@ public class PhotoLabListResponse {
             Long photoLabId,
             String name,
             List<String> imageUrls,
-            List<String> keywords,
+            List<String> tags,
             String address,
             Double distanceKm,
             boolean isFavorite,

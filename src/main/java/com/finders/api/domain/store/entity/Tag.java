@@ -15,14 +15,14 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-        name = "keyword",
+        name = "tag",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_keyword_name", columnNames = {"name"})
+                @UniqueConstraint(name = "uk_tag_name", columnNames = {"name"})
         }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Keyword extends BaseTimeEntity {
+public class Tag extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +32,7 @@ public class Keyword extends BaseTimeEntity {
     private String name;
 
     @Builder
-    private Keyword(String name) {
+    private Tag(String name) {
         this.name = name;
     }
 }
