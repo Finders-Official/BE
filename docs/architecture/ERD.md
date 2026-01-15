@@ -463,7 +463,7 @@ CREATE TABLE photo_lab_business_hour (  -- 현상소의 각 요일마다의 일�
     PRIMARY KEY (id),
     UNIQUE KEY uk_lab_hour (photo_lab_id, day_of_week),
     CONSTRAINT fk_lab_hour FOREIGN KEY (photo_lab_id) REFERENCES photo_lab(id) ON DELETE CASCADE,
-    CONSTRAINT chk_day_of_week CHECK (day_of_week IN ('SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'))
+    CONSTRAINT chk_day_of_week CHECK (day_of_week IN ('SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'))
 ) ENGINE=InnoDB COMMENT='영업시간';
 
 CREATE TABLE photo_lab_document (   -- GCP Cloud Storage에 bucket 만들어서 저장해야 할 듯
