@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.finders.api.domain.inquiry.entity.QInquiry.inquiry;
-import static com.finders.api.domain.inquiry.entity.QInquiryReply.inquiryReply;
 
 @Repository
 @RequiredArgsConstructor
@@ -37,11 +36,10 @@ public class InquiryQueryRepository {
             return Collections.emptyList();
         }
 
-        // 2단계: ID 목록으로 전체 데이터 조회
+        // 2단계: ID 목록으로 전체 데이터 조회 (목록용이므로 replies 제외)
         return queryFactory
                 .selectFrom(inquiry)
                 .leftJoin(inquiry.photoLab).fetchJoin()
-                .leftJoin(inquiry.replies, inquiryReply).fetchJoin()
                 .where(inquiry.id.in(ids))
                 .orderBy(inquiry.createdAt.desc())
                 .fetch();
@@ -80,10 +78,9 @@ public class InquiryQueryRepository {
             return Collections.emptyList();
         }
 
-        // 2단계: ID 목록으로 전체 데이터 조회
+        // 2단계: ID 목록으로 전체 데이터 조회 (목록용이므로 replies 제외)
         return queryFactory
                 .selectFrom(inquiry)
-                .leftJoin(inquiry.replies, inquiryReply).fetchJoin()
                 .where(inquiry.id.in(ids))
                 .orderBy(inquiry.createdAt.desc())
                 .fetch();
@@ -125,10 +122,9 @@ public class InquiryQueryRepository {
             return Collections.emptyList();
         }
 
-        // 2단계: ID 목록으로 전체 데이터 조회
+        // 2단계: ID 목록으로 전체 데이터 조회 (목록용이므로 replies 제외)
         return queryFactory
                 .selectFrom(inquiry)
-                .leftJoin(inquiry.replies, inquiryReply).fetchJoin()
                 .where(inquiry.id.in(ids))
                 .orderBy(inquiry.createdAt.desc())
                 .fetch();
