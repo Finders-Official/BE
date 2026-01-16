@@ -136,6 +136,7 @@ replicate:
 sentry:
   dsn: ${SENTRY_DSN:}
   environment: ${SPRING_PROFILES_ACTIVE:local}
+  release: ${info.build.name:finders-api}@${info.build.version:unknown}
   traces-sample-rate: 1.0
   send-default-pii: false
   in-app-includes: com.finders  # 스택트레이스에서 우리 코드 하이라이트
