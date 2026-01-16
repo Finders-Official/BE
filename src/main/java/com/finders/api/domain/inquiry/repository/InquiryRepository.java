@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     @Query("SELECT i FROM Inquiry i " +
+            "LEFT JOIN FETCH i.member " +
             "LEFT JOIN FETCH i.photoLab " +
             "LEFT JOIN FETCH i.replies r " +
             "LEFT JOIN FETCH r.replier " +
