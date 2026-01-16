@@ -30,13 +30,14 @@ public class OwnerInquiryController {
     @GetMapping
     public ApiResponse<InquiryResponse.InquiryListDTO> getPhotoLabInquiries(
             @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam Long photoLabId,
             @RequestParam(required = false) InquiryStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.success(
                 SuccessCode.INQUIRY_FOUND,
-                inquiryQueryService.getPhotoLabInquiries(authUser.memberId(), status, page, size)
+                inquiryQueryService.getPhotoLabInquiries(photoLabId, authUser.memberId(), status, page, size)
         );
     }
 
@@ -44,11 +45,12 @@ public class OwnerInquiryController {
     @GetMapping("/{inquiryId}")
     public ApiResponse<InquiryResponse.InquiryDetailDTO> getPhotoLabInquiryDetail(
             @PathVariable Long inquiryId,
+            @RequestParam Long photoLabId,
             @AuthenticationPrincipal AuthUser authUser
     ) {
         return ApiResponse.success(
                 SuccessCode.INQUIRY_FOUND,
-                inquiryQueryService.getPhotoLabInquiryDetail(inquiryId, authUser.memberId())
+                inquiryQueryService.getPhotoLabInquiryDetail(inquiryId, photoLabId, authUser.memberId())
         );
     }
 
@@ -56,12 +58,13 @@ public class OwnerInquiryController {
     @PostMapping("/{inquiryId}/replies")
     public ApiResponse<InquiryResponse.ReplyCreateDTO> createReply(
             @PathVariable Long inquiryId,
+            @RequestParam Long photoLabId,
             @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody InquiryRequest.CreateReplyDTO request
     ) {
         return ApiResponse.success(
                 SuccessCode.INQUIRY_REPLY_CREATED,
-                inquiryCommandService.createPhotoLabReply(inquiryId, request, authUser.memberId())
+                inquiryCommandService.createPhotoLabReply(inquiryId, photoLabId, request, authUser.memberId())
         );
     }
 }

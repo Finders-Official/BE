@@ -45,25 +45,33 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
     }
 
     @Override
-    public InquiryResponse.InquiryListDTO getPhotoLabInquiries(Long ownerId, InquiryStatus status, int page, int size) {
-        PhotoLab photoLab = photoLabRepository.findByOwnerId(ownerId)
+    public InquiryResponse.InquiryListDTO getPhotoLabInquiries(Long photoLabId, Long ownerId, InquiryStatus status, int page, int size) {
+        PhotoLab photoLab = photoLabRepository.findById(photoLabId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
-        List<Inquiry> inquiries = inquiryQueryRepository.findByPhotoLabId(photoLab.getId(), status, page, size);
-        long totalCount = inquiryQueryRepository.countByPhotoLabId(photoLab.getId(), status);
+        if (photoLab.getOwner() == null || !photoLab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.STORE_ACCESS_DENIED);
+        }
+
+        List<Inquiry> inquiries = inquiryQueryRepository.findByPhotoLabId(photoLabId, status, page, size);
+        long totalCount = inquiryQueryRepository.countByPhotoLabId(photoLabId, status);
 
         return InquiryResponse.InquiryListDTO.from(inquiries, totalCount, page, size);
     }
 
     @Override
-    public InquiryResponse.InquiryDetailDTO getPhotoLabInquiryDetail(Long inquiryId, Long ownerId) {
+    public InquiryResponse.InquiryDetailDTO getPhotoLabInquiryDetail(Long inquiryId, Long photoLabId, Long ownerId) {
+        PhotoLab photoLab = photoLabRepository.findById(photoLabId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        if (photoLab.getOwner() == null || !photoLab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.STORE_ACCESS_DENIED);
+        }
+
         Inquiry inquiry = inquiryRepository.findByIdWithDetails(inquiryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INQUIRY_NOT_FOUND));
 
-        PhotoLab photoLab = photoLabRepository.findByOwnerId(ownerId)
-                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
-
-        if (inquiry.getPhotoLab() == null || !inquiry.getPhotoLab().getId().equals(photoLab.getId())) {
+        if (inquiry.getPhotoLab() == null || !inquiry.getPhotoLab().getId().equals(photoLabId)) {
             throw new CustomException(ErrorCode.INQUIRY_ACCESS_DENIED);
         }
 

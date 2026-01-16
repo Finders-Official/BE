@@ -87,6 +87,7 @@ public enum ErrorCode implements BaseCode {
     // Store (현상소)
     // ========================================
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE_404", "현상소를 찾을 수 없습니다."),
+    STORE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "STORE_403", "해당 현상소에 접근 권한이 없습니다."),
     REGION_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_404", "지역을 찾을 수 없습니다."),
     BUSINESS_HOUR_NOT_FOUND(HttpStatus.NOT_FOUND, "BUSINESS_HOUR_404", "현상소의 영업시간을 찾을 수 없습니다."),
 
