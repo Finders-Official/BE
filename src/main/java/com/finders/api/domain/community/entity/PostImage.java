@@ -23,10 +23,6 @@ public class PostImage extends BaseTimeEntity {
     @Column(nullable = false, length = 500)
     private String imageUrl;
 
-    private Integer width;
-
-    private Integer height;
-
     @Column(name = "display_order")
     private Integer displayOrder;
 }
