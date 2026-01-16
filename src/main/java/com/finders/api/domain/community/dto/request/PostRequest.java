@@ -20,7 +20,7 @@ public class PostRequest {
             String content,
 
             @Size(max = 10, message = "사진은 최대 10장가지 가능합니다.")
-            List<MultipartFile> images,
+            List<String> images,
 
             boolean isSelfDeveloped,
             Long labId,
