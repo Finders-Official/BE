@@ -157,13 +157,8 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     }
 
     private List<String> buildImageUrls(Long photoLabId) {
-        List<PhotoLabImage> images = photoLabImageRepository.findByPhotoLabIds(List.of(photoLabId));
-        if (images.isEmpty()) {
-            return List.of();
-        }
-        return images.stream()
-                .map(image -> storageService.getPublicUrl(image.getImageUrl()))
-                .toList();
+        Map<Long, List<String>> imageUrlMap = buildImageUrlMap(List.of(photoLabId));
+        return imageUrlMap.getOrDefault(photoLabId, List.of());
     }
 
     private Map<Long, List<String>> buildTagMap(List<Long> photoLabIds) {
