@@ -26,12 +26,6 @@ public class MemberAddress extends BaseEntity {
     @Column(name = "address_name", nullable = false, length = 50)
     private String addressName;
 
-    @Column(name = "recipient_name", length = 50)
-    private String recipientName;
-
-    @Column(length = 20)
-    private String phone;
-
     @Column(nullable = false, length = 10)
     private String zipcode;
 
