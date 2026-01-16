@@ -41,13 +41,6 @@ public class MemberAddressCommandServiceImpl implements MemberAddressCommandServ
 
         MemberAddress savedAddress = memberAddressRepository.save(newAddress);
 
-        return MemberAddressResponse.AddressDetail.builder()
-                .addressId(savedAddress.getId())
-                .addressName(savedAddress.getAddressName())
-                .zipcode(savedAddress.getZipcode())
-                .address(savedAddress.getAddress())
-                .addressDetail(savedAddress.getAddressDetail())
-                .isDefault(savedAddress.isDefault())
-                .build();
+        return MemberAddressResponse.AddressDetail.from(savedAddress);
     }
 }

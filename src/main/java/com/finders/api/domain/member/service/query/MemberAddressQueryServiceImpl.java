@@ -18,14 +18,7 @@ public class MemberAddressQueryServiceImpl implements MemberAddressQueryService 
     @Override
     public List<MemberAddressResponse.AddressDetail> getMemberAddress(Long memberId) {
         return memberAddressRepository.findAllByUser_IdOrderByIsDefaultDescCreatedAtDesc(memberId).stream()
-                .map(address -> MemberAddressResponse.AddressDetail.builder()
-                        .addressId(address.getId())
-                        .addressName(address.getAddressName())
-                        .zipcode(address.getZipcode())
-                        .address(address.getAddress())
-                        .addressDetail(address.getAddressDetail())
-                        .isDefault(address.isDefault())
-                        .build())
+                .map(MemberAddressResponse.AddressDetail::from)
                 .toList();
     }
 }
