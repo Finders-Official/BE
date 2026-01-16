@@ -1,7 +1,11 @@
 package com.finders.api.infra.storage;
 
+import com.finders.api.global.exception.CustomException;
+import com.finders.api.global.response.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Arrays;
 
 /**
  * GCS 저장 경로 패턴
@@ -66,6 +70,30 @@ public enum StoragePath {
      */
     public String format(Object... args) {
         return String.format(pattern, args);
+    }
+
+    // 경로 문자열 분석 -> 해당하는 StoragePath 상수 반환
+    public static StoragePath fromObjectPath(String objectPath) {
+        return Arrays.stream(values())
+                .filter(path -> {
+                    String root = path.getPattern().split("/")[0];
+                    if (root.equals("temp") && objectPath.startsWith("temp/orders")) {
+                        return path == SCANNED_PHOTO;
+                    }
+                    return objectPath.startsWith(root);
+                })
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.STORAGE_INVALID_PATH));
+    }
+
+    public Long extractId(String objectPath) {
+        try {
+            String[] parts = objectPath.split("/");
+            if (this == SCANNED_PHOTO) return Long.parseLong(parts[2]); // temp/orders/{id}
+            return Long.parseLong(parts[1]); // 그 외 보통 {category}/{id}
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.STORAGE_INVALID_PATH);
+        }
     }
 
     // 공통 API 사용 가능 여부 확인
