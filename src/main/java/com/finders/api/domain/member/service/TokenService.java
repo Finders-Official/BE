@@ -72,6 +72,47 @@ public class TokenService {
                 memberId, amount, balanceAfter, relatedType, relatedId);
     }
 
+    /**
+     * 토큰 구매 (결제 완료 후 호출)
+     */
+    @Transactional
+    public void purchaseTokens(MemberUser member, int amount, Long paymentId) {
+        // 토큰 추가
+        int balanceAfter = member.addTokens(amount);
+
+        // 이력 저장
+        TokenHistory history = TokenHistory.createPurchaseHistory(
+                member, amount, balanceAfter, TokenRelatedType.PAYMENT, paymentId,
+                "토큰 " + amount + "개 구매"
+        );
+        tokenHistoryRepository.save(history);
+
+        log.info("[TokenService.purchaseTokens] Purchased tokens: memberId={}, amount={}, balanceAfter={}, paymentId={}",
+                member.getId(), amount, balanceAfter, paymentId);
+    }
+
+    /**
+     * 토큰 환불 (결제 취소 시 호출)
+     */
+    @Transactional
+    public void refundTokens(MemberUser member, int amount, Long paymentId) {
+        int currentBalance = member.getTokenBalance();
+
+        // 환불할 토큰이 현재 잔액보다 많으면 현재 잔액만큼만 차감
+        int refundAmount = Math.min(amount, currentBalance);
+        int balanceAfter = member.deductTokens(refundAmount);
+
+        // 이력 저장
+        TokenHistory history = TokenHistory.createRefundHistory(
+                member, -refundAmount, balanceAfter, TokenRelatedType.PAYMENT, paymentId,
+                "토큰 " + refundAmount + "개 환불 (결제 취소)"
+        );
+        tokenHistoryRepository.save(history);
+
+        log.info("[TokenService.refundTokens] Refunded tokens for cancellation: memberId={}, amount={}, balanceAfter={}, paymentId={}",
+                member.getId(), refundAmount, balanceAfter, paymentId);
+    }
+
     private MemberUser getMemberUser(Long memberId) {
         return memberUserRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
