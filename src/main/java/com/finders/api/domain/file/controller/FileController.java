@@ -39,6 +39,7 @@ public class FileController {
                 - **RESTORATION_ORIGINAL**: AI 복원 요청 원본 사진
                 - **RESTORATION_MASK**: AI 복원용 마스크 데이터
                 - **RESTORATION_RESTORED**: AI 복원 완료된 결과물
+                - **INQUIRY**: 1:1 문의시 첨부하는 이미지
                 
                 ⚠️ **주의**: 그 외 카테고리(SCANNED_PHOTO, LAB_DOCUMENT 등)는 도메인 전용 API를 사용해야 합니다.
                 """

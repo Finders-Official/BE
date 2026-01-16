@@ -37,6 +37,9 @@ public enum StoragePath {
     /** 프로모션 이미지: promotions/{promotionId}/{uuid}.{ext} */
     PROMOTION("promotions/%d/%s", true),
 
+    /** 1:1 문의 이미지: inquiries/{memberId}/{uuid}.{ext} */
+    INQUIRY("inquiries/%d/%s", true),
+
     /** 임시 업로드 (public): temp/{memberId}/{uuid}.{ext} - 30일 후 자동 삭제 */
     TEMP_PUBLIC("temp/%d/%s", true),
 
@@ -99,7 +102,7 @@ public enum StoragePath {
 
     // 공통 API 사용 가능 여부 확인
     public boolean isCommon() {
-        return this == PROFILE || this == POST_IMAGE || this == TEMP_PUBLIC ||
+        return this == PROFILE || this == POST_IMAGE || this == TEMP_PUBLIC || this == INQUIRY ||
                 this == RESTORATION_ORIGINAL || this == RESTORATION_MASK || this == RESTORATION_RESTORED;
     }
 }
