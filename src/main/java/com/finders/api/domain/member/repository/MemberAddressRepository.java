@@ -8,8 +8,8 @@ import java.util.Optional;
 
 public interface MemberAddressRepository extends JpaRepository<MemberAddress, Long> {
     // 특정 유저의 기존 기본 배송지 찾기
-    Optional<MemberAddress> findByUserIdAndIsDefaultTrue(Long memberId);
+    Optional<MemberAddress> findByUser_IdAndIsDefaultTrue(Long memberId);
 
     // 유저 id 기준 조회, 기본배송지 우선 -> 최신순 정렬
-    List<MemberAddress> findAllByUserIdOrderByIsDefaultDescCreatedAtDesc(Long memberId);
+    List<MemberAddress> findAllByUser_IdOrderByIsDefaultDescCreatedAtDesc(Long memberId);
 }
