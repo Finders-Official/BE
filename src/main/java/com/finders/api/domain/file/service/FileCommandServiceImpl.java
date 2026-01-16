@@ -29,13 +29,13 @@ public class FileCommandServiceImpl implements FileCommandService {
         }
 
         // 공통 카테고리의 경우, domainId는 반드시 본인의 memberId여야 함
-        if (!memberId.equals(request.domainId())) {
+        if (!memberId.equals(request.memberId())) {
             throw new CustomException(ErrorCode.STORAGE_UNAUTHORIZED);
         }
 
         // 고유한 파일명 및 최종 경로 생성
         String uniqueFileName = UUID.randomUUID().toString().replace("-", "") + "_" + request.fileName();
-        String objectPath = pathType.format(request.domainId(), uniqueFileName);
+        String objectPath = pathType.format(request.memberId(), uniqueFileName);
 
         return storageService.getPresignedUrl(
                 objectPath,
