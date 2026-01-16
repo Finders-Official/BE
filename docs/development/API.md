@@ -129,25 +129,25 @@ Authorization: Bearer {access_token}
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/inquiries` | 내 문의 목록 |
-| GET | `/api/v1/inquiries/{id}` | 문의 상세 |
-| POST | `/api/v1/inquiries` | 문의 생성 (photoLabId null=고객센터, 있으면=매장문의) |
+| GET | `/inquiries` | 내 문의 목록 |
+| GET | `/inquiries/{id}` | 문의 상세 |
+| POST | `/inquiries` | 문의 생성 (photoLabId null=고객센터, 있으면=매장문의) |
 
 ### Inquiry (Owner)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/owner/inquiries` | 현상소 문의 목록 |
-| GET | `/api/v1/owner/inquiries/{id}` | 문의 상세 |
-| POST | `/api/v1/owner/inquiries/{id}/replies` | 답변 작성 |
+| GET | `/owner/inquiries` | 현상소 문의 목록 |
+| GET | `/owner/inquiries/{id}` | 문의 상세 |
+| POST | `/owner/inquiries/{id}/replies` | 답변 작성 |
 
 ### Inquiry (Admin)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/admin/inquiries` | 서비스 문의 목록 |
-| GET | `/api/v1/admin/inquiries/{id}` | 문의 상세 |
-| POST | `/api/v1/admin/inquiries/{id}/replies` | 답변 작성 |
+| GET | `/admin/inquiries` | 서비스 문의 목록 |
+| GET | `/admin/inquiries/{id}` | 문의 상세 |
+| POST | `/admin/inquiries/{id}/replies` | 답변 작성 |
 
 ## Error Codes
 
