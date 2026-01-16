@@ -160,25 +160,21 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         Double lat = request.locationAgreed() ? request.latitude() : 0.0;
         Double lng = request.locationAgreed() ? request.longitude() : 0.0;
 
-        List<PhotoLab> labs = photoLabRepository.searchCommunityPhotoLabs(
+        List<PhotoLabRepository.PhotoLabSearchResult> searchResults = photoLabRepository.searchCommunityPhotoLabs(
                 request.keyword(),
                 lat,
                 lng,
                 request.locationAgreed()
         );
 
-        List<PhotoLabResponse.PhotoLabSearchDTO> dtos = labs.stream()
-                .map(lab -> {
+        List<PhotoLabResponse.PhotoLabSearchDTO> dtos = searchResults.stream()
+                .map(result -> {
+                    PhotoLab lab = result.getPhotoLab();
                     String distanceStr = null;
 
-                    if (request.locationAgreed() && lab.getLatitude() != null && lab.getLongitude() != null) {
-                        double distance = haversineKm(
-                                lat,
-                                lng,
-                                lab.getLatitude().doubleValue(),
-                                lab.getLongitude().doubleValue()
-                        );
-                        distanceStr = String.format(DISTANCE_FORMAT_KM, distance);
+                    if (request.locationAgreed() && result.getDistanceVal() != null) {
+                        double distanceKm = result.getDistanceVal() / 1000.0;
+                        distanceStr = String.format(DISTANCE_FORMAT_KM, distanceKm);
                     }
 
                     return PhotoLabResponse.PhotoLabSearchDTO.from(lab, distanceStr, request.locationAgreed());

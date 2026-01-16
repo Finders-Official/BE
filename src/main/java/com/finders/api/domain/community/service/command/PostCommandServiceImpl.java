@@ -26,6 +26,9 @@ public class PostCommandServiceImpl implements PostCommandService {
     private final PostImageRepository postImageRepository;
     private final MemberUserRepository memberUserRepository;
 
+    private static final int MIN_REVIEW_LENGTH = 20;
+    private static final int MAX_REVIEW_LENGTH = 300;
+
     @Override
     public Long createPost(PostRequest.CreatePostDTO request, Long memberId) {
         MemberUser memberUser = memberUserRepository.findById(memberId)
@@ -35,10 +38,14 @@ public class PostCommandServiceImpl implements PostCommandService {
         if (!request.isSelfDeveloped()) {
             String review = request.reviewContent();
 
-            if (review == null || review.trim().isEmpty() || review.length() < 20) {
+            if (review == null) {
                 throw new CustomException(ErrorCode.REVIEW_TOO_SHORT);
             }
-            if (review.length() > 300) {
+            int trimmedLength = review.trim().length();
+            if (trimmedLength < MIN_REVIEW_LENGTH) {
+                throw new CustomException(ErrorCode.REVIEW_TOO_SHORT);
+            }
+            if (trimmedLength > MAX_REVIEW_LENGTH) {
                 throw new CustomException(ErrorCode.REVIEW_TOO_LONG);
             }
         }
