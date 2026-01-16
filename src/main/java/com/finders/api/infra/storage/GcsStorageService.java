@@ -82,11 +82,14 @@ public class GcsStorageService implements StorageService {
 
     // 벌크 업로드 경로 생성 및 Presigned URL 발급
     @Override
-    public List<StorageResponse.PresignedUrl> generateBulkPresignedUrls(StoragePath storagePath, Long domainId, int count) {
-        List<String> objectPaths = IntStream.range(0, count)
-                .mapToObj(i -> createUniquePath(storagePath, domainId, "bulk_" + i + ".jpg"))
+    public List<StorageResponse.PresignedUrl> generateBulkPresignedUrls(StoragePath storagePath, Long domainId, List<String> fileNames) {
+        if (fileNames == null || fileNames.isEmpty()) {
+            return List.of();
+        }
+
+        return fileNames.stream()
+                .map(fileName -> generatePresignedUrl(storagePath, domainId, fileName))
                 .toList();
-        return getPresignedUrls(objectPaths, storagePath.isPublic(), null);
     }
 
     /**
