@@ -1,5 +1,6 @@
 package com.finders.api.domain.store.service.query;
 
+import com.finders.api.domain.store.dto.request.PhotoLabRequest;
 import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
@@ -19,7 +20,6 @@ import com.finders.api.global.response.SuccessCode;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,9 +45,6 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     // 커뮤니티 현상소 검색 관련
     private final PhotoLabRepository photoLabRepository;
     private static final String DISTANCE_FORMAT_KM = "%.1fkm";
-    private static final int MINUTES_IN_DEGREE = 60;
-    private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.1515;
-    private static final double KILOMETERS_PER_STATUTE_MILE = 1.609344;
 
     @Override
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(PhotoLabSearchCondition condition) {
@@ -157,37 +154,38 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     // 커뮤니티 현상소 검색
     @Override
-    public PhotoLabResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable) {
-        Page<PhotoLab> labs = photoLabRepository.searchByName(keyword, pageable);
+    public PhotoLabResponse.PhotoLabSearchListDTO searchCommunityPhotoLabs(
+            PhotoLabRequest.PhotoLabCommunitySearchRequest request
+    ) {
+        Double lat = request.locationAgreed() ? request.latitude() : 0.0;
+        Double lng = request.locationAgreed() ? request.longitude() : 0.0;
 
-        List<PhotoLabResponse.PhotoLabSearchDTO> dtos = labs.getContent().stream()
+        List<PhotoLab> labs = photoLabRepository.searchCommunityPhotoLabs(
+                request.keyword(),
+                lat,
+                lng,
+                request.locationAgreed()
+        );
+
+        List<PhotoLabResponse.PhotoLabSearchDTO> dtos = labs.stream()
                 .map(lab -> {
                     String distanceStr = null;
 
-                    if (latitude != null && longitude != null && lab.getLatitude() != null && lab.getLongitude() != null) {
-                        double distance = calculateDistance(
-                                latitude,
-                                longitude,
+                    if (request.locationAgreed() && lab.getLatitude() != null && lab.getLongitude() != null) {
+                        double distance = haversineKm(
+                                lat,
+                                lng,
                                 lab.getLatitude().doubleValue(),
                                 lab.getLongitude().doubleValue()
                         );
                         distanceStr = String.format(DISTANCE_FORMAT_KM, distance);
                     }
 
-                    return PhotoLabResponse.PhotoLabSearchDTO.from(lab, distanceStr);
+                    return PhotoLabResponse.PhotoLabSearchDTO.from(lab, distanceStr, request.locationAgreed());
                 })
                 .toList();
 
         return PhotoLabResponse.PhotoLabSearchListDTO.from(dtos);
     }
 
-    // 현상소 검색 직선 거리 계산
-    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        double theta = lon1 - lon2;
-        double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2))
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
-        dist = Math.acos(dist);
-        dist = Math.toDegrees(dist);
-        return dist * MINUTES_IN_DEGREE * STATUTE_MILES_PER_NAUTICAL_MILE * KILOMETERS_PER_STATUTE_MILE;
-    }
 }

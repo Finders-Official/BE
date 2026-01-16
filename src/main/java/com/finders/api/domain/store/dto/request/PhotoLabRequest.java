@@ -42,4 +42,12 @@ public class PhotoLabRequest {
             Integer maxReservationsPerHour
     ) {
     }
+
+    // 커뮤니티 현상소 검색
+    public record PhotoLabCommunitySearchRequest(
+            String keyword,
+            Double latitude,
+            Double longitude,
+            boolean locationAgreed
+    ) {}
 }
