@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Admin Inquiry", description = "1:1 문의 API (Admin)")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin/inquiries")
+@RequestMapping("/admin/inquiries")
 public class AdminInquiryController {
 
     private final InquiryQueryService inquiryQueryService;
