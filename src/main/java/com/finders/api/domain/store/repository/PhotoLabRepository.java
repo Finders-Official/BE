@@ -8,9 +8,16 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
+    // 커뮤니티 현상소 검색 관련 상수
+    int COMMUNITY_SEARCH_LIMIT = 8;
+
     List<PhotoLab> findTop8ByOrderByReservationCountDescIdAsc();
 
     // 커뮤니티 현상소 검색
+    interface PhotoLabSearchResult {
+        PhotoLab getPhotoLab();
+        Double getDistanceVal();
+    }
     @Query(value = "SELECT *, " +
             // 직선 거리 계산
             "ST_Distance_Sphere(point(:lng, :lat), point(longitude, latitude)) AS distance_val " +
@@ -25,9 +32,9 @@ public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
             // 3순위 예약 수
             "reservation_count DESC " +
 
-            "LIMIT 8",
+            "LIMIT " + COMMUNITY_SEARCH_LIMIT,
             nativeQuery = true)
-    List<PhotoLab> searchCommunityPhotoLabs(
+    List<PhotoLabSearchResult> searchCommunityPhotoLabs(
             @Param("keyword") String keyword,
             @Param("lat") Double lat,
             @Param("lng") Double lng,
