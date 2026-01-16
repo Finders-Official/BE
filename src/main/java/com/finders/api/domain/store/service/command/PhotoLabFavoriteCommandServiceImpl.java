@@ -38,10 +38,7 @@ public class PhotoLabFavoriteCommandServiceImpl implements PhotoLabFavoriteComma
 
         photoLabFavoriteRepository.save(new FavoritePhotoLab(memberUser, photoLab));
 
-        return PhotoLabFavoriteResponse.Status.builder()
-                .photoLabId(photoLabId)
-                .isFavorite(true)
-                .build();
+        return new PhotoLabFavoriteResponse.Status(photoLabId, true);
     }
 
     @Override
@@ -54,10 +51,7 @@ public class PhotoLabFavoriteCommandServiceImpl implements PhotoLabFavoriteComma
 
         photoLabFavoriteRepository.delete(favorite);
 
-        return PhotoLabFavoriteResponse.Status.builder()
-                .photoLabId(photoLabId)
-                .isFavorite(false)
-                .build();
+        return new PhotoLabFavoriteResponse.Status(photoLabId, false);
     }
 
     private void validateMember(Long memberId) {
