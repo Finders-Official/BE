@@ -16,7 +16,7 @@ public interface StorageService {
     StorageResponse.PresignedUrl generatePresignedUrl(StoragePath storagePath, Long domainId, String originalFileName);
 
     // 벌크 업로드 경로 생성 및 Presigned URL 발급
-    List<StorageResponse.PresignedUrl> generateBulkPresignedUrls(StoragePath storagePath, Long domainId, int count);
+    List<StorageResponse.PresignedUrl> generateBulkPresignedUrls(StoragePath storagePath, Long domainId, List<String> fileNames);
 
     /**
      * 파일 삭제
