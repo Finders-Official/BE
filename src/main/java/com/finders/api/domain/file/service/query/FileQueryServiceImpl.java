@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class FileQueryServiceImpl implements FileQueryService {
 
+    private static final int SIGNED_URL_EXPIRY_MINUTES = 15;
+
     private final StorageService storageService;
 
     @Override
@@ -31,6 +33,6 @@ public class FileQueryServiceImpl implements FileQueryService {
             throw new CustomException(ErrorCode.STORAGE_UNAUTHORIZED);
         }
 
-        return storageService.getSignedUrl(objectPath, 15);
+        return storageService.getSignedUrl(objectPath, SIGNED_URL_EXPIRY_MINUTES);
     }
 }
