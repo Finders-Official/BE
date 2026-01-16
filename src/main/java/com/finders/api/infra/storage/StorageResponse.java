@@ -39,18 +39,13 @@ public class StorageResponse {
     ) {
     }
 
-    @Builder
     public record PresignedUrl(
             String url,
             String objectPath,
             long expiresAtEpochSecond
     ) {
         public static PresignedUrl of(String url, String objectPath, long expiresAtEpochSecond) {
-            return PresignedUrl.builder()
-                    .url(url)
-                    .objectPath(objectPath)
-                    .expiresAtEpochSecond(expiresAtEpochSecond)
-                    .build();
+            return new PresignedUrl(url, objectPath, expiresAtEpochSecond);
         }
     }
 
