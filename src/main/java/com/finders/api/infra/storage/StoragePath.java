@@ -27,7 +27,7 @@ public enum StoragePath {
     /** 현상소 QR 코드: photo-labs/{photoLabId}/qr.png */
     LAB_QR("photo-labs/%d/qr.png", true),
 
-    /** 게시글 이미지: posts/{postId}/{uuid}.{ext} */
+    /** 게시글 이미지: posts/{memberId}/{uuid}.{ext} */
     POST_IMAGE("posts/%d/%s", true),
 
     /** 프로모션 이미지: promotions/{promotionId}/{uuid}.{ext} */
@@ -66,5 +66,11 @@ public enum StoragePath {
      */
     public String format(Object... args) {
         return String.format(pattern, args);
+    }
+
+    // 공통 API 사용 가능 여부 확인
+    public boolean isCommon() {
+        return this == PROFILE || this == POST_IMAGE || this == TEMP_PUBLIC ||
+                this == RESTORATION_ORIGINAL || this == RESTORATION_MASK || this == RESTORATION_RESTORED;
     }
 }

@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 public class GcsStorageService implements StorageService {
 
     private static final List<String> STORAGE_SCOPES = List.of(
-            "https://www.googleapis.com/auth/devstorage.read_only"
+            "https://www.googleapis.com/auth/devstorage.read_write"
     );
     private static final int IMPERSONATED_CREDENTIALS_LIFETIME_SECONDS = 3600;
 
@@ -160,33 +160,50 @@ public class GcsStorageService implements StorageService {
         return String.format("%s/%s", properties.getPublicBaseUrl(), objectPath);
     }
 
-
     /**
-     * 업로드(PUT)용 Signed URL
-     * - private 버킷에 프론트가 직접 PUT 업로드할 때 사용
+     * 업로드(PUT)용 Presigned URL 생성 (단일)
+     * - isPublic에 따라 버킷을 동적으로 선택합니다.
+     * - 새로운 응답 DTO(PresignedUrl)를 사용하여 objectPath를 함께 반환합니다.
      */
     @Override
-    public StorageResponse.SignedUrl getSignedUploadUrl(String objectPath, Integer expiryMinutes) {
+    public StorageResponse.PresignedUrl getPresignedUrl(String objectPath, boolean isPublic, Integer expiryMinutes) {
+        // 1. IAM Signer 초기화 확인 (기존 로직 활용)
         validateSignerInitialized();
 
+        // 2. 만료 시간 설정
         int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
 
-        BlobInfo blobInfo = BlobInfo.newBuilder(properties.privateBucket(), objectPath).build();
+        // 3. [핵심] isPublic 여부에 따라 버킷 결정
+        String bucketName = isPublic ? properties.publicBucket() : properties.privateBucket();
 
+        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, objectPath).build();
+
+        // 4. PUT 메서드 전용 V4 서명 URL 생성
         URL signedUrl = storage.signUrl(
                 blobInfo,
                 expiry,
                 TimeUnit.MINUTES,
                 Storage.SignUrlOption.withV4Signature(),
-                Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
-                Storage.SignUrlOption.signWith(signer)
+                Storage.SignUrlOption.httpMethod(HttpMethod.PUT), // 반드시 PUT
+                Storage.SignUrlOption.signWith(signer)            // IAM Signer 사용
         );
 
-        long expiresAt = System.currentTimeMillis() / 1000 + (expiry * 60L);
+        long expiresAt = (System.currentTimeMillis() / 1000) + (expiry * 60L);
 
-        log.debug("[GcsStorageService.getSignedUploadUrl] path={}, expiryMinutes={}", objectPath, expiry);
+        log.debug("[GcsStorageService.getPresignedUpload] bucket={}, path={}", bucketName, objectPath);
 
-        return new StorageResponse.SignedUrl(signedUrl.toString(), expiresAt);
+        return StorageResponse.PresignedUrl.of(signedUrl.toString(), objectPath, expiresAt);
+    }
+
+    /**
+     * 업로드(PUT)용 Presigned URL 생성 (벌크/리스트)
+     * - 오너의 스캔본 업로드와 같이 여러 개의 URL이 필요할 때 사용합니다.
+     */
+    @Override
+    public List<StorageResponse.PresignedUrl> getPresignedUrls(List<String> objectPaths, boolean isPublic, Integer expiryMinutes) {
+        return objectPaths.stream()
+                .map(path -> getPresignedUrl(path, isPublic, expiryMinutes))
+                .toList();
     }
 
     @Override
