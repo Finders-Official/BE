@@ -75,11 +75,11 @@ public class PortOnePaymentService {
 
             return convertToPaymentInfo(response);
         } catch (WebClientResponseException e) {
-            log.error("포트원 결제 조회 실패: paymentId={}, status={}, body={}",
+            log.error("[PortOnePaymentService.getPayment] 포트원 결제 조회 실패: paymentId={}, status={}, body={}",
                     paymentId, e.getStatusCode(), e.getResponseBodyAsString(), e);
             throw new PortOneException("결제 정보를 조회할 수 없습니다.", e);
         } catch (Exception e) {
-            log.error("포트원 결제 조회 실패: paymentId={}", paymentId, e);
+            log.error("[PortOnePaymentService.getPayment] 포트원 결제 조회 실패: paymentId={}", paymentId, e);
             throw new PortOneException("결제 정보를 조회할 수 없습니다.", e);
         }
     }
@@ -114,11 +114,11 @@ public class PortOnePaymentService {
                     totalAmount != null ? totalAmount.intValue() : 0
             );
         } catch (WebClientResponseException e) {
-            log.error("포트원 결제 취소 실패: paymentId={}, status={}, body={}",
+            log.error("[PortOnePaymentService.cancelPayment] 포트원 결제 취소 실패: paymentId={}, status={}, body={}",
                     paymentId, e.getStatusCode(), e.getResponseBodyAsString(), e);
             throw new PortOneException("결제를 취소할 수 없습니다.", e);
         } catch (Exception e) {
-            log.error("포트원 결제 취소 실패: paymentId={}", paymentId, e);
+            log.error("[PortOnePaymentService.cancelPayment] 포트원 결제 취소 실패: paymentId={}", paymentId, e);
             throw new PortOneException("결제를 취소할 수 없습니다.", e);
         }
     }
@@ -149,13 +149,15 @@ public class PortOnePaymentService {
         } catch (PortOneException e) {
             throw e;
         } catch (Exception e) {
-            log.error("웹훅 검증 실패", e);
+            log.error("[PortOnePaymentService.verifyWebhook] 웹훅 검증 실패", e);
             throw new PortOneException("웹훅 검증에 실패했습니다.", e);
         }
     }
 
     /**
      * 웹훅 시그니처 검증
+     * - 상수 시간 비교(constant-time comparison)로 타이밍 공격 방지
+     * - 포트원 웹훅 시그니처는 여러 개가 콤마로 구분되어 전달될 수 있음
      */
     private boolean verifyWebhookSignature(String body, String webhookId,
                                            String webhookTimestamp, String webhookSignature) {
@@ -169,10 +171,18 @@ public class PortOnePaymentService {
             byte[] hash = mac.doFinal(signedPayload.getBytes(StandardCharsets.UTF_8));
             String expectedSignature = "v1," + Base64.getEncoder().encodeToString(hash);
 
-            // 웹훅 시그니처는 "v1,{base64_signature}" 형식
-            return webhookSignature.contains(expectedSignature);
+            // 웹훅 시그니처는 여러 개가 공백으로 구분되어 전달될 수 있음
+            // 상수 시간 비교로 타이밍 공격 방지
+            for (String signature : webhookSignature.split(" ")) {
+                if (java.security.MessageDigest.isEqual(
+                        signature.trim().getBytes(StandardCharsets.UTF_8),
+                        expectedSignature.getBytes(StandardCharsets.UTF_8))) {
+                    return true;
+                }
+            }
+            return false;
         } catch (Exception e) {
-            log.error("시그니처 검증 중 오류 발생", e);
+            log.error("[PortOnePaymentService.verifyWebhookSignature] 시그니처 검증 중 오류 발생", e);
             return false;
         }
     }

@@ -92,25 +92,26 @@ public class TokenService {
     }
 
     /**
-     * 토큰 환불 (결제 취소 시 호출)
+     * 토큰 회수 (결제 취소 시 호출)
+     * - 결제 취소로 인한 토큰 차감은 '사용'으로 기록
      */
     @Transactional
-    public void refundTokens(MemberUser member, int amount, Long paymentId) {
+    public void revokeTokens(MemberUser member, int amount, Long paymentId) {
         int currentBalance = member.getTokenBalance();
 
-        // 환불할 토큰이 현재 잔액보다 많으면 현재 잔액만큼만 차감
-        int refundAmount = Math.min(amount, currentBalance);
-        int balanceAfter = member.deductTokens(refundAmount);
+        // 회수할 토큰이 현재 잔액보다 많으면 현재 잔액만큼만 차감
+        int revokeAmount = Math.min(amount, currentBalance);
+        int balanceAfter = member.deductTokens(revokeAmount);
 
-        // 이력 저장
-        TokenHistory history = TokenHistory.createRefundHistory(
-                member, -refundAmount, balanceAfter, TokenRelatedType.PAYMENT, paymentId,
-                "토큰 " + refundAmount + "개 환불 (결제 취소)"
+        // 이력 저장 (사용으로 기록 - 내부에서 음수로 저장됨)
+        TokenHistory history = TokenHistory.createUseHistory(
+                member, revokeAmount, balanceAfter, TokenRelatedType.PAYMENT, paymentId,
+                "토큰 " + revokeAmount + "개 회수 (결제 취소)"
         );
         tokenHistoryRepository.save(history);
 
-        log.info("[TokenService.refundTokens] Refunded tokens for cancellation: memberId={}, amount={}, balanceAfter={}, paymentId={}",
-                member.getId(), refundAmount, balanceAfter, paymentId);
+        log.info("[TokenService.revokeTokens] Revoked tokens for cancellation: memberId={}, amount={}, balanceAfter={}, paymentId={}",
+                member.getId(), revokeAmount, balanceAfter, paymentId);
     }
 
     private MemberUser getMemberUser(Long memberId) {

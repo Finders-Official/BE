@@ -66,7 +66,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
 
         Payment savedPayment = paymentRepository.save(payment);
 
-        log.info("결제 사전등록 완료: paymentId={}, memberId={}, amount={}",
+        log.info("[PaymentCommandServiceImpl.preRegister] 결제 사전등록 완료: paymentId={}, memberId={}, amount={}",
                 request.paymentId(), memberId, request.amount());
 
         return PaymentResponse.PreRegistered.builder()
@@ -101,7 +101,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             case PAID -> {
                 // 금액 검증
                 if (!payment.getAmount().equals(portOneInfo.getAmount())) {
-                    log.error("결제 금액 불일치: expected={}, actual={}",
+                    log.error("[PaymentCommandServiceImpl.complete] 결제 금액 불일치: expected={}, actual={}",
                             payment.getAmount(), portOneInfo.getAmount());
                     throw new CustomException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
                 }
@@ -123,7 +123,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                     chargeTokens(payment);
                 }
 
-                log.info("결제 완료: paymentId={}, transactionId={}",
+                log.info("[PaymentCommandServiceImpl.complete] 결제 완료: paymentId={}, transactionId={}",
                         payment.getPaymentId(), portOneInfo.getTransactionId());
             }
             case VIRTUAL_ACCOUNT_ISSUED -> {
@@ -132,15 +132,15 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                         portOneInfo.getPgTxId(),
                         portOneInfo.getPgProvider()
                 );
-                log.info("가상계좌 발급: paymentId={}", payment.getPaymentId());
+                log.info("[PaymentCommandServiceImpl.complete] 가상계좌 발급: paymentId={}", payment.getPaymentId());
             }
             case FAILED -> {
                 payment.fail(portOneInfo.getFailCode(), portOneInfo.getFailMessage());
-                log.warn("결제 실패: paymentId={}, reason={}",
+                log.warn("[PaymentCommandServiceImpl.complete] 결제 실패: paymentId={}, reason={}",
                         payment.getPaymentId(), portOneInfo.getFailMessage());
             }
             default -> {
-                log.warn("처리할 수 없는 결제 상태: paymentId={}, status={}",
+                log.warn("[PaymentCommandServiceImpl.complete] 처리할 수 없는 결제 상태: paymentId={}, status={}",
                         payment.getPaymentId(), portOneInfo.getStatus());
                 throw new CustomException(ErrorCode.PAYMENT_INVALID_STATUS);
             }
@@ -182,10 +182,10 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             if (payment.getOrderType() == OrderType.TOKEN_PURCHASE
                     && payment.getStatus() == PaymentStatus.CANCELLED
                     && payment.getTokenAmount() != null) {
-                refundTokens(payment);
+                revokeTokens(payment);
             }
 
-            log.info("결제 취소 완료: paymentId={}, cancelAmount={}",
+            log.info("[PaymentCommandServiceImpl.cancel] 결제 취소 완료: paymentId={}, cancelAmount={}",
                     paymentId, cancelAmount);
 
             return PaymentResponse.Cancelled.builder()
@@ -198,7 +198,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                     .build();
 
         } catch (PortOneException e) {
-            log.error("포트원 결제 취소 실패: paymentId={}", paymentId, e);
+            log.error("[PaymentCommandServiceImpl.cancel] 포트원 결제 취소 실패: paymentId={}", paymentId, e);
             throw new CustomException(ErrorCode.PAYMENT_CANCEL_FAILED);
         }
     }
@@ -218,7 +218,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                     .orElse(null);
 
             if (payment == null) {
-                log.warn("웹훅 대상 결제 없음: paymentId={}", webhookInfo.getPaymentId());
+                log.warn("[PaymentCommandServiceImpl.handleWebhook] 웹훅 대상 결제 없음: paymentId={}", webhookInfo.getPaymentId());
                 return;
             }
 
@@ -254,24 +254,24 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                             chargeTokens(payment);
                         }
 
-                        log.info("웹훅으로 결제 완료 처리: paymentId={}", payment.getPaymentId());
+                        log.info("[PaymentCommandServiceImpl.handleWebhook] 웹훅으로 결제 완료 처리: paymentId={}", payment.getPaymentId());
                     }
                 }
                 case CANCELLED, PARTIAL_CANCELLED -> {
                     payment.updateStatus(portOneInfo.getStatus());
-                    log.info("웹훅으로 결제 취소 처리: paymentId={}, status={}",
+                    log.info("[PaymentCommandServiceImpl.handleWebhook] 웹훅으로 결제 취소 처리: paymentId={}, status={}",
                             payment.getPaymentId(), portOneInfo.getStatus());
                 }
                 case FAILED -> {
                     payment.fail(portOneInfo.getFailCode(), portOneInfo.getFailMessage());
-                    log.info("웹훅으로 결제 실패 처리: paymentId={}", payment.getPaymentId());
+                    log.info("[PaymentCommandServiceImpl.handleWebhook] 웹훅으로 결제 실패 처리: paymentId={}", payment.getPaymentId());
                 }
-                default -> log.debug("웹훅 처리 스킵: paymentId={}, status={}",
+                default -> log.debug("[PaymentCommandServiceImpl.handleWebhook] 웹훅 처리 스킵: paymentId={}, status={}",
                         payment.getPaymentId(), portOneInfo.getStatus());
             }
 
         } catch (PortOneException e) {
-            log.error("웹훅 처리 실패", e);
+            log.error("[PaymentCommandServiceImpl.handleWebhook] 웹훅 처리 실패", e);
             throw new CustomException(ErrorCode.WEBHOOK_VERIFICATION_FAILED);
         }
     }
@@ -280,15 +280,17 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
         Member member = payment.getMember();
         if (member instanceof MemberUser memberUser) {
             tokenService.purchaseTokens(memberUser, payment.getTokenAmount(), payment.getId());
-            log.info("토큰 충전 완료: memberId={}, amount={}", member.getId(), payment.getTokenAmount());
+            log.info("[PaymentCommandServiceImpl.chargeTokens] 토큰 충전 완료: memberId={}, amount={}",
+                    member.getId(), payment.getTokenAmount());
         }
     }
 
-    private void refundTokens(Payment payment) {
+    private void revokeTokens(Payment payment) {
         Member member = payment.getMember();
         if (member instanceof MemberUser memberUser) {
-            tokenService.refundTokens(memberUser, payment.getTokenAmount(), payment.getId());
-            log.info("토큰 환불 완료: memberId={}, amount={}", member.getId(), payment.getTokenAmount());
+            tokenService.revokeTokens(memberUser, payment.getTokenAmount(), payment.getId());
+            log.info("[PaymentCommandServiceImpl.revokeTokens] 토큰 회수 완료: memberId={}, amount={}",
+                    member.getId(), payment.getTokenAmount());
         }
     }
 }
