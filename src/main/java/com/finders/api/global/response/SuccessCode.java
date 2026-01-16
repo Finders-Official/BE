@@ -41,7 +41,7 @@ public enum SuccessCode implements BaseCode {
     MEMBER_ME_FOUND(HttpStatus.OK, "MEMBER_203", "내 정보 조회에 성공했습니다."),
 
     // 주소
-    MEMBER_ADDRESS_CREATED(HttpStatus.CREATED, "MEMBER_210", "배송지가 등록되었습니다."),
+    MEMBER_ADDRESS_CREATED(HttpStatus.CREATED, "ADDRESS_210", "배송지가 등록되었습니다."),
 
     // ========================================
     // Store (현상소)
