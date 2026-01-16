@@ -18,6 +18,6 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     @Query("SELECT i FROM Inquiry i " +
             "LEFT JOIN FETCH i.photoLab " +
-            "WHERE i.id = :id AND i.member.id = :memberId")
-    Optional<Inquiry> findByIdAndMemberId(@Param("id") Long id, @Param("memberId") Long memberId);
+            "WHERE i.id = :id")
+    Optional<Inquiry> findByIdWithPhotoLab(@Param("id") Long id);
 }
