@@ -26,7 +26,7 @@ public class MemberAddressCommandServiceImpl implements MemberAddressCommandServ
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (request.isDefault()) {
-            memberAddressRepository.findByUserIdAndIsDefaultTrue(memberId)
+            memberAddressRepository.findByUser_IdAndIsDefaultTrue(memberId)
                     .ifPresent(existingDefault -> existingDefault.updateIsDefault(false));
         }
 
