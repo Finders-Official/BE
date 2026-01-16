@@ -18,12 +18,12 @@ public interface InquiryQueryService {
     /**
      * Owner: 현상소 문의 목록 조회
      */
-    InquiryResponse.InquiryListDTO getPhotoLabInquiries(Long ownerId, InquiryStatus status, int page, int size);
+    InquiryResponse.InquiryListDTO getPhotoLabInquiries(Long photoLabId, Long ownerId, InquiryStatus status, int page, int size);
 
     /**
      * Owner: 현상소 문의 상세 조회
      */
-    InquiryResponse.InquiryDetailDTO getPhotoLabInquiryDetail(Long inquiryId, Long ownerId);
+    InquiryResponse.InquiryDetailDTO getPhotoLabInquiryDetail(Long inquiryId, Long photoLabId, Long ownerId);
 
     /**
      * Admin: 서비스 문의 목록 조회

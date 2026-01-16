@@ -13,7 +13,7 @@ public interface InquiryCommandService {
     /**
      * Owner: 현상소 문의 답변
      */
-    InquiryResponse.ReplyCreateDTO createPhotoLabReply(Long inquiryId, InquiryRequest.CreateReplyDTO request, Long ownerId);
+    InquiryResponse.ReplyCreateDTO createPhotoLabReply(Long inquiryId, Long photoLabId, InquiryRequest.CreateReplyDTO request, Long ownerId);
 
     /**
      * Admin: 서비스 문의 답변

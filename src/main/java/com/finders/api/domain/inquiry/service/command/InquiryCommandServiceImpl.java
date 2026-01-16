@@ -43,7 +43,14 @@ public class InquiryCommandServiceImpl implements InquiryCommandService {
     }
 
     @Override
-    public InquiryResponse.ReplyCreateDTO createPhotoLabReply(Long inquiryId, InquiryRequest.CreateReplyDTO request, Long ownerId) {
+    public InquiryResponse.ReplyCreateDTO createPhotoLabReply(Long inquiryId, Long photoLabId, InquiryRequest.CreateReplyDTO request, Long ownerId) {
+        PhotoLab photoLab = photoLabRepository.findById(photoLabId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        if (photoLab.getOwner() == null || !photoLab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.STORE_ACCESS_DENIED);
+        }
+
         Inquiry inquiry = inquiryRepository.findByIdWithPhotoLab(inquiryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INQUIRY_NOT_FOUND));
 
@@ -51,10 +58,7 @@ public class InquiryCommandServiceImpl implements InquiryCommandService {
             throw new CustomException(ErrorCode.INQUIRY_ALREADY_CLOSED);
         }
 
-        PhotoLab photoLab = photoLabRepository.findByOwnerId(ownerId)
-                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
-
-        if (inquiry.getPhotoLab() == null || !inquiry.getPhotoLab().getId().equals(photoLab.getId())) {
+        if (inquiry.getPhotoLab() == null || !inquiry.getPhotoLab().getId().equals(photoLabId)) {
             throw new CustomException(ErrorCode.INQUIRY_ACCESS_DENIED);
         }
 

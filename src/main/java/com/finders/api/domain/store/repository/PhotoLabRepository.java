@@ -12,7 +12,6 @@ import java.util.Optional;
 
 public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
 
-    Optional<PhotoLab> findByOwnerId(Long ownerId);
     List<PhotoLab> findTop8ByOrderByReservationCountDescIdAsc();
 
     // 커뮤니티 현상소 검색
