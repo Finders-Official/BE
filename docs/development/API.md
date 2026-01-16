@@ -125,6 +125,30 @@ Authorization: Bearer {access_token}
 | GET | `/posts/{id}` | 게시글 상세 |
 | POST | `/posts/{id}/like` | 좋아요 |
 
+### Inquiry (User)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/inquiries` | 내 문의 목록 |
+| GET | `/api/v1/inquiries/{id}` | 문의 상세 |
+| POST | `/api/v1/inquiries` | 문의 생성 (photoLabId null=고객센터, 있으면=매장문의) |
+
+### Inquiry (Owner)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/owner/inquiries` | 현상소 문의 목록 |
+| GET | `/api/v1/owner/inquiries/{id}` | 문의 상세 |
+| POST | `/api/v1/owner/inquiries/{id}/replies` | 답변 작성 |
+
+### Inquiry (Admin)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/admin/inquiries` | 서비스 문의 목록 |
+| GET | `/api/v1/admin/inquiries/{id}` | 문의 상세 |
+| POST | `/api/v1/admin/inquiries/{id}/replies` | 답변 작성 |
+
 ## Error Codes
 
 ### Common (COMMON_xxx)
