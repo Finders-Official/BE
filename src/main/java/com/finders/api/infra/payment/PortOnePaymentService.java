@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finders.api.domain.payment.enums.PaymentMethod;
 import com.finders.api.domain.payment.enums.PaymentStatus;
 import com.finders.api.domain.payment.enums.PgProvider;
+import com.finders.api.infra.payment.dto.PortOneCancelResponse;
+import com.finders.api.infra.payment.dto.PortOnePaymentResponse;
+import com.finders.api.infra.payment.dto.PortOneWebhookPayload;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -21,6 +24,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -64,13 +68,13 @@ public class PortOnePaymentService {
      */
     public PortOnePaymentInfo getPayment(String paymentId) {
         try {
-            Map<String, Object> response = webClient.get()
+            PortOnePaymentResponse response = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/payments/{paymentId}")
                             .queryParam("storeId", properties.getStoreId())
                             .build(paymentId))
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(PortOnePaymentResponse.class)
                     .block();
 
             return convertToPaymentInfo(response);
@@ -89,7 +93,7 @@ public class PortOnePaymentService {
      */
     public PortOneCancelInfo cancelPayment(String paymentId, Integer amount, String reason) {
         try {
-            Map<String, Object> requestBody = new java.util.HashMap<>();
+            Map<String, Object> requestBody = new HashMap<>();
             if (amount != null) {
                 requestBody.put("amount", amount);
             }
@@ -98,20 +102,18 @@ public class PortOnePaymentService {
             }
             requestBody.put("storeId", properties.getStoreId());
 
-            Map<String, Object> response = webClient.post()
+            PortOneCancelResponse response = webClient.post()
                     .uri("/payments/{paymentId}/cancel", paymentId)
                     .bodyValue(requestBody)
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(PortOneCancelResponse.class)
                     .block();
 
-            Map<String, Object> cancellation = (Map<String, Object>) response.get("cancellation");
-            String cancelId = (String) cancellation.get("id");
-            Number totalAmount = (Number) cancellation.get("totalAmount");
+            PortOneCancelResponse.Cancellation cancellation = response.getCancellation();
 
             return new PortOneCancelInfo(
-                    cancelId,
-                    totalAmount != null ? totalAmount.intValue() : 0
+                    cancellation.getId(),
+                    cancellation.getTotalAmount() != null ? cancellation.getTotalAmount() : 0
             );
         } catch (WebClientResponseException e) {
             log.error("[PortOnePaymentService.cancelPayment] 포트원 결제 취소 실패: paymentId={}, status={}, body={}",
@@ -135,14 +137,12 @@ public class PortOnePaymentService {
                 throw new PortOneException("웹훅 시그니처 검증에 실패했습니다.");
             }
 
-            // JSON 파싱
-            Map<String, Object> webhook = objectMapper.readValue(body, Map.class);
+            // JSON 파싱 (DTO 사용)
+            PortOneWebhookPayload webhook = objectMapper.readValue(body, PortOneWebhookPayload.class);
 
-            String type = (String) webhook.get("type");
-            Map<String, Object> data = (Map<String, Object>) webhook.get("data");
-
-            if (data != null && data.containsKey("paymentId")) {
-                return new PortOneWebhookInfo((String) data.get("paymentId"), type);
+            PortOneWebhookPayload.Data data = webhook.getData();
+            if (data != null && data.getPaymentId() != null) {
+                return new PortOneWebhookInfo(data.getPaymentId(), webhook.getType());
             }
 
             return null;
@@ -187,23 +187,12 @@ public class PortOnePaymentService {
         }
     }
 
-    private PortOnePaymentInfo convertToPaymentInfo(Map<String, Object> payment) {
-        String status = (String) payment.get("status");
-        String paymentId = (String) payment.get("id");
-        String transactionId = (String) payment.get("transactionId");
-        String pgTxId = (String) payment.get("pgTxId");
-        String receiptUrl = (String) payment.get("receiptUrl");
-
-        Map<String, Object> amount = (Map<String, Object>) payment.get("amount");
+    private PortOnePaymentInfo convertToPaymentInfo(PortOnePaymentResponse response) {
+        // 금액 추출
         Integer totalAmount = null;
-        if (amount != null && amount.get("total") != null) {
-            totalAmount = ((Number) amount.get("total")).intValue();
+        if (response.getAmount() != null) {
+            totalAmount = response.getAmount().getTotal();
         }
-
-        Map<String, Object> channel = (Map<String, Object>) payment.get("channel");
-        Map<String, Object> method = (Map<String, Object>) payment.get("method");
-
-        Map<String, Object> failure = (Map<String, Object>) payment.get("failure");
 
         // 카드 정보 추출
         String cardCompany = null;
@@ -211,37 +200,39 @@ public class PortOnePaymentService {
         String approveNo = null;
         Integer installmentMonths = null;
 
+        PortOnePaymentResponse.Method method = response.getMethod();
         if (method != null) {
-            // 카드 정보 (PaymentMethodCard 구조)
-            Map<String, Object> card = (Map<String, Object>) method.get("card");
+            PortOnePaymentResponse.Card card = method.getCard();
             if (card != null) {
-                cardCompany = (String) card.get("publisher");  // 발행사 코드
-                cardNumber = (String) card.get("number");      // 마스킹된 카드 번호
+                cardCompany = card.getPublisher();
+                cardNumber = card.getNumber();
             }
-            approveNo = (String) method.get("approvalNumber");
+            approveNo = method.getApprovalNumber();
 
-            // 할부 정보 (PaymentInstallment 구조)
-            Map<String, Object> installment = (Map<String, Object>) method.get("installment");
-            if (installment != null && installment.get("month") != null) {
-                installmentMonths = ((Number) installment.get("month")).intValue();
+            PortOnePaymentResponse.Installment installment = method.getInstallment();
+            if (installment != null) {
+                installmentMonths = installment.getMonth();
             }
         }
 
+        // 실패 정보 추출
+        PortOnePaymentResponse.Failure failure = response.getFailure();
+
         return PortOnePaymentInfo.builder()
-                .paymentId(paymentId)
-                .transactionId(transactionId)
-                .status(convertStatus(status))
+                .paymentId(response.getId())
+                .transactionId(response.getTransactionId())
+                .status(convertStatus(response.getStatus()))
                 .amount(totalAmount)
                 .method(convertMethod(method))
-                .pgProvider(convertPgProvider(channel))
-                .pgTxId(pgTxId)
-                .receiptUrl(receiptUrl)
+                .pgProvider(convertPgProvider(response.getChannel()))
+                .pgTxId(response.getPgTxId())
+                .receiptUrl(response.getReceiptUrl())
                 .cardCompany(cardCompany)
                 .cardNumber(cardNumber)
                 .approveNo(approveNo)
                 .installmentMonths(installmentMonths)
-                .failCode(failure != null ? (String) failure.get("reason") : null)
-                .failMessage(failure != null ? (String) failure.get("message") : null)
+                .failCode(failure != null ? failure.getReason() : null)
+                .failMessage(failure != null ? failure.getMessage() : null)
                 .build();
     }
 
@@ -259,12 +250,10 @@ public class PortOnePaymentService {
         };
     }
 
-    private PaymentMethod convertMethod(Map<String, Object> method) {
-        if (method == null) return null;
-        String type = (String) method.get("type");
-        if (type == null) return null;
+    private PaymentMethod convertMethod(PortOnePaymentResponse.Method method) {
+        if (method == null || method.getType() == null) return null;
 
-        return switch (type) {
+        return switch (method.getType()) {
             case "PaymentMethodCard" -> PaymentMethod.CARD;
             case "PaymentMethodTransfer" -> PaymentMethod.TRANSFER;
             case "PaymentMethodVirtualAccount" -> PaymentMethod.VIRTUAL_ACCOUNT;
@@ -273,12 +262,10 @@ public class PortOnePaymentService {
         };
     }
 
-    private PgProvider convertPgProvider(Map<String, Object> channel) {
-        if (channel == null) return null;
-        String pgProvider = (String) channel.get("pgProvider");
-        if (pgProvider == null) return null;
+    private PgProvider convertPgProvider(PortOnePaymentResponse.Channel channel) {
+        if (channel == null || channel.getPgProvider() == null) return null;
 
-        return switch (pgProvider) {
+        return switch (channel.getPgProvider()) {
             case "KCP" -> PgProvider.KCP;
             case "KAKAOPAY" -> PgProvider.KAKAOPAY;
             case "NAVERPAY" -> PgProvider.NAVERPAY;
