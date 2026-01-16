@@ -293,8 +293,6 @@ CREATE TABLE member_address
     id             BIGINT       NOT NULL AUTO_INCREMENT,
     member_id      BIGINT       NOT NULL,               -- FK
     address_name   VARCHAR(50)  NOT NULL,               -- 배송지 이름
-    recipient_name VARCHAR(50) NULL,                    -- 배송자 이름
-    phone          VARCHAR(20) NULL,
     zipcode        VARCHAR(10)  NOT NULL,               -- 우편번호
     address        VARCHAR(200) NOT NULL,               -- 'ex) 서울 서초구 고무래로 89
     address_detail VARCHAR(100) NULL,                   -- 'ex) 3003동 303호
@@ -1019,3 +1017,4 @@ CREATE TABLE payment
 | 2.4.4 | 2026-01-12 | `region` table (sido/sigungu) 추가 및 `photo_lab.region_id` FK 참조 설정                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 | 2.4.5 | 2026-01-15 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | 2.4.6 | 2026-01-15 | `tag` 테이블 추가 및 keyword -> tag 로 명칭 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 2.4.7 | 2026-01-16 | `member_address` 테이블의 `recipientName`, `phone` 컬럼 삭제                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
