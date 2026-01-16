@@ -42,7 +42,7 @@ public class MemberAddress extends BaseEntity {
     private boolean isDefault;
 
     @Builder
-    public MemberAddress(MemberUser user, String addressName, String zipcode,
+    private MemberAddress(MemberUser user, String addressName, String zipcode,
                          String address, String addressDetail, boolean isDefault) {
         this.user = user;
         this.addressName = addressName;
