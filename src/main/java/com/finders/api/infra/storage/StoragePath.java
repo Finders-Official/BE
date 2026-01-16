@@ -91,7 +91,8 @@ public enum StoragePath {
             String[] parts = objectPath.split("/");
             if (this == SCANNED_PHOTO) return Long.parseLong(parts[2]); // temp/orders/{id}
             return Long.parseLong(parts[1]); // 그 외 보통 {category}/{id}
-        } catch (Exception e) {
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            // 경로가 예상보다 짧거나(Index), ID 자리에 숫자가 아닌 값이 온 경우(Format)
             throw new CustomException(ErrorCode.STORAGE_INVALID_PATH);
         }
     }
