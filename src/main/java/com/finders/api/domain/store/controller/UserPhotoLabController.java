@@ -4,6 +4,7 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.service.command.PhotoLabFavoriteCommandService;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.service.query.PhotoLabPopularQueryService;
