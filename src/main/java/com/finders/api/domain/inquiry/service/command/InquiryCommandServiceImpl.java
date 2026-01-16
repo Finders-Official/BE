@@ -44,7 +44,7 @@ public class InquiryCommandServiceImpl implements InquiryCommandService {
 
     @Override
     public InquiryResponse.ReplyCreateDTO createPhotoLabReply(Long inquiryId, InquiryRequest.CreateReplyDTO request, Long ownerId) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository.findByIdWithPhotoLab(inquiryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INQUIRY_NOT_FOUND));
 
         if (inquiry.getStatus() == InquiryStatus.CLOSED) {
@@ -68,7 +68,7 @@ public class InquiryCommandServiceImpl implements InquiryCommandService {
 
     @Override
     public InquiryResponse.ReplyCreateDTO createServiceReply(Long inquiryId, InquiryRequest.CreateReplyDTO request, Long adminId) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository.findByIdWithPhotoLab(inquiryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INQUIRY_NOT_FOUND));
 
         if (inquiry.getStatus() == InquiryStatus.CLOSED) {

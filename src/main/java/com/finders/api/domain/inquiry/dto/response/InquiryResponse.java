@@ -63,20 +63,19 @@ public class InquiryResponse {
     }
 
     /**
-     * 답변 미리보기 (목록용)
+     * 답변 미리보기 (목록용) - 필드 3개 이하 → 생성자 직접 사용
      */
-    @Builder
     public record ReplyPreviewDTO(
             Long id,
             String content,
             LocalDateTime createdAt
     ) {
         public static ReplyPreviewDTO from(InquiryReply reply) {
-            return ReplyPreviewDTO.builder()
-                    .id(reply.getId())
-                    .content(reply.getContent())
-                    .createdAt(reply.getCreatedAt())
-                    .build();
+            return new ReplyPreviewDTO(
+                    reply.getId(),
+                    reply.getContent(),
+                    reply.getCreatedAt()
+            );
         }
     }
 
@@ -100,7 +99,7 @@ public class InquiryResponse {
                     .title(inquiry.getTitle())
                     .content(inquiry.getContent())
                     .status(inquiry.getStatus())
-                    .photoLab(inquiry.getPhotoLab() != null ? PhotoLabInfoDTO.from(inquiry) : null)
+                    .photoLab(inquiry.getPhotoLab() != null ? PhotoLabInfoDTO.from(inquiry.getPhotoLab()) : null)
                     .member(MemberInfoDTO.from(inquiry))
                     .createdAt(inquiry.getCreatedAt())
                     .replies(inquiry.getReplies().stream().map(ReplyDTO::from).toList())
@@ -109,34 +108,32 @@ public class InquiryResponse {
     }
 
     /**
-     * 현상소 정보
+     * 현상소 정보 - 필드 2개 → 생성자 직접 사용
      */
-    @Builder
     public record PhotoLabInfoDTO(
             Long id,
             String name
     ) {
-        public static PhotoLabInfoDTO from(Inquiry inquiry) {
-            return PhotoLabInfoDTO.builder()
-                    .id(inquiry.getPhotoLab().getId())
-                    .name(inquiry.getPhotoLab().getName())
-                    .build();
+        public static PhotoLabInfoDTO from(com.finders.api.domain.store.entity.PhotoLab photoLab) {
+            return new PhotoLabInfoDTO(
+                    photoLab.getId(),
+                    photoLab.getName()
+            );
         }
     }
 
     /**
-     * 회원 정보 (Owner/Admin 조회용)
+     * 회원 정보 (Owner/Admin 조회용) - 필드 2개 → 생성자 직접 사용
      */
-    @Builder
     public record MemberInfoDTO(
             Long id,
             String name
     ) {
         public static MemberInfoDTO from(Inquiry inquiry) {
-            return MemberInfoDTO.builder()
-                    .id(inquiry.getMember().getId())
-                    .name(inquiry.getMember().getName())
-                    .build();
+            return new MemberInfoDTO(
+                    inquiry.getMember().getId(),
+                    inquiry.getMember().getName()
+            );
         }
     }
 
@@ -161,34 +158,32 @@ public class InquiryResponse {
     }
 
     /**
-     * 문의 생성 응답
+     * 문의 생성 응답 - 필드 2개 → 생성자 직접 사용
      */
-    @Builder
     public record InquiryCreateDTO(
             Long id,
             String message
     ) {
         public static InquiryCreateDTO from(Inquiry inquiry) {
-            return InquiryCreateDTO.builder()
-                    .id(inquiry.getId())
-                    .message("문의가 등록되었습니다.")
-                    .build();
+            return new InquiryCreateDTO(
+                    inquiry.getId(),
+                    "문의가 등록되었습니다."
+            );
         }
     }
 
     /**
-     * 답변 생성 응답
+     * 답변 생성 응답 - 필드 2개 → 생성자 직접 사용
      */
-    @Builder
     public record ReplyCreateDTO(
             Long id,
             String message
     ) {
         public static ReplyCreateDTO from(InquiryReply reply) {
-            return ReplyCreateDTO.builder()
-                    .id(reply.getId())
-                    .message("답변이 등록되었습니다.")
-                    .build();
+            return new ReplyCreateDTO(
+                    reply.getId(),
+                    "답변이 등록되었습니다."
+            );
         }
     }
 }
