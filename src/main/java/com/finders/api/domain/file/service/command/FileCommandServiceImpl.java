@@ -1,4 +1,4 @@
-package com.finders.api.domain.file.service;
+package com.finders.api.domain.file.service.command;
 
 import com.finders.api.domain.file.dto.FileRequest;
 import com.finders.api.global.exception.CustomException;
@@ -34,13 +34,10 @@ public class FileCommandServiceImpl implements FileCommandService {
         }
 
         // 고유한 파일명 및 최종 경로 생성
-        String uniqueFileName = UUID.randomUUID().toString().replace("-", "") + "_" + request.fileName();
-        String objectPath = pathType.format(request.memberId(), uniqueFileName);
-
-        return storageService.getPresignedUrl(
-                objectPath,
-                pathType.isPublic(),
-                15
+        return storageService.generatePresignedUrl(
+                pathType,
+                request.memberId(),
+                request.fileName()
         );
     }
 }
