@@ -38,18 +38,18 @@ public class PaymentWebhookController {
         if (!StringUtils.hasText(webhookId) ||
                 !StringUtils.hasText(webhookTimestamp) ||
                 !StringUtils.hasText(webhookSignature)) {
-            log.warn("웹훅 필수 헤더 누락: webhookId={}, hasTimestamp={}, hasSignature={}",
+            log.warn("[PaymentWebhookController.handlePortOneWebhook] 웹훅 필수 헤더 누락: webhookId={}, hasTimestamp={}, hasSignature={}",
                     webhookId, StringUtils.hasText(webhookTimestamp), StringUtils.hasText(webhookSignature));
             return ResponseEntity.badRequest().build();
         }
 
-        log.info("포트원 웹훅 수신: webhookId={}", webhookId);
+        log.info("[PaymentWebhookController.handlePortOneWebhook] 포트원 웹훅 수신: webhookId={}", webhookId);
 
         try {
             paymentCommandService.handleWebhook(body, webhookId, webhookTimestamp, webhookSignature);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("웹훅 처리 실패: webhookId={}", webhookId, e);
+            log.error("[PaymentWebhookController.handlePortOneWebhook] 웹훅 처리 실패: webhookId={}", webhookId, e);
             // 웹훅 재시도를 위해 400 대신 200 반환하지 않음
             return ResponseEntity.badRequest().build();
         }
