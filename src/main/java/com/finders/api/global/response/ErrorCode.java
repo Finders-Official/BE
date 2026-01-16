@@ -135,7 +135,13 @@ public enum ErrorCode implements BaseCode {
     STORAGE_INVALID_PATH(HttpStatus.BAD_REQUEST, "STORAGE_400", "잘못된 저장 경로입니다."),
     STORAGE_INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "STORAGE_401", "허용되지 않는 파일 형식입니다."),
     STORAGE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "STORAGE_402", "파일 크기가 제한을 초과했습니다."),
-    STORAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_502", "Signed URL 생성에 실패했습니다.");
+    STORAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_502", "Signed URL 생성에 실패했습니다."),
+
+    // ========================================
+    // Community (사진 수다)
+    // ========================================
+    REVIEW_TOO_SHORT(HttpStatus.BAD_REQUEST, "COMMUNITY_401", "리뷰는 최소 20자 이상 작성해야 합니다."),
+    REVIEW_TOO_LONG(HttpStatus.BAD_REQUEST, "COMMUNITY_402", "리뷰는 최대 300자 이내로 작성해야 합니다.");
 
     private final HttpStatus status;
     private final String code;
