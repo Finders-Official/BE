@@ -4,8 +4,10 @@ package com.finders.api.domain.member.entity;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "member_address", indexes = {
@@ -21,7 +23,7 @@ public class MemberAddress extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    private MemberUser user;
 
     @Column(name = "address_name", nullable = false, length = 50)
     private String addressName;
@@ -37,4 +39,19 @@ public class MemberAddress extends BaseEntity {
 
     @Column(name = "is_default", nullable = false)
     private boolean isDefault;
+
+    @Builder
+    public MemberAddress(MemberUser user, String addressName, String zipcode,
+                         String address, String addressDetail, boolean isDefault) {
+        this.user = user;
+        this.addressName = addressName;
+        this.zipcode = zipcode;
+        this.address = address;
+        this.addressDetail = addressDetail;
+        this.isDefault = isDefault;
+    }
+
+    public void updateIsDefault(boolean isDefault) {
+        this.isDefault = isDefault;
+    }
 }
