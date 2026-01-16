@@ -41,14 +41,9 @@ public class InquiryResponse {
             InquiryStatus status,
             String photoLabName,
             LocalDateTime createdAt,
-            boolean hasReply,
-            ReplyPreviewDTO latestReply
+            boolean hasReply
     ) {
         public static InquiryItemDTO from(Inquiry inquiry) {
-            InquiryReply latestReply = inquiry.getReplies().isEmpty()
-                    ? null
-                    : inquiry.getReplies().get(inquiry.getReplies().size() - 1);
-
             return InquiryItemDTO.builder()
                     .id(inquiry.getId())
                     .title(inquiry.getTitle())
@@ -56,8 +51,7 @@ public class InquiryResponse {
                     .status(inquiry.getStatus())
                     .photoLabName(inquiry.getPhotoLab() != null ? inquiry.getPhotoLab().getName() : null)
                     .createdAt(inquiry.getCreatedAt())
-                    .hasReply(!inquiry.getReplies().isEmpty())
-                    .latestReply(latestReply != null ? ReplyPreviewDTO.from(latestReply) : null)
+                    .hasReply(inquiry.getStatus() != InquiryStatus.PENDING)
                     .build();
         }
     }
