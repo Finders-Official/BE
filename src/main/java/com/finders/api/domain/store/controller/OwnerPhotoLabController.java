@@ -45,7 +45,7 @@ public class OwnerPhotoLabController {
     ) {
         return ApiResponse.success(
                 SuccessCode.CREATED,
-                photoLabService.createPhotoLab(owner != null ? owner.memberId() : null, request)
+                photoLabService.createPhotoLab(owner.memberId(), request)
         );
     }
 
@@ -61,7 +61,7 @@ public class OwnerPhotoLabController {
     ) {
         return ApiResponse.success(
                 SuccessCode.STORAGE_UPLOADED,
-                photoLabImageService.uploadImage(owner != null ? owner.memberId() : null, photoLabId, file, displayOrder, isMain)
+                photoLabImageService.uploadImage(owner.memberId(), photoLabId, file, displayOrder, isMain)
         );
     }
 
@@ -76,7 +76,7 @@ public class OwnerPhotoLabController {
     ) {
         return ApiResponse.success(
                 SuccessCode.STORAGE_UPLOADED,
-                photoLabDocumentService.uploadDocument(owner != null ? owner.memberId() : null, photoLabId, documentType, file)
+                photoLabDocumentService.uploadDocument(owner.memberId(), photoLabId, documentType, file)
         );
     }
 }
