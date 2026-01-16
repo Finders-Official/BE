@@ -1,4 +1,4 @@
-﻿package com.finders.api.domain.store.repository;
+package com.finders.api.domain.store.repository;
 
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.enums.PhotoLabStatus;

@@ -11,6 +11,7 @@ public class PhotoLabDetailResponse {
             Long photoLabId,
             String name,
             List<String> imageUrls,
+            List<String> tags,
             String address,
             String addressDetail,
             Double distanceKm,

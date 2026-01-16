@@ -1,4 +1,4 @@
-﻿package com.finders.api.domain.store.service.query;
+package com.finders.api.domain.store.service.query;
 
 import com.finders.api.domain.community.entity.PostImage;
 import com.finders.api.domain.community.enums.CommunityStatus;
@@ -129,6 +129,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .photoLabId(photoLab.getId())
                 .name(photoLab.getName())
                 .imageUrls(buildImageUrls(photoLabId))
+                .tags(buildTags(photoLabId))
                 .address(photoLab.getAddress())
                 .addressDetail(photoLab.getAddressDetail())
                 .distanceKm(distanceKm)
@@ -176,6 +177,11 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                         tag -> tag.getPhotoLab().getId(),
                         Collectors.mapping(item -> item.getTag().getName(), Collectors.toList())
                 ));
+    }
+
+    private List<String> buildTags(Long photoLabId) {
+        Map<Long, List<String>> tagMap = buildTagMap(List.of(photoLabId));
+        return tagMap.getOrDefault(photoLabId, List.of());
     }
 
     private Set<Long> buildFavoriteSet(Long memberId, List<Long> photoLabIds) {
