@@ -17,16 +17,16 @@
 | 인스턴스 ID | `finders-db` |
 | 버전 | MySQL 8.0 |
 | Cloud SQL 버전 | Enterprise |
-| 머신 유형 | db-custom-1-3840 |
-| vCPU | 1 vCPU |
-| RAM | 3.75 GB |
+| 머신 유형 | db-g1-small |
+| vCPU | 공유 vCPU |
+| RAM | 1.7 GB |
 | 저장용량 | 10 GB SSD |
 | 가용성 | 단일 영역 |
 | 공개 IP | `34.64.50.136` |
 | 포트 | 3306 |
 | 백업 | 자동 |
 | 승인된 네트워크 | `34.50.19.146/32` (finders-server) |
-| **예상 비용** | **~$65/월** |
+| **예상 비용** | **~$27/월** |
 
 ### 접속 정보
 ```
@@ -62,14 +62,15 @@ User: finders
 | 버킷 | 공개 여부 | Lifecycle |
 |------|----------|-----------|
 | `finders-public` | `allUsers:objectViewer` | `temp/` 30일 후 삭제 |
-| `finders-private` | 비공개 | 없음 |
+| `finders-private` | 비공개 | `temp/` 30일 후 삭제 |
 
 ### 서비스 계정
 
 | 항목 | 값 |
 |------|-----|
-| 이름 | `finders-storage` |
-| 역할 | Storage 관리자 |
+| 이름 | Compute Engine default service account |
+| 이메일 | `517500643080-compute@developer.gserviceaccount.com` |
+| 역할 | Storage Object Admin |
 | 용도 | Spring 서버에서 GCS 접근용 |
 
 ### 경로 규칙
@@ -129,10 +130,10 @@ User: finders
 
 | 서비스 | 월 비용 |
 |--------|---------|
-| Cloud SQL | ~$65 |
+| Cloud SQL | ~$27 |
 | Compute Engine | ~$34 |
 | Cloud Storage | ~$1 |
-| **총합** | **~$100/월** |
+| **총합** | **~$62/월** |
 
 ---
 
@@ -144,10 +145,10 @@ User: finders
 | 유효 기간 | 90일 |
 | 시작일 | 2024.12.28 |
 | **만료 예정일** | **2025.03.28** |
-| 예상 사용량 | ~$100/월 × 3개월 = ~$300 |
+| 예상 사용량 | ~$62/월 × 3개월 = ~$186 |
 
 ### 무료 기간 종료 후
-- **2025년 3월 28일**부터 월 **~$100** 과금 예정
+- **2025년 3월 28일**부터 월 **~$62** 과금 예정
 - 필요시 머신 스펙 다운그레이드로 비용 절감 가능:
   - Compute Engine: e2-medium → e2-small (~$17/월)
   - Cloud SQL: 1 vCPU → db-f1-micro (~$10/월)
