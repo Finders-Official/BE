@@ -12,12 +12,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Owner Inquiry", description = "1:1 문의 API (Owner)")
 @RestController
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('OWNER')")
 @RequestMapping("/owner/inquiries")
 public class OwnerInquiryController {
 
