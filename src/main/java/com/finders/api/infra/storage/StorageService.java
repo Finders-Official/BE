@@ -59,14 +59,11 @@ public interface StorageService {
      */
     String getPublicUrl(String objectPath);
 
-    /**
-     *  업로드(PUT)용 Signed URL 생성 (Private 버킷 전용)
-     *
-     * @param objectPath    업로드할 파일 경로
-     * @param expiryMinutes 만료 시간 (분), null이면 기본값 사용
-     * @return PUT Signed URL
-     */
-    StorageResponse.SignedUrl getSignedUploadUrl(String objectPath, Integer expiryMinutes);
+    // 업로드(PUT) 전용 URL 발급
+    StorageResponse.PresignedUrl getPresignedUrl(String objectPath, boolean isPublic, Integer expiryMinutes);
+
+    // 업로드(PUT) 전용 URL 발급 (벌크/리스트)
+    List<StorageResponse.PresignedUrl> getPresignedUrls(List<String> objectPaths, boolean isPublic, Integer expiryMinutes);
 
     /**
      * 배치로 한번에 Signed URL 생성
