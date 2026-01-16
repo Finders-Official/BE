@@ -24,8 +24,6 @@ public class PostRequest {
 
             boolean isSelfDeveloped,
             Long labId,
-
-            @Size(min = 20, max = 300, message = "리뷰는 최소 20자, 최대 300자 이내여야 합니다.")
             String reviewContent
     ){}
 

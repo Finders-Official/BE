@@ -34,6 +34,18 @@ public class PostCommandServiceImpl implements PostCommandService {
         MemberUser memberUser = memberUserRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
+        // 자가 현상이 아닐 때만 글자 수 체크
+        if (!request.isSelfDeveloped()) {
+            String review = request.reviewContent();
+
+            if (review == null || review.trim().isEmpty() || review.length() < 20) {
+                throw new CustomException(ErrorCode.REVIEW_TOO_SHORT);
+            }
+            if (review.length() > 300) {
+                throw new CustomException(ErrorCode.REVIEW_TOO_LONG);
+            }
+        }
+
         PhotoLab photoLab = null;
 
         if (request.labId() != null) {
