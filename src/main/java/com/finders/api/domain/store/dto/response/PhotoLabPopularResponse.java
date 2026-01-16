@@ -10,8 +10,21 @@ public class PhotoLabPopularResponse {
             Long photoLabId,
             String name,
             String mainImageUrl,
-            List<String> keywords,
+            List<String> tags,
             Integer workCount
     ) {
+        public static Card from(
+                com.finders.api.domain.store.entity.PhotoLab photoLab,
+                String mainImageUrl,
+                List<String> tags
+        ) {
+            return Card.builder()
+                    .photoLabId(photoLab.getId())
+                    .name(photoLab.getName())
+                    .mainImageUrl(mainImageUrl)
+                    .tags(tags)
+                    .workCount(photoLab.getWorkCount())
+                    .build();
+        }
     }
 }
