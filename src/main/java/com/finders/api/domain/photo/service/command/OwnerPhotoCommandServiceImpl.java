@@ -72,7 +72,7 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
 
             String objectPath = String.format("scanned/%d/orders/%s/%s", photoLabId, orderCode, filename);
 
-            StorageResponse.SignedUrl signed = storageService.getSignedUploadUrl(objectPath, null);
+            StorageResponse.SignedUrl signed = storageService.getSignedUrl(objectPath, null);
             if (expiresAt == null) expiresAt = signed.expiresAtEpochSecond();
 
             items.add(OwnerPhotoResponse.Item.of(i, objectPath, signed.url()));
