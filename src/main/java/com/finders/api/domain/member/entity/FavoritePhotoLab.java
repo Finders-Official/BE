@@ -1,6 +1,5 @@
-package com.finders.api.domain.community.entity;
+package com.finders.api.domain.member.entity;
 
-import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.Entity;
