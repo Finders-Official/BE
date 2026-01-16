@@ -2,7 +2,6 @@ package com.finders.api.infra.storage;
 
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
-import com.finders.api.infra.storage.StorageResponse.SignedUrl;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ImpersonatedCredentials;
@@ -16,13 +15,13 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * GCS Storage 서비스 구현
@@ -74,90 +73,20 @@ public class GcsStorageService implements StorageService {
         }
     }
 
+    // 단건 업로드 경로 생성 및 Presigned URL 발급
     @Override
-    public StorageResponse.Upload uploadPublic(MultipartFile file, StoragePath storagePath, Object... pathArgs) {
-        validatePublicPath(storagePath);
-        return upload(file, properties.publicBucket(), storagePath, true, pathArgs);
+    public StorageResponse.PresignedUrl generatePresignedUrl(StoragePath storagePath, Long domainId, String originalFileName) {
+        String objectPath = createUniquePath(storagePath, domainId, originalFileName);
+        return getPresignedUrl(objectPath, storagePath.isPublic(), null);
     }
 
+    // 벌크 업로드 경로 생성 및 Presigned URL 발급
     @Override
-    public StorageResponse.Upload uploadPrivate(MultipartFile file, StoragePath storagePath, Object... pathArgs) {
-        validatePrivatePath(storagePath);
-        return upload(file, properties.privateBucket(), storagePath, false, pathArgs);
-    }
-
-    private StorageResponse.Upload upload(MultipartFile file, String bucket,
-                                          StoragePath storagePath, boolean isPublic, Object... pathArgs) {
-        try {
-            String filename = generateFilename(file.getOriginalFilename());
-            Object[] allArgs = appendFilename(pathArgs, filename);
-            String objectPath = storagePath.format(allArgs);
-
-            BlobId blobId = BlobId.of(bucket, objectPath);
-            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                    .setContentType(file.getContentType())
-                    .build();
-
-            storage.createFrom(blobInfo, file.getInputStream());
-
-            String url = isPublic ? getPublicUrl(objectPath) : null;
-
-            log.info("[GcsStorageService.upload] bucket={}, path={}, size={}",
-                    bucket, objectPath, file.getSize());
-
-            return StorageResponse.Upload.from(
-                    bucket,
-                    objectPath,
-                    url,
-                    file.getContentType(),
-                    file.getSize()
-            );
-
-        } catch (IOException e) {
-            log.error("[GcsStorageService.upload] 업로드 실패: {}", e.getMessage(), e);
-            throw new CustomException(ErrorCode.STORAGE_UPLOAD_FAILED, e);
-        }
-    }
-
-    @Override
-    public StorageResponse.Delete delete(String objectPath, boolean isPublic) {
-        String bucket = isPublic ? properties.publicBucket() : properties.privateBucket();
-
-        BlobId blobId = BlobId.of(bucket, objectPath);
-        boolean deleted = storage.delete(blobId);
-
-        log.info("[GcsStorageService.delete] bucket={}, path={}, deleted={}",
-                bucket, objectPath, deleted);
-
-        return new StorageResponse.Delete(bucket, objectPath, deleted);
-    }
-
-    @Override
-    public StorageResponse.SignedUrl getSignedUrl(String objectPath, Integer expiryMinutes) {
-        validateSignerInitialized();
-
-        int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
-
-        BlobInfo blobInfo = BlobInfo.newBuilder(properties.privateBucket(), objectPath).build();
-
-        URL signedUrl = storage.signUrl(
-                blobInfo,
-                expiry,
-                TimeUnit.MINUTES,
-                Storage.SignUrlOption.withV4Signature(),
-                Storage.SignUrlOption.signWith(signer)
-        );
-
-        long expiresAt = System.currentTimeMillis() / 1000 + (expiry * 60L);
-
-        log.debug("[GcsStorageService.getSignedUrl] path={}, expiryMinutes={}", objectPath, expiry);
-
-        return new StorageResponse.SignedUrl(signedUrl.toString(), expiresAt);
-    }
-
-    @Override
-    public String getPublicUrl(String objectPath) {
-        return String.format("%s/%s", properties.getPublicBaseUrl(), objectPath);
+    public List<StorageResponse.PresignedUrl> generateBulkPresignedUrls(StoragePath storagePath, Long domainId, int count) {
+        List<String> objectPaths = IntStream.range(0, count)
+                .mapToObj(i -> createUniquePath(storagePath, domainId, "bulk_" + i + ".jpg"))
+                .toList();
+        return getPresignedUrls(objectPaths, storagePath.isPublic(), null);
     }
 
     /**
@@ -167,13 +96,13 @@ public class GcsStorageService implements StorageService {
      */
     @Override
     public StorageResponse.PresignedUrl getPresignedUrl(String objectPath, boolean isPublic, Integer expiryMinutes) {
-        // 1. IAM Signer 초기화 확인 (기존 로직 활용)
+        // 1. IAM Signer 초기화 확인
         validateSignerInitialized();
 
         // 2. 만료 시간 설정
         int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
 
-        // 3. [핵심] isPublic 여부에 따라 버킷 결정
+        // 3. isPublic 여부에 따라 버킷 결정
         String bucketName = isPublic ? properties.publicBucket() : properties.privateBucket();
 
         BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, objectPath).build();
@@ -206,59 +135,69 @@ public class GcsStorageService implements StorageService {
                 .toList();
     }
 
+    // 조회용 Signed URL (GET 방식 - private 버킷용)
     @Override
-    public Map<String, SignedUrl> getSignedUrls(List<String> objectPaths, Integer expiryMinutes) {
+    public StorageResponse.SignedUrl getSignedUrl(String objectPath, Integer expiryMinutes) {
+        validateSignerInitialized();
+
         int expiry = expiryMinutes != null ? expiryMinutes : properties.signedUrlExpiryMinutes();
 
+        BlobInfo blobInfo = BlobInfo.newBuilder(properties.privateBucket(), objectPath).build();
+
+        URL signedUrl = storage.signUrl(
+                blobInfo,
+                expiry,
+                TimeUnit.MINUTES,
+                Storage.SignUrlOption.withV4Signature(),
+                Storage.SignUrlOption.signWith(signer)
+        );
+
+        long expiresAt = System.currentTimeMillis() / 1000 + (expiry * 60L);
+
+        log.debug("[GcsStorageService.getSignedUrl] path={}, expiryMinutes={}", objectPath, expiry);
+
+        return new StorageResponse.SignedUrl(signedUrl.toString(), expiresAt);
+    }
+
+    @Override
+    public Map<String, StorageResponse.SignedUrl> getSignedUrls(List<String> objectPaths, Integer expiryMinutes) {
         return objectPaths.stream()
                 .filter(p -> p != null && !p.isBlank())
                 .distinct()
-                .collect(java.util.stream.Collectors.toMap(
-                        p -> p,
-                        p -> getSignedUrl(p, expiry) // 내부에서 signUrl 수행
-                ));
+                .collect(Collectors.toMap(p -> p, p -> getSignedUrl(p, expiryMinutes)));
+    }
+
+    @Override
+    public String getPublicUrl(String objectPath) {
+        return String.format("%s/%s", properties.getPublicBaseUrl(), objectPath);
+    }
+
+    // 파일 삭제
+    @Override
+    public StorageResponse.Delete delete(String objectPath, boolean isPublic) {
+        String bucket = isPublic ? properties.publicBucket() : properties.privateBucket();
+
+        BlobId blobId = BlobId.of(bucket, objectPath);
+        boolean deleted = storage.delete(blobId);
+
+        log.info("[GcsStorageService.delete] bucket={}, path={}, deleted={}",
+                bucket, objectPath, deleted);
+
+        return new StorageResponse.Delete(bucket, objectPath, deleted);
     }
 
     // ========================================
     // Private Helper Methods
     // ========================================
+    private String createUniquePath(StoragePath storagePath, Long domainId, String fileName) {
+        String uniqueFileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
+        return storagePath.format(domainId, uniqueFileName);
+    }
 
     private void validateSignerInitialized() {
         if (signer == null) {
             throw new CustomException(ErrorCode.STORAGE_SIGNED_URL_FAILED,
                     "Signed URL 생성 불가: Signer가 초기화되지 않았습니다");
-        }
-    }
-
-    private String generateFilename(String originalFilename) {
-        String extension = extractExtension(originalFilename);
-        return UUID.randomUUID().toString() + extension;
-    }
-
-    private String extractExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
-        return filename.substring(filename.lastIndexOf("."));
-    }
-
-    private Object[] appendFilename(Object[] pathArgs, String filename) {
-        Object[] result = Arrays.copyOf(pathArgs, pathArgs.length + 1);
-        result[pathArgs.length] = filename;
-        return result;
-    }
-
-    private void validatePublicPath(StoragePath storagePath) {
-        if (!storagePath.isPublic()) {
-            throw new CustomException(ErrorCode.STORAGE_INVALID_PATH,
-                    "Public 버킷에 Private 경로를 사용할 수 없습니다: " + storagePath);
-        }
-    }
-
-    private void validatePrivatePath(StoragePath storagePath) {
-        if (storagePath.isPublic()) {
-            throw new CustomException(ErrorCode.STORAGE_INVALID_PATH,
-                    "Private 버킷에 Public 경로를 사용할 수 없습니다: " + storagePath);
         }
     }
 }

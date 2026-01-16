@@ -3,7 +3,6 @@ package com.finders.api.infra.storage;
 import com.finders.api.infra.storage.StorageResponse.SignedUrl;
 import java.util.List;
 import java.util.Map;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Storage 서비스 인터페이스
@@ -13,25 +12,11 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public interface StorageService {
 
-    /**
-     * Public 버킷에 파일 업로드
-     *
-     * @param file        업로드할 파일
-     * @param storagePath 저장 경로 패턴 (isPublic=true인 경로만 허용)
-     * @param pathArgs    경로 패턴에 대입할 인자들 (파일명 제외, UUID 자동 생성)
-     * @return 직접 접근 가능한 URL 포함 응답
-     */
-    StorageResponse.Upload uploadPublic(MultipartFile file, StoragePath storagePath, Object... pathArgs);
+    // 단건 업로드 경로 생성 및 Presigned URL 발급
+    StorageResponse.PresignedUrl generatePresignedUrl(StoragePath storagePath, Long domainId, String originalFileName);
 
-    /**
-     * Private 버킷에 파일 업로드
-     *
-     * @param file        업로드할 파일
-     * @param storagePath 저장 경로 패턴 (isPublic=false인 경로만 허용)
-     * @param pathArgs    경로 패턴에 대입할 인자들 (파일명 제외, UUID 자동 생성)
-     * @return object path만 포함 (URL은 getSignedUrl로 별도 요청)
-     */
-    StorageResponse.Upload uploadPrivate(MultipartFile file, StoragePath storagePath, Object... pathArgs);
+    // 벌크 업로드 경로 생성 및 Presigned URL 발급
+    List<StorageResponse.PresignedUrl> generateBulkPresignedUrls(StoragePath storagePath, Long domainId, int count);
 
     /**
      * 파일 삭제
