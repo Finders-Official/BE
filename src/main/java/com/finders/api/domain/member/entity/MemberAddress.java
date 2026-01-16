@@ -15,6 +15,7 @@ import org.hibernate.annotations.SQLRestriction;
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("deleted_at IS NULL")   // 삭제되지 않은 데이터만 조회 대상
 public class MemberAddress extends BaseEntity {
 
     @Id
