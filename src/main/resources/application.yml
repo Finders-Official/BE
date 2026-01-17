@@ -85,8 +85,6 @@ google:
     project-id: ${GOOGLE_CLOUD_PROJECT:}
     credentials:
       location: ${GOOGLE_APPLICATION_CREDENTIALS:}
-    vision:
-      enabled: ${VISION_ENABLED:false}
     storage:
       public-bucket: ${GCS_PUBLIC_BUCKET:finders-public}
       private-bucket: ${GCS_PRIVATE_BUCKET:finders-private}

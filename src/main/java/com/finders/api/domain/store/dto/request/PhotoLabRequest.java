@@ -1,5 +1,6 @@
 package com.finders.api.domain.store.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -42,4 +43,20 @@ public class PhotoLabRequest {
             Integer maxReservationsPerHour
     ) {
     }
+
+    // 커뮤니티 현상소 검색
+    public record PhotoLabCommunitySearchRequest(
+            @Schema(description = "검색 키워드", example = "파인더스")
+            @NotBlank(message = "검색어는 필수입니다.")
+            String keyword,
+
+            @Schema(description = "사용자 위도")
+            Double latitude,
+
+            @Schema(description = "사용자 경도")
+            Double longitude,
+
+            @Schema(description = "위치 정보 활용 동의 여부")
+            boolean locationAgreed
+    ) {}
 }
