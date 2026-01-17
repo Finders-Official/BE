@@ -70,9 +70,19 @@ dependencies {
     implementation 'com.google.cloud:google-cloud-logging-logback'
 
     // ========================================
+    // Sentry (Error Monitoring)
+    // ========================================
+    implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.28.0'
+
+    // ========================================
     // WebClient (Replicate API)
     // ========================================
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // ========================================
+    // PortOne V2 (결제 연동) - REST API 사용
+    // ========================================
+    // WebClient는 spring-boot-starter-webflux에서 제공
 
     // ========================================
     // Utility
@@ -125,4 +135,8 @@ jar {
 
 bootJar {
     enabled = true
+}
+
+springBoot {
+    buildInfo()
 }

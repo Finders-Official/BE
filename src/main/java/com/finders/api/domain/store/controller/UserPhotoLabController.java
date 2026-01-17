@@ -1,12 +1,13 @@
 package com.finders.api.domain.store.controller;
 
+import com.finders.api.domain.store.dto.request.PhotoLabRequest;
 import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
+import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.service.command.PhotoLabFavoriteCommandService;
-import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.service.query.PhotoLabPopularQueryService;
 import com.finders.api.domain.store.service.query.PhotoLabQueryService;
 import com.finders.api.global.response.ApiResponse;
@@ -15,20 +16,18 @@ import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Tag(name = "PhotoLab_USER", description = "현상소 API")
 @RestController
@@ -77,6 +76,21 @@ public class UserPhotoLabController {
         return photoLabQueryService.getPhotoLabs(condition);
     }
 
+    @Operation(summary = "현상소 상세 조회 API")
+    @GetMapping("/{photoLabId}")
+    public ApiResponse<PhotoLabDetailResponse.Detail> getPhotoLabDetail(
+            @PathVariable Long photoLabId,
+            @AuthenticationPrincipal AuthUser user,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng
+    ) {
+        Long memberId = user != null ? user.memberId() : null;
+        return ApiResponse.success(
+                SuccessCode.STORE_FOUND,
+                photoLabQueryService.getPhotoLabDetail(photoLabId, memberId, lat, lng)
+        );
+    }
+
     @Operation(summary = "현상소 즐겨찾기 추가 API")
     @PostMapping("/{photoLabId}/favorites")
     public ApiResponse<PhotoLabFavoriteResponse.Status> addFavorite(
@@ -102,17 +116,15 @@ public class UserPhotoLabController {
     }
 
     // 커뮤니티 현상소 검색
-    @Operation(summary = "현상소 검색", description = "게시글 작성 시 연결할 현상소를 검색합니다. 위도/경도가 없으면 거리 없이 주소만 나옵니다.")
+    @Operation(summary = "커뮤니티 현상소 검색",
+            description = "게시글 작성 시 연결할 현상소를 검색합니다. 1순위 정확도 순 > 2순위 거리 순 + 예약 수로 정렬됩니다. 위치 정보 미동의 시 예약 수로 정렬되며 주소만 노출됩니다.")
     @GetMapping("/search")
     public ApiResponse<PhotoLabResponse.PhotoLabSearchListDTO> searchLabs(
-            @RequestParam(name = "keyword") String keyword,
-            @RequestParam(name = "latitude", required = false) Double latitude,
-            @RequestParam(name = "longitude", required = false) Double longitude,
-            @PageableDefault(size = 8) Pageable pageable
+            @ModelAttribute PhotoLabRequest.PhotoLabCommunitySearchRequest request
     ) {
         return ApiResponse.success(
                 SuccessCode.STORE_LIST_FOUND,
-                photoLabQueryService.searchPhotoLabs(keyword, latitude, longitude, pageable)
+                photoLabQueryService.searchCommunityPhotoLabs(request)
         );
     }
 }
