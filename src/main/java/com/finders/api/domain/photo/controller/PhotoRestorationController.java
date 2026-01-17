@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,10 +27,28 @@ public class PhotoRestorationController {
     // TODO: JWT 인증 구현 시 @AuthenticationPrincipal로 교체
     private static final Long TEMP_MEMBER_ID = 1L;
 
-    @Operation(summary = "사진 복원 요청", description = "손상된 사진을 업로드하여 AI 복원을 요청합니다. 과노출 영역이 자동으로 감지됩니다.")
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+            summary = "사진 복원 요청",
+            description = """
+                AI 사진 복원을 요청합니다.
+
+                ### 사전 작업 (프론트엔드)
+                1. `POST /api/files/presigned-url` 로 원본/마스크 이미지 업로드 URL 발급
+                2. 발급받은 URL로 GCS에 직접 PUT 업로드
+                3. 업로드 완료 후 objectPath를 이 API로 전달
+
+                ### 요청 예시
+                ```json
+                {
+                  "originalPath": "restorations/123/original/uuid.png",
+                  "maskPath": "restorations/123/mask/uuid.png"
+                }
+                ```
+                """
+    )
+    @PostMapping
     public ApiResponse<RestorationResponse.Created> createRestoration(
-            @ModelAttribute @Valid RestorationRequest.Create request
+            @RequestBody @Valid RestorationRequest.Create request
     ) {
         RestorationResponse.Created response = restorationService.createRestoration(TEMP_MEMBER_ID, request);
         return ApiResponse.success(SuccessCode.RESTORATION_CREATED, response);
