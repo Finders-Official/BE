@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MemberAddressRepository extends JpaRepository<MemberAddress, Long> {
+    // 특정 유저의 배송지가 존재하는지 확인
+    boolean existsByUserId(Long memberId);
+
     // 특정 유저의 기존 기본 배송지 찾기
     Optional<MemberAddress> findByUser_IdAndIsDefaultTrue(Long memberId);
 
