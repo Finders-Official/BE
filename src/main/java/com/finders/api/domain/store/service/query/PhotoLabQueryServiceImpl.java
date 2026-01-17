@@ -4,6 +4,7 @@ import com.finders.api.domain.community.entity.PostImage;
 import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.PostImageRepository;
 import com.finders.api.domain.member.service.query.MemberQueryService;
+import com.finders.api.domain.store.dto.request.PhotoLabRequest;
 import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
@@ -25,6 +26,11 @@ import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,22 +38,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
-    private static final String DISTANCE_FORMAT_KM = "%.1fkm";
-    private static final int MINUTES_IN_DEGREE = 60;
-    private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.1515;
-    private static final double KILOMETERS_PER_STATUTE_MILE = 1.609344;
     private static final int POST_IMAGE_LIMIT = 10;
     private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
 
@@ -62,6 +59,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     // 커뮤니티 현상소 검색 관련
     private final PhotoLabRepository photoLabRepository;
+    private static final String DISTANCE_FORMAT_KM = "%.1fkm";
 
     @Override
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(PhotoLabSearchCondition condition) {
@@ -240,37 +238,34 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     // 커뮤니티 현상소 검색
     @Override
-    public PhotoLabResponse.PhotoLabSearchListDTO searchPhotoLabs(String keyword, Double latitude, Double longitude, Pageable pageable) {
-        Page<PhotoLab> labs = photoLabRepository.searchByName(keyword, pageable);
+    public PhotoLabResponse.PhotoLabSearchListDTO searchCommunityPhotoLabs(
+            PhotoLabRequest.PhotoLabCommunitySearchRequest request
+    ) {
+        Double lat = request.locationAgreed() ? request.latitude() : 0.0;
+        Double lng = request.locationAgreed() ? request.longitude() : 0.0;
 
-        List<PhotoLabResponse.PhotoLabSearchDTO> dtos = labs.getContent().stream()
-                .map(lab -> {
+        List<PhotoLabRepository.PhotoLabSearchResult> searchResults = photoLabRepository.searchCommunityPhotoLabs(
+                request.keyword(),
+                lat,
+                lng,
+                request.locationAgreed()
+        );
+
+        List<PhotoLabResponse.PhotoLabSearchDTO> dtos = searchResults.stream()
+                .map(result -> {
+                    PhotoLab lab = result.getPhotoLab();
                     String distanceStr = null;
 
-                    if (latitude != null && longitude != null && lab.getLatitude() != null && lab.getLongitude() != null) {
-                        double distance = calculateDistance(
-                                latitude,
-                                longitude,
-                                lab.getLatitude().doubleValue(),
-                                lab.getLongitude().doubleValue()
-                        );
-                        distanceStr = String.format(DISTANCE_FORMAT_KM, distance);
+                    if (request.locationAgreed() && result.getDistanceVal() != null) {
+                        double distanceKm = result.getDistanceVal() / 1000.0;
+                        distanceStr = String.format(DISTANCE_FORMAT_KM, distanceKm);
                     }
 
-                    return PhotoLabResponse.PhotoLabSearchDTO.from(lab, distanceStr);
+                    return PhotoLabResponse.PhotoLabSearchDTO.from(lab, distanceStr, request.locationAgreed());
                 })
                 .toList();
 
         return PhotoLabResponse.PhotoLabSearchListDTO.from(dtos);
     }
 
-    // 현상소 검색 직선 거리 계산
-    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        double theta = lon1 - lon2;
-        double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2))
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
-        dist = Math.acos(dist);
-        dist = Math.toDegrees(dist);
-        return dist * MINUTES_IN_DEGREE * STATUTE_MILES_PER_NAUTICAL_MILE * KILOMETERS_PER_STATUTE_MILE;
-    }
 }
