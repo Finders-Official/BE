@@ -45,11 +45,7 @@ public class PostQueryServiceImpl implements PostQueryService {
         String profileImageUrl = getFullUrl(post.getMemberUser().getProfileImage());
 
         List<PostResponse.PostImageResDTO> images = post.getPostImageList().stream()
-                .map(img -> PostResponse.PostImageResDTO.builder()
-                        .imageUrl(getFullUrl(img.getObjectPath()))
-                        .width(img.getWidth())
-                        .height(img.getHeight())
-                        .build())
+                .map(this::toPostImageResDTO)
                 .toList();
 
         return PostResponse.PostDetailResDTO.from(post, isLiked, isMine, profileImageUrl, images);
@@ -58,56 +54,48 @@ public class PostQueryServiceImpl implements PostQueryService {
     @Override
     public PostResponse.PostPreviewListDTO getPostList(Integer page, Long memberId) {
         List<Post> posts = postQueryRepository.findAllForFeed(page, DEFAULT_PAGE_SIZE);
-
-        Set<Long> likedPostIds = java.util.Collections.emptySet();
-        if (memberId != null && !posts.isEmpty()) {
-            List<Long> postIds = posts.stream().map(Post::getId).toList();
-            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
-        }
-
-        final Set<Long> finalLikedPostIds = likedPostIds;
-        List<PostResponse.PostPreviewDTO> dtos = posts.stream()
-                .map(post -> {
-                    boolean isLiked = finalLikedPostIds.contains(post.getId());
-                    PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
-                            : PostResponse.PostImageResDTO.builder()
-                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getObjectPath()))
-                            .width(post.getPostImageList().get(0).getWidth())
-                            .height(post.getPostImageList().get(0).getHeight())
-                            .build();
-                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImage);
-                })
-                .toList();
-
-        return PostResponse.PostPreviewListDTO.from(dtos);
+        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId));
     }
 
     @Override
     public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
         List<Post> posts = postQueryRepository.findTop10PopularPosts();
+        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId));
+    }
 
-        Set<Long> likedPostIds = java.util.Collections.emptySet();
-        if (memberId != null) {
-            List<Long> postIds = posts.stream().map(Post::getId).toList();
-            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
+    @Override
+    public PostResponse.PostPreviewListDTO searchPosts(String keyword, Long memberId, Pageable pageable) {
+        Page<Post> posts = postRepository.searchPostsByKeyword(keyword, pageable);
+        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts.getContent(), memberId));
+    }
+
+    private PostResponse.PostImageResDTO toPostImageResDTO(com.finders.api.domain.community.entity.PostImage image) {
+        if (image == null) {
+            return null;
         }
+        return PostResponse.PostImageResDTO.from(image, getFullUrl(image.getObjectPath()));
+    }
 
-        final Set<Long> finalLikedPostIds = likedPostIds;
-        List<PostResponse.PostPreviewDTO> previewDTOs = posts.stream()
+    private List<PostResponse.PostPreviewDTO> convertToPreviewDTOs(List<Post> posts, Long memberId) {
+        Set<Long> likedPostIds = getLikedPostIds(memberId, posts);
+
+        return posts.stream()
                 .map(post -> {
-                    boolean isLiked = finalLikedPostIds.contains(post.getId());
-                    PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
-                            : PostResponse.PostImageResDTO.builder()
-                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getObjectPath()))
-                            .width(post.getPostImageList().get(0).getWidth())
-                            .height(post.getPostImageList().get(0).getHeight())
-                            .build();
+                    boolean isLiked = likedPostIds.contains(post.getId());
+                    com.finders.api.domain.community.entity.PostImage firstImage = post.getPostImageList().isEmpty() ? null
+                            : post.getPostImageList().get(0);
 
-                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImage);
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, toPostImageResDTO(firstImage));
                 })
                 .toList();
+    }
 
-        return PostResponse.PostPreviewListDTO.from(previewDTOs);
+    private Set<Long> getLikedPostIds(Long memberId, List<Post> posts) {
+        if (memberId == null || posts.isEmpty()) {
+            return java.util.Collections.emptySet();
+        }
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+        return postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
     }
 
     private String getFullUrl(String objectPath) {
@@ -115,33 +103,5 @@ public class PostQueryServiceImpl implements PostQueryService {
             return null;
         }
         return storageService.getPublicUrl(objectPath);
-    }
-
-    // 커뮤니티 게시글 검색
-    @Override
-    public PostResponse.PostPreviewListDTO searchPosts(String keyword, Long memberId, Pageable pageable) {
-        Page<Post> posts = postRepository.searchPostsByKeyword(keyword, pageable);
-
-        Set<Long> likedPostIds = java.util.Collections.emptySet();
-        if (memberId != null) {
-            List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
-            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
-        }
-
-        final Set<Long> finalLikedPostIds = likedPostIds;
-        List<PostResponse.PostPreviewDTO> dtos = posts.getContent().stream()
-                .map(post -> {
-                    boolean isLiked = finalLikedPostIds.contains(post.getId());
-                    PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
-                            : PostResponse.PostImageResDTO.builder()
-                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getObjectPath()))
-                            .width(post.getPostImageList().get(0).getWidth())
-                            .height(post.getPostImageList().get(0).getHeight())
-                            .build();
-                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImage);
-                })
-                .toList();
-
-        return PostResponse.PostPreviewListDTO.from(dtos);
     }
 }

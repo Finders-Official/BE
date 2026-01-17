@@ -1,6 +1,7 @@
 package com.finders.api.domain.community.dto.response;
 
 import com.finders.api.domain.community.entity.Post;
+import com.finders.api.domain.community.entity.PostImage;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -9,26 +10,24 @@ import java.util.List;
 public class PostResponse {
 
     // 공통 이미지 DTO
-    @Builder
     public record PostImageResDTO(
             String imageUrl,
             Integer width,
             Integer height
-    ) {}
+    ) {
+        public static PostImageResDTO from(PostImage image, String imageUrl) {
+            return new PostImageResDTO(imageUrl, image.getWidth(), image.getHeight());
+        }
+    }
 
     // 피드 목록 조회
-    @Builder
     public record PostsResDTO(
             Long postId,
             String title,
             PostImageResDTO image
     ) {
         public static PostsResDTO from(Post post, PostImageResDTO imageResDTO) {
-            return PostsResDTO.builder()
-                    .postId(post.getId())
-                    .title(post.getTitle())
-                    .image(imageResDTO)
-                    .build();
+            return new PostsResDTO(post.getId(), post.getTitle(), imageResDTO);
         }
     }
 
@@ -69,18 +68,17 @@ public class PostResponse {
     }
 
     // 현상소 리뷰
-    @Builder
     public record LabReviewResDTO(
             Long labId,
             String labName,
             String content
     ) {
         public static LabReviewResDTO from(Post post) {
-            return LabReviewResDTO.builder()
-                    .labId(post.getPhotoLab().getId())
-                    .labName(post.getPhotoLab().getName())
-                    .content(post.getLabReview())
-                    .build();
+            return new LabReviewResDTO(
+                    post.getPhotoLab().getId(),
+                    post.getPhotoLab().getName(),
+                    post.getLabReview()
+            );
         }
     }
 
