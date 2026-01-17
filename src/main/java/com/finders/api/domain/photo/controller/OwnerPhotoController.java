@@ -5,12 +5,16 @@ import com.finders.api.domain.photo.dto.OwnerPhotoResponse;
 import com.finders.api.domain.photo.service.command.OwnerPhotoCommandService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
+import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+@Slf4j
 @Tag(name = "Owner Photo", description = "오너용 현상/스캔 등록 API")
 @RestController
 @RequiredArgsConstructor
@@ -19,21 +23,20 @@ public class OwnerPhotoController {
 
     private final OwnerPhotoCommandService ownerPhotoCommandService;
 
-    // TODO: JWT 인증 적용 시 @AuthenticationPrincipal로 교체
-    private static final Long TEMP_OWNER_ID = 1L;
-
     @Operation(
             summary = "오너 - 스캔 업로드 presigned url 벌크 발급(PUT)",
             description = "private 버킷에 PUT 업로드 가능한 presigned url을 count 만큼 발급합니다."
     )
     @PostMapping("/{photoLabId}/scan-uploads/presigned-urls")
+    @PreAuthorize("hasRole('OWNER')")
     public ApiResponse<OwnerPhotoResponse.PresignedUrls> createScanUploadPresignedUrls(
+            @AuthenticationPrincipal AuthUser owner,
             @PathVariable Long photoLabId,
             @RequestBody @Valid OwnerPhotoRequest.CreateScanUploadPresignedUrls request
     ) {
         OwnerPhotoResponse.PresignedUrls response = ownerPhotoCommandService.createScanUploadPresignedUrls(
                 photoLabId,
-                TEMP_OWNER_ID,
+                owner.memberId(),
                 request
         );
         return ApiResponse.success(SuccessCode.OK, response);
@@ -50,13 +53,15 @@ public class OwnerPhotoController {
                 """
     )
     @PostMapping("/{photoLabId}/development-orders")
+    @PreAuthorize("hasRole('OWNER')")
     public ApiResponse<OwnerPhotoResponse.Created> createDevelopmentOrder(
+            @AuthenticationPrincipal AuthUser owner,
             @PathVariable Long photoLabId,
             @RequestBody @Valid OwnerPhotoRequest.CreateDevelopmentOrder request
     ) {
         Long orderId = ownerPhotoCommandService.createDevelopmentOrder(
                 photoLabId,
-                TEMP_OWNER_ID,
+                owner.memberId(),
                 request
         );
 
@@ -74,7 +79,9 @@ public class OwnerPhotoController {
                 """
     )
     @PostMapping("/{photoLabId}/development-orders/{developmentOrderId}/scanned-photos")
+    @PreAuthorize("hasRole('OWNER')")
     public ApiResponse<OwnerPhotoResponse.ScannedPhotosRegistered> registerScannedPhotos(
+            @AuthenticationPrincipal AuthUser owner,
             @PathVariable Long photoLabId,
             @PathVariable Long developmentOrderId,
             @RequestBody @Valid OwnerPhotoRequest.RegisterScannedPhotos request
@@ -82,7 +89,7 @@ public class OwnerPhotoController {
         OwnerPhotoResponse.ScannedPhotosRegistered response =
                 ownerPhotoCommandService.registerScannedPhotos(
                         photoLabId,
-                        TEMP_OWNER_ID,
+                        owner.memberId(),
                         developmentOrderId,
                         request
                 );
@@ -95,15 +102,20 @@ public class OwnerPhotoController {
             description = "오너가 현상 주문의 상태를 원하는 값으로 변경합니다."
     )
     @PatchMapping("/{photoLabId}/development-orders/{developmentOrderId}/status")
+    @PreAuthorize("hasRole('OWNER')")
     public ApiResponse<OwnerPhotoResponse.DevelopmentOrderStatusUpdated> updateDevelopmentOrderStatus(
+            @AuthenticationPrincipal AuthUser owner,
             @PathVariable Long photoLabId,
             @PathVariable Long developmentOrderId,
             @RequestBody @Valid OwnerPhotoRequest.UpdateDevelopmentOrderStatus request
     ) {
+        log.info("authUser = {}", owner);
+        log.info("authorities = {}", owner.getAuthorities());
+
         OwnerPhotoResponse.DevelopmentOrderStatusUpdated response =
                 ownerPhotoCommandService.updateDevelopmentOrderStatus(
                         photoLabId,
-                        TEMP_OWNER_ID,
+                        owner.memberId(),
                         developmentOrderId,
                         request
                 );
