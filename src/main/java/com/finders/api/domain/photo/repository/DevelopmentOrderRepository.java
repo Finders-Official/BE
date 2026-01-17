@@ -1,6 +1,7 @@
 package com.finders.api.domain.photo.repository;
 
 import com.finders.api.domain.photo.entity.DevelopmentOrder;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,4 +32,16 @@ public interface DevelopmentOrderRepository extends JpaRepository<DevelopmentOrd
     Page<DevelopmentOrder> findMyOrdersWithPhotoLab(@Param("memberId") Long memberId, Pageable pageable);
 
     boolean existsByIdAndUser_Id(Long id, Long memberId);
+
+    @Query("""
+        select d from DevelopmentOrder d
+        join fetch d.photoLab pl
+        join fetch pl.owner o
+        where d.id = :orderId
+          and d.user.id = :memberId
+    """)
+    Optional<DevelopmentOrder> findByIdAndMemberIdFetchPhotoLabOwner(
+            @Param("orderId") Long orderId,
+            @Param("memberId") Long memberId
+    );
 }
