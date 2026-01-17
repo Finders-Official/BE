@@ -120,6 +120,20 @@ public enum ErrorCode implements BaseCode {
     INSUFFICIENT_TOKEN(HttpStatus.PAYMENT_REQUIRED, "TOKEN_402", "토큰이 부족합니다."),
     TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "TOKEN_404", "토큰 정보를 찾을 수 없습니다."),
 
+    // ========================================
+    // Payment (결제)
+    // ========================================
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_404", "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "PAYMENT_409", "이미 존재하는 결제 ID입니다."),
+    PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT_403", "해당 결제에 접근 권한이 없습니다."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "PAYMENT_410", "이미 처리된 결제입니다."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_400", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_INVALID_STATUS(HttpStatus.BAD_REQUEST, "PAYMENT_401", "처리할 수 없는 결제 상태입니다."),
+    PAYMENT_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PAYMENT_402", "취소할 수 없는 결제 상태입니다."),
+    PAYMENT_CANCEL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_500", "결제 취소에 실패했습니다."),
+    PAYMENT_CANCEL_AMOUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "PAYMENT_412", "취소 금액이 결제 금액을 초과할 수 없습니다."),
+    INVALID_PAYMENT_REQUEST(HttpStatus.BAD_REQUEST, "PAYMENT_403", "잘못된 결제 요청입니다."),
+    WEBHOOK_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT_411", "웹훅 검증에 실패했습니다."),
 
     // ========================================
     // External API

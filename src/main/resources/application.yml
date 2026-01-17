@@ -120,6 +120,14 @@ springdoc:
   use-fqn: true   # DTO 클래스 이름 충돌을 방지하기 위해 FQN(Fully Qualified Name) 사용
 
 # ========================================
+# PortOne V2 결제 설정
+# ========================================
+portone:
+  api-secret: ${PORTONE_API_SECRET:}
+  webhook-secret: ${PORTONE_WEBHOOK_SECRET:}
+  store-id: ${PORTONE_STORE_ID:}
+
+# ========================================
 # Replicate AI 설정
 # ========================================
 replicate:
