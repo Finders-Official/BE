@@ -157,7 +157,13 @@ public enum ErrorCode implements BaseCode {
     // ========================================
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY_404", "문의를 찾을 수 없습니다."),
     INQUIRY_ACCESS_DENIED(HttpStatus.FORBIDDEN, "INQUIRY_403", "해당 문의에 접근 권한이 없습니다."),
-    INQUIRY_ALREADY_CLOSED(HttpStatus.BAD_REQUEST, "INQUIRY_400", "이미 종료된 문의입니다.");
+    INQUIRY_ALREADY_CLOSED(HttpStatus.BAD_REQUEST, "INQUIRY_400", "이미 종료된 문의입니다."),
+
+    // ========================================
+    // Community (사진 수다)
+    // ========================================
+    REVIEW_TOO_SHORT(HttpStatus.BAD_REQUEST, "COMMUNITY_401", "리뷰는 최소 20자 이상 작성해야 합니다."),
+    REVIEW_TOO_LONG(HttpStatus.BAD_REQUEST, "COMMUNITY_402", "리뷰는 최대 300자 이내로 작성해야 합니다.");
 
     private final HttpStatus status;
     private final String code;

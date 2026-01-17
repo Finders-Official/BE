@@ -9,7 +9,6 @@ import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
-import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +29,6 @@ public class PostQueryServiceImpl implements PostQueryService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostQueryRepository postQueryRepository;
-    private final StorageService storageService;
     private final MemberUserRepository memberUserRepository;
 
     @Override
@@ -99,9 +97,8 @@ public class PostQueryServiceImpl implements PostQueryService {
         return PostResponse.PostPreviewListDTO.from(previewDTOs);
     }
 
-    private String getFullUrl(String path) {
-        if (path == null || path.isBlank()) return null;
-        return storageService.getSignedUrl(path, SIGNED_URL_EXPIRY_MINUTES).url();
+    private String getFullUrl(String objectPath) {
+        return objectPath;
     }
 
     // 커뮤니티 게시글 검색
