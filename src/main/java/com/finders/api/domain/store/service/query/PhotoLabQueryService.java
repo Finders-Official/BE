@@ -15,4 +15,5 @@ public interface PhotoLabQueryService {
     // 커뮤니티 현상소 검색
     PhotoLabResponse.PhotoLabSearchListDTO searchCommunityPhotoLabs(
             PhotoLabRequest.PhotoLabCommunitySearchRequest request
-    );}
+    );
+}
