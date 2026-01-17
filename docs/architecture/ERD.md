@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.4.6 | 2026-01-15
+> v2.4.7 | 2026-01-15
 
 ---
 
@@ -19,6 +19,7 @@
 |                 | `member_agreement`        | 약관 동의 이력                     |
 |                 | `terms`                   | 약관 버전 관리                     |
 |                 | `token_history`           | AI 토큰 충전/사용 내역 - User 전용     |
+|                 | `favorite_photo_lab`      | 관심 현상소                       |
 | **store**       | `photo_lab`               | 현상소 정보                       |
 |                 | `photo_lab_image`         | 현상소 이미지                      |
 |                 | `photo_lab_tag`           | 현상소-태그 조인 테이블                |
@@ -38,7 +39,6 @@
 |                 | `post_image`              | 게시글 이미지                      |
 |                 | `comments`                | 댓글                           |
 |                 | `post_like`               | 좋아요                          |
-|                 | `favorite_photo_lab`      | 관심 현상소                       |
 | **inquiry**     | `inquiry`                 | 1:1 문의                       |
 |                 | `inquiry_reply`           | 문의 답변                        |
 | **common**      | `notice`                  | 공지사항                         |
@@ -373,6 +373,18 @@ CREATE TABLE token_history
     CONSTRAINT fk_token_history_member FOREIGN KEY (member_id) REFERENCES member (id),
     CONSTRAINT chk_token_type CHECK (type IN ('SIGNUP_BONUS', 'REFRESH', 'PURCHASE', 'USE', 'REFUND'))
 ) ENGINE=InnoDB COMMENT='토큰 내역';
+
+CREATE TABLE favorite_photo_lab
+( -- 별 표시
+    id           BIGINT   NOT NULL AUTO_INCREMENT,
+    member_id    BIGINT   NOT NULL,
+    photo_lab_id BIGINT   NOT NULL,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_favorite_lab (member_id, photo_lab_id),
+    CONSTRAINT fk_fav_lab_member FOREIGN KEY (member_id) REFERENCES member (id),
+    CONSTRAINT fk_fav_lab_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab (id)
+) ENGINE=InnoDB COMMENT='관심 현상소';
 
 -- ============================================
 -- 2. STORE (현상소)
@@ -778,18 +790,6 @@ CREATE TABLE post_like
     CONSTRAINT fk_like_member FOREIGN KEY (member_id) REFERENCES member (id)
 ) ENGINE=InnoDB COMMENT='좋아요';
 
-CREATE TABLE favorite_photo_lab
-( -- 별 표시
-    id           BIGINT   NOT NULL AUTO_INCREMENT,
-    member_id    BIGINT   NOT NULL,
-    photo_lab_id BIGINT   NOT NULL,
-    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_favorite_lab (member_id, photo_lab_id),
-    CONSTRAINT fk_fav_lab_member FOREIGN KEY (member_id) REFERENCES member (id),
-    CONSTRAINT fk_fav_lab_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab (id)
-) ENGINE=InnoDB COMMENT='관심 현상소';
-
 -- ============================================
 -- 6. INQUIRY
 -- ============================================
@@ -1017,4 +1017,5 @@ CREATE TABLE payment
 | 2.4.4 | 2026-01-12 | `region` table (sido/sigungu) 추가 및 `photo_lab.region_id` FK 참조 설정                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 | 2.4.5 | 2026-01-15 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | 2.4.6 | 2026-01-15 | `tag` 테이블 추가 및 keyword -> tag 로 명칭 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| 2.4.7 | 2026-01-16 | `member_address` 테이블의 `recipientName`, `phone` 컬럼 삭제                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 2.4.7 | 2026-01-15 | `favorite_photo_lab` 도메인 위치 변경 community -> member  
+| 2.4.8 | 2026-01-16 | `member_address` 테이블의 `recipientName`, `phone` 컬럼 삭제|
