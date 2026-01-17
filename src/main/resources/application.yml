@@ -85,8 +85,6 @@ google:
     project-id: ${GOOGLE_CLOUD_PROJECT:}
     credentials:
       location: ${GOOGLE_APPLICATION_CREDENTIALS:}
-    vision:
-      enabled: ${VISION_ENABLED:false}
     storage:
       public-bucket: ${GCS_PUBLIC_BUCKET:finders-public}
       private-bucket: ${GCS_PRIVATE_BUCKET:finders-private}
@@ -120,6 +118,14 @@ springdoc:
   use-fqn: true   # DTO 클래스 이름 충돌을 방지하기 위해 FQN(Fully Qualified Name) 사용
 
 # ========================================
+# PortOne V2 결제 설정
+# ========================================
+portone:
+  api-secret: ${PORTONE_API_SECRET:}
+  webhook-secret: ${PORTONE_WEBHOOK_SECRET:}
+  store-id: ${PORTONE_STORE_ID:}
+
+# ========================================
 # Replicate AI 설정
 # ========================================
 replicate:
@@ -129,6 +135,17 @@ replicate:
   webhook-base-url: ${WEBHOOK_BASE_URL:http://localhost:8080/api}
   timeout-seconds: 120
   max-retries: 60
+
+# ========================================
+# Sentry 설정 (에러 모니터링)
+# ========================================
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SPRING_PROFILES_ACTIVE:local}
+  release: ${info.build.name:finders-api}@${info.build.version:unknown}
+  traces-sample-rate: 1.0
+  send-default-pii: false
+  in-app-includes: com.finders  # 스택트레이스에서 우리 코드 하이라이트
 
 # ========================================
 # Logging 설정

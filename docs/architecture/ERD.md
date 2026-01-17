@@ -1,11 +1,11 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.4.7 | 2026-01-15
+> v2.4.8 | 2026-01-17
 
 ---
 
-## 테이블 목록 (34개)
+## 테이블 목록 (35개)
 
 | 도메인             | 테이블                       | 설명                           |
 |-----------------|---------------------------|------------------------------|
@@ -40,6 +40,7 @@
 |                 | `comments`                | 댓글                           |
 |                 | `post_like`               | 좋아요                          |
 | **inquiry**     | `inquiry`                 | 1:1 문의                       |
+|                 | `inquiry_image`           | 문의 첨부 이미지                    |
 |                 | `inquiry_reply`           | 문의 답변                        |
 | **common**      | `notice`                  | 공지사항                         |
 |                 | `promotion`               | 프로모션/배너                      |
@@ -73,7 +74,8 @@ member ─┬─ 1:N ─ member_device (FCM 토큰, 공통)
         │              ├─ 1:N ─ comments
         │              └─ 1:N ─ post_like
         ├─ 1:N ─ favorite_photo_lab
-        ├─ 1:N ─ inquiry ─── 1:N ─ inquiry_reply
+        ├─ 1:N ─ inquiry ─┬─ 1:N ─ inquiry_image
+        │                 └─ 1:N ─ inquiry_reply
         ├─ 1:N ─ notification
         └─ 1:N ─ payment (결제, 토큰 구매)
 
@@ -140,11 +142,13 @@ FAILED                // 결제 실패
         PARTIAL_CANCELLED     // 부분 취소
 CANCELLED             // 전액 취소
 
-PaymentMethod:          // 포트원 V2 결제수단
-CARD,TRANSFER,VIRTUAL_ACCOUNT,GIFT_CERTIFICATE,MOBILE,EASY_PAY
+PaymentMethod:          // 포트원 V2 결제수단 (사용: 카드, 계좌이체, 가상계좌, 간편결제)
+  CARD, TRANSFER, VIRTUAL_ACCOUNT, EASY_PAY
 
-PgProvider:             // PG사/간편결제 제공자 (주요)
-TOSSPAYMENTS,KCP,INICIS,NICE,KAKAOPAY,NAVERPAY,TOSSPAY
+PgProvider:             // PG사/간편결제 제공자 (현재: KCP + 간편결제 3종)
+  KCP,                  // 메인 PG사 (카드, 계좌이체, 가상계좌)
+  KAKAOPAY, NAVERPAY, TOSSPAY  // 간편결제
+  // 확장 가능: TOSSPAYMENTS, INICIS, NICE 등
 
 OrderType:TOKEN_PURCHASE,DEVELOPMENT_ORDER,PRINT_ORDER
 TokenHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
@@ -174,6 +178,7 @@ TokenHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
 | `photo_lab_notice`   | -               | -           | 이미지 없음 (텍스트만)                                                   |
 | `scanned_photo`      | `image_url`     | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}`           |
 | `post_image`         | `image_url`     | public      | `posts/{postId}/{uuid}.{ext}`                                   |
+| `inquiry_image`      | `image_url`     | public      | `inquiries/{inquiryId}/{uuid}.{ext}`                            |
 | `photo_restoration`  | `original_url`  | **private** | `restorations/{memberId}/original/{uuid}.{ext}`                 |
 | `photo_restoration`  | `mask_url`      | **private** | `restorations/{memberId}/mask/{uuid}.{ext}`                     |
 | `photo_restoration`  | `restored_url`  | **private** | `restorations/{memberId}/restored/{uuid}.{ext}`                 |
@@ -812,6 +817,19 @@ CREATE TABLE inquiry
     CONSTRAINT chk_inquiry_status CHECK (status IN ('PENDING', 'ANSWERED', 'CLOSED'))
 ) ENGINE=InnoDB COMMENT='1:1 문의';
 
+CREATE TABLE inquiry_image
+(                                        -- 문의 첨부 이미지 (최대 5개)
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    inquiry_id    BIGINT       NOT NULL, -- FK
+    image_url     VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    display_order INT          NOT NULL DEFAULT 0,
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX         idx_inquiry_image (inquiry_id),
+    CONSTRAINT fk_inquiry_image FOREIGN KEY (inquiry_id) REFERENCES inquiry (id) ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='문의 이미지';
+
 CREATE TABLE inquiry_reply
 (
     id         BIGINT   NOT NULL AUTO_INCREMENT,
@@ -933,9 +951,8 @@ CREATE TABLE payment
         )),
     CONSTRAINT chk_order_type CHECK (order_type IN ('TOKEN_PURCHASE', 'DEVELOPMENT_ORDER', 'PRINT_ORDER')),
     CONSTRAINT chk_payment_method CHECK (method IS NULL OR method IN (
-                                                                      'CARD', 'TRANSFER', 'VIRTUAL_ACCOUNT',
-                                                                      'GIFT_CERTIFICATE', 'MOBILE', 'EASY_PAY'
-        )),
+        'CARD', 'TRANSFER', 'VIRTUAL_ACCOUNT', 'EASY_PAY'
+    )),
     CONSTRAINT chk_payment_data CHECK (
         (order_type = 'TOKEN_PURCHASE' AND token_amount IS NOT NULL AND related_order_id IS NULL) OR
         (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER') AND related_order_id IS NOT NULL AND token_amount IS NULL)
@@ -1018,4 +1035,6 @@ CREATE TABLE payment
 | 2.4.5 | 2026-01-15 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | 2.4.6 | 2026-01-15 | `tag` 테이블 추가 및 keyword -> tag 로 명칭 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 2.4.7 | 2026-01-15 | `favorite_photo_lab` 도메인 위치 변경 community -> member  
-| 2.4.8 | 2026-01-16 | `member_address` 테이블의 `recipientName`, `phone` 컬럼 삭제|
+| 2.4.8 | 2026-01-16 | `member_address` 테이블의 `recipientName`, `phone` 컬럼 삭제|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2.4.9 | 2026-01-17 | **문의 이미지 첨부 기능 추가**: `inquiry_image` 테이블 신규 (최대 5개), `Inquiry` 엔티티에 images 관계 추가, GCS 경로 규칙 추가 (`inquiries/{inquiryId}/{uuid}.{ext}`) (35개 테이블)                                                                                                                                                                                                                                                                                                                                                                                      |
+

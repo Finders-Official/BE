@@ -20,7 +20,7 @@ public class PostLike extends BaseTimeEntity {
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_user_id", nullable = false)
+    @JoinColumn(name = "member_id", nullable = false)
     private MemberUser memberUser;
 
     @Builder

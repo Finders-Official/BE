@@ -20,12 +20,10 @@ public class PostRequest {
             String content,
 
             @Size(max = 10, message = "사진은 최대 10장가지 가능합니다.")
-            List<MultipartFile> images,
+            List<String> images,
 
             boolean isSelfDeveloped,
             Long labId,
-
-            @Size(min = 20, max = 300, message = "리뷰는 최소 20자, 최대 300자 이내여야 합니다.")
             String reviewContent
     ){}
 

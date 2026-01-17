@@ -87,6 +87,7 @@ public enum ErrorCode implements BaseCode {
     // Store (현상소)
     // ========================================
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE_404", "현상소를 찾을 수 없습니다."),
+    STORE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "STORE_403", "해당 현상소에 접근 권한이 없습니다."),
     REGION_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_404", "지역을 찾을 수 없습니다."),
     BUSINESS_HOUR_NOT_FOUND(HttpStatus.NOT_FOUND, "BUSINESS_HOUR_404", "현상소의 영업시간을 찾을 수 없습니다."),
 
@@ -119,12 +120,25 @@ public enum ErrorCode implements BaseCode {
     INSUFFICIENT_TOKEN(HttpStatus.PAYMENT_REQUIRED, "TOKEN_402", "토큰이 부족합니다."),
     TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "TOKEN_404", "토큰 정보를 찾을 수 없습니다."),
 
+    // ========================================
+    // Payment (결제)
+    // ========================================
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_404", "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "PAYMENT_409", "이미 존재하는 결제 ID입니다."),
+    PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT_403", "해당 결제에 접근 권한이 없습니다."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "PAYMENT_410", "이미 처리된 결제입니다."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_400", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_INVALID_STATUS(HttpStatus.BAD_REQUEST, "PAYMENT_401", "처리할 수 없는 결제 상태입니다."),
+    PAYMENT_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PAYMENT_402", "취소할 수 없는 결제 상태입니다."),
+    PAYMENT_CANCEL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_500", "결제 취소에 실패했습니다."),
+    PAYMENT_CANCEL_AMOUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "PAYMENT_412", "취소 금액이 결제 금액을 초과할 수 없습니다."),
+    INVALID_PAYMENT_REQUEST(HttpStatus.BAD_REQUEST, "PAYMENT_403", "잘못된 결제 요청입니다."),
+    WEBHOOK_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT_411", "웹훅 검증에 실패했습니다."),
 
     // ========================================
     // External API
     // ========================================
     EXTERNAL_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_503", "외부 API 호출에 실패했습니다."),
-    VISION_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "VISION_503", "Vision AI 호출에 실패했습니다."),
 
     // ========================================
     // Storage (GCS)
@@ -135,7 +149,20 @@ public enum ErrorCode implements BaseCode {
     STORAGE_INVALID_PATH(HttpStatus.BAD_REQUEST, "STORAGE_400", "잘못된 저장 경로입니다."),
     STORAGE_INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "STORAGE_401", "허용되지 않는 파일 형식입니다."),
     STORAGE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "STORAGE_402", "파일 크기가 제한을 초과했습니다."),
-    STORAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_502", "Signed URL 생성에 실패했습니다.");
+    STORAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_502", "Signed URL 생성에 실패했습니다."),
+
+    // ========================================
+    // Inquiry (문의)
+    // ========================================
+    INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "INQUIRY_404", "문의를 찾을 수 없습니다."),
+    INQUIRY_ACCESS_DENIED(HttpStatus.FORBIDDEN, "INQUIRY_403", "해당 문의에 접근 권한이 없습니다."),
+    INQUIRY_ALREADY_CLOSED(HttpStatus.BAD_REQUEST, "INQUIRY_400", "이미 종료된 문의입니다."),
+
+    // ========================================
+    // Community (사진 수다)
+    // ========================================
+    REVIEW_TOO_SHORT(HttpStatus.BAD_REQUEST, "COMMUNITY_401", "리뷰는 최소 20자 이상 작성해야 합니다."),
+    REVIEW_TOO_LONG(HttpStatus.BAD_REQUEST, "COMMUNITY_402", "리뷰는 최대 300자 이내로 작성해야 합니다.");
 
     private final HttpStatus status;
     private final String code;
