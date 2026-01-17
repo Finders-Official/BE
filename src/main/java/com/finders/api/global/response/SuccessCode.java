@@ -84,6 +84,13 @@ public enum SuccessCode implements BaseCode {
     STORAGE_DELETED(HttpStatus.OK, "STORAGE_200", "파일이 삭제되었습니다."),
 
     // ========================================
+    // Inquiry (문의)
+    // ========================================
+    INQUIRY_CREATED(HttpStatus.CREATED, "INQUIRY_201", "문의가 등록되었습니다."),
+    INQUIRY_FOUND(HttpStatus.OK, "INQUIRY_200", "문의 조회에 성공했습니다."),
+    INQUIRY_REPLY_CREATED(HttpStatus.CREATED, "INQUIRY_202", "답변이 등록되었습니다."),
+
+    // ========================================
     // Payment (결제)
     // ========================================
     PAYMENT_PRE_REGISTERED(HttpStatus.CREATED, "PAYMENT_201", "결제가 사전등록되었습니다."),
