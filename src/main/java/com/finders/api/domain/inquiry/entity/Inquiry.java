@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,11 @@ public class Inquiry extends BaseTimeEntity {
     @OrderBy("createdAt ASC")
     private List<InquiryReply> replies = new ArrayList<>();
 
+    @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    @BatchSize(size = 10)
+    private List<InquiryImage> images = new ArrayList<>();
+
     @Builder
     private Inquiry(Member member, PhotoLab photoLab, String title, String content) {
         this.member = member;
@@ -69,6 +75,16 @@ public class Inquiry extends BaseTimeEntity {
     public void addReply(InquiryReply reply) {
         this.replies.add(reply);
         this.status = InquiryStatus.ANSWERED;
+    }
+
+    public void addImage(InquiryImage image) {
+        this.images.add(image);
+    }
+
+    public void addImages(List<String> imageUrls) {
+        for (int i = 0; i < imageUrls.size(); i++) {
+            this.images.add(InquiryImage.create(this, imageUrls.get(i), i));
+        }
     }
 
     public void close() {

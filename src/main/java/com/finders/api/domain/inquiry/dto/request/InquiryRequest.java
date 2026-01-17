@@ -3,6 +3,8 @@ package com.finders.api.domain.inquiry.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public class InquiryRequest {
 
     /**
@@ -17,7 +19,10 @@ public class InquiryRequest {
 
             @NotBlank(message = "문의 내용은 필수입니다.")
             @Size(max = 500, message = "문의 내용은 500자 이내여야 합니다.")
-            String content
+            String content,
+
+            @Size(max = 5, message = "이미지는 최대 5개까지 첨부할 수 있습니다.")
+            List<String> imageUrls
     ) {}
 
     /**

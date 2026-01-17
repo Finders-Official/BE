@@ -1,6 +1,7 @@
 package com.finders.api.domain.inquiry.dto.response;
 
 import com.finders.api.domain.inquiry.entity.Inquiry;
+import com.finders.api.domain.inquiry.entity.InquiryImage;
 import com.finders.api.domain.inquiry.entity.InquiryReply;
 import com.finders.api.domain.inquiry.enums.InquiryStatus;
 import lombok.Builder;
@@ -84,6 +85,7 @@ public class InquiryResponse {
             InquiryStatus status,
             PhotoLabInfoDTO photoLab,
             MemberInfoDTO member,
+            List<String> imageUrls,
             LocalDateTime createdAt,
             List<ReplyDTO> replies
     ) {
@@ -95,6 +97,7 @@ public class InquiryResponse {
                     .status(inquiry.getStatus())
                     .photoLab(inquiry.getPhotoLab() != null ? PhotoLabInfoDTO.from(inquiry.getPhotoLab()) : null)
                     .member(MemberInfoDTO.from(inquiry))
+                    .imageUrls(inquiry.getImages().stream().map(InquiryImage::getImageUrl).toList())
                     .createdAt(inquiry.getCreatedAt())
                     .replies(inquiry.getReplies().stream().map(ReplyDTO::from).toList())
                     .build();
