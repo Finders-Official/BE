@@ -3,7 +3,6 @@ package com.finders.api.domain.community.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,7 +19,7 @@ public class PostRequest {
             String content,
 
             @Size(max = 10, message = "사진은 최대 10장가지 가능합니다.")
-            List<String> images,
+            List<PostImageRequestDTO> images,
 
             boolean isSelfDeveloped,
             Long labId,
@@ -31,5 +30,12 @@ public class PostRequest {
     public record CreateCommentDTO(
             @NotBlank(message = "댓글 내용은 필수입니다.")
             String content
+    ) {}
+
+    // 이미지 관련
+    public record PostImageRequestDTO(
+            @NotBlank String imageUrl,
+            @NotBlank Integer width,
+            @NotBlank Integer height
     ) {}
 }

@@ -8,18 +8,26 @@ import java.util.List;
 
 public class PostResponse {
 
+    // 공통 이미지 DTO
+    @Builder
+    public record PostImageResDTO(
+            String imageUrl,
+            Integer width,
+            Integer height
+    ) {}
+
     // 피드 목록 조회
     @Builder
     public record PostsResDTO(
             Long postId,
             String title,
-            String imageUrl
+            PostImageResDTO image
     ) {
-        public static PostsResDTO from(Post post, String imageUrl) {
+        public static PostsResDTO from(Post post, PostImageResDTO imageResDTO) {
             return PostsResDTO.builder()
                     .postId(post.getId())
                     .title(post.getTitle())
-                    .imageUrl(imageUrl)
+                    .image(imageResDTO)
                     .build();
         }
     }
@@ -33,7 +41,7 @@ public class PostResponse {
             LocalDateTime createdAt,
             String title,
             String content,
-            List<String> imageUrls,
+            List<PostImageResDTO> images,
             Integer likeCount,
             boolean isLiked,
             boolean isSelfDeveloped,
@@ -41,7 +49,7 @@ public class PostResponse {
             Integer commentCount,
             LabReviewResDTO labReview
     ) {
-        public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine, String profileImageUrl, List<String> imageUrls) {
+        public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine, String profileImageUrl, List<PostImageResDTO> images) {
             return PostDetailResDTO.builder()
                     .postId(post.getId())
                     .profileImageUrl(profileImageUrl)
@@ -49,7 +57,7 @@ public class PostResponse {
                     .createdAt(post.getCreatedAt())
                     .title(post.getTitle())
                     .content(post.getContent())
-                    .imageUrls(imageUrls)
+                    .images(images)
                     .likeCount(post.getLikeCount())
                     .isLiked(isLiked)
                     .isSelfDeveloped(post.isSelfDeveloped())
@@ -81,16 +89,16 @@ public class PostResponse {
     @Builder
     public record PostPreviewDTO(
             Long postId,
-            String imageUrl,
+            PostImageResDTO image,
             String title,
             Integer likeCount,
             Integer commentCount,
             boolean isLiked
     ) {
-        public static PostPreviewDTO from(Post post, boolean isLiked, String imageUrl) {
+        public static PostPreviewDTO from(Post post, boolean isLiked, PostImageResDTO imageResDTO) {
             return PostPreviewDTO.builder()
                     .postId(post.getId())
-                    .imageUrl(imageUrl)
+                    .image(imageResDTO)
                     .title(post.getTitle())
                     .likeCount(post.getLikeCount())
                     .commentCount(post.getCommentCount())

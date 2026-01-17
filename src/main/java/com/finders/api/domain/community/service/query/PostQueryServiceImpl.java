@@ -24,7 +24,6 @@ import java.util.Set;
 public class PostQueryServiceImpl implements PostQueryService {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
@@ -43,11 +42,15 @@ public class PostQueryServiceImpl implements PostQueryService {
 
         String profileImageUrl = getFullUrl(post.getMemberUser().getProfileImage());
 
-        List<String> imageUrls = post.getPostImageList().stream()
-                .map(img -> getFullUrl(img.getImageUrl()))
+        List<PostResponse.PostImageResDTO> images = post.getPostImageList().stream()
+                .map(img -> PostResponse.PostImageResDTO.builder()
+                        .imageUrl(getFullUrl(img.getImageUrl()))
+                        .width(img.getWidth())
+                        .height(img.getHeight())
+                        .build())
                 .toList();
 
-        return PostResponse.PostDetailResDTO.from(post, isLiked, isMine, profileImageUrl, imageUrls);
+        return PostResponse.PostDetailResDTO.from(post, isLiked, isMine, profileImageUrl, images);
     }
 
     @Override
@@ -64,9 +67,13 @@ public class PostQueryServiceImpl implements PostQueryService {
         List<PostResponse.PostPreviewDTO> dtos = posts.stream()
                 .map(post -> {
                     boolean isLiked = finalLikedPostIds.contains(post.getId());
-                    String mainImageUrl = post.getPostImageList().isEmpty() ? null
-                            : getFullUrl(post.getPostImageList().get(0).getImageUrl());
-                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImageUrl);
+                    PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
+                            : PostResponse.PostImageResDTO.builder()
+                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getImageUrl()))
+                            .width(post.getPostImageList().get(0).getWidth())
+                            .height(post.getPostImageList().get(0).getHeight())
+                            .build();
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImage);
                 })
                 .toList();
 
@@ -87,10 +94,14 @@ public class PostQueryServiceImpl implements PostQueryService {
         List<PostResponse.PostPreviewDTO> previewDTOs = posts.stream()
                 .map(post -> {
                     boolean isLiked = finalLikedPostIds.contains(post.getId());
-                    String mainImageUrl = post.getPostImageList().isEmpty() ? null
-                            : getFullUrl(post.getPostImageList().get(0).getImageUrl());
+                    PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
+                            : PostResponse.PostImageResDTO.builder()
+                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getImageUrl()))
+                            .width(post.getPostImageList().get(0).getWidth())
+                            .height(post.getPostImageList().get(0).getHeight())
+                            .build();
 
-                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImageUrl);
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImage);
                 })
                 .toList();
 
@@ -116,9 +127,13 @@ public class PostQueryServiceImpl implements PostQueryService {
         List<PostResponse.PostPreviewDTO> dtos = posts.getContent().stream()
                 .map(post -> {
                     boolean isLiked = finalLikedPostIds.contains(post.getId());
-                    String mainImageUrl = post.getPostImageList().isEmpty() ? null
-                            : getFullUrl(post.getPostImageList().get(0).getImageUrl());
-                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImageUrl);
+                    PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
+                            : PostResponse.PostImageResDTO.builder()
+                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getImageUrl()))
+                            .width(post.getPostImageList().get(0).getWidth())
+                            .height(post.getPostImageList().get(0).getHeight())
+                            .build();
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, mainImage);
                 })
                 .toList();
 
