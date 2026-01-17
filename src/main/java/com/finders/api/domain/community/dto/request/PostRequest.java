@@ -1,6 +1,7 @@
 package com.finders.api.domain.community.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
@@ -34,8 +35,13 @@ public class PostRequest {
 
     // 이미지 관련
     public record PostImageRequestDTO(
-            @NotBlank String imageUrl,
-            @NotBlank Integer width,
-            @NotBlank Integer height
+            @NotBlank(message = "이미지 경로는 필수입니다.")
+            String objectPath,
+
+            @NotNull(message = "가로 길이는 필수입니다.")
+            Integer width,
+
+            @NotNull(message = "세로 길이는 필수입니다.")
+            Integer height
     ) {}
 }

@@ -64,7 +64,7 @@ public class PostCommandServiceImpl implements PostCommandService {
 
                 PostImage postImage = PostImage.builder()
                         .post(post)
-                        .imageUrl(imageDto.imageUrl())
+                        .objectPath(imageDto.objectPath())
                         .width(imageDto.width())
                         .height(imageDto.height())
                         .displayOrder(i)
