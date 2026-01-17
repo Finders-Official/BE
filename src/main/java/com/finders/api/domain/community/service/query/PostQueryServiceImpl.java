@@ -9,6 +9,7 @@ import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ public class PostQueryServiceImpl implements PostQueryService {
     private final PostLikeRepository postLikeRepository;
     private final PostQueryRepository postQueryRepository;
     private final MemberUserRepository memberUserRepository;
+    private final StorageService storageService;
 
     @Override
     public PostResponse.PostDetailResDTO getPostDetail(Long postId, Long memberId) {
@@ -44,7 +46,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
         List<PostResponse.PostImageResDTO> images = post.getPostImageList().stream()
                 .map(img -> PostResponse.PostImageResDTO.builder()
-                        .imageUrl(getFullUrl(img.getImageUrl()))
+                        .imageUrl(getFullUrl(img.getObjectPath()))
                         .width(img.getWidth())
                         .height(img.getHeight())
                         .build())
@@ -69,7 +71,7 @@ public class PostQueryServiceImpl implements PostQueryService {
                     boolean isLiked = finalLikedPostIds.contains(post.getId());
                     PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
                             : PostResponse.PostImageResDTO.builder()
-                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getImageUrl()))
+                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getObjectPath()))
                             .width(post.getPostImageList().get(0).getWidth())
                             .height(post.getPostImageList().get(0).getHeight())
                             .build();
@@ -96,7 +98,7 @@ public class PostQueryServiceImpl implements PostQueryService {
                     boolean isLiked = finalLikedPostIds.contains(post.getId());
                     PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
                             : PostResponse.PostImageResDTO.builder()
-                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getImageUrl()))
+                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getObjectPath()))
                             .width(post.getPostImageList().get(0).getWidth())
                             .height(post.getPostImageList().get(0).getHeight())
                             .build();
@@ -109,7 +111,10 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     private String getFullUrl(String objectPath) {
-        return objectPath;
+        if (objectPath == null || objectPath.isBlank()) {
+            return null;
+        }
+        return storageService.getPublicUrl(objectPath);
     }
 
     // 커뮤니티 게시글 검색
@@ -129,7 +134,7 @@ public class PostQueryServiceImpl implements PostQueryService {
                     boolean isLiked = finalLikedPostIds.contains(post.getId());
                     PostResponse.PostImageResDTO mainImage = post.getPostImageList().isEmpty() ? null
                             : PostResponse.PostImageResDTO.builder()
-                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getImageUrl()))
+                            .imageUrl(getFullUrl(post.getPostImageList().get(0).getObjectPath()))
                             .width(post.getPostImageList().get(0).getWidth())
                             .height(post.getPostImageList().get(0).getHeight())
                             .build();

@@ -20,8 +20,8 @@ public class PostImage extends BaseTimeEntity {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    @Column(nullable = false, length = 500)
-    private String imageUrl;
+    @Column(name = "object_path", nullable = false)
+    private String objectPath;
 
     @Column(name = "display_order")
     private Integer displayOrder;
