@@ -58,4 +58,19 @@ public interface StorageService {
      */
     Map<String, SignedUrl> getSignedUrls(List<String> objectPaths, Integer expiryMinutes);
 
+    /**
+     * byte[] 데이터를 직접 업로드 (서버에서 외부 API 결과를 저장할 때 사용)
+     * <p>
+     * Replicate AI 복원 결과처럼 백엔드에서 직접 업로드해야 하는 경우에만 사용합니다.
+     * 일반적인 클라이언트 업로드는 Presigned URL 방식을 사용하세요.
+     *
+     * @param data        업로드할 바이트 데이터
+     * @param contentType MIME 타입 (예: "image/png")
+     * @param storagePath 저장 경로 enum
+     * @param domainId    도메인 ID (memberId, orderId 등)
+     * @param fileName    파일명 (확장자 포함)
+     * @return 업로드 결과 (objectPath 포함)
+     */
+    StorageResponse.Upload uploadBytes(byte[] data, String contentType, StoragePath storagePath, Long domainId, String fileName);
+
 }

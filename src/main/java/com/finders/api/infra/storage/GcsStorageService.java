@@ -21,7 +21,6 @@ import java.net.URL;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * GCS Storage 서비스 구현
@@ -187,6 +186,31 @@ public class GcsStorageService implements StorageService {
                 bucket, objectPath, deleted);
 
         return new StorageResponse.Delete(bucket, objectPath, deleted);
+    }
+
+    /**
+     * byte[] 데이터를 직접 GCS에 업로드
+     * <p>
+     * Replicate AI 복원 결과처럼 백엔드에서 직접 업로드해야 하는 경우에만 사용합니다.
+     */
+    @Override
+    public StorageResponse.Upload uploadBytes(byte[] data, String contentType, StoragePath storagePath, Long domainId, String fileName) {
+        String bucket = storagePath.isPublic() ? properties.publicBucket() : properties.privateBucket();
+        String objectPath = createUniquePath(storagePath, domainId, fileName);
+
+        BlobId blobId = BlobId.of(bucket, objectPath);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(contentType)
+                .build();
+
+        storage.create(blobInfo, data);
+
+        String url = storagePath.isPublic() ? getPublicUrl(objectPath) : null;
+
+        log.info("[GcsStorageService.uploadBytes] bucket={}, path={}, size={}",
+                bucket, objectPath, data.length);
+
+        return StorageResponse.Upload.from(bucket, objectPath, url, contentType, data.length);
     }
 
     // ========================================
