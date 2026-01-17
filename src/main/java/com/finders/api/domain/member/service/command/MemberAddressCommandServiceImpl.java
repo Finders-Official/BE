@@ -25,7 +25,14 @@ public class MemberAddressCommandServiceImpl implements MemberAddressCommandServ
         MemberUser user = memberUserRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        if (request.isDefault()) {
+        // 첫 번째 배송지인지 확인
+        boolean isFirstAddress = !memberAddressRepository.existsByUserId(memberId);
+
+        // 요청에서 기본 배송지로 설정했거나, 첫 번째 배송지라면 true
+        boolean shouldBeDefault = request.isDefault() || isFirstAddress;
+
+        // 이번 배송지가 기본 배송지가 되어야 한다면, 기존 기본 배송지는 해제
+        if (shouldBeDefault) {
             memberAddressRepository.findByUser_IdAndIsDefaultTrue(memberId)
                     .ifPresent(existingDefault -> existingDefault.updateIsDefault(false));
         }
