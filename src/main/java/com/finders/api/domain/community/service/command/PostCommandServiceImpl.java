@@ -38,10 +38,8 @@ public class PostCommandServiceImpl implements PostCommandService {
         if (!request.isSelfDeveloped()) {
             String review = request.reviewContent();
 
-            if (review == null) {
-                throw new CustomException(ErrorCode.REVIEW_TOO_SHORT);
-            }
-            int trimmedLength = review.trim().length();
+            int trimmedLength = (review != null) ? review.trim().length() : 0;
+
             if (trimmedLength < MIN_REVIEW_LENGTH) {
                 throw new CustomException(ErrorCode.REVIEW_TOO_SHORT);
             }
