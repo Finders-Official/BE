@@ -139,7 +139,6 @@ public enum ErrorCode implements BaseCode {
     // External API
     // ========================================
     EXTERNAL_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_503", "외부 API 호출에 실패했습니다."),
-    VISION_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "VISION_503", "Vision AI 호출에 실패했습니다."),
 
     // ========================================
     // Storage (GCS)
