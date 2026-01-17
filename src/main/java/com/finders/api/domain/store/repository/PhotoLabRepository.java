@@ -1,17 +1,20 @@
 package com.finders.api.domain.store.repository;
 
 import com.finders.api.domain.store.entity.PhotoLab;
+import com.finders.api.domain.store.enums.PhotoLabStatus;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
 
 public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
     // 커뮤니티 현상소 검색 관련 상수
     int COMMUNITY_SEARCH_LIMIT = 8;
 
     List<PhotoLab> findTop8ByOrderByReservationCountDescIdAsc();
+
+    Optional<PhotoLab> findByIdAndStatus(Long id, PhotoLabStatus status);
 
     // 커뮤니티 현상소 검색
     interface PhotoLabSearchResult {
