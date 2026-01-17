@@ -142,11 +142,13 @@ FAILED                // 결제 실패
         PARTIAL_CANCELLED     // 부분 취소
 CANCELLED             // 전액 취소
 
-PaymentMethod:          // 포트원 V2 결제수단
-CARD,TRANSFER,VIRTUAL_ACCOUNT,GIFT_CERTIFICATE,MOBILE,EASY_PAY
+PaymentMethod:          // 포트원 V2 결제수단 (사용: 카드, 계좌이체, 가상계좌, 간편결제)
+  CARD, TRANSFER, VIRTUAL_ACCOUNT, EASY_PAY
 
-PgProvider:             // PG사/간편결제 제공자 (주요)
-TOSSPAYMENTS,KCP,INICIS,NICE,KAKAOPAY,NAVERPAY,TOSSPAY
+PgProvider:             // PG사/간편결제 제공자 (현재: KCP + 간편결제 3종)
+  KCP,                  // 메인 PG사 (카드, 계좌이체, 가상계좌)
+  KAKAOPAY, NAVERPAY, TOSSPAY  // 간편결제
+  // 확장 가능: TOSSPAYMENTS, INICIS, NICE 등
 
 OrderType:TOKEN_PURCHASE,DEVELOPMENT_ORDER,PRINT_ORDER
 TokenHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
@@ -951,9 +953,8 @@ CREATE TABLE payment
         )),
     CONSTRAINT chk_order_type CHECK (order_type IN ('TOKEN_PURCHASE', 'DEVELOPMENT_ORDER', 'PRINT_ORDER')),
     CONSTRAINT chk_payment_method CHECK (method IS NULL OR method IN (
-                                                                      'CARD', 'TRANSFER', 'VIRTUAL_ACCOUNT',
-                                                                      'GIFT_CERTIFICATE', 'MOBILE', 'EASY_PAY'
-        )),
+        'CARD', 'TRANSFER', 'VIRTUAL_ACCOUNT', 'EASY_PAY'
+    )),
     CONSTRAINT chk_payment_data CHECK (
         (order_type = 'TOKEN_PURCHASE' AND token_amount IS NOT NULL AND related_order_id IS NULL) OR
         (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER') AND related_order_id IS NOT NULL AND token_amount IS NULL)

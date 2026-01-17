@@ -80,6 +80,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // ========================================
+    // PortOne V2 (결제 연동) - REST API 사용
+    // ========================================
+    // WebClient는 spring-boot-starter-webflux에서 제공
+
+    // ========================================
     // Utility
     // ========================================
     compileOnly 'org.projectlombok:lombok'

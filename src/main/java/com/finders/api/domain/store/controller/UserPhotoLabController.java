@@ -1,12 +1,12 @@
 package com.finders.api.domain.store.controller;
 
 import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
+import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.service.command.PhotoLabFavoriteCommandService;
-import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.service.query.PhotoLabPopularQueryService;
 import com.finders.api.domain.store.service.query.PhotoLabQueryService;
 import com.finders.api.global.response.ApiResponse;
@@ -15,20 +15,19 @@ import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Tag(name = "PhotoLab_USER", description = "현상소 API")
 @RestController
@@ -75,6 +74,21 @@ public class UserPhotoLabController {
                 .build();
 
         return photoLabQueryService.getPhotoLabs(condition);
+    }
+
+    @Operation(summary = "현상소 상세 조회 API")
+    @GetMapping("/{photoLabId}")
+    public ApiResponse<PhotoLabDetailResponse.Detail> getPhotoLabDetail(
+            @PathVariable Long photoLabId,
+            @AuthenticationPrincipal AuthUser user,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng
+    ) {
+        Long memberId = user != null ? user.memberId() : null;
+        return ApiResponse.success(
+                SuccessCode.STORE_FOUND,
+                photoLabQueryService.getPhotoLabDetail(photoLabId, memberId, lat, lng)
+        );
     }
 
     @Operation(summary = "현상소 즐겨찾기 추가 API")
