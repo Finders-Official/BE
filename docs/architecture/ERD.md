@@ -158,7 +158,7 @@ TokenHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
 
 ## GCS (Cloud Storage) 규칙
 
-> 이미지/파일 저장소 규칙. DB에는 `storage_key`(경로)만 저장하고, API 응답 시 URL 변환.
+> 이미지/파일 저장소 규칙. DB에는 `object_path`(경로)만 저장하고, API 응답 시 URL 변환.
 
 ### 버킷 구성
 
@@ -172,17 +172,17 @@ TokenHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
 | 테이블                  | 컬럼              | 버킷          | 경로 패턴                                                           |
 |----------------------|-----------------|-------------|-----------------------------------------------------------------|
 | `member`             | `profile_image` | public      | `profiles/{memberId}/{uuid}.{ext}`                              |
-| `photo_lab_image`    | `image_url`     | public      | `photo-labs/{photoLabId}/images/{uuid}.{ext}`                   |
+| `photo_lab_image`    | `object_path`   | public      | `photo-labs/{photoLabId}/images/{uuid}.{ext}`                   |
 | `photo_lab`          | `qr_code_url`   | public      | `photo-labs/{photoLabId}/qr.png`                                |
-| `photo_lab_document` | `file_url`      | **private** | `photo-labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
+| `photo_lab_document` | `object_path`   | **private** | `photo-labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
 | `photo_lab_notice`   | -               | -           | 이미지 없음 (텍스트만)                                                   |
-| `scanned_photo`      | `image_url`     | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}`           |
-| `post_image`         | `image_url`     | public      | `posts/{postId}/{uuid}.{ext}`                                   |
-| `inquiry_image`      | `image_url`     | public      | `inquiries/{inquiryId}/{uuid}.{ext}`                            |
-| `photo_restoration`  | `original_url`  | **private** | `restorations/{memberId}/original/{uuid}.{ext}`                 |
-| `photo_restoration`  | `mask_url`      | **private** | `restorations/{memberId}/mask/{uuid}.{ext}`                     |
-| `photo_restoration`  | `restored_url`  | **private** | `restorations/{memberId}/restored/{uuid}.{ext}`                 |
-| `promotion`          | `image_url`     | public      | `promotions/{promotionId}/{uuid}.{ext}`                         |
+| `scanned_photo`      | `object_path`   | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}`           |
+| `post_image`         | `object_path`   | public      | `posts/{postId}/{uuid}.{ext}`                                   |
+| `inquiry_image`      | `object_path`   | public      | `inquiries/{inquiryId}/{uuid}.{ext}`                            |
+| `photo_restoration`  | `original_path` | **private** | `restorations/{memberId}/original/{uuid}.{ext}`                 |
+| `photo_restoration`  | `mask_path`     | **private** | `restorations/{memberId}/mask/{uuid}.{ext}`                     |
+| `photo_restoration`  | `restored_path` | **private** | `restorations/{memberId}/restored/{uuid}.{ext}`                 |
+| `promotion`          | `object_path`   | public      | `promotions/{promotionId}/{uuid}.{ext}`                         |
 
 ### 자동 삭제 (Lifecycle)
 
@@ -434,7 +434,7 @@ CREATE TABLE photo_lab_image
 (                                                      -- 현상소마다 이미지 개수가 여러 개이므로 따로 분리
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     photo_lab_id  BIGINT       NOT NULL,               -- FK
-    image_url     VARCHAR(500) NOT NULL,               -- GCP Cloud Storage
+    object_path   VARCHAR(500) NOT NULL,               -- GCS object path (예: photo-labs/123/images/abc.jpg)
     display_order INT          NOT NULL DEFAULT 0,
     is_main       BOOLEAN      NOT NULL DEFAULT FALSE, -- 대표 이미지 여부
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -510,7 +510,7 @@ CREATE TABLE photo_lab_document
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     photo_lab_id  BIGINT       NOT NULL,
     document_type VARCHAR(30)  NOT NULL, -- BUSINESS_LICENSE, BUSINESS_PERMIT
-    file_url      VARCHAR(500) NOT NULL, -- GCP Cloud Storage에 documents/{photo_lab_id}/business-license/{document_id}_{number}.pdf 의 이름으로 저장해야할 듯
+    object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: photo-labs/123/documents/BUSINESS_LICENSE/abc.pdf)
     -- 파일의 버전관리가 필요하다. 관리자 입장에서 생각해보면, approved, rejeceted, pending
     file_name     VARCHAR(200) NULL,
     verified_at   DATETIME NULL,         -- 검증 완료 일시
@@ -617,7 +617,7 @@ CREATE TABLE scanned_photo
 (                                        -- 1:N 관계
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     order_id      BIGINT       NOT NULL, -- FK development_order
-    image_url     VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: temp/orders/123/scans/abc.jpg)
     file_name     VARCHAR(200) NULL,
     display_order INT          NOT NULL DEFAULT 0,
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -701,9 +701,9 @@ CREATE TABLE photo_restoration
 (                                                                    -- Replicate AI 사용
     id                      BIGINT       NOT NULL AUTO_INCREMENT,
     member_id               BIGINT       NOT NULL,
-    original_url            VARCHAR(500) NOT NULL,                   -- 원본 이미지
-    mask_url                VARCHAR(500) NOT NULL,                   -- 마스크 이미지 (프론트에서 전송)
-    restored_url            VARCHAR(500) NULL,                       -- 복원된 이미지
+    original_path           VARCHAR(500) NOT NULL,                   -- 원본 이미지 GCS 경로
+    mask_path               VARCHAR(500) NOT NULL,                   -- 마스크 이미지 GCS 경로 (프론트에서 전송)
+    restored_path           VARCHAR(500) NULL,                       -- 복원된 이미지 GCS 경로
     status                  VARCHAR(20)  NOT NULL DEFAULT 'PENDING', -- PENDING, PROCESSING, COMPLETED, FAILED
     replicate_prediction_id VARCHAR(100) NULL,                       -- Replicate API prediction ID (webhook 매칭용)
     -- 토큰 관련
@@ -760,7 +760,7 @@ CREATE TABLE post_image
 (                                        -- 1:N
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     post_id       BIGINT       NOT NULL, -- FK
-    image_url     VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: posts/123/abc.jpg)
     display_order INT          NOT NULL DEFAULT 0,
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -823,7 +823,7 @@ CREATE TABLE inquiry_image
 (                                        -- 문의 첨부 이미지 (최대 5개)
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     inquiry_id    BIGINT       NOT NULL, -- FK
-    image_url     VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: inquiries/123/abc.jpg)
     display_order INT          NOT NULL DEFAULT 0,
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -871,7 +871,7 @@ CREATE TABLE promotion
     photo_lab_id   BIGINT       NOT NULL,
     title          VARCHAR(200) NOT NULL,
     description    VARCHAR(500) NULL,
-    image_url      VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    object_path    VARCHAR(500) NOT NULL, -- GCS object path (예: promotions/123/abc.jpg)
     promotion_type VARCHAR(20)  NOT NULL DEFAULT 'BANNER',
     display_order  INT          NOT NULL DEFAULT 0,
     start_date     DATETIME     NOT NULL,
@@ -1038,3 +1038,4 @@ CREATE TABLE payment
 | 2.4.6 | 2026-01-15 | `tag` 테이블 추가 및 keyword -> tag 로 명칭 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 2.4.7 | 2026-01-15 | `favorite_photo_lab` 도메인 위치 변경 community -> member                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | 2.4.8 | 2026-01-17 | **문의 이미지 첨부 기능 추가**: `inquiry_image` 테이블 신규 (최대 5개), `Inquiry` 엔티티에 images 관계 추가, GCS 경로 규칙 추가 (`inquiries/{inquiryId}/{uuid}.{ext}`) (35개 테이블)                                                                                                                                                                                                                                                                                                                                                                                      |
+| **2.5.0** | **2026-01-18** | **이미지 필드명 objectPath 통일 (#106)**: GCS 저장 이미지 컬럼명을 `object_path`로 통일 (`photo_lab_image`, `photo_lab_document`, `scanned_photo`, `post_image`, `inquiry_image`, `promotion`), `photo_restoration` 컬럼명 변경 (`original_url` → `original_path`, `mask_url` → `mask_path`, `restored_url` → `restored_path`), GCS 경로 규칙 문서에 `storage_key` → `object_path` 용어 통일, 프로젝트 전체 네이밍 표준화 |
