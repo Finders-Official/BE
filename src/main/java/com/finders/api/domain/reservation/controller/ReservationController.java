@@ -6,11 +6,13 @@ import com.finders.api.domain.reservation.service.command.ReservationCommandServ
 import com.finders.api.domain.reservation.service.query.ReservationQueryService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
+import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -29,15 +31,13 @@ public class ReservationController {
     private final ReservationCommandService reservationCommandService;
     private final ReservationQueryService reservationQueryService;
 
-    // TODO: JWT 인증 구현 시 @AuthenticationPrincipal로 교체
-    private static final Long TEMP_MEMBER_ID = 2L;
-
     @Operation(
             summary = "현상소 날짜별 예약 가능 시간대 조회",
             description = "특정 날짜에 예약 가능한 시간대 목록을 조회합니다."
     )
     @GetMapping("/{photoLabId}/reservation/available-times")
     public ApiResponse<ReservationResponse.AvailableTimes> getAvailableTimes(
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable Long photoLabId,
             @RequestParam
             @DateTimeFormat(iso = ISO.DATE) LocalDate date
@@ -52,10 +52,11 @@ public class ReservationController {
     )
     @PostMapping("/{photoLabId}/reservations")
     public ApiResponse<ReservationResponse.Created> createReservation(
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable Long photoLabId,
             @RequestBody @Valid ReservationRequest.Create request
     ) {
-        ReservationResponse.Created response = reservationCommandService.createReservation(photoLabId, TEMP_MEMBER_ID, request);
+        ReservationResponse.Created response = reservationCommandService.createReservation(photoLabId, user.memberId(), request);
         return ApiResponse.success(SuccessCode.RESERVATION_CREATED, response);
     }
 
@@ -65,10 +66,12 @@ public class ReservationController {
     )
     @GetMapping("/{photoLabId}/reservations/{reservationId}")
     public ApiResponse<ReservationResponse.Detail> getReservation(
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable Long photoLabId,
             @PathVariable Long reservationId
     ) {
-        ReservationResponse.Detail response = reservationQueryService.getReservation(photoLabId, reservationId, TEMP_MEMBER_ID);
+        ReservationResponse.Detail response = reservationQueryService.getReservation(photoLabId, reservationId,
+                user.memberId());
         return ApiResponse.success(SuccessCode.RESERVATION_FOUND, response);
     }
 
@@ -78,10 +81,11 @@ public class ReservationController {
     )
     @DeleteMapping("/{photoLabId}/reservations/{reservationId}")
     public ApiResponse<ReservationResponse.Cancel> cancelReservation(
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable Long photoLabId,
             @PathVariable Long reservationId
     ) {
-        ReservationResponse.Cancel response =  reservationCommandService.cancelReservation(photoLabId, reservationId, TEMP_MEMBER_ID);
+        ReservationResponse.Cancel response =  reservationCommandService.cancelReservation(photoLabId, reservationId, user.memberId());
         return ApiResponse.success(SuccessCode.RESERVATION_CANCELLED,response);
     }
 }
