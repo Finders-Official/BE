@@ -71,7 +71,6 @@ services:
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
       KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:-http://localhost:8080/api/auth/kakao/callback}
       GCS_BUCKET: ${GCS_BUCKET:-}
-      VISION_ENABLED: ${VISION_ENABLED:-false}
     networks:
       - finders-network
     profiles:
