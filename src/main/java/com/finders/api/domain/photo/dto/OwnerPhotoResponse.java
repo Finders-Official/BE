@@ -2,6 +2,7 @@ package com.finders.api.domain.photo.dto;
 
 
 import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;
+import com.finders.api.domain.photo.enums.PrintOrderStatus;
 import java.util.List;
 
 public class OwnerPhotoResponse {
@@ -61,6 +62,18 @@ public class OwnerPhotoResponse {
     ) {
         public static DevelopmentOrderStatusUpdated of(Long id, DevelopmentOrderStatus status) {
             return new DevelopmentOrderStatusUpdated(id, status);
+        }
+    }
+
+    public record PrintOrderId(Long printOrderId) {
+        public static PrintOrderId of(Long id) {
+            return new PrintOrderId(id);
+        }
+    }
+
+    public record PrintOrderStatusUpdated(Long printOrderId, PrintOrderStatus status) {
+        public static PrintOrderStatusUpdated of(Long id, PrintOrderStatus status) {
+            return new PrintOrderStatusUpdated(id, status);
         }
     }
 }
