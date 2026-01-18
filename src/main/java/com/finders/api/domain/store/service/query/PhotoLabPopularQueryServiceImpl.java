@@ -7,7 +7,6 @@ import com.finders.api.domain.store.entity.PhotoLabTag;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
-import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +25,6 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
     private final PhotoLabRepository photoLabRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
     private final PhotoLabTagQueryRepository photoLabTagQueryRepository;
-    private final StorageService storageService;
 
     @Override
     public List<PhotoLabPopularResponse.Card> getPopularPhotoLabs() {
@@ -39,19 +37,19 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
                 .map(PhotoLab::getId)
                 .toList();
 
-        Map<Long, String> mainImageUrlByPhotoLabId = buildMainImageUrlMap(photoLabIds);
+        Map<Long, String> mainImageObjectPathByPhotoLabId = buildMainImageObjectPathMap(photoLabIds);
         Map<Long, List<String>> tagsByPhotoLabId = buildTagMap(photoLabIds);
 
         return photoLabs.stream()
                 .map(photoLab -> PhotoLabPopularResponse.Card.from(
                         photoLab,
-                        mainImageUrlByPhotoLabId.get(photoLab.getId()),
+                        mainImageObjectPathByPhotoLabId.get(photoLab.getId()),
                         tagsByPhotoLabId.getOrDefault(photoLab.getId(), List.of())
                 ))
                 .toList();
     }
 
-    private Map<Long, String> buildMainImageUrlMap(List<Long> photoLabIds) {
+    private Map<Long, String> buildMainImageObjectPathMap(List<Long> photoLabIds) {
         List<PhotoLabImage> mainImages = photoLabImageRepository.findMainImagesByPhotoLabIds(photoLabIds);
         if (mainImages.isEmpty()) {
             return Collections.emptyMap();
@@ -63,7 +61,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
             if (result.containsKey(photoLabId)) {
                 continue;
             }
-            result.put(photoLabId, storageService.getPublicUrl(image.getImageUrl()));
+            result.put(photoLabId, image.getObjectPath());
         }
         return result;
     }

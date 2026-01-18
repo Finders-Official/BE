@@ -10,7 +10,7 @@ public class PhotoLabDetailResponse {
     public record Detail(
             Long photoLabId,
             String name,
-            List<String> imageUrls,
+            List<String> imageObjectPaths,
             List<String> tags,
             String address,
             String addressDetail,

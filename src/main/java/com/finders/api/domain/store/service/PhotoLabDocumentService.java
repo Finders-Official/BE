@@ -15,7 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -28,13 +29,13 @@ public class PhotoLabDocumentService {
     private final StorageService storageService;
 
     @Transactional
-    public PhotoLabDocumentResponse.Create uploadDocument(
+    public StorageResponse.PresignedUrl createDocumentPresignedUrl(
             Long ownerId,
             Long photoLabId,
             DocumentType documentType,
-            MultipartFile file
+            String fileName
     ) {
-        log.info("[PhotoLabDocumentService.uploadDocument] photoLabId={}, documentType={}",
+        log.info("[PhotoLabDocumentService.createDocumentPresignedUrl] photoLabId={}, documentType={}",
                 photoLabId, documentType);
 
         PhotoLab photoLab = photoLabRepository.findById(photoLabId)
@@ -44,20 +45,38 @@ public class PhotoLabDocumentService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        validateFile(file);
+        validateFileName(fileName);
 
-        StorageResponse.Upload upload = storageService.uploadPrivate(
-                file,
-                StoragePath.LAB_DOCUMENT,
-                photoLabId,
-                documentType.name().toLowerCase()
-        );
+        String objectPath = createDocumentObjectPath(photoLabId, documentType, fileName);
+        return storageService.getPresignedUrl(objectPath, false, null);
+    }
+
+    @Transactional
+    public PhotoLabDocumentResponse.Create registerDocument(
+            Long ownerId,
+            Long photoLabId,
+            DocumentType documentType,
+            String objectPath,
+            String fileName
+    ) {
+        log.info("[PhotoLabDocumentService.registerDocument] photoLabId={}, documentType={}",
+                photoLabId, documentType);
+
+        PhotoLab photoLab = photoLabRepository.findById(photoLabId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        if (ownerId == null || !photoLab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        validateFileName(fileName);
+        validateDocumentObjectPath(photoLabId, documentType, objectPath);
 
         PhotoLabDocument document = PhotoLabDocument.builder()
                 .photoLab(photoLab)
                 .documentType(documentType)
-                .fileUrl(upload.objectPath())
-                .fileName(file.getOriginalFilename())
+                .objectPath(objectPath)
+                .fileName(fileName)
                 .build();
 
         photoLabDocumentRepository.save(document);
@@ -65,10 +84,28 @@ public class PhotoLabDocumentService {
         return PhotoLabDocumentResponse.Create.from(document);
     }
 
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_INPUT, "file is required.");
+    private void validateFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_INPUT, "fileName은 필수입니다.");
         }
+    }
+
+    private void validateDocumentObjectPath(Long photoLabId, DocumentType documentType, String objectPath) {
+        if (objectPath == null || objectPath.isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_INPUT, "objectPath는 필수입니다.");
+        }
+
+        String documentTypeSegment = documentType.name().toLowerCase();
+        String prefix = String.format("photo-labs/%d/documents/%s/", photoLabId, documentTypeSegment);
+        if (!objectPath.startsWith(prefix)) {
+            throw new CustomException(ErrorCode.STORAGE_INVALID_PATH, "잘못된 문서 경로입니다.");
+        }
+    }
+
+    private String createDocumentObjectPath(Long photoLabId, DocumentType documentType, String fileName) {
+        String uniqueFileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
+        String documentTypeSegment = documentType.name().toLowerCase();
+        return StoragePath.LAB_DOCUMENT.format(photoLabId, documentTypeSegment, uniqueFileName);
     }
 }
 
