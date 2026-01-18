@@ -113,6 +113,17 @@ public enum ErrorCode implements BaseCode {
     PHOTO_MEMBER_REQUIRED(HttpStatus.BAD_REQUEST, "PHOTO_400_MEMBER_REQUIRED", "현장 접수 시 회원 정보가 필요합니다."),
     PHOTO_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "PHOTO_404_ORDER_NOT_FOUND", "현상 주문을 찾을 수 없습니다."),
     PHOTO_ORDER_PHOTOLAB_MISMATCH(HttpStatus.BAD_REQUEST, "PHOTO_400_ORDER_PHOTOLAB_MISMATCH", "해당 현상소의 주문이 아닙니다."),
+    PHOTO_PHOTOLAB_ACCOUNT_NOT_REGISTERED(HttpStatus.BAD_REQUEST, "PHOTO_400_PHOTOLAB_ACCOUNT_NOT_REGISTERED", "현상소의 사업자 계좌 정보가 등록되어 있지 않습니다."),
+    PHOTO_PHOTOLAB_ACCOUNT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PHOTO_403_PHOTOLAB_ACCOUNT_ACCESS_DENIED", "해당 주문에 대한 현상소 계좌 정보에 접근할 수 없습니다."),
+    PHOTO_PRINT_ORDER_NOT_FOUND(HttpStatus.FORBIDDEN, "PHOTO_404_PRINT_ORDER_NOT_FOUND", "해당 인화 주문을 찾을 수 없습니다."),
+    PHOTO_PRINT_ORDER_STATUS_INVALID(HttpStatus.BAD_REQUEST, "PHOTO_400_PRINT_ORDER_STATUS_INVALID", "현재 인화 주문 상태에서는 해당 작업을 수행할 수 없습니다."),
+    PHOTO_PRINT_ORDER_OWNER_MISMATCH(HttpStatus.FORBIDDEN, "PHOTO_403_PRINT_ORDER_OWNER_MISMATCH", "해당 인화 주문을 처리할 권한이 없습니다."),
+    PHOTO_PAYMENT_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "PHOTO_409_PAYMENT_ALREADY_SUBMITTED", "이미 입금 증빙이 제출된 주문입니다."),
+    PHOTO_DELIVERY_ALREADY_CREATED(HttpStatus.CONFLICT, "PHOTO_409_DELIVERY_ALREADY_CREATED", "이미 배송 정보가 등록된 주문입니다."),
+    PHOTO_DELIVERY_NOT_FOUND(HttpStatus.NOT_FOUND, "PHOTO_404_DELIVERY_NOT_FOUND", "배송 정보를 찾을 수 없습니다."),
+    PHOTO_DELIVERY_STATUS_INVALID(HttpStatus.BAD_REQUEST, "PHOTO_400_DELIVERY_STATUS_INVALID", "현재 배송 상태에서는 해당 작업을 수행할 수 없습니다."),
+    PHOTO_PRINT_STATUS_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PHOTO_400_PRINT_ORDER_INVALID", "현재 인화 주문 상태에서는 해당 작업을 수행할 수 없습니다."),
+
 
     // ========================================
     // Token
@@ -150,6 +161,8 @@ public enum ErrorCode implements BaseCode {
     STORAGE_INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "STORAGE_401", "허용되지 않는 파일 형식입니다."),
     STORAGE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "STORAGE_402", "파일 크기가 제한을 초과했습니다."),
     STORAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_502", "Signed URL 생성에 실패했습니다."),
+    STORAGE_INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "STORAGE_403", "해당 API에서 지원하지 않는 업로드 카테고리입니다."),
+    STORAGE_UNAUTHORIZED(HttpStatus.FORBIDDEN, "STORAGE_405", "해당 경로에 대한 업로드 권한이 없습니다."),
 
     // ========================================
     // Inquiry (문의)

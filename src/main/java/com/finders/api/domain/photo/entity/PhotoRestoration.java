@@ -37,6 +37,12 @@ public class PhotoRestoration extends BaseTimeEntity {
     @Column(name = "restored_url", length = 500)
     private String restoredUrl;
 
+    @Column(name = "restored_width")
+    private Integer restoredWidth;
+
+    @Column(name = "restored_height")
+    private Integer restoredHeight;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private RestorationStatus status = RestorationStatus.PENDING;
@@ -71,9 +77,11 @@ public class PhotoRestoration extends BaseTimeEntity {
         this.replicatePredictionId = predictionId;
     }
 
-    public void complete(String restoredUrl) {
+    public void complete(String restoredUrl, Integer width, Integer height) {
         this.status = RestorationStatus.COMPLETED;
         this.restoredUrl = restoredUrl;
+        this.restoredWidth = width;
+        this.restoredHeight = height;
     }
 
     public void fail(String errorMessage) {

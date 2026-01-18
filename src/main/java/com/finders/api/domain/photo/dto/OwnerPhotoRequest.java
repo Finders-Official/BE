@@ -1,10 +1,12 @@
 package com.finders.api.domain.photo.dto;
 
 import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;
+import com.finders.api.domain.photo.enums.PrintOrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import lombok.Builder;
 
 import java.util.List;
@@ -85,5 +87,32 @@ public class OwnerPhotoRequest {
             @Schema(example = "SCANNING", description = "주문 상태 (RECEIVED/DEVELOPING/SCANNING/COMPLETED)")
             @NotNull(message = "status는 필수입니다.")
             DevelopmentOrderStatus status
+    ) {}
+
+    @Builder
+    public record StartPrinting(
+            @Schema(example = "2026-01-17T15:00:00", description = "예상 작업 완료 시간(estimatedAt)")
+            @NotNull(message = "estimatedAt은 필수입니다.")
+            LocalDateTime estimatedAt
+    ) {}
+
+    @Builder
+    public record RegisterShipping(
+            @Schema(example = "우체국택배", description = "택배사")
+            @NotNull(message = "carrier는 필수입니다.")
+            String carrier,
+
+            @Schema(example = "123412341234", description = "송장번호")
+            @NotNull(message = "trackingNumber는 필수입니다.")
+            String trackingNumber,
+
+            @Schema(example = "2026-01-17T18:30:00", description = "발송일시(없으면 now)")
+            LocalDateTime shippedAt
+    ) {}
+
+    public record UpdatePrintOrderStatus(
+            @Schema(example = "COMPLETED", description = "인화 주문 상태 변경")
+            @NotNull(message = "status는 필수입니다.")
+            PrintOrderStatus status
     ) {}
 }

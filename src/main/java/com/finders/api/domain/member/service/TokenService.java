@@ -34,9 +34,15 @@ public class TokenService {
         return member.hasEnoughTokens(amount);
     }
 
+    /**
+     * 토큰 사용 (동시성 제어 적용)
+     * <p>
+     * PESSIMISTIC_WRITE 락을 사용하여 토큰 잔액 체크와 차감 사이의 race condition을 방지합니다.
+     */
     @Transactional
     public void useTokens(Long memberId, int amount, TokenRelatedType relatedType, Long relatedId, String description) {
-        MemberUser member = getMemberUser(memberId);
+        // 배타적 락으로 회원 조회 (동시성 제어)
+        MemberUser member = getMemberUserWithLock(memberId);
 
         if (!member.hasEnoughTokens(amount)) {
             throw new CustomException(ErrorCode.INSUFFICIENT_TOKEN);
@@ -55,9 +61,13 @@ public class TokenService {
                 memberId, amount, balanceAfter, relatedType, relatedId);
     }
 
+    /**
+     * 토큰 환불 (동시성 제어 적용)
+     */
     @Transactional
     public void refundTokens(Long memberId, int amount, TokenRelatedType relatedType, Long relatedId, String description) {
-        MemberUser member = getMemberUser(memberId);
+        // 배타적 락으로 회원 조회 (동시성 제어)
+        MemberUser member = getMemberUserWithLock(memberId);
 
         // 토큰 추가
         int balanceAfter = member.addTokens(amount);
@@ -116,6 +126,16 @@ public class TokenService {
 
     private MemberUser getMemberUser(Long memberId) {
         return memberUserRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    /**
+     * 배타적 락으로 회원 조회 (동시성 제어)
+     * <p>
+     * PESSIMISTIC_WRITE 락을 사용하여 토큰 잔액 변경 작업의 원자성을 보장합니다.
+     */
+    private MemberUser getMemberUserWithLock(Long memberId) {
+        return memberUserRepository.findByIdWithLock(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
     }
 }
