@@ -48,7 +48,7 @@ public class ReplicateWebhookController {
         try {
             payload = objectMapper.readValue(rawBody, ReplicateResponse.Prediction.class);
         } catch (IOException e) {
-            log.error("[ReplicateWebhook] JSON 파싱 실패: {}", e.getMessage());
+            log.error("[ReplicateWebhook] JSON 파싱 실패: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.BAD_REQUEST, "잘못된 Webhook 페이로드 형식입니다.");
         }
         log.info("[ReplicateWebhook] Received: id={}, status={}", payload.id(), payload.status());
