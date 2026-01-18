@@ -159,13 +159,46 @@ User: finders
 
 ---
 
+## Cloudflare
+
+| 항목 | 값 |
+|------|-----|
+| 서비스 | Zero Trust (구 Cloudflare Access) |
+| 도메인 | finders.it.kr (가비아) |
+| 플랜 | Free (50명까지) |
+| 기능 | DDoS 방어, WAF, SSL, Tunnel |
+
+### Cloudflare Tunnel
+
+| 항목 | 값 |
+|------|-----|
+| 터널 이름 | finders-tunnel |
+| 호스트명 | api.finders.it.kr |
+| 타겟 | http://localhost:8080 |
+| 설정 파일 | /etc/cloudflared/config.yml |
+| 서비스 상태 | systemd (자동 시작) |
+
+**특징**:
+- Public IP 직접 노출 없음
+- DDoS 무제한 방어
+- 자동 SSL 인증서
+- 접속 로그 자동 기록
+
+---
+
 ## 네트워크 구성
+
+### 현재 구성 (Cloudflare Tunnel 사용)
 
 ```
 [클라이언트]
-    ↓ (HTTPS)
-[Compute Engine: 34.50.19.146]
-    ↓ (MySQL 3306)
+    ↓ HTTPS
+[Cloudflare Edge Network] (전 세계 데이터센터)
+    ↓ 암호화된 터널
+[cloudflared 데몬] (Compute Engine 내부)
+    ↓
+[Spring Boot :8080]
+    ↓ MySQL 3306
 [Cloud SQL: 34.64.50.136]
 
 [Compute Engine] → [Cloud Storage: finders-public]   (공개 이미지)
@@ -173,11 +206,16 @@ User: finders
 ```
 
 ### 방화벽 규칙
-| 포트 | 용도 | 상태 |
-|------|------|------|
-| 80 | HTTP | 허용 |
-| 443 | HTTPS | 허용 |
-| 8080 | Spring Boot | **추가 필요** |
+
+| 포트 | 용도 | 상태 | 비고 |
+|------|------|------|------|
+| 22 | SSH | 허용 (제한적) | 관리자 IP만 |
+| 80 | HTTP | **차단 권장** | Cloudflare Tunnel 사용 시 불필요 |
+| 443 | HTTPS | **차단 권장** | Cloudflare Tunnel 사용 시 불필요 |
+| 3306 | MySQL | 차단 | 내부 통신만 |
+| 8080 | Spring Boot | 차단 | 내부 통신만 |
+
+**⚠️ 주의**: Cloudflare Tunnel은 outbound 연결만 사용하므로, 인바운드 포트 오픈 불필요
 
 ---
 
