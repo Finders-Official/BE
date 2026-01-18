@@ -48,6 +48,16 @@ public class PostResponse {
             Integer commentCount,
             LabReviewResDTO labReview
     ) {
+        public static PostDetailResDTO fromNewPost(Post post, String profileImageUrl, List<PostImageResDTO> images) {
+            return PostDetailResDTO.from(
+                    post,
+                    false,
+                    true,
+                    profileImageUrl,
+                    images
+            );
+        }
+
         public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine, String profileImageUrl, List<PostImageResDTO> images) {
             return PostDetailResDTO.builder()
                     .postId(post.getId())

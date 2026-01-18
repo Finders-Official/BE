@@ -84,11 +84,11 @@ public class PostCommandServiceImpl implements PostCommandService {
             }
         }
 
-        String profileUrl = java.util.Optional.ofNullable(memberUser.getProfileImage())
-                .map(storageService::getPublicUrl)
-                .orElse(null);
+        String profileUrl = memberUser.getProfileImage() != null
+                ? storageService.getPublicUrl(memberUser.getProfileImage())
+                : null;
 
-        return PostResponse.PostDetailResDTO.from(post, false, true, profileUrl, imageResDTOs);
+        return PostResponse.PostDetailResDTO.fromNewPost(post, profileUrl, imageResDTOs);
     }
 
     @Override
