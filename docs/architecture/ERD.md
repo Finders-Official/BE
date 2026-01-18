@@ -704,6 +704,8 @@ CREATE TABLE photo_restoration
     original_path           VARCHAR(500) NOT NULL,                   -- 원본 이미지 GCS 경로
     mask_path               VARCHAR(500) NOT NULL,                   -- 마스크 이미지 GCS 경로 (프론트에서 전송)
     restored_path           VARCHAR(500) NULL,                       -- 복원된 이미지 GCS 경로
+    restored_width          INT NULL,                                -- 복원된 이미지 너비 (픽셀)
+    restored_height         INT NULL,                                -- 복원된 이미지 높이 (픽셀)
     status                  VARCHAR(20)  NOT NULL DEFAULT 'PENDING', -- PENDING, PROCESSING, COMPLETED, FAILED
     replicate_prediction_id VARCHAR(100) NULL,                       -- Replicate API prediction ID (webhook 매칭용)
     -- 토큰 관련
@@ -762,6 +764,8 @@ CREATE TABLE post_image
     post_id       BIGINT       NOT NULL, -- FK
     object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: posts/123/abc.jpg)
     display_order INT          NOT NULL DEFAULT 0,
+    width         INT          NOT NULL, -- 이미지 너비 (픽셀)
+    height        INT          NOT NULL, -- 이미지 높이 (픽셀)
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     INDEX         idx_post_image (post_id),
