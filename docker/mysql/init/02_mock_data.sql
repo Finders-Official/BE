@@ -222,7 +222,7 @@ VALUES
 -- =====================================================
 -- 10. PhotoLabImage (현상소 이미지)
 -- =====================================================
-INSERT INTO photo_lab_image (photo_lab_id, object_path, display_order, is_main, created_at, updated_at)
+INSERT INTO photo_lab_image (photo_lab_id, image_url, display_order, is_main, created_at, updated_at)
 VALUES
     (1, 'photo-labs/1/images/main.jpg', 0, true, NOW(), NOW()),
     (1, 'photo-labs/1/images/interior1.jpg', 1, false, NOW(), NOW()),
