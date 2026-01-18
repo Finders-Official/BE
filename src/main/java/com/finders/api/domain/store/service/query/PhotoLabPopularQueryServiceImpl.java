@@ -37,19 +37,19 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
                 .map(PhotoLab::getId)
                 .toList();
 
-        Map<Long, String> mainImageObjectPathByPhotoLabId = buildMainImageObjectPathMap(photoLabIds);
+        Map<Long, String> mainImageUrlByPhotoLabId = buildMainImageUrlMap(photoLabIds);
         Map<Long, List<String>> tagsByPhotoLabId = buildTagMap(photoLabIds);
 
         return photoLabs.stream()
                 .map(photoLab -> PhotoLabPopularResponse.Card.from(
                         photoLab,
-                        mainImageObjectPathByPhotoLabId.get(photoLab.getId()),
+                        mainImageUrlByPhotoLabId.get(photoLab.getId()),
                         tagsByPhotoLabId.getOrDefault(photoLab.getId(), List.of())
                 ))
                 .toList();
     }
 
-    private Map<Long, String> buildMainImageObjectPathMap(List<Long> photoLabIds) {
+    private Map<Long, String> buildMainImageUrlMap(List<Long> photoLabIds) {
         List<PhotoLabImage> mainImages = photoLabImageRepository.findMainImagesByPhotoLabIds(photoLabIds);
         if (mainImages.isEmpty()) {
             return Collections.emptyMap();
