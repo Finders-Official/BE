@@ -21,6 +21,7 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StoragePath;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
 import java.time.LocalDateTime;
@@ -51,6 +52,7 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
 
     private static final DateTimeFormatter ORDER_DATE_FMT = DateTimeFormatter.ofPattern("yyMMdd");
 
+
     @Override
     public OwnerPhotoResponse.PresignedUrls createScanUploadPresignedUrls(
             Long photoLabId,
@@ -74,18 +76,42 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
         int count = request.count();
         String orderCode = order.getOrderCode();
 
+        // 1) 파일명(UUID) 리스트 생성
+        List<String> fileNames = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            fileNames.add(UUID.randomUUID().toString().replace("-", ""));
+        }
+
+        // 2) bulk presigned url 발급
+        // StoragePath 규칙은 너희 프로젝트에 맞춰 넣어줘야 함.
+        // 예: StoragePath.SCANNED_UPLOAD 같은 enum이 있다고 가정
+        List<StorageResponse.PresignedUrl> presignedUrls =
+                storageService.generateBulkPresignedUrls(
+                        StoragePath.SCANNED_PHOTO,
+                        photoLabId,
+                        fileNames
+                );
+
+        // 3) objectPath 조립 + Item 매핑
         List<OwnerPhotoResponse.Item> items = new ArrayList<>(count);
+
         Long expiresAt = null;
 
-        for (int i = 1; i <= count; i++) {
-            String filename = UUID.randomUUID().toString().replace("-", "");
+        for (int i = 0; i < presignedUrls.size(); i++) {
+            StorageResponse.PresignedUrl p = presignedUrls.get(i);
 
-            String objectPath = String.format("scanned/%d/orders/%s/%s", photoLabId, orderCode, filename);
+            String objectPath = p.objectPath();
 
-            StorageResponse.SignedUrl signed = storageService.getSignedUrl(objectPath, null);
-            if (expiresAt == null) expiresAt = signed.expiresAtEpochSecond();
+            if (objectPath == null || objectPath.isBlank()) {
+                String filename = fileNames.get(i);
+                objectPath = String.format("scanned/%d/orders/%s/%s", photoLabId, orderCode, filename);
+            }
 
-            items.add(OwnerPhotoResponse.Item.of(i, objectPath, signed.url()));
+            if (expiresAt == null) {
+                expiresAt = p.expiresAtEpochSecond();
+            }
+
+            items.add(OwnerPhotoResponse.Item.of(i + 1, objectPath, p.url()));
         }
 
         return OwnerPhotoResponse.PresignedUrls.of(
@@ -96,6 +122,7 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
                 items
         );
     }
+
 
     @Override
     public Long createDevelopmentOrder(
