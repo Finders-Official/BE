@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -47,10 +48,10 @@ public class PostController {
     }
 
     @Operation(summary = "게시물 작성", description = "게시글 등록 API입니다.")
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<Long> createPost(
             @AuthenticationPrincipal AuthUser authUser,
-            @ModelAttribute @Valid PostRequest.CreatePostDTO request
+            @RequestBody @Valid PostRequest.CreatePostDTO request
     ) {
         return ApiResponse.success(SuccessCode.POST_CREATED, postCommandService.createPost(request, authUser.memberId()));
     }
@@ -138,6 +139,7 @@ public class PostController {
     public ApiResponse<PostResponse.PostPreviewListDTO> searchPosts(
             @RequestParam(name = "keyword") String keyword,
             @AuthenticationPrincipal AuthUser authUser,
+            @ParameterObject
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.searchPosts(keyword, authUser.memberId(), pageable));

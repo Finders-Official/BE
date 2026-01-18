@@ -196,7 +196,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         }
 
         List<String> keys = postImages.stream()
-                .map(PostImage::getImageUrl)
+                .map(PostImage::getObjectPath)
                 .toList();
 
         Map<String, StorageResponse.SignedUrl> signedMap = storageService.getSignedUrls(keys, SIGNED_URL_EXPIRY_MINUTES);
