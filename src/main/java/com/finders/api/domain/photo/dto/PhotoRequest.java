@@ -66,22 +66,6 @@ public class PhotoRequest {
             int quantity
     ) { }
 
-    @Builder
-    @Schema(name = "CreatePrintOrderRequest", description = "회원 - 인화 주문 생성 요청(/print-orders)")
-    public record CreatePrintOrder(
-
-            @NotNull Long developmentOrderId,
-            @NotNull ReceiptMethod receiptMethod,
-
-            @NotNull FilmType filmType,
-            @NotNull PrintMethod printMethod,
-            @NotNull PaperType paperType,
-            @NotNull PrintSize size,
-            @NotNull FrameType frameType,
-
-            @NotEmpty List<@Valid SelectedPhoto> photos
-    ) { }
-
     public record DepositReceiptConfirm(
             @NotBlank(message = "objectPath는 필수입니다.")
             String objectPath,
