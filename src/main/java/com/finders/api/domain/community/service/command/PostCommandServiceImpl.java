@@ -60,11 +60,13 @@ public class PostCommandServiceImpl implements PostCommandService {
 
         if (request.images() != null && !request.images().isEmpty()) {
             for (int i = 0; i < request.images().size(); i++) {
-                String url = request.images().get(i);
+                PostRequest.PostImageRequestDTO imageDto = request.images().get(i);
 
                 PostImage postImage = PostImage.builder()
                         .post(post)
-                        .imageUrl(url)
+                        .objectPath(imageDto.objectPath())
+                        .width(imageDto.width())
+                        .height(imageDto.height())
                         .displayOrder(i)
                         .build();
 
