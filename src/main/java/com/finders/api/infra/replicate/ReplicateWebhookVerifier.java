@@ -4,6 +4,7 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
@@ -36,6 +37,9 @@ public class ReplicateWebhookVerifier {
 
     private final ReplicateProperties properties;
 
+    @Value("${spring.profiles.active:local}")
+    private String activeProfile;
+
     /**
      * Webhook 요청 검증
      *
@@ -57,10 +61,14 @@ public class ReplicateWebhookVerifier {
             throw new CustomException(ErrorCode.WEBHOOK_VERIFICATION_FAILED, "webhook-signature 헤더가 없습니다.");
         }
 
-        // 2. Webhook Secret 검증
+        // 2. Webhook Secret 검증 (환경별 처리)
         if (properties.webhookSecret() == null || properties.webhookSecret().isBlank()) {
-            log.warn("[ReplicateWebhookVerifier] Webhook secret이 설정되지 않았습니다. 검증을 건너뜁니다.");
-            return; // 개발 환경에서는 검증 스킵
+            if ("local".equals(activeProfile)) {
+                log.warn("[ReplicateWebhookVerifier] Local 환경: Webhook secret 미설정, 검증 스킵");
+                return;
+            }
+            log.error("[ReplicateWebhookVerifier] Webhook secret이 설정되지 않았습니다. 환경: {}", activeProfile);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "Webhook secret이 설정되지 않았습니다.");
         }
 
         // 3. Timestamp 검증 (Replay Attack 방지)
@@ -154,6 +162,9 @@ public class ReplicateWebhookVerifier {
             // Base64 인코딩 반환
             return Base64.getEncoder().encodeToString(hmacBytes);
 
+        } catch (IllegalArgumentException e) {
+            log.error("[ReplicateWebhookVerifier] Base64 디코딩 실패: {}", e.getMessage());
+            throw new CustomException(ErrorCode.WEBHOOK_VERIFICATION_FAILED, "잘못된 webhook secret 형식입니다.");
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             log.error("[ReplicateWebhookVerifier] HMAC 계산 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.WEBHOOK_VERIFICATION_FAILED, "서명 계산 중 오류가 발생했습니다.");

@@ -19,6 +19,7 @@ import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -31,7 +32,6 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PhotoRestorationService {
 
@@ -42,7 +42,21 @@ public class PhotoRestorationService {
     private final StorageService storageService;
     private final TokenService tokenService;
     private final ReplicateClient replicateClient;
-    private final WebClient webClient;
+    private final WebClient longTimeoutWebClient;
+
+    public PhotoRestorationService(
+            PhotoRestorationRepository restorationRepository,
+            StorageService storageService,
+            TokenService tokenService,
+            ReplicateClient replicateClient,
+            @Qualifier("longTimeoutWebClient") WebClient longTimeoutWebClient
+    ) {
+        this.restorationRepository = restorationRepository;
+        this.storageService = storageService;
+        this.tokenService = tokenService;
+        this.replicateClient = replicateClient;
+        this.longTimeoutWebClient = longTimeoutWebClient;
+    }
 
     /**
      * 복원 요청 생성
@@ -174,12 +188,13 @@ public class PhotoRestorationService {
      * <p>
      * Private 버킷의 복원 완료 이미지를 Public 버킷(temp/)으로 복사하여
      * 커뮤니티 게시글 작성에 사용할 수 있도록 합니다.
+     * <p>
+     * 트랜잭션 없음: DB 변경이 없고 조회 + GCS 작업만 수행
      *
      * @param memberId      회원 ID
      * @param restorationId 복원 ID
      * @return objectPath, width, height 정보
      */
-    @Transactional(readOnly = true)
     public com.finders.api.domain.photo.dto.ShareResponse shareToPublic(Long memberId, Long restorationId) {
         PhotoRestoration restoration = getRestorationById(restorationId);
 
@@ -279,8 +294,8 @@ public class PhotoRestorationService {
         log.info("[PhotoRestorationService.downloadAndStoreResult] Downloading result image: url={}", resultUrl);
 
         try {
-            // 1. Replicate 결과 이미지 다운로드
-            byte[] imageBytes = webClient.get()
+            // 1. Replicate 결과 이미지 다운로드 (120초 타임아웃)
+            byte[] imageBytes = longTimeoutWebClient.get()
                     .uri(resultUrl)
                     .retrieve()
                     .bodyToMono(byte[].class)
