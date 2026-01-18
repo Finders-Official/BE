@@ -163,4 +163,6 @@ public class DevelopmentOrder extends BaseTimeEntity {
     public void updateStatus(DevelopmentOrderStatus status) {
         this.status = status;
     }
+
+    public boolean hasPrintTask() {return this.isPrint;}
 }
