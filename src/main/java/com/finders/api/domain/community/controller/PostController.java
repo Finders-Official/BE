@@ -49,7 +49,7 @@ public class PostController {
 
     @Operation(summary = "게시물 작성", description = "게시글 등록 API입니다.")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResponse<Long> createPost(
+    public ApiResponse<PostResponse.PostDetailResDTO> createPost(
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody @Valid PostRequest.CreatePostDTO request
     ) {
@@ -87,7 +87,7 @@ public class PostController {
 
     @Operation(summary = "게시물 댓글 작성", description = "특정 게시글에 새로운 댓글을 남깁니다.")
     @PostMapping("/{postId}/comments")
-    public ApiResponse<Long> createComment(
+    public ApiResponse<CommentResponse.CommentResDTO> createComment(
             @PathVariable Long postId,
             @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody PostRequest.CreateCommentDTO request
