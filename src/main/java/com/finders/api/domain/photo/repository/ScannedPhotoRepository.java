@@ -29,4 +29,18 @@ public interface ScannedPhotoRepository extends JpaRepository<ScannedPhoto, Long
 
     Slice<ScannedPhoto> findByOrderIdOrderByDisplayOrderAsc(Long orderId, Pageable pageable);
 
+    @Query("""
+        select count(sp.id)
+        from ScannedPhoto sp
+        join sp.order d
+        join d.user u
+        where u.id = :memberId
+          and d.id = :developmentOrderId
+          and sp.id in :photoIds
+    """)
+    long countAccessiblePhotos(
+            @Param("memberId") Long memberId,
+            @Param("developmentOrderId") Long developmentOrderId,
+            @Param("photoIds") List<Long> photoIds
+    );
 }

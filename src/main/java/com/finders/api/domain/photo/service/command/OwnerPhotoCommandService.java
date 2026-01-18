@@ -30,4 +30,27 @@ public interface OwnerPhotoCommandService {
             Long developmentOrderId,
             OwnerPhotoRequest.UpdateDevelopmentOrderStatus request
     );
+
+
+    OwnerPhotoResponse.PrintOrderStatusUpdated startPrinting(
+            Long photoLabId,
+            Long ownerId,
+            Long printOrderId,
+            OwnerPhotoRequest.StartPrinting request
+    );
+
+
+    OwnerPhotoResponse.PrintOrderStatusUpdated registerShipping(
+            Long photoLabId,
+            Long ownerId,
+            Long printOrderId,
+            OwnerPhotoRequest.RegisterShipping request
+    );
+
+    OwnerPhotoResponse.PrintOrderStatusUpdated updatePrintOrderStatus(
+            Long photoLabId,
+            Long ownerId,
+            Long printOrderId,
+            OwnerPhotoRequest.UpdatePrintOrderStatus request
+    );
 }
