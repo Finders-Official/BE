@@ -3,8 +3,9 @@ package com.finders.api.domain.photo.controller;
 import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
 import com.finders.api.domain.photo.dto.ShareResponse;
-import com.finders.api.domain.photo.service.PhotoRestorationService;
-import com.finders.api.domain.photo.service.PhotoRestorationShareService;
+import com.finders.api.domain.photo.service.command.PhotoRestorationCommandService;
+import com.finders.api.domain.photo.service.command.PhotoRestorationShareService;
+import com.finders.api.domain.photo.service.query.PhotoRestorationQueryService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
@@ -34,8 +35,9 @@ import java.util.Arrays;
 @RequestMapping("/restorations")
 public class PhotoRestorationController {
 
-    private final PhotoRestorationService restorationService;
-    private final PhotoRestorationShareService restorationShareService;
+    private final PhotoRestorationCommandService commandService;
+    private final PhotoRestorationQueryService queryService;
+    private final PhotoRestorationShareService shareService;
 
     @Operation(
             summary = "사진 복원 요청",
@@ -65,7 +67,7 @@ public class PhotoRestorationController {
             @AuthenticationPrincipal AuthUser user,
             @RequestBody @Valid RestorationRequest.Create request
     ) {
-        RestorationResponse.Created response = restorationService.createRestoration(user.memberId(), request);
+        RestorationResponse.Created response = commandService.createRestoration(user.memberId(), request);
 
         // Location 헤더 생성: /restorations/{id}
         URI location = ServletUriComponentsBuilder
@@ -85,7 +87,7 @@ public class PhotoRestorationController {
             @AuthenticationPrincipal AuthUser user,
             @PathVariable Long restorationId
     ) {
-        RestorationResponse.Detail response = restorationService.getRestoration(user.memberId(), restorationId);
+        RestorationResponse.Detail response = queryService.getRestoration(user.memberId(), restorationId);
         return ApiResponse.success(SuccessCode.RESTORATION_FOUND, response);
     }
 
@@ -115,7 +117,7 @@ public class PhotoRestorationController {
             @RequestParam(defaultValue = "createdAt,desc") String[] sort
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(parseSortOrders(sort)));
-        Page<RestorationResponse.Summary> response = restorationService.getRestorationHistory(user.memberId(), pageable);
+        Page<RestorationResponse.Summary> response = queryService.getRestorationHistory(user.memberId(), pageable);
         return ApiResponse.ok(response);
     }
 
@@ -144,7 +146,7 @@ public class PhotoRestorationController {
             @PathVariable Long restorationId,
             @RequestBody @Valid RestorationRequest.Feedback request
     ) {
-        restorationService.addFeedback(user.memberId(), restorationId, request);
+        commandService.addFeedback(user.memberId(), restorationId, request);
         return ApiResponse.success(SuccessCode.OK);
     }
 
@@ -183,7 +185,7 @@ public class PhotoRestorationController {
             @AuthenticationPrincipal AuthUser user,
             @PathVariable Long restorationId
     ) {
-        ShareResponse response = restorationShareService.shareToPublic(user.memberId(), restorationId);
+        ShareResponse response = shareService.shareToPublic(user.memberId(), restorationId);
 
         // X-Public-Image-URL 헤더: 공유된 이미지의 Public URL
         String publicImageUrl = String.format("https://storage.googleapis.com/%s/%s",
