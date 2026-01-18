@@ -149,7 +149,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         for (PhotoLabImage image : images) {
             Long photoLabId = image.getPhotoLab().getId();
             result.computeIfAbsent(photoLabId, key -> new java.util.ArrayList<>())
-                    .add(storageService.getPublicUrl(image.getImageUrl()));
+                    .add(image.getObjectPath());
         }
         return result;
     }
