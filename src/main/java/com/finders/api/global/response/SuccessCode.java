@@ -98,7 +98,7 @@ public enum SuccessCode implements BaseCode {
     // Payment (결제)
     // ========================================
     PAYMENT_PRE_REGISTERED(HttpStatus.CREATED, "PAYMENT_201", "결제가 사전등록되었습니다."),
-    PAYMENT_COMPLETED(HttpStatus.OK, "PAYMENT_201", "결제가 완료되었습니다."),
+    PAYMENT_COMPLETED(HttpStatus.OK, "PAYMENT_200", "결제가 완료되었습니다."),
     PAYMENT_CANCELLED(HttpStatus.OK, "PAYMENT_200", "결제가 취소되었습니다.");
 
     private final HttpStatus status;
