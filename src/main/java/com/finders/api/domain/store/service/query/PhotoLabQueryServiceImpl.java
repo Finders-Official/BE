@@ -253,7 +253,6 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         List<PhotoLabResponse.PhotoLabSearchDTO> dtos = searchResults.stream()
                 .map(result -> {
-                    PhotoLab lab = result.getPhotoLab();
                     String distanceStr = null;
 
                     if (request.locationAgreed() && result.getDistanceVal() != null) {
@@ -261,7 +260,13 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                         distanceStr = String.format(DISTANCE_FORMAT_KM, distanceKm);
                     }
 
-                    return PhotoLabResponse.PhotoLabSearchDTO.from(lab, distanceStr, request.locationAgreed());
+                    return PhotoLabResponse.PhotoLabSearchDTO.from(
+                            result.getId(),
+                            result.getName(),
+                            result.getAddress(),
+                            distanceStr,
+                            request.locationAgreed()
+                    );
                 })
                 .toList();
 
