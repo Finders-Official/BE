@@ -134,7 +134,7 @@ public class PrintOrder extends BaseTimeEntity {
     ) {
         // 이미 제출된 경우 방어
         if (this.status != PrintOrderStatus.PENDING) {
-            throw new CustomException(ErrorCode.BAD_REQUEST,"입금 캡처를 제출할 수 없는 상태입니다.");
+            throw new CustomException(ErrorCode.PHOTO_PRINT_ORDER_STATUS_INVALID);
         }
 
         this.depositReceiptObjectPath = depositReceiptObjectPath;
