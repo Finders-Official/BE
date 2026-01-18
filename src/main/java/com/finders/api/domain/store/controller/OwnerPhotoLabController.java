@@ -45,7 +45,6 @@ public class OwnerPhotoLabController {
                 photoLabService.createPhotoLab(owner.memberId(), request)
         );
     }
-
     @Operation(summary = "현상소 이미지 업로드 presigned url 발급")
     @PreAuthorize("hasRole('OWNER')")
     @PostMapping("/image/presigned-url")

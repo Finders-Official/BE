@@ -9,7 +9,7 @@ public class PhotoLabListResponse {
     public record Card(
             Long photoLabId,
             String name,
-            List<String> imageObjectPaths,
+            List<String> imageUrls,
             List<String> tags,
             String address,
             Double distanceKm,
@@ -27,7 +27,7 @@ public class PhotoLabListResponse {
             return Card.builder()
                     .photoLabId(photoLab.getId())
                     .name(photoLab.getName())
-                    .imageObjectPaths(imageObjectPaths)
+                    .imageUrls(imageObjectPaths)
                     .tags(tags)
                     .address(photoLab.getAddress())
                     .distanceKm(distanceKm)

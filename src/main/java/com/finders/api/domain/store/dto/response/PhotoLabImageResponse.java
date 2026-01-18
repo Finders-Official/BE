@@ -9,6 +9,7 @@ public class PhotoLabImageResponse {
     public record Create(
             Long id,
             Long photoLabId,
+            String imageUrl,
             String objectPath,
             Integer displayOrder,
             boolean isMain

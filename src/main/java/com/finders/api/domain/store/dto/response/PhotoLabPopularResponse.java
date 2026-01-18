@@ -9,7 +9,7 @@ public class PhotoLabPopularResponse {
     public record Card(
             Long photoLabId,
             String name,
-            String mainImageObjectPath,
+            String mainImageUrl,
             List<String> tags,
             Integer workCount
     ) {
@@ -21,7 +21,7 @@ public class PhotoLabPopularResponse {
             return Card.builder()
                     .photoLabId(photoLab.getId())
                     .name(photoLab.getName())
-                    .mainImageObjectPath(mainImageObjectPath)
+                    .mainImageUrl(mainImageObjectPath)
                     .tags(tags)
                     .workCount(photoLab.getWorkCount())
                     .build();
