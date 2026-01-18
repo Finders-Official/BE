@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Photo", description = "회원용 현상/스캔/인화 내역 조회 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/photos")
+@RequestMapping("/photos")
 public class PhotoController {
 
     private final PhotoCommandService photoCommandService;
