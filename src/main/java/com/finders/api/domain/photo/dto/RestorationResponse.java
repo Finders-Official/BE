@@ -31,6 +31,8 @@ public class RestorationResponse {
             Long id,
             String originalUrl,
             String restoredUrl,
+            Integer restoredWidth,
+            Integer restoredHeight,
             RestorationStatus status,
             int tokenUsed,
             FeedbackRating feedbackRating,
@@ -43,6 +45,8 @@ public class RestorationResponse {
                     .id(restoration.getId())
                     .originalUrl(originalSignedUrl)
                     .restoredUrl(restoredSignedUrl)
+                    .restoredWidth(restoration.getRestoredWidth())
+                    .restoredHeight(restoration.getRestoredHeight())
                     .status(restoration.getStatus())
                     .tokenUsed(restoration.getTokenUsed())
                     .feedbackRating(restoration.getFeedbackRating())
