@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v2.4.8 | 2026-01-17
+> v3.0.0 | 2026-01-18
 
 ---
 
@@ -95,7 +95,7 @@ photo_lab ─┬─ 1:N ─ photo_lab_image
 
 ```java
 // 회원 (Joined Table 상속)
-MemberType:USER,OWNER,ADMIN  // dtype 컬럼 (discriminator)
+MemberType:USER,OWNER,ADMIN  // role 컬럼 (discriminator)
 MemberStatus:ACTIVE,SUSPENDED,WITHDRAWN
 SocialProvider:KAKAO,APPLE    // User 전용
 DeviceType:IOS,ANDROID,WEB
@@ -158,7 +158,7 @@ TokenHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
 
 ## GCS (Cloud Storage) 규칙
 
-> 이미지/파일 저장소 규칙. DB에는 `storage_key`(경로)만 저장하고, API 응답 시 URL 변환.
+> 이미지/파일 저장소 규칙. DB에는 `object_path`(경로)만 저장하고, API 응답 시 URL 변환.
 
 ### 버킷 구성
 
@@ -172,17 +172,17 @@ TokenHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
 | 테이블                  | 컬럼              | 버킷          | 경로 패턴                                                           |
 |----------------------|-----------------|-------------|-----------------------------------------------------------------|
 | `member`             | `profile_image` | public      | `profiles/{memberId}/{uuid}.{ext}`                              |
-| `photo_lab_image`    | `image_url`     | public      | `photo-labs/{photoLabId}/images/{uuid}.{ext}`                   |
+| `photo_lab_image`    | `object_path`   | public      | `photo-labs/{photoLabId}/images/{uuid}.{ext}`                   |
 | `photo_lab`          | `qr_code_url`   | public      | `photo-labs/{photoLabId}/qr.png`                                |
-| `photo_lab_document` | `file_url`      | **private** | `photo-labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
+| `photo_lab_document` | `object_path`   | **private** | `photo-labs/{photoLabId}/documents/{documentType}/{uuid}.{ext}` |
 | `photo_lab_notice`   | -               | -           | 이미지 없음 (텍스트만)                                                   |
-| `scanned_photo`      | `image_url`     | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}`           |
-| `post_image`         | `image_url`     | public      | `posts/{postId}/{uuid}.{ext}`                                   |
-| `inquiry_image`      | `image_url`     | public      | `inquiries/{inquiryId}/{uuid}.{ext}`                            |
-| `photo_restoration`  | `original_url`  | **private** | `restorations/{memberId}/original/{uuid}.{ext}`                 |
-| `photo_restoration`  | `mask_url`      | **private** | `restorations/{memberId}/mask/{uuid}.{ext}`                     |
-| `photo_restoration`  | `restored_url`  | **private** | `restorations/{memberId}/restored/{uuid}.{ext}`                 |
-| `promotion`          | `image_url`     | public      | `promotions/{promotionId}/{uuid}.{ext}`                         |
+| `scanned_photo`      | `object_path`   | **private** | `temp/orders/{developmentOrderId}/scans/{uuid}.{ext}`           |
+| `post_image`         | `object_path`   | public      | `posts/{postId}/{uuid}.{ext}`                                   |
+| `inquiry_image`      | `object_path`   | public      | `inquiries/{inquiryId}/{uuid}.{ext}`                            |
+| `photo_restoration`  | `original_path` | **private** | `restorations/{memberId}/original/{uuid}.{ext}`                 |
+| `photo_restoration`  | `mask_path`     | **private** | `restorations/{memberId}/mask/{uuid}.{ext}`                     |
+| `photo_restoration`  | `restored_path` | **private** | `restorations/{memberId}/restored/{uuid}.{ext}`                 |
+| `promotion`          | `object_path`   | public      | `promotions/{promotionId}/{uuid}.{ext}`                         |
 
 ### 자동 삭제 (Lifecycle)
 
@@ -241,7 +241,7 @@ CREATE TABLE member
     deleted_at         DATETIME NULL,
     PRIMARY KEY (id),
     INDEX              idx_member_role (role),
-    CONSTRAINT chk_member_dtype CHECK (role IN ('USER', 'OWNER', 'ADMIN')),
+    CONSTRAINT chk_member_role CHECK (role IN ('USER', 'OWNER', 'ADMIN')),
     CONSTRAINT chk_member_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'WITHDRAWN'))
 ) ENGINE=InnoDB COMMENT='회원 Base (Joined Table 상속)';
 
@@ -278,7 +278,7 @@ CREATE TABLE member_admin
 ) ENGINE=InnoDB COMMENT='Admin 전용';
 
 CREATE TABLE social_account
-(                                       -- User(dtype='USER') 전용
+(                                       -- User(role='USER') 전용
     id           BIGINT       NOT NULL AUTO_INCREMENT,
     member_id    BIGINT       NOT NULL, -- FK (User만 연결, Owner/Admin은 소셜 로그인 미사용)
     provider     VARCHAR(20)  NOT NULL, -- KAKAO, APPLE
@@ -434,7 +434,7 @@ CREATE TABLE photo_lab_image
 (                                                      -- 현상소마다 이미지 개수가 여러 개이므로 따로 분리
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     photo_lab_id  BIGINT       NOT NULL,               -- FK
-    image_url     VARCHAR(500) NOT NULL,               -- GCP Cloud Storage
+    object_path   VARCHAR(500) NOT NULL,               -- GCS object path (예: photo-labs/123/images/abc.jpg)
     display_order INT          NOT NULL DEFAULT 0,
     is_main       BOOLEAN      NOT NULL DEFAULT FALSE, -- 대표 이미지 여부
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -510,7 +510,7 @@ CREATE TABLE photo_lab_document
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     photo_lab_id  BIGINT       NOT NULL,
     document_type VARCHAR(30)  NOT NULL, -- BUSINESS_LICENSE, BUSINESS_PERMIT
-    file_url      VARCHAR(500) NOT NULL, -- GCP Cloud Storage에 documents/{photo_lab_id}/business-license/{document_id}_{number}.pdf 의 이름으로 저장해야할 듯
+    object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: photo-labs/123/documents/BUSINESS_LICENSE/abc.pdf)
     -- 파일의 버전관리가 필요하다. 관리자 입장에서 생각해보면, approved, rejeceted, pending
     file_name     VARCHAR(200) NULL,
     verified_at   DATETIME NULL,         -- 검증 완료 일시
@@ -617,7 +617,7 @@ CREATE TABLE scanned_photo
 (                                        -- 1:N 관계
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     order_id      BIGINT       NOT NULL, -- FK development_order
-    image_url     VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: temp/orders/123/scans/abc.jpg)
     file_name     VARCHAR(200) NULL,
     display_order INT          NOT NULL DEFAULT 0,
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -701,9 +701,9 @@ CREATE TABLE photo_restoration
 (                                                                    -- Replicate AI 사용
     id                      BIGINT       NOT NULL AUTO_INCREMENT,
     member_id               BIGINT       NOT NULL,
-    original_url            VARCHAR(500) NOT NULL,                   -- 원본 이미지
-    mask_url                VARCHAR(500) NOT NULL,                   -- 마스크 이미지 (프론트에서 전송)
-    restored_url            VARCHAR(500) NULL,                       -- 복원된 이미지
+    original_path           VARCHAR(500) NOT NULL,                   -- 원본 이미지 GCS 경로
+    mask_path               VARCHAR(500) NOT NULL,                   -- 마스크 이미지 GCS 경로 (프론트에서 전송)
+    restored_path           VARCHAR(500) NULL,                       -- 복원된 이미지 GCS 경로
     status                  VARCHAR(20)  NOT NULL DEFAULT 'PENDING', -- PENDING, PROCESSING, COMPLETED, FAILED
     replicate_prediction_id VARCHAR(100) NULL,                       -- Replicate API prediction ID (webhook 매칭용)
     -- 토큰 관련
@@ -760,7 +760,7 @@ CREATE TABLE post_image
 (                                        -- 1:N
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     post_id       BIGINT       NOT NULL, -- FK
-    image_url     VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: posts/123/abc.jpg)
     display_order INT          NOT NULL DEFAULT 0,
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -823,7 +823,7 @@ CREATE TABLE inquiry_image
 (                                        -- 문의 첨부 이미지 (최대 5개)
     id            BIGINT       NOT NULL AUTO_INCREMENT,
     inquiry_id    BIGINT       NOT NULL, -- FK
-    image_url     VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    object_path   VARCHAR(500) NOT NULL, -- GCS object path (예: inquiries/123/abc.jpg)
     display_order INT          NOT NULL DEFAULT 0,
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -871,7 +871,7 @@ CREATE TABLE promotion
     photo_lab_id   BIGINT       NOT NULL,
     title          VARCHAR(200) NOT NULL,
     description    VARCHAR(500) NULL,
-    image_url      VARCHAR(500) NOT NULL, -- GCP Cloud Storage
+    object_path    VARCHAR(500) NOT NULL, -- GCS object path (예: promotions/123/abc.jpg)
     promotion_type VARCHAR(20)  NOT NULL DEFAULT 'BANNER',
     display_order  INT          NOT NULL DEFAULT 0,
     start_date     DATETIME     NOT NULL,
@@ -986,55 +986,10 @@ CREATE TABLE payment
 
 ## 변경 이력
 
-| 버전    | 날짜         | 변경 내용                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-|-------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.0.0 | 2025-12-22 | 최초 작성 (27개 테이블)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 1.1.0 | 2025-12-22 | notification, post_hashtag 추가, CHECK 제약 추가, 인덱스 최적화                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 1.2.0 | 2025-12-23 | member_agreement, photo_lab_document, photo_restoration, payment 테이블 추가, post.rating, print_order_item.print_method 컬럼 추가 (33개 테이블)                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 1.2.1 | 2025-12-23 | photo_lab_option → photo_lab_service, reservation_option → reservation_item 테이블명 변경, OptionType → ServiceType Enum명 변경                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| 1.2.2 | 2025-12-23 | 이미지 테이블 정리: thumbnail_url 제거, width/height 추가 (photo_lab_image, scanned_photo, post_image)                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 1.2.3 | 2025-12-23 | promotion, film_content에 width/height 추가, film_content.thumbnail_url → image_url 변경                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 1.2.4 | 2025-12-23 | NoticeType에 POLICY 추가 (일반공지, 이벤트안내, 약관/정책공지)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| 1.2.5 | 2025-12-24 | post_hashtag 테이블 제거 (화면설계서 미사용) (32개 테이블)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 1.2.6 | 2025-12-24 | payment 테이블 리팩토링: 계좌이체 전용(depositor_name), 포트원 연동 대비(pg_tid, receipt_url), 취소 관련(cancelled_at, cancel_reason) 컬럼 추가                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 1.3.0 | 2025-12-24 | **AI 토큰 시스템 추가**: token_history 테이블 신규, member에 token_balance/last_token_refresh_at 추가, photo_restoration에 token_used/feedback_rating/feedback_comment/mask_data 추가, payment에 포트원 필드(merchant_uid, imp_uid, token_amount, fail_reason) 추가 및 TOKEN_PURCHASE 지원 (33개 테이블)                                                                                                                                                                                                                                                                   |
-| 1.3.1 | 2025-12-24 | inquiry_reply.admin_id → replier_id 변경 (ADMIN/OWNER 모두 답변 가능하도록)                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| 1.3.2 | 2025-12-24 | comment 테이블에서 대댓글 기능 제거 (parent_id, idx_comment_parent, fk_comment_parent 삭제)                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| 1.3.3 | 2025-12-24 | favorite_post 테이블 제거 (좋아요한 게시글은 post_like로 조회) (32개 테이블)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| 1.3.4 | 2025-12-27 | 모든 TINYINT(1) → BOOLEAN 타입으로 변경 (is_default, is_agreed, is_delivery_available, is_main, is_active, is_closed, is_available, is_pinned, is_featured, is_read)                                                                                                                                                                                                                                                                                                                                                                              |
-| 1.4.0 | 2025-12-27 | **스키마 대폭 정리**: social_account에서 토큰 컬럼 제거, reservation_item 테이블 제거, reservation.total_price 제거, post에 is_self_developed 추가 및 rating/view_count 제거, 모든 이미지 테이블에서 width/height 제거 (31개 테이블)                                                                                                                                                                                                                                                                                                                                                  |
-| 1.4.1 | 2025-12-27 | day_of_week TINYINT → VARCHAR + CHECK 변경, development_order.scan_progress 제거 (scanned_photo COUNT로 계산)                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| 1.4.2 | 2025-12-27 | 오류 수정: member_address FK 누락, photo_lab_bank_account 인덱스 오류, 주석 정리                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| 1.5.0 | 2025-12-28 | **photo_lab_service 테이블 제거**, reservation에 is_develop/is_scan/is_print 컬럼 추가 (작업 내용 다중 선택), ServiceType Enum 제거 (30개 테이블)                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 1.5.1 | 2025-12-28 | post 테이블에 lab_review 컬럼 추가 (현상소 이용 시 한줄 리뷰)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| 1.5.2 | 2025-12-28 | promotion 테이블: link_url 제거, photo_lab_id NOT NULL로 변경 (프로모션은 항상 현상소 상세로 연결)                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| 1.6.0 | 2025-12-28 | **포트원 결제 전환**: photo_lab_bank_account 테이블 제거, payment에서 depositor_name 제거, PaymentMethod를 CARD/EASY_PAY로 변경 (29개 테이블)                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| 1.7.0 | 2025-12-28 | **현장 주문 지원**: photo_lab에 qr_code_url 추가, development_order.reservation_id NULL 허용 + photo_lab_id 추가, print_order.dev_order_id NULL 허용 + photo_lab_id 추가 (예약/현상 없이 주문 가능)                                                                                                                                                                                                                                                                                                                                                                  |
-| 1.8.0 | 2025-12-28 | **스키마 검토 및 정리**: ERD 관계도 현장 주문 반영, comment.status CHECK 추가, promotion.promotion_type CHECK 추가 (BANNER/POPUP/EVENT), print_order_item CHECK 추가 (paper_type/print_method/process), post/inquiry에 photo_lab_id 인덱스 추가                                                                                                                                                                                                                                                                                                                        |
-| 1.9.0 | 2025-12-28 | **결제 시스템 정리**: development_order에 total_price 추가 (가격 스냅샷), OrderType에서 RESERVATION→DEVELOPMENT_ORDER 변경, PaymentMethod에 ON_SITE 추가 (현장결제)                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 1.9.1 | 2025-12-28 | payment 테이블에 chk_payment_data CHECK 추가 (TOKEN_PURCHASE↔token_amount, 주문↔order_id 필수 관계 강제)                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 1.9.2 | 2025-12-28 | post 테이블에 chk_post_lab_required CHECK 추가 (자가현상↔photo_lab_id 일관성 강제)                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 1.9.3 | 2025-12-28 | payment 테이블에 pg_provider 컬럼 추가 (PG사 정보 기록: kakao, tosspay, kcp 등)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| 2.0.0 | 2025-12-30 | **약관 버전관리 및 FCM 지원**: `terms` 테이블 추가 (약관 버전 관리), `member_agreement`에 `terms_id` FK 추가, `member_device` 테이블 추가 (FCM 토큰), `DeviceType` Enum 추가, ERD 관계도에 Owner-PhotoLab 1:N 관계 명시 (31개 테이블)                                                                                                                                                                                                                                                                                                                                                 |
-| 2.1.0 | 2025-12-31 | **Member Joined Table 상속 적용**: `member` Base 테이블 + `member_user`/`member_owner`/`member_admin` 자식 테이블 분리, `member.role` → `dtype` 변경 (JPA Discriminator), `refresh_token` 컬럼 추가 (공통), User 전용 필드(`token_balance`, `last_token_refresh_at`) → `member_user`로 이동, Owner 전용 필드(`bank_*`, `business_number`) → `member_owner`로 이동, `photo_lab.business_number` 제거, `social_account`/`member_address`/`token_history`는 User 전용 명시 (34개 테이블)                                                                                                    |
-| 2.2.0 | 2025-12-31 | **토스 페이먼츠 전환**: 포트원 필드 제거(`merchant_uid`, `imp_uid`, `pg_provider`, `payment_method`), 토스 필드 추가(`payment_key`, `last_transaction_key`, `order_id`, `order_name`, `method`, `easy_pay_provider`, `approve_no`, `card_company`, `card_number`, `installment_months`, `balance_amount`, `expires_at`, `fail_code`, `fail_message`, `cancel_amount`), `order_id` BIGINT → `related_order_id`로 변경, `PaymentStatus` 토스 표준으로 변경(READY/IN_PROGRESS/WAITING_FOR_DEPOSIT/DONE/CANCELED/PARTIAL_CANCELED/ABORTED/EXPIRED), `EasyPayProvider` Enum 추가 |
-| 2.2.1 | 2025-12-31 | `photo_lab` 테이블에 `max_reservations_per_hour` 컬럼 추가 (시간당 최대 예약 수, 기본값 3, Owner 조정 가능)                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| 2.2.2 | 2026-01-01 | **Owner/Admin 로그인 지원**: `member_owner`, `member_admin`에 `password_hash` 컬럼 추가 (이메일/비밀번호 로그인), `social_account`에 `idx_social_member` 인덱스 추가                                                                                                                                                                                                                                                                                                                                                                                                |
-| 2.2.3 | 2026-01-01 | `film_content` 테이블 삭제 (프론트엔드 하드코딩으로 대체) (33개 테이블)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| 2.2.4 | 2026-01-01 | **GCS 스토리지 규칙 문서화**: 버킷 구성(public/private), 테이블별 경로 규칙, 임시 업로드 Lifecycle 정책, API 응답 처리 방식 추가                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| 2.2.5 | 2026-01-03 | `photo_lab` 테이블에 `rating` 칼럼 삭제, `work_count` 칼럼 추가 (작업 총 횟수, 월간 작업 횟수에 사용, 기본값 0)                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| 2.2.6 | 2026-01-03 | `scanned_photo` 경로 변경: `orders/` → `temp/orders/` (30일 자동 삭제 통합 관리), Lifecycle 섹션 보강                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| 2.2.7 | 2026-01-04 | `DayOfWeek` enum 삭제, java.time.DayOfTime 으로 대체.(MONDAY, TUESDAY, WEDNESDAY,THURSDAY, FRIDAY, SATURDAY, SUNDAY)                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| 2.2.8 | 2026-01-05 | `member` 테이블에서 `nickname` 컬럼명 `name`으로 변경, `refresh_token_hash로` 컬럼명 변경(해시 저장), `member_user`에 `nickname` 컬럼 추가, `member_address` 테이블에서 현재 필요하지 않은 `recipient_name`, `phone` 컬럼 nullable로 변경(불필요 시 추후 삭제 예정)                                                                                                                                                                                                                                                                                                                              |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 2.2.9 | 2026-01-05 | `terms` 타입 SERVICE, PRIVACY, LOCATION, NOTIFICATION으로 재정의                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 2.3.0 | 2026-01-06 | **AI 사진 복원 스키마 보완**: `photo_restoration` 테이블에 `replicate_prediction_id`, `error_message` 컬럼 추가, GCS 경로 규칙에 `mask_url` 추가, 토큰 차감 시점 변경 (요청 시 → 복원 완료 시)                                                                                                                                                                                                                                                                                                                                                                                    |
-| 2.3.1 | 2026-01-06 | photo_lab_business_hour.day_of_week VARCHAR(3) → VARCHAR(10) 변경 (java.time.DayOfWeek 수용)                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| 2.4.0 | 2026-01-06 | **포트원 V2 결제 전환**: 토스 페이먼츠에서 포트원 V2로 전환, `PaymentStatus` 변경(READY/PENDING/VIRTUAL_ACCOUNT_ISSUED/PAID/FAILED/PARTIAL_CANCELLED/CANCELLED), `PaymentMethod` 영문 코드로 변경(CARD/TRANSFER/VIRTUAL_ACCOUNT/GIFT_CERTIFICATE/MOBILE/EASY_PAY), `EasyPayProvider` → `PgProvider`로 변경, payment 테이블 필드 재설계(`order_id` → `payment_id`, `payment_key` → `transaction_id`, `pg_tx_id` 추가, `approved_at` → `paid_at`)                                                                                                                                      |
-| 2.4.1 | 2026-01-07 | **예약 슬롯 엔티티 추가**: `reservation_slot` 테이블 신규 도입. 현상소(`photo_lab`) + 날짜 + 시간 단위의 예약 정원(`max_capacity`, `reserved_count`)을 관리하도록 구조 분리. 동시 예약 시 정원 초과를 방지하기 위해 슬롯 단위 락 기반 처리 적용.                                                                                                                                                                                                                                                                                                                                                             |
-| 2.4.2 | 2026-01-08 | `member` 테이블의 `dtype` 컬럼명 `role`로 수정, `social_account` 테이블에 email 컬럼 추가                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| 2.4.3 | 2026-01-08 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 2.4.4 | 2026-01-12 | `region` table (sido/sigungu) 추가 및 `photo_lab.region_id` FK 참조 설정                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-| 2.4.5 | 2026-01-15 | `member` 테이블의 `profile_image` 컬럼 `member_user` 테이블로 이동 및 `role` 관련 제약 조건 알맞게 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 2.4.6 | 2026-01-15 | `tag` 테이블 추가 및 keyword -> tag 로 명칭 수정                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| 2.4.7 | 2026-01-15 | `favorite_photo_lab` 도메인 위치 변경 community -> member                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| 2.4.8 | 2026-01-17 | **문의 이미지 첨부 기능 추가**: `inquiry_image` 테이블 신규 (최대 5개), `Inquiry` 엔티티에 images 관계 추가, GCS 경로 규칙 추가 (`inquiries/{inquiryId}/{uuid}.{ext}`) (35개 테이블)                                                                                                                                                                                                                                                                                                                                                                                      |
+| 버전  | 날짜       | 변경 내용 |
+|-------|-----------|----------|
+| **3.0.0** | **2026-01-18** | 버전 체계 재정비: 이전 변경 이력 아카이빙 (Git 히스토리 참조), 현재 스키마 기준 메이저 버전 설정 (35개 테이블) |
+
+---
+
+**참고**: v2.5.1 이전 변경 이력은 Git 커밋 히스토리에서 확인 가능합니다.

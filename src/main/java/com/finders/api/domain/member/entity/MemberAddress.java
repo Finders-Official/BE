@@ -4,8 +4,10 @@ package com.finders.api.domain.member.entity;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "member_address", indexes = {
@@ -13,6 +15,7 @@ import lombok.NoArgsConstructor;
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("deleted_at IS NULL")   // 삭제되지 않은 데이터만 조회 대상
 public class MemberAddress extends BaseEntity {
 
     @Id
@@ -21,16 +24,10 @@ public class MemberAddress extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    private MemberUser user;
 
     @Column(name = "address_name", nullable = false, length = 50)
     private String addressName;
-
-    @Column(name = "recipient_name", length = 50)
-    private String recipientName;
-
-    @Column(length = 20)
-    private String phone;
 
     @Column(nullable = false, length = 10)
     private String zipcode;
@@ -43,4 +40,19 @@ public class MemberAddress extends BaseEntity {
 
     @Column(name = "is_default", nullable = false)
     private boolean isDefault;
+
+    @Builder
+    private MemberAddress(MemberUser user, String addressName, String zipcode,
+                         String address, String addressDetail, boolean isDefault) {
+        this.user = user;
+        this.addressName = addressName;
+        this.zipcode = zipcode;
+        this.address = address;
+        this.addressDetail = addressDetail;
+        this.isDefault = isDefault;
+    }
+
+    public void updateIsDefault(boolean isDefault) {
+        this.isDefault = isDefault;
+    }
 }

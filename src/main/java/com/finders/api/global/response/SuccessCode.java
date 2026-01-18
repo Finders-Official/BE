@@ -40,6 +40,9 @@ public enum SuccessCode implements BaseCode {
     MEMBER_DELETED(HttpStatus.OK, "MEMBER_202", "회원 탈퇴가 완료되었습니다."),
     MEMBER_ME_FOUND(HttpStatus.OK, "MEMBER_203", "내 정보 조회에 성공했습니다."),
 
+    // 주소
+    MEMBER_ADDRESS_CREATED(HttpStatus.CREATED, "ADDRESS_210", "배송지가 등록되었습니다."),
+
     // ========================================
     // Store (현상소)
     // ========================================
@@ -82,6 +85,7 @@ public enum SuccessCode implements BaseCode {
     // ========================================
     STORAGE_UPLOADED(HttpStatus.CREATED, "STORAGE_201", "파일이 업로드되었습니다."),
     STORAGE_DELETED(HttpStatus.OK, "STORAGE_200", "파일이 삭제되었습니다."),
+    STORAGE_UPLOAD_URL_ISSUED(HttpStatus.OK, "FILE_200", "파일 업로드 URL이 발급되었습니다.");
 
     // ========================================
     // Inquiry (문의)
