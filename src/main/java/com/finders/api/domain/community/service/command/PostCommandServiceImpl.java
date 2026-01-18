@@ -1,6 +1,7 @@
 package com.finders.api.domain.community.service.command;
 
 import com.finders.api.domain.community.dto.request.PostRequest;
+import com.finders.api.domain.community.dto.response.PostResponse;
 import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.entity.PostImage;
 import com.finders.api.domain.community.enums.CommunityStatus;
@@ -12,9 +13,13 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +33,10 @@ public class PostCommandServiceImpl implements PostCommandService {
 
     private static final int MIN_REVIEW_LENGTH = 20;
     private static final int MAX_REVIEW_LENGTH = 300;
+    private final StorageService storageService;
 
     @Override
-    public Long createPost(PostRequest.CreatePostDTO request, Long memberId) {
+    public PostResponse.PostDetailResDTO createPost(PostRequest.CreatePostDTO request, Long memberId) {
         MemberUser memberUser = memberUserRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -58,6 +64,7 @@ public class PostCommandServiceImpl implements PostCommandService {
         Post post = Post.toEntity(request, memberUser, photoLab);
         post = postRepository.save(post);
 
+        List<PostResponse.PostImageResDTO> imageResDTOs = new ArrayList<>();
         if (request.images() != null && !request.images().isEmpty()) {
             for (int i = 0; i < request.images().size(); i++) {
                 PostRequest.PostImageRequestDTO imageDto = request.images().get(i);
@@ -71,10 +78,17 @@ public class PostCommandServiceImpl implements PostCommandService {
                         .build();
 
                 postImageRepository.save(postImage);
+
+                String fullImageUrl = storageService.getPublicUrl(postImage.getObjectPath());
+                imageResDTOs.add(PostResponse.PostImageResDTO.from(postImage, fullImageUrl));
             }
         }
 
-        return post.getId();
+        String profileUrl = java.util.Optional.ofNullable(memberUser.getProfileImage())
+                .map(storageService::getPublicUrl)
+                .orElse(null);
+
+        return PostResponse.PostDetailResDTO.from(post, false, true, profileUrl, imageResDTOs);
     }
 
     @Override

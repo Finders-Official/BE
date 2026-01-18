@@ -1,6 +1,7 @@
 package com.finders.api.domain.community.service.command;
 
 import com.finders.api.domain.community.dto.request.PostRequest;
+import com.finders.api.domain.community.dto.response.CommentResponse;
 import com.finders.api.domain.community.entity.Comment;
 import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.enums.CommunityStatus;
@@ -10,6 +11,7 @@ import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +24,10 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final MemberUserRepository memberUserRepository;
+    private final StorageService storageService;
 
     @Override
-    public Long createComment(Long postId, PostRequest.CreateCommentDTO request, Long memberId) {
+    public CommentResponse.CommentResDTO createComment(Long postId, PostRequest.CreateCommentDTO request, Long memberId) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -32,10 +35,15 @@ public class CommentCommandServiceImpl implements CommentCommandService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Comment comment = Comment.toEntity(request.content(), post, memberUser);
-
         post.increaseCommentCount();
 
-        return commentRepository.save(comment).getId();
+        Comment savedComment = commentRepository.save(comment);
+
+        String profileUrl = java.util.Optional.ofNullable(memberUser.getProfileImage())
+                .map(storageService::getPublicUrl)
+                .orElse(null);
+
+        return CommentResponse.CommentResDTO.from(savedComment, memberId, profileUrl);
     }
 
     @Override
