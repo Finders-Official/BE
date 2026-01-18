@@ -1,5 +1,6 @@
 package com.finders.api.domain.store.dto.request;
 
+import com.finders.api.domain.store.enums.DocumentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -58,5 +59,33 @@ public class PhotoLabRequest {
 
             @Schema(description = "위치 정보 활용 동의 여부")
             boolean locationAgreed
+    ) {}
+
+    public record CreateImagePresignedUrl(
+            @NotBlank(message = "fileName은 필수입니다.")
+            String fileName
+    ) {}
+
+    public record RegisterImage(
+            @NotBlank(message = "objectPath는 필수입니다.")
+            String objectPath,
+            Integer displayOrder,
+            Boolean isMain
+    ) {}
+
+    public record CreateDocumentPresignedUrl(
+            @NotNull(message = "documentType은 필수입니다.")
+            DocumentType documentType,
+            @NotBlank(message = "fileName은 필수입니다.")
+            String fileName
+    ) {}
+
+    public record RegisterDocument(
+            @NotNull(message = "documentType은 필수입니다.")
+            DocumentType documentType,
+            @NotBlank(message = "objectPath는 필수입니다.")
+            String objectPath,
+            @NotBlank(message = "fileName은 필수입니다.")
+            String fileName
     ) {}
 }

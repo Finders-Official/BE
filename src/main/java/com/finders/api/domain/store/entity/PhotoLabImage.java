@@ -23,8 +23,8 @@ public class PhotoLabImage extends BaseTimeEntity {
     @JoinColumn(name = "photo_lab_id", nullable = false)
     private PhotoLab photoLab;
 
-    @Column(name = "image_url", nullable = false, length = 500)
-    private String imageUrl;
+    @Column(name = "object_path", nullable = false, length = 500)
+    private String objectPath;
 
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder = 0;
@@ -35,12 +35,12 @@ public class PhotoLabImage extends BaseTimeEntity {
     @Builder
     private PhotoLabImage(
             PhotoLab photoLab,
-            String imageUrl,
+            String objectPath,
             Integer displayOrder,
             Boolean isMain
     ) {
         this.photoLab = photoLab;
-        this.imageUrl = imageUrl;
+        this.objectPath = objectPath;
         this.displayOrder = displayOrder != null ? displayOrder : 0;
         this.isMain = isMain != null && isMain;
     }

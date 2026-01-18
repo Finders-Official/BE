@@ -14,12 +14,11 @@ public class PhotoLabImageResponse {
             Integer displayOrder,
             boolean isMain
     ) {
-        public static Create from(PhotoLabImage image, String imageUrl) {
+        public static Create from(PhotoLabImage image) {
             return Create.builder()
                     .id(image.getId())
                     .photoLabId(image.getPhotoLab().getId())
-                    .imageUrl(imageUrl)
-                    .objectPath(image.getImageUrl())
+                    .objectPath(image.getObjectPath())
                     .displayOrder(image.getDisplayOrder())
                     .isMain(image.isMain())
                     .build();
