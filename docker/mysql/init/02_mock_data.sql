@@ -100,13 +100,13 @@ VALUES
 
 -- 4-1. USER (5명)
 -- member 테이블에 먼저 INSERT
-INSERT INTO member (role, name, email, phone, status, refresh_token_hash)
+INSERT INTO member (role, name, email, phone, status, refresh_token_hash, created_at, updated_at)
 VALUES
-    ('USER', '김철수', 'user1@test.com', '010-1111-1111', 'ACTIVE', NULL),  -- ID 1
-    ('USER', '이영희', 'user2@test.com', '010-2222-2222', 'ACTIVE', NULL),  -- ID 2
-    ('USER', '박민수', 'user3@test.com', '010-3333-3333', 'ACTIVE', NULL),  -- ID 3
-    ('USER', '최지현', 'user4@test.com', '010-4444-4444', 'ACTIVE', NULL),  -- ID 4
-    ('USER', '정다은', 'user5@test.com', '010-5555-5555', 'ACTIVE', NULL);  -- ID 5
+    ('USER', '김철수', 'user1@test.com', '010-1111-1111', 'ACTIVE', NULL, NOW(), NOW()),  -- ID 1
+    ('USER', '이영희', 'user2@test.com', '010-2222-2222', 'ACTIVE', NULL, NOW(), NOW()),  -- ID 2
+    ('USER', '박민수', 'user3@test.com', '010-3333-3333', 'ACTIVE', NULL, NOW(), NOW()),  -- ID 3
+    ('USER', '최지현', 'user4@test.com', '010-4444-4444', 'ACTIVE', NULL, NOW(), NOW()),  -- ID 4
+    ('USER', '정다은', 'user5@test.com', '010-5555-5555', 'ACTIVE', NULL, NOW(), NOW());  -- ID 5
 
 -- member_user 테이블에 INSERT (created_at, updated_at 없음!)
 INSERT INTO member_user (member_id, nickname, profile_image, token_balance, last_token_refresh_at)
@@ -118,11 +118,11 @@ VALUES
     (5, '다은이', 'profiles/5/profile.jpg', 10, NOW());
 
 -- 4-2. OWNER (3명)
-INSERT INTO member (role, name, email, phone, status, refresh_token_hash)
+INSERT INTO member (role, name, email, phone, status, refresh_token_hash, created_at, updated_at)
 VALUES
-    ('OWNER', '홍길동', 'owner1@test.com', '010-6666-6666', 'ACTIVE', NULL),  -- ID 6
-    ('OWNER', '김상현', 'owner2@test.com', '010-7777-7777', 'ACTIVE', NULL),  -- ID 7
-    ('OWNER', '박서준', 'owner3@test.com', '010-8888-8888', 'ACTIVE', NULL);  -- ID 8
+    ('OWNER', '홍길동', 'owner1@test.com', '010-6666-6666', 'ACTIVE', NULL, NOW(), NOW()),  -- ID 6
+    ('OWNER', '김상현', 'owner2@test.com', '010-7777-7777', 'ACTIVE', NULL, NOW(), NOW()),  -- ID 7
+    ('OWNER', '박서준', 'owner3@test.com', '010-8888-8888', 'ACTIVE', NULL, NOW(), NOW());  -- ID 8
 
 -- member_owner 테이블에 INSERT (created_at, updated_at 없음!)
 INSERT INTO member_owner (member_id, password_hash, business_number, bank_name, bank_account_number, bank_account_holder)
@@ -132,9 +132,9 @@ VALUES
     (8, '$2a$10$dummyhash3', '345-67-89012', '우리은행', '345678901234', '박서준');
 
 -- 4-3. ADMIN (1명)
-INSERT INTO member (role, name, email, phone, status, refresh_token_hash)
+INSERT INTO member (role, name, email, phone, status, refresh_token_hash, created_at, updated_at)
 VALUES
-    ('ADMIN', '관리자', 'admin@finders.com', '010-9999-9999', 'ACTIVE', NULL);  -- ID 9
+    ('ADMIN', '관리자', 'admin@finders.com', '010-9999-9999', 'ACTIVE', NULL, NOW(), NOW());  -- ID 9
 
 -- member_admin 테이블에 INSERT (created_at, updated_at 없음!)
 INSERT INTO member_admin (member_id, password_hash)
