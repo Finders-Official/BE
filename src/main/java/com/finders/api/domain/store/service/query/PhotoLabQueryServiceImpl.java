@@ -88,14 +88,14 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .map(PhotoLab::getId)
                 .toList();
 
-        Map<Long, List<String>> imageObjectPathsByLabId = buildImageObjectPathMap(photoLabIds);
+        Map<Long, List<String>> imageUrlsByLabId = buildImageUrlMap(photoLabIds);
         Map<Long, List<String>> tagsByLabId = buildTagMap(photoLabIds);
         Set<Long> favoriteLabIds = buildFavoriteSet(condition.memberId(), photoLabIds);
 
         List<PhotoLabListResponse.Card> cards = photoLabPage.getContent().stream()
                 .map(photoLab -> PhotoLabListResponse.Card.from(
                         photoLab,
-                        imageObjectPathsByLabId.getOrDefault(photoLab.getId(), List.of()),
+                        imageUrlsByLabId.getOrDefault(photoLab.getId(), List.of()),
                         tagsByLabId.getOrDefault(photoLab.getId(), List.of()),
                         distanceKmOrNull(condition.lat(), condition.lng(), photoLab),
                         favoriteLabIds.contains(photoLab.getId())
@@ -126,7 +126,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         return PhotoLabDetailResponse.Detail.builder()
                 .photoLabId(photoLab.getId())
                 .name(photoLab.getName())
-                .imageObjectPaths(buildImageObjectPaths(photoLabId))
+                .imageUrls(buildImageUrls(photoLabId))
                 .tags(buildTags(photoLabId))
                 .address(photoLab.getAddress())
                 .addressDetail(photoLab.getAddressDetail())
@@ -139,7 +139,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .build();
     }
 
-    private Map<Long, List<String>> buildImageObjectPathMap(List<Long> photoLabIds) {
+    private Map<Long, List<String>> buildImageUrlMap(List<Long> photoLabIds) {
         List<PhotoLabImage> images = photoLabImageRepository.findByPhotoLabIds(photoLabIds);
         if (images.isEmpty()) {
             return Collections.emptyMap();
@@ -154,9 +154,9 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         return result;
     }
 
-    private List<String> buildImageObjectPaths(Long photoLabId) {
-        Map<Long, List<String>> imageObjectPathMap = buildImageObjectPathMap(List.of(photoLabId));
-        return imageObjectPathMap.getOrDefault(photoLabId, List.of());
+    private List<String> buildImageUrls(Long photoLabId) {
+        Map<Long, List<String>> imageUrlMap = buildImageUrlMap(List.of(photoLabId));
+        return imageUrlMap.getOrDefault(photoLabId, List.of());
     }
 
     private Map<Long, List<String>> buildTagMap(List<Long> photoLabIds) {

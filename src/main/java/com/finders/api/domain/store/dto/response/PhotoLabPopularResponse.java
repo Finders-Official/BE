@@ -15,13 +15,13 @@ public class PhotoLabPopularResponse {
     ) {
         public static Card from(
                 com.finders.api.domain.store.entity.PhotoLab photoLab,
-                String mainImageObjectPath,
+                String mainImageUrl,
                 List<String> tags
         ) {
             return Card.builder()
                     .photoLabId(photoLab.getId())
                     .name(photoLab.getName())
-                    .mainImageUrl(mainImageObjectPath)
+                    .mainImageUrl(mainImageUrl)
                     .tags(tags)
                     .workCount(photoLab.getWorkCount())
                     .build();
