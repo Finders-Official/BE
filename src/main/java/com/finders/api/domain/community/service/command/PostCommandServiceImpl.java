@@ -12,8 +12,6 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
-import com.finders.api.infra.storage.StoragePath;
-import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +24,29 @@ public class PostCommandServiceImpl implements PostCommandService {
     private final PostRepository postRepository;
     private final PhotoLabRepository photoLabRepository;
     private final PostImageRepository postImageRepository;
-    private final StorageService storageService;
     private final MemberUserRepository memberUserRepository;
+
+    private static final int MIN_REVIEW_LENGTH = 20;
+    private static final int MAX_REVIEW_LENGTH = 300;
 
     @Override
     public Long createPost(PostRequest.CreatePostDTO request, Long memberId) {
         MemberUser memberUser = memberUserRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 자가 현상이 아닐 때만 글자 수 체크
+        if (!request.isSelfDeveloped()) {
+            String review = request.reviewContent();
+
+            int trimmedLength = (review != null) ? review.trim().length() : 0;
+
+            if (trimmedLength < MIN_REVIEW_LENGTH) {
+                throw new CustomException(ErrorCode.REVIEW_TOO_SHORT);
+            }
+            if (trimmedLength > MAX_REVIEW_LENGTH) {
+                throw new CustomException(ErrorCode.REVIEW_TOO_LONG);
+            }
+        }
 
         PhotoLab photoLab = null;
 
@@ -46,15 +60,13 @@ public class PostCommandServiceImpl implements PostCommandService {
 
         if (request.images() != null && !request.images().isEmpty()) {
             for (int i = 0; i < request.images().size(); i++) {
-                var uploadResponse = storageService.uploadPublic(
-                        request.images().get(i),
-                        StoragePath.POST_IMAGE,
-                        post.getId()
-                );
+                PostRequest.PostImageRequestDTO imageDto = request.images().get(i);
 
                 PostImage postImage = PostImage.builder()
                         .post(post)
-                        .imageUrl(uploadResponse.objectPath())
+                        .objectPath(imageDto.objectPath())
+                        .width(imageDto.width())
+                        .height(imageDto.height())
                         .displayOrder(i)
                         .build();
 

@@ -20,7 +20,7 @@ import java.util.List;
 import static com.finders.api.domain.reservation.entity.QReservationSlot.reservationSlot;
 import static com.finders.api.domain.store.entity.QPhotoLab.photoLab;
 import static com.finders.api.domain.store.entity.QPhotoLabBusinessHour.photoLabBusinessHour;
-import static com.finders.api.domain.store.entity.QPhotoLabKeyword.photoLabKeyword;
+import static com.finders.api.domain.store.entity.QPhotoLabTag.photoLabTag;
 
 @Repository
 @RequiredArgsConstructor
@@ -30,7 +30,7 @@ public class PhotoLabQueryRepository {
 
     public Page<PhotoLab> search(
             String query,
-            List<Long> keywordIds,
+            List<Long> tagIds,
             Long regionId,
             LocalDate date,
             int page,
@@ -42,7 +42,7 @@ public class PhotoLabQueryRepository {
         BooleanExpression condition = photoLab.status.eq(PhotoLabStatus.ACTIVE)
                 .and(likeQuery(query))
                 .and(inRegion(regionId))
-                .and(hasKeywordIds(keywordIds))
+                .and(hasTagIds(tagIds))
                 .and(isOpenAndReservable(date));
 
         JPAQuery<PhotoLab> contentQuery = queryFactory
@@ -80,15 +80,15 @@ public class PhotoLabQueryRepository {
         return photoLab.region.id.eq(regionId);
     }
 
-    private BooleanExpression hasKeywordIds(List<Long> keywordIds) {
-        if (keywordIds == null || keywordIds.isEmpty()) {
+    private BooleanExpression hasTagIds(List<Long> tagIds) {
+        if (tagIds == null || tagIds.isEmpty()) {
             return null;
         }
         return JPAExpressions
                 .selectOne()
-                .from(photoLabKeyword)
-                .where(photoLabKeyword.photoLab.eq(photoLab)
-                        .and(photoLabKeyword.id.in(keywordIds)))
+                .from(photoLabTag)
+                .where(photoLabTag.photoLab.eq(photoLab)
+                        .and(photoLabTag.tag.id.in(tagIds)))
                 .exists();
     }
 

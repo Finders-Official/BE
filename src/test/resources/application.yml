@@ -45,8 +45,6 @@ oauth2:
 
 google:
   cloud:
-    vision:
-      enabled: false
     project-id: test-project
 
 cors:
