@@ -64,10 +64,10 @@ public class ReplicateWebhookVerifier {
         // 2. Webhook Secret 검증 (환경별 처리)
         if (properties.webhookSecret() == null || properties.webhookSecret().isBlank()) {
             if ("local".equals(activeProfile)) {
-                log.warn("[ReplicateWebhookVerifier] Local 환경: Webhook secret 미설정, 검증 스킵");
+                log.warn("[ReplicateWebhookVerifier.verify] Local 환경: Webhook secret 미설정, 검증 스킵");
                 return;
             }
-            log.error("[ReplicateWebhookVerifier] Webhook secret이 설정되지 않았습니다. 환경: {}", activeProfile);
+            log.error("[ReplicateWebhookVerifier.verify] Webhook secret이 설정되지 않았습니다. 환경: {}", activeProfile);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "Webhook secret이 설정되지 않았습니다.");
         }
 
@@ -77,7 +77,7 @@ public class ReplicateWebhookVerifier {
         // 4. 서명 검증
         verifySignature(webhookId, webhookTimestamp, webhookSignature, requestBody);
 
-        log.debug("[ReplicateWebhookVerifier] Webhook 검증 성공: id={}", webhookId);
+        log.debug("[ReplicateWebhookVerifier.verify] Webhook 검증 성공: id={}", webhookId);
     }
 
     /**
@@ -163,10 +163,10 @@ public class ReplicateWebhookVerifier {
             return Base64.getEncoder().encodeToString(hmacBytes);
 
         } catch (IllegalArgumentException e) {
-            log.error("[ReplicateWebhookVerifier] Base64 디코딩 실패: {}", e.getMessage());
+            log.error("[ReplicateWebhookVerifier.calculateHmacSha256] Base64 디코딩 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.WEBHOOK_VERIFICATION_FAILED, "잘못된 webhook secret 형식입니다.");
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            log.error("[ReplicateWebhookVerifier] HMAC 계산 실패: {}", e.getMessage());
+            log.error("[ReplicateWebhookVerifier.calculateHmacSha256] HMAC 계산 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.WEBHOOK_VERIFICATION_FAILED, "서명 계산 중 오류가 발생했습니다.");
         }
     }

@@ -8,6 +8,7 @@ import com.finders.api.domain.member.enums.TokenRelatedType;
 import com.finders.api.domain.member.service.TokenService;
 import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
+import com.finders.api.domain.photo.dto.ShareResponse;
 import com.finders.api.domain.photo.entity.PhotoRestoration;
 import com.finders.api.domain.photo.repository.PhotoRestorationRepository;
 import com.finders.api.global.exception.CustomException;
@@ -184,7 +185,7 @@ public class PhotoRestorationService {
      * @param restorationId 복원 ID
      * @return objectPath, width, height 정보
      */
-    public com.finders.api.domain.photo.dto.ShareResponse shareToPublic(Long memberId, Long restorationId) {
+    public ShareResponse shareToPublic(Long memberId, Long restorationId) {
         PhotoRestoration restoration = getRestorationById(restorationId);
 
         // 1. 권한 검증
@@ -209,7 +210,7 @@ public class PhotoRestorationService {
                 restorationId, publicObjectPath);
 
         // 4. objectPath + 메타데이터 반환
-        return com.finders.api.domain.photo.dto.ShareResponse.of(
+        return ShareResponse.of(
                 publicObjectPath,
                 restoration.getRestoredWidth(),
                 restoration.getRestoredHeight()
@@ -350,7 +351,7 @@ public class PhotoRestorationService {
             return new ImageDimensions(null, null);
 
         } catch (Exception e) {
-            log.error("[PhotoRestorationService.extractImageDimensions] Failed to extract dimensions: {}", e.getMessage());
+            log.error("[PhotoRestorationService.extractImageDimensions] Failed to extract dimensions: {}", e.getMessage(), e);
             return new ImageDimensions(null, null);
         }
     }
