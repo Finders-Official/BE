@@ -39,9 +39,9 @@ public class CommentCommandServiceImpl implements CommentCommandService {
 
         Comment savedComment = commentRepository.save(comment);
 
-        String profileUrl = java.util.Optional.ofNullable(memberUser.getProfileImage())
-                .map(storageService::getPublicUrl)
-                .orElse(null);
+        String profileUrl = memberUser.getProfileImage() != null
+                ? storageService.getPublicUrl(memberUser.getProfileImage())
+                : null;
 
         return CommentResponse.CommentResDTO.from(savedComment, memberId, profileUrl);
     }
