@@ -28,7 +28,7 @@ public class PhotoLabDocumentService {
     private final PhotoLabDocumentRepository photoLabDocumentRepository;
     private final StorageService storageService;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public StorageResponse.PresignedUrl createDocumentPresignedUrl(
             Long ownerId,
             Long photoLabId,

@@ -11,7 +11,7 @@ public class PhotoLabDocumentResponse {
             Long id,
             Long photoLabId,
             DocumentType documentType,
-            String objectPath,
+            String documentUrl,
             String fileName
     ) {
         public static Create from(PhotoLabDocument document) {
@@ -19,7 +19,7 @@ public class PhotoLabDocumentResponse {
                     .id(document.getId())
                     .photoLabId(document.getPhotoLab().getId())
                     .documentType(document.getDocumentType())
-                    .objectPath(document.getObjectPath())
+                    .documentUrl(document.getObjectPath())
                     .fileName(document.getFileName())
                     .build();
         }
