@@ -9,19 +9,19 @@ public class PhotoLabPopularResponse {
     public record Card(
             Long photoLabId,
             String name,
-            String mainImageUrl,
+            String mainImageObjectPath,
             List<String> tags,
             Integer workCount
     ) {
         public static Card from(
                 com.finders.api.domain.store.entity.PhotoLab photoLab,
-                String mainImageUrl,
+                String mainImageObjectPath,
                 List<String> tags
         ) {
             return Card.builder()
                     .photoLabId(photoLab.getId())
                     .name(photoLab.getName())
-                    .mainImageUrl(mainImageUrl)
+                    .mainImageObjectPath(mainImageObjectPath)
                     .tags(tags)
                     .workCount(photoLab.getWorkCount())
                     .build();

@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+
 
 @Slf4j
 @Service
@@ -27,14 +27,38 @@ public class PhotoLabImageService {
     private final StorageService storageService;
 
     @Transactional
-    public PhotoLabImageResponse.Create uploadImage(
+    public StorageResponse.PresignedUrl createImagePresignedUrl(
             Long ownerId,
             Long photoLabId,
-            MultipartFile file,
+            String fileName
+    ) {
+        log.info("[PhotoLabImageService.createImagePresignedUrl] photoLabId={}", photoLabId);
+
+        PhotoLab photoLab = photoLabRepository.findById(photoLabId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        if (ownerId == null || !photoLab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        validateFileName(fileName);
+
+        return storageService.generatePresignedUrl(
+                StoragePath.LAB_IMAGE,
+                photoLabId,
+                fileName
+        );
+    }
+
+    @Transactional
+    public PhotoLabImageResponse.Create registerImage(
+            Long ownerId,
+            Long photoLabId,
+            String objectPath,
             Integer displayOrder,
             Boolean isMain
     ) {
-        log.info("[PhotoLabImageService.uploadImage] photoLabId={}, displayOrder={}, isMain={}",
+        log.info("[PhotoLabImageService.registerImage] photoLabId={}, displayOrder={}, isMain={}",
                 photoLabId, displayOrder, isMain);
 
         PhotoLab photoLab = photoLabRepository.findById(photoLabId)
@@ -44,16 +68,10 @@ public class PhotoLabImageService {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        validateFile(file);
+        validateImageObjectPath(photoLabId, objectPath);
         validateDisplayOrder(displayOrder);
 
         Integer resolvedDisplayOrder = resolveDisplayOrder(photoLabId, displayOrder);
-
-        StorageResponse.Upload upload = storageService.uploadPublic(
-                file,
-                StoragePath.LAB_IMAGE,
-                photoLabId
-        );
 
         if (Boolean.TRUE.equals(isMain)) {
             photoLabImageRepository.clearMainByPhotoLabId(photoLabId);
@@ -61,32 +79,14 @@ public class PhotoLabImageService {
 
         PhotoLabImage photoLabImage = PhotoLabImage.builder()
                 .photoLab(photoLab)
-                .imageUrl(upload.objectPath())
+                .objectPath(objectPath)
                 .displayOrder(resolvedDisplayOrder)
                 .isMain(isMain)
                 .build();
 
         photoLabImageRepository.save(photoLabImage);
 
-        String publicUrl = upload.url() != null
-                ? upload.url()
-                : storageService.getPublicUrl(photoLabImage.getImageUrl());
-
-        return PhotoLabImageResponse.Create.from(photoLabImage, publicUrl);
-    }
-
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_INPUT, "file is required.");
-        }
-
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new CustomException(
-                    ErrorCode.STORAGE_INVALID_FILE_TYPE,
-                    "Only image/* content types are allowed."
-            );
-        }
+        return PhotoLabImageResponse.Create.from(photoLabImage);
     }
 
     private Integer resolveDisplayOrder(Long photoLabId, Integer displayOrder) {
@@ -101,6 +101,23 @@ public class PhotoLabImageService {
     private void validateDisplayOrder(Integer displayOrder) {
         if (displayOrder != null && displayOrder < 0) {
             throw new CustomException(ErrorCode.INVALID_INPUT, "displayOrder must be >= 0.");
+        }
+    }
+
+    private void validateFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_INPUT, "fileName은 필수입니다.");
+        }
+    }
+
+    private void validateImageObjectPath(Long photoLabId, String objectPath) {
+        if (objectPath == null || objectPath.isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_INPUT, "objectPath는 필수입니다.");
+        }
+
+        String prefix = String.format("photo-labs/%d/images/", photoLabId);
+        if (!objectPath.startsWith(prefix)) {
+            throw new CustomException(ErrorCode.STORAGE_INVALID_PATH, "잘못된 이미지 경로입니다.");
         }
     }
 }

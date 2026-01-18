@@ -9,7 +9,7 @@ public class PhotoLabListResponse {
     public record Card(
             Long photoLabId,
             String name,
-            List<String> imageUrls,
+            List<String> imageObjectPaths,
             List<String> tags,
             String address,
             Double distanceKm,
@@ -19,7 +19,7 @@ public class PhotoLabListResponse {
     ) {
         public static Card from(
                 com.finders.api.domain.store.entity.PhotoLab photoLab,
-                List<String> imageUrls,
+                List<String> imageObjectPaths,
                 List<String> tags,
                 Double distanceKm,
                 boolean isFavorite
@@ -27,7 +27,7 @@ public class PhotoLabListResponse {
             return Card.builder()
                     .photoLabId(photoLab.getId())
                     .name(photoLab.getName())
-                    .imageUrls(imageUrls)
+                    .imageObjectPaths(imageObjectPaths)
                     .tags(tags)
                     .address(photoLab.getAddress())
                     .distanceKm(distanceKm)
