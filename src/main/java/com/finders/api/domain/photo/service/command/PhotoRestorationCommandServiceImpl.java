@@ -56,8 +56,8 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         // 3. 복원 요청 저장 (토큰 차감은 완료 시점에)
         PhotoRestoration restoration = PhotoRestoration.builder()
                 .memberId(memberId)
-                .originalUrl(request.originalPath())
-                .maskUrl(request.maskPath())
+                .originalPath(request.originalPath())
+                .maskPath(request.maskPath())
                 .tokenUsed(RESTORATION_TOKEN_COST)
                 .build();
 
