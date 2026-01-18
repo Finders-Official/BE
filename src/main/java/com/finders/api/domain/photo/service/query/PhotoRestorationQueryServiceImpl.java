@@ -41,12 +41,12 @@ public class PhotoRestorationQueryServiceImpl implements PhotoRestorationQuerySe
         }
 
         String originalSignedUrl = storageService.getSignedUrl(
-                restoration.getOriginalUrl(), SIGNED_URL_EXPIRY_MINUTES).url();
+                restoration.getOriginalPath(), SIGNED_URL_EXPIRY_MINUTES).url();
 
         String restoredSignedUrl = null;
-        if (restoration.getRestoredUrl() != null) {
+        if (restoration.getRestoredPath() != null) {
             restoredSignedUrl = storageService.getSignedUrl(
-                    restoration.getRestoredUrl(), SIGNED_URL_EXPIRY_MINUTES).url();
+                    restoration.getRestoredPath(), SIGNED_URL_EXPIRY_MINUTES).url();
         }
 
         return RestorationResponse.Detail.from(restoration, originalSignedUrl, restoredSignedUrl);
@@ -58,9 +58,9 @@ public class PhotoRestorationQueryServiceImpl implements PhotoRestorationQuerySe
 
         // 1. 모든 썸네일 경로 수집
         List<String> thumbnailPaths = restorations.getContent().stream()
-                .map(restoration -> restoration.getRestoredUrl() != null
-                        ? restoration.getRestoredUrl()
-                        : restoration.getOriginalUrl())
+                .map(restoration -> restoration.getRestoredPath() != null
+                        ? restoration.getRestoredPath()
+                        : restoration.getOriginalPath())
                 .toList();
 
         // 2. 배치로 Signed URL 생성 (N+1 쿼리 방지)
@@ -71,9 +71,9 @@ public class PhotoRestorationQueryServiceImpl implements PhotoRestorationQuerySe
 
         // 3. Response 변환
         return restorations.map(restoration -> {
-            String thumbnailPath = restoration.getRestoredUrl() != null
-                    ? restoration.getRestoredUrl()
-                    : restoration.getOriginalUrl();
+            String thumbnailPath = restoration.getRestoredPath() != null
+                    ? restoration.getRestoredPath()
+                    : restoration.getOriginalPath();
             String signedUrl = signedUrlMap.get(thumbnailPath).url();
             return RestorationResponse.Summary.from(restoration, signedUrl);
         });
