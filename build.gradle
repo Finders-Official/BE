@@ -85,11 +85,6 @@ dependencies {
     // WebClient는 spring-boot-starter-webflux에서 제공
 
     // ========================================
-    // Image Metadata Extractor (AI 복원 이미지 크기 추출)
-    // ========================================
-    implementation 'com.drewnoakes:metadata-extractor:2.19.0'
-
-    // ========================================
     // Utility
     // ========================================
     compileOnly 'org.projectlombok:lombok'
