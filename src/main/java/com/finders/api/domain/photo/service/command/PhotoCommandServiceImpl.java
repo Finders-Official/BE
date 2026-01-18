@@ -6,6 +6,7 @@ import com.finders.api.domain.photo.entity.PrintOrder;
 import com.finders.api.domain.photo.entity.PrintOrderItem;
 import com.finders.api.domain.photo.entity.PrintOrderPhoto;
 import com.finders.api.domain.photo.entity.ScannedPhoto;
+import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;
 import com.finders.api.domain.photo.enums.ReceiptMethod;
 import com.finders.api.domain.photo.repository.DevelopmentOrderRepository;
 import com.finders.api.domain.photo.repository.PrintOrderItemRepository;
@@ -29,6 +30,21 @@ public class PhotoCommandServiceImpl implements PhotoCommandService {
     private final PrintOrderRepository printOrderRepository;
     private final PrintOrderItemRepository printOrderItemRepository;
     private final PrintOrderPhotoRepository printOrderPhotoRepository;
+
+    @Override
+    public Long skipPrint(Long memberId, Long developmentOrderId) {
+
+        DevelopmentOrder devOrder = developmentOrderRepository.findById(developmentOrderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PHOTO_ORDER_NOT_FOUND));
+
+        if (!devOrder.getUser().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        devOrder.updateStatus(DevelopmentOrderStatus.COMPLETED);
+
+        return devOrder.getId();
+    }
 
     @Override
     public Long createPrintOrder(Long memberId, PhotoRequest.PrintQuote request) {
