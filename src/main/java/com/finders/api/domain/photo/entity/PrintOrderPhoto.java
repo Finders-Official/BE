@@ -1,5 +1,6 @@
 package com.finders.api.domain.photo.entity;
 
+import com.finders.api.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -24,7 +25,7 @@ import lombok.NoArgsConstructor;
                 @UniqueConstraint(name = "uk_pop_order_photo", columnNames = {"print_order_id", "scanned_photo_id"})
         }
 )
-public class PrintOrderPhoto {
+public class PrintOrderPhoto extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
