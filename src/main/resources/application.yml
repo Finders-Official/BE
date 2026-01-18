@@ -133,6 +133,7 @@ replicate:
   base-url: https://api.replicate.com/v1
   model-version: ${REPLICATE_MODEL_VERSION:}
   webhook-base-url: ${WEBHOOK_BASE_URL:http://localhost:8080/api}
+  webhook-secret: ${REPLICATE_WEBHOOK_SECRET:}
   timeout-seconds: 120
   max-retries: 60
 

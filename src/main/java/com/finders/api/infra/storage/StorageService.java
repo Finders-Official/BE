@@ -73,4 +73,39 @@ public interface StorageService {
      */
     StorageResponse.Upload uploadBytes(byte[] data, String contentType, StoragePath storagePath, Long domainId, String fileName);
 
+    /**
+     * Private 버킷에서 Public 버킷으로 파일 복사
+     * <p>
+     * AI 복원 완료 이미지를 커뮤니티에 공유할 때 사용합니다.
+     * GCS 내부 복사(Storage.CopyRequest)를 사용하여 네트워크 비용 없이 빠르게 처리합니다.
+     *
+     * @param sourceObjectPath Private 버킷의 원본 파일 경로 (예: "restorations/123/restored/abc.png")
+     * @param storagePath      Public 버킷의 목적지 경로 타입
+     * @param domainId         도메인 ID (memberId 등)
+     * @param fileName         파일명 (확장자 포함)
+     * @return 복사된 파일의 objectPath (예: "temp/456/xyz.png")
+     */
+    String copyToPublic(String sourceObjectPath, StoragePath storagePath, Long domainId, String fileName);
+
+    /**
+     * MultipartFile을 Public 버킷에 업로드
+     *
+     * @param file        업로드할 파일
+     * @param storagePath 저장 경로 타입
+     * @param domainId    도메인 ID
+     * @return 업로드 결과
+     */
+    StorageResponse.Upload uploadPublic(org.springframework.web.multipart.MultipartFile file, StoragePath storagePath, Long domainId);
+
+    /**
+     * MultipartFile을 Private 버킷에 업로드
+     *
+     * @param file        업로드할 파일
+     * @param storagePath 저장 경로 타입
+     * @param domainId    도메인 ID
+     * @param subPath     추가 하위 경로 (documentType 등)
+     * @return 업로드 결과
+     */
+    StorageResponse.Upload uploadPrivate(org.springframework.web.multipart.MultipartFile file, StoragePath storagePath, Long domainId, String subPath);
+
 }
