@@ -18,12 +18,14 @@ public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
 
     // 커뮤니티 현상소 검색
     interface PhotoLabSearchResult {
-        PhotoLab getPhotoLab();
+        Long getId();
+        String getName();
+        String getAddress();
         Double getDistanceVal();
     }
-    @Query(value = "SELECT *, " +
+    @Query(value = "SELECT id, name, address, " +
             // 직선 거리 계산
-            "ST_Distance_Sphere(point(:lng, :lat), point(longitude, latitude)) AS distance_val " +
+            "IF(:locationAgreed = true, ST_Distance_Sphere(point(:lng, :lat), point(longitude, latitude)), NULL) AS distance_val " +
             "FROM photo_lab " +
             "WHERE status = 'ACTIVE' AND name LIKE CONCAT('%', :keyword, '%') " +
 
