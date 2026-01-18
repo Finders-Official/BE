@@ -32,6 +32,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PhotoRestorationService {
 
@@ -42,21 +43,9 @@ public class PhotoRestorationService {
     private final StorageService storageService;
     private final TokenService tokenService;
     private final ReplicateClient replicateClient;
-    private final WebClient longTimeoutWebClient;
 
-    public PhotoRestorationService(
-            PhotoRestorationRepository restorationRepository,
-            StorageService storageService,
-            TokenService tokenService,
-            ReplicateClient replicateClient,
-            @Qualifier("longTimeoutWebClient") WebClient longTimeoutWebClient
-    ) {
-        this.restorationRepository = restorationRepository;
-        this.storageService = storageService;
-        this.tokenService = tokenService;
-        this.replicateClient = replicateClient;
-        this.longTimeoutWebClient = longTimeoutWebClient;
-    }
+    @Qualifier("longTimeoutWebClient")
+    private final WebClient longTimeoutWebClient;
 
     /**
      * 복원 요청 생성
