@@ -25,7 +25,7 @@ public class PhotoLab extends BaseEntity {
     private Long id;
 
     /**
-     * FK → member(id)q
+     * FK → member(id)
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)

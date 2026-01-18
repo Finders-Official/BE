@@ -100,4 +100,20 @@ public class TokenHistory extends BaseEntity {
                 .description(description)
                 .build();
     }
+
+    /**
+     * 토큰 구매 이력 생성
+     */
+    public static TokenHistory createPurchaseHistory(Member member, int amount, int balanceAfter,
+                                                     TokenRelatedType relatedType, Long relatedId, String description) {
+        return TokenHistory.builder()
+                .member(member)
+                .type(TokenHistoryType.PURCHASE)
+                .amount(amount) // 구매는 양수로 저장
+                .balanceAfter(balanceAfter)
+                .relatedType(relatedType)
+                .relatedId(relatedId)
+                .description(description)
+                .build();
+    }
 }
