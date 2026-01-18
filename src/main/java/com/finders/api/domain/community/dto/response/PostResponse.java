@@ -1,6 +1,7 @@
 package com.finders.api.domain.community.dto.response;
 
 import com.finders.api.domain.community.entity.Post;
+import com.finders.api.domain.community.entity.PostImage;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -8,19 +9,25 @@ import java.util.List;
 
 public class PostResponse {
 
+    // 공통 이미지 DTO
+    public record PostImageResDTO(
+            String imageUrl,
+            Integer width,
+            Integer height
+    ) {
+        public static PostImageResDTO from(PostImage image, String imageUrl) {
+            return new PostImageResDTO(imageUrl, image.getWidth(), image.getHeight());
+        }
+    }
+
     // 피드 목록 조회
-    @Builder
     public record PostsResDTO(
             Long postId,
             String title,
-            String imageUrl
+            PostImageResDTO image
     ) {
-        public static PostsResDTO from(Post post, String imageUrl) {
-            return PostsResDTO.builder()
-                    .postId(post.getId())
-                    .title(post.getTitle())
-                    .imageUrl(imageUrl)
-                    .build();
+        public static PostsResDTO from(Post post, PostImageResDTO imageResDTO) {
+            return new PostsResDTO(post.getId(), post.getTitle(), imageResDTO);
         }
     }
 
@@ -33,7 +40,7 @@ public class PostResponse {
             LocalDateTime createdAt,
             String title,
             String content,
-            List<String> imageUrls,
+            List<PostImageResDTO> images,
             Integer likeCount,
             boolean isLiked,
             boolean isSelfDeveloped,
@@ -41,7 +48,7 @@ public class PostResponse {
             Integer commentCount,
             LabReviewResDTO labReview
     ) {
-        public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine, String profileImageUrl, List<String> imageUrls) {
+        public static PostDetailResDTO from(Post post, boolean isLiked, boolean isMine, String profileImageUrl, List<PostImageResDTO> images) {
             return PostDetailResDTO.builder()
                     .postId(post.getId())
                     .profileImageUrl(profileImageUrl)
@@ -49,7 +56,7 @@ public class PostResponse {
                     .createdAt(post.getCreatedAt())
                     .title(post.getTitle())
                     .content(post.getContent())
-                    .imageUrls(imageUrls)
+                    .images(images)
                     .likeCount(post.getLikeCount())
                     .isLiked(isLiked)
                     .isSelfDeveloped(post.isSelfDeveloped())
@@ -61,18 +68,17 @@ public class PostResponse {
     }
 
     // 현상소 리뷰
-    @Builder
     public record LabReviewResDTO(
             Long labId,
             String labName,
             String content
     ) {
         public static LabReviewResDTO from(Post post) {
-            return LabReviewResDTO.builder()
-                    .labId(post.getPhotoLab().getId())
-                    .labName(post.getPhotoLab().getName())
-                    .content(post.getLabReview())
-                    .build();
+            return new LabReviewResDTO(
+                    post.getPhotoLab().getId(),
+                    post.getPhotoLab().getName(),
+                    post.getLabReview()
+            );
         }
     }
 
@@ -81,16 +87,16 @@ public class PostResponse {
     @Builder
     public record PostPreviewDTO(
             Long postId,
-            String imageUrl,
+            PostImageResDTO image,
             String title,
             Integer likeCount,
             Integer commentCount,
             boolean isLiked
     ) {
-        public static PostPreviewDTO from(Post post, boolean isLiked, String imageUrl) {
+        public static PostPreviewDTO from(Post post, boolean isLiked, PostImageResDTO imageResDTO) {
             return PostPreviewDTO.builder()
                     .postId(post.getId())
-                    .imageUrl(imageUrl)
+                    .image(imageResDTO)
                     .title(post.getTitle())
                     .likeCount(post.getLikeCount())
                     .commentCount(post.getCommentCount())
