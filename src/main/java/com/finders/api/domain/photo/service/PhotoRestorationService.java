@@ -1,14 +1,9 @@
 package com.finders.api.domain.photo.service;
 
-import com.drew.imaging.ImageMetadataReader;
-import com.drew.metadata.Metadata;
-import com.drew.metadata.jpeg.JpegDirectory;
-import com.drew.metadata.png.PngDirectory;
 import com.finders.api.domain.member.enums.TokenRelatedType;
 import com.finders.api.domain.member.service.TokenService;
 import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
-import com.finders.api.domain.photo.dto.ShareResponse;
 import com.finders.api.domain.photo.entity.PhotoRestoration;
 import com.finders.api.domain.photo.repository.PhotoRestorationRepository;
 import com.finders.api.global.exception.CustomException;
@@ -21,12 +16,14 @@ import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.ByteArrayInputStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 사진 복원 서비스
@@ -44,6 +41,7 @@ public class PhotoRestorationService {
     private final StorageService storageService;
     private final TokenService tokenService;
     private final ReplicateClient replicateClient;
+    private final ImageMetadataService imageMetadataService;
 
     @Qualifier("longTimeoutWebClient")
     private final WebClient longTimeoutWebClient;
@@ -143,17 +141,39 @@ public class PhotoRestorationService {
         return RestorationResponse.Detail.from(restoration, originalSignedUrl, restoredSignedUrl);
     }
 
-    public List<RestorationResponse.Summary> getRestorationHistory(Long memberId) {
-        return restorationRepository.findByMemberIdOrderByCreatedAtDesc(memberId)
-                .stream()
-                .map(restoration -> {
-                    String thumbnailUrl = restoration.getRestoredUrl() != null
-                            ? restoration.getRestoredUrl()
-                            : restoration.getOriginalUrl();
-                    String signedUrl = storageService.getSignedUrl(thumbnailUrl, SIGNED_URL_EXPIRY_MINUTES).url();
-                    return RestorationResponse.Summary.from(restoration, signedUrl);
-                })
+    /**
+     * 복원 이력 조회 (페이지네이션 + 배치 Signed URL 생성)
+     * <p>
+     * N+1 쿼리 최적화: 배치로 Signed URL을 생성하여 GCS API 호출 횟수를 줄입니다.
+     *
+     * @param memberId 회원 ID
+     * @param pageable 페이지 정보 (page, size, sort)
+     * @return 복원 이력 페이지
+     */
+    public Page<RestorationResponse.Summary> getRestorationHistory(Long memberId, Pageable pageable) {
+        Page<PhotoRestoration> restorations = restorationRepository.findByMemberId(memberId, pageable);
+
+        // 1. 모든 썸네일 경로 수집
+        List<String> thumbnailPaths = restorations.getContent().stream()
+                .map(restoration -> restoration.getRestoredUrl() != null
+                        ? restoration.getRestoredUrl()
+                        : restoration.getOriginalUrl())
                 .toList();
+
+        // 2. 배치로 Signed URL 생성 (N+1 쿼리 방지)
+        Map<String, StorageResponse.SignedUrl> signedUrlMap = storageService.getSignedUrls(
+                thumbnailPaths,
+                SIGNED_URL_EXPIRY_MINUTES
+        );
+
+        // 3. Response 변환
+        return restorations.map(restoration -> {
+            String thumbnailPath = restoration.getRestoredUrl() != null
+                    ? restoration.getRestoredUrl()
+                    : restoration.getOriginalUrl();
+            String signedUrl = signedUrlMap.get(thumbnailPath).url();
+            return RestorationResponse.Summary.from(restoration, signedUrl);
+        });
     }
 
     @Transactional
@@ -171,50 +191,6 @@ public class PhotoRestorationService {
         restoration.addFeedback(request.rating(), request.comment());
 
         log.info("[PhotoRestorationService.addFeedback] Feedback added: id={}, rating={}", restorationId, request.rating());
-    }
-
-    /**
-     * AI 복원 이미지를 커뮤니티 공유용으로 Public 버킷에 복사
-     * <p>
-     * Private 버킷의 복원 완료 이미지를 Public 버킷(temp/)으로 복사하여
-     * 커뮤니티 게시글 작성에 사용할 수 있도록 합니다.
-     * <p>
-     * 트랜잭션 없음: DB 변경이 없고 조회 + GCS 작업만 수행
-     *
-     * @param memberId      회원 ID
-     * @param restorationId 복원 ID
-     * @return objectPath, width, height 정보
-     */
-    public ShareResponse shareToPublic(Long memberId, Long restorationId) {
-        PhotoRestoration restoration = getRestorationById(restorationId);
-
-        // 1. 권한 검증
-        if (!restoration.isOwner(memberId)) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
-
-        // 2. 완료 상태 검증
-        if (!restoration.isCompleted()) {
-            throw new CustomException(ErrorCode.BAD_REQUEST, "완료된 복원만 공유할 수 있습니다.");
-        }
-
-        // 3. Private → Public 버킷 복사 (GCS 내부 복사, 빠르고 비용 없음)
-        String publicObjectPath = storageService.copyToPublic(
-                restoration.getRestoredUrl(),
-                StoragePath.TEMP_PUBLIC,  // temp/{memberId}/{uuid}.png
-                memberId,
-                "shared.png"
-        );
-
-        log.info("[PhotoRestorationService.shareToPublic] Shared: restorationId={}, publicPath={}",
-                restorationId, publicObjectPath);
-
-        // 4. objectPath + 메타데이터 반환
-        return ShareResponse.of(
-                publicObjectPath,
-                restoration.getRestoredWidth(),
-                restoration.getRestoredHeight()
-        );
     }
 
     @Transactional
@@ -296,7 +272,7 @@ public class PhotoRestorationService {
             }
 
             // 2. 메타데이터 추출 (width, height)
-            ImageDimensions dimensions = extractImageDimensions(imageBytes);
+            ImageMetadataService.ImageDimensions dimensions = imageMetadataService.extractDimensions(imageBytes);
 
             // 3. GCS에 직접 업로드 (byte[] 사용)
             StorageResponse.Upload upload = storageService.uploadBytes(
@@ -321,48 +297,8 @@ public class PhotoRestorationService {
     }
 
     /**
-     * 이미지 바이트에서 width/height 추출
-     */
-    private ImageDimensions extractImageDimensions(byte[] imageBytes) {
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes)) {
-            Metadata metadata = ImageMetadataReader.readMetadata(bis);
-
-            // PNG 디렉토리 먼저 시도
-            PngDirectory pngDirectory = metadata.getFirstDirectoryOfType(PngDirectory.class);
-            if (pngDirectory != null) {
-                Integer width = pngDirectory.getInteger(PngDirectory.TAG_IMAGE_WIDTH);
-                Integer height = pngDirectory.getInteger(PngDirectory.TAG_IMAGE_HEIGHT);
-                if (width != null && height != null) {
-                    return new ImageDimensions(width, height);
-                }
-            }
-
-            // JPEG 디렉토리 시도
-            JpegDirectory jpegDirectory = metadata.getFirstDirectoryOfType(JpegDirectory.class);
-            if (jpegDirectory != null) {
-                Integer width = jpegDirectory.getInteger(JpegDirectory.TAG_IMAGE_WIDTH);
-                Integer height = jpegDirectory.getInteger(JpegDirectory.TAG_IMAGE_HEIGHT);
-                if (width != null && height != null) {
-                    return new ImageDimensions(width, height);
-                }
-            }
-
-            log.warn("[PhotoRestorationService.extractImageDimensions] Could not extract dimensions from metadata");
-            return new ImageDimensions(null, null);
-
-        } catch (Exception e) {
-            log.error("[PhotoRestorationService.extractImageDimensions] Failed to extract dimensions: {}", e.getMessage(), e);
-            return new ImageDimensions(null, null);
-        }
-    }
-
-    /**
-     * 이미지 크기 정보
-     */
-    private record ImageDimensions(Integer width, Integer height) {}
-
-    /**
      * 복원된 이미지 결과 (경로 + 메타데이터)
      */
-    private record RestoredImageResult(String objectPath, Integer width, Integer height) {}
+    private record RestoredImageResult(String objectPath, Integer width, Integer height) {
+    }
 }
