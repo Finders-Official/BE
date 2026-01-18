@@ -4,6 +4,7 @@ import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
 import com.finders.api.domain.photo.dto.ShareResponse;
 import com.finders.api.domain.photo.service.PhotoRestorationService;
+import com.finders.api.domain.photo.service.PhotoRestorationShareService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
@@ -11,10 +12,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
+import java.net.URI;
+import java.util.Arrays;
 
 /**
  * 사진 복원 API 컨트롤러
@@ -26,6 +35,7 @@ import java.util.List;
 public class PhotoRestorationController {
 
     private final PhotoRestorationService restorationService;
+    private final PhotoRestorationShareService restorationShareService;
 
     @Operation(
             summary = "사진 복원 요청",
@@ -44,15 +54,29 @@ public class PhotoRestorationController {
                   "maskPath": "restorations/123/mask/uuid.png"
                 }
                 ```
+
+                ### 응답
+                - HTTP 201 Created
+                - Location 헤더: 생성된 복원 리소스 URL
                 """
     )
     @PostMapping
-    public ApiResponse<RestorationResponse.Created> createRestoration(
+    public ResponseEntity<ApiResponse<RestorationResponse.Created>> createRestoration(
             @AuthenticationPrincipal AuthUser user,
             @RequestBody @Valid RestorationRequest.Create request
     ) {
         RestorationResponse.Created response = restorationService.createRestoration(user.memberId(), request);
-        return ApiResponse.success(SuccessCode.RESTORATION_CREATED, response);
+
+        // Location 헤더 생성: /restorations/{id}
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(response.id())
+                .toUri();
+
+        return ResponseEntity
+                .created(location)
+                .body(ApiResponse.success(SuccessCode.RESTORATION_CREATED, response));
     }
 
     @Operation(summary = "복원 결과 조회", description = "특정 복원 요청의 상세 결과를 조회합니다.")
@@ -65,13 +89,52 @@ public class PhotoRestorationController {
         return ApiResponse.success(SuccessCode.RESTORATION_FOUND, response);
     }
 
-    @Operation(summary = "복원 이력 조회", description = "사용자의 모든 복원 이력을 조회합니다.")
+    @Operation(
+            summary = "복원 이력 조회",
+            description = """
+                사용자의 복원 이력을 페이지네이션으로 조회합니다.
+
+                ### 파라미터
+                - page: 페이지 번호 (0부터 시작, 기본값: 0)
+                - size: 페이지 크기 (기본값: 10)
+                - sort: 정렬 기준 (기본값: createdAt,desc)
+
+                ### 응답
+                - content: 복원 이력 목록
+                - totalElements: 전체 복원 건수
+                - totalPages: 전체 페이지 수
+                - size: 페이지 크기
+                - number: 현재 페이지 번호
+                """
+    )
     @GetMapping
-    public ApiResponse<List<RestorationResponse.Summary>> getRestorationHistory(
-            @AuthenticationPrincipal AuthUser user
+    public ApiResponse<Page<RestorationResponse.Summary>> getRestorationHistory(
+            @AuthenticationPrincipal AuthUser user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String[] sort
     ) {
-        List<RestorationResponse.Summary> response = restorationService.getRestorationHistory(user.memberId());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(parseSortOrders(sort)));
+        Page<RestorationResponse.Summary> response = restorationService.getRestorationHistory(user.memberId(), pageable);
         return ApiResponse.ok(response);
+    }
+
+    /**
+     * 정렬 파라미터 파싱
+     * <p>
+     * "createdAt,desc" 형식의 문자열을 Sort.Order로 변환
+     */
+    private Sort.Order[] parseSortOrders(String[] sortParams) {
+        return Arrays.stream(sortParams)
+                .map(param -> {
+                    String[] parts = param.split(",");
+                    String property = parts[0];
+                    Sort.Direction direction = parts.length > 1 && "asc".equalsIgnoreCase(parts[1])
+                            ? Sort.Direction.ASC
+                            : Sort.Direction.DESC;
+                    return new Sort.Order(direction, property);
+                })
+                .toArray(Sort.Order[]::new);
     }
 
     @Operation(summary = "복원 결과 피드백", description = "복원 결과에 대한 피드백(좋음/나쁨)을 남깁니다.")
@@ -105,6 +168,10 @@ public class PhotoRestorationController {
                 }
                 ```
 
+                ### 응답
+                - HTTP 200 OK
+                - X-Public-Image-URL 헤더: 공유된 이미지의 Public URL
+
                 ### 참고
                 - Private 버킷에서 Public 버킷으로 GCS 내부 복사 (빠르고 비용 없음)
                 - 반환된 objectPath를 게시글 작성 API에 그대로 전달
@@ -112,11 +179,18 @@ public class PhotoRestorationController {
                 """
     )
     @PostMapping("/{restorationId}/share")
-    public ApiResponse<ShareResponse> shareToPublic(
+    public ResponseEntity<ApiResponse<ShareResponse>> shareToPublic(
             @AuthenticationPrincipal AuthUser user,
             @PathVariable Long restorationId
     ) {
-        ShareResponse response = restorationService.shareToPublic(user.memberId(), restorationId);
-        return ApiResponse.success(SuccessCode.OK, response);
+        ShareResponse response = restorationShareService.shareToPublic(user.memberId(), restorationId);
+
+        // X-Public-Image-URL 헤더: 공유된 이미지의 Public URL
+        String publicImageUrl = String.format("https://storage.googleapis.com/%s/%s",
+                "finders-public-bucket", response.objectPath());
+
+        return ResponseEntity.ok()
+                .header("X-Public-Image-URL", publicImageUrl)
+                .body(ApiResponse.success(SuccessCode.OK, response));
     }
 }
