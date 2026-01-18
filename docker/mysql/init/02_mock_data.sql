@@ -152,9 +152,9 @@ VALUES
     (5, 'APPLE', 'apple_5566778899', NULL, NOW(), NOW());
 
 -- =====================================================
--- 6. MemberAgreement (회원 약관 동의) - camelCase 컬럼명 주의!
+-- 6. MemberAgreement (회원 약관 동의)
 -- =====================================================
-INSERT INTO member_agreement (member_id, terms_id, isAgreed, agreedAt, created_at, updated_at)
+INSERT INTO member_agreement (member_id, terms_id, is_agreed, agreed_at, created_at, updated_at)
 VALUES
     -- User 1
     (1, 1, true, NOW(), NOW(), NOW()),
@@ -423,9 +423,9 @@ VALUES
      'PROCESSING', 'pred_def456', 1, NULL, NULL, NULL, NOW(), NOW());
 
 -- =====================================================
--- 25. Post (게시글) - camelCase 컬럼명 주의!
+-- 25. Post (게시글)
 -- =====================================================
-INSERT INTO post (member_id, photo_lab_id, isSelfDeveloped, title, content, labReview, likeCount, commentCount, status, created_at, updated_at)
+INSERT INTO post (member_user_id, photo_lab_id, is_self_developed, title, content, lab_review, like_count, comment_count, status, created_at, updated_at)
 VALUES
     (1, 1, false, '강남 필름 첫 방문', '강남 필름 현상소에서 첫 현상했어요. 결과물이 너무 좋아요!', '친절하시고 실력도 좋으세요', 5, 3, 'ACTIVE', NOW(), NOW()),
     (2, 1, false, '흑백 필름 현상 후기', '흑백 필름 현상 정말 만족스럽습니다', '빠르고 깔끔해요', 8, 2, 'ACTIVE', NOW(), NOW()),
