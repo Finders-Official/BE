@@ -81,9 +81,14 @@ public class Inquiry extends BaseTimeEntity {
         this.images.add(image);
     }
 
-    public void addImages(List<String> imageUrls) {
-        for (int i = 0; i < imageUrls.size(); i++) {
-            this.images.add(InquiryImage.create(this, imageUrls.get(i), i));
+    /**
+     * 문의 이미지 추가
+     *
+     * @param imagePaths GCS objectPath 리스트 (예: "temp/123/abc.png")
+     */
+    public void addImages(List<String> imagePaths) {
+        for (int i = 0; i < imagePaths.size(); i++) {
+            this.images.add(InquiryImage.create(this, imagePaths.get(i), i));
         }
     }
 
