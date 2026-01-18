@@ -87,7 +87,7 @@ public class PostController {
 
     @Operation(summary = "게시물 댓글 작성", description = "특정 게시글에 새로운 댓글을 남깁니다.")
     @PostMapping("/{postId}/comments")
-    public ApiResponse<Long> createComment(
+    public ApiResponse<CommentResponse.CommentResDTO> createComment(
             @PathVariable Long postId,
             @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody PostRequest.CreateCommentDTO request
