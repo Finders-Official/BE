@@ -122,7 +122,7 @@ public enum ErrorCode implements BaseCode {
     PHOTO_DELIVERY_ALREADY_CREATED(HttpStatus.CONFLICT, "PHOTO_409_DELIVERY_ALREADY_CREATED", "이미 배송 정보가 등록된 주문입니다."),
     PHOTO_DELIVERY_NOT_FOUND(HttpStatus.NOT_FOUND, "PHOTO_404_DELIVERY_NOT_FOUND", "배송 정보를 찾을 수 없습니다."),
     PHOTO_DELIVERY_STATUS_INVALID(HttpStatus.BAD_REQUEST, "PHOTO_400_DELIVERY_STATUS_INVALID", "현재 배송 상태에서는 해당 작업을 수행할 수 없습니다."),
-    PHOTO_PRINT_STATUS_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PHOTO_400_PRINT_ORDER_STATUS_INVALID", "현재 인화 주문 상태에서는 해당 작업을 수행할 수 없습니다."),
+    PHOTO_PRINT_STATUS_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PHOTO_400_PRINT_ORDER_INVALID", "현재 인화 주문 상태에서는 해당 작업을 수행할 수 없습니다."),
 
 
     // ========================================
