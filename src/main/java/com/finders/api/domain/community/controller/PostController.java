@@ -49,7 +49,7 @@ public class PostController {
 
     @Operation(summary = "게시물 작성", description = "게시글 등록 API입니다.")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResponse<Long> createPost(
+    public ApiResponse<PostResponse.PostDetailResDTO> createPost(
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody @Valid PostRequest.CreatePostDTO request
     ) {
