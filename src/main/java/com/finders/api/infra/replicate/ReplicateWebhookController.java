@@ -1,7 +1,7 @@
 package com.finders.api.infra.replicate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finders.api.domain.photo.service.PhotoRestorationService;
+import com.finders.api.domain.photo.service.command.PhotoRestorationCommandService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.ErrorCode;
@@ -29,7 +29,7 @@ import java.io.IOException;
 @RequestMapping("/webhooks/replicate")
 public class ReplicateWebhookController {
 
-    private final PhotoRestorationService restorationService;
+    private final PhotoRestorationCommandService commandService;
     private final ReplicateWebhookVerifier webhookVerifier;
     private final ObjectMapper objectMapper;
 
@@ -57,19 +57,19 @@ public class ReplicateWebhookController {
             String resultUrl = payload.getFirstOutput();
             if (resultUrl != null) {
                 try {
-                    restorationService.completeRestoration(payload.id(), resultUrl);
+                    commandService.completeRestoration(payload.id(), resultUrl);
                 } catch (Exception e) {
                     // completeRestoration 실패 시 별도 트랜잭션으로 실패 처리
                     log.error("[ReplicateWebhook] Failed to complete restoration: id={}, error={}",
                             payload.id(), e.getMessage(), e);
-                    restorationService.failRestoration(payload.id(), e.getMessage());
+                    commandService.failRestoration(payload.id(), e.getMessage());
                 }
             } else {
                 log.error("[ReplicateWebhook] Succeeded but no output: id={}", payload.id());
-                restorationService.failRestoration(payload.id(), "복원 결과 이미지가 없습니다.");
+                commandService.failRestoration(payload.id(), "복원 결과 이미지가 없습니다.");
             }
         } else if (payload.isFailed()) {
-            restorationService.failRestoration(payload.id(), payload.error());
+            commandService.failRestoration(payload.id(), payload.error());
         } else {
             log.debug("[ReplicateWebhook] Ignored status: id={}, status={}", payload.id(), payload.status());
         }
