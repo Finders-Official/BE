@@ -6,7 +6,6 @@ import com.finders.api.domain.photo.dto.PhotoResponse.ScanResult;
 import com.finders.api.domain.photo.service.command.PhotoCommandService;
 import com.finders.api.domain.photo.service.query.PhotoQueryService;
 import com.finders.api.global.response.ApiResponse;
-import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SlicedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
@@ -14,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -29,25 +27,38 @@ public class PhotoController {
     private final PhotoQueryService photoQueryService;
 
     @Operation(
-            summary = "회원 - 내 지난 작업(현상 내역) 목록 조회",
-            description = "최근 주문부터 페이지네이션(Page)으로 조회합니다."
+            summary = "회원 - 내 진행중 작업 조회",
+            description = "진행중인 현상/스캔/인화(배송/수령 포함) 작업이 있으면 진행 상태를 내려줍니다. 없으면 data는 null입니다."
+    )
+    @GetMapping("/current-work")
+    public ApiResponse<PhotoResponse.MyCurrentWork> getMyCurrentWork(
+            @AuthenticationPrincipal AuthUser user
+    ) {
+        PhotoResponse.MyCurrentWork result =
+                photoQueryService.getMyCurrentWork(user.memberId());
+
+        return ApiResponse.success(SuccessCode.OK, result);
+    }
+
+    @Operation(
+            summary = "회원 - 내 현상 주문 목록 조회(무한스크롤)",
+            description = "내 현상 주문을 Slice 기반으로 조회합니다. 각 주문은 스캔 프리뷰 signedUrl을 포함합니다. 인화 주문이면 배송 정보도 포함될 수 있습니다."
     )
     @GetMapping("/development-orders")
-    public PagedResponse<PhotoResponse.MyDevelopmentOrder> getMyDevelopmentOrders(
+    public SlicedResponse<PhotoResponse.MyDevelopmentOrder> getMyDevelopmentOrders(
             @AuthenticationPrincipal AuthUser user,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "20") int size
     ) {
-
-        Page<PhotoResponse.MyDevelopmentOrder> result =
+        Slice<PhotoResponse.MyDevelopmentOrder> result =
                 photoQueryService.getMyDevelopmentOrders(user.memberId(), page, size);
 
-        return PagedResponse.of(SuccessCode.OK, result);
+        return SlicedResponse.of(SuccessCode.OK, result);
     }
 
     @Operation(
             summary = "회원 - 스캔 결과 사진 목록 조회",
-            description = "해당 현상 주문의 스캔 결과 사진을 페이지네이션(Slice)으로 조회합니다. 각 항목은 signedUrl을 포함합니다."
+            description = "해당 현상 주문의 스캔 결과 사진을 무한스크롤로 조회합니다. 각 항목은 signedUrl을 포함합니다."
     )
     @GetMapping("/development-orders/{developmentOrderId}/scan-results")
     public SlicedResponse<PhotoResponse.ScanResult> getMyScanResults(
@@ -61,6 +72,20 @@ public class PhotoController {
 
         return SlicedResponse.of(SuccessCode.OK, result);
     }
+
+    @Operation(
+            summary = "회원 - 인화 안함 확정",
+            description = "해당 현상 주문에 대해 인화를 진행하지 않기로 확정하고 주문 상태를 완료 처리합니다."
+    )
+    @PostMapping("/development-orders/{developmentOrderId}/print/skip")
+    public ApiResponse<Long> skipPrint(
+            @AuthenticationPrincipal AuthUser user,
+            @PathVariable Long developmentOrderId
+    ) {
+        Long result = photoCommandService.skipPrint(user.memberId(), developmentOrderId);
+        return ApiResponse.success(SuccessCode.OK, result);
+    }
+
 
     @Operation(
             summary = "회원 - 인화 옵션 목록 조회",
