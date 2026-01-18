@@ -15,6 +15,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URL;
@@ -211,6 +212,98 @@ public class GcsStorageService implements StorageService {
                 bucket, objectPath, data.length);
 
         return StorageResponse.Upload.from(bucket, objectPath, url, contentType, data.length);
+    }
+
+    /**
+     * Private 버킷에서 Public 버킷으로 파일 복사
+     * <p>
+     * GCS Storage.CopyRequest를 사용하여 서버 간 내부 복사를 수행합니다.
+     * 네트워크 다운로드/업로드 없이 GCS 내부에서 복사되므로 매우 빠르고 비용이 들지 않습니다.
+     */
+    @Override
+    public String copyToPublic(String sourceObjectPath, StoragePath storagePath, Long domainId, String fileName) {
+        // 1. Source (Private 버킷)
+        BlobId source = BlobId.of(properties.privateBucket(), sourceObjectPath);
+
+        // 2. Destination (Public 버킷)
+        String destinationPath = createUniquePath(storagePath, domainId, fileName);
+        BlobId destination = BlobId.of(properties.publicBucket(), destinationPath);
+
+        // 3. GCS 내부 복사 수행
+        Storage.CopyRequest copyRequest = Storage.CopyRequest.of(source, destination);
+        storage.copy(copyRequest).getResult();
+
+        log.info("[GcsStorageService.copyToPublic] Copied: {} → {}",
+                sourceObjectPath, destinationPath);
+
+        // 4. objectPath만 반환 (프로젝트 통일 규칙)
+        return destinationPath;
+    }
+
+    /**
+     * MultipartFile을 Public 버킷에 업로드
+     */
+    @Override
+    public StorageResponse.Upload uploadPublic(MultipartFile file, StoragePath storagePath, Long domainId) {
+        try {
+            String originalFilename = file.getOriginalFilename();
+            String objectPath = createUniquePath(storagePath, domainId, originalFilename);
+
+            BlobId blobId = BlobId.of(properties.publicBucket(), objectPath);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                    .setContentType(file.getContentType())
+                    .build();
+
+            storage.create(blobInfo, file.getBytes());
+
+            String url = getPublicUrl(objectPath);
+
+            log.info("[GcsStorageService.uploadPublic] Uploaded: path={}, size={}",
+                    objectPath, file.getSize());
+
+            return StorageResponse.Upload.from(
+                    properties.publicBucket(),
+                    objectPath,
+                    url,
+                    file.getContentType(),
+                    (int) file.getSize()
+            );
+        } catch (IOException e) {
+            log.error("[GcsStorageService.uploadPublic] Upload failed: {}", e.getMessage());
+            throw new CustomException(ErrorCode.STORAGE_UPLOAD_FAILED, "Public 버킷 업로드 실패");
+        }
+    }
+
+    /**
+     * MultipartFile을 Private 버킷에 업로드
+     */
+    @Override
+    public StorageResponse.Upload uploadPrivate(MultipartFile file, StoragePath storagePath, Long domainId, String subPath) {
+        try {
+            String originalFilename = file.getOriginalFilename();
+            String objectPath = storagePath.format(domainId, subPath, UUID.randomUUID().toString().replace("-", "") + "_" + originalFilename);
+
+            BlobId blobId = BlobId.of(properties.privateBucket(), objectPath);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                    .setContentType(file.getContentType())
+                    .build();
+
+            storage.create(blobInfo, file.getBytes());
+
+            log.info("[GcsStorageService.uploadPrivate] Uploaded: path={}, size={}",
+                    objectPath, file.getSize());
+
+            return StorageResponse.Upload.from(
+                    properties.privateBucket(),
+                    objectPath,
+                    null,  // Private 버킷은 URL 반환하지 않음
+                    file.getContentType(),
+                    (int) file.getSize()
+            );
+        } catch (IOException e) {
+            log.error("[GcsStorageService.uploadPrivate] Upload failed: {}", e.getMessage());
+            throw new CustomException(ErrorCode.STORAGE_UPLOAD_FAILED, "Private 버킷 업로드 실패");
+        }
     }
 
     // ========================================

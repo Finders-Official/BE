@@ -1,5 +1,9 @@
 package com.finders.api.domain.photo.service;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.jpeg.JpegDirectory;
+import com.drew.metadata.png.PngDirectory;
 import com.finders.api.domain.member.enums.TokenRelatedType;
 import com.finders.api.domain.member.service.TokenService;
 import com.finders.api.domain.photo.dto.RestorationRequest;
@@ -19,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 /**
@@ -164,6 +169,49 @@ public class PhotoRestorationService {
         log.info("[PhotoRestorationService.addFeedback] Feedback added: id={}, rating={}", restorationId, request.rating());
     }
 
+    /**
+     * AI 복원 이미지를 커뮤니티 공유용으로 Public 버킷에 복사
+     * <p>
+     * Private 버킷의 복원 완료 이미지를 Public 버킷(temp/)으로 복사하여
+     * 커뮤니티 게시글 작성에 사용할 수 있도록 합니다.
+     *
+     * @param memberId      회원 ID
+     * @param restorationId 복원 ID
+     * @return objectPath, width, height 정보
+     */
+    @Transactional(readOnly = true)
+    public com.finders.api.domain.photo.dto.ShareResponse shareToPublic(Long memberId, Long restorationId) {
+        PhotoRestoration restoration = getRestorationById(restorationId);
+
+        // 1. 권한 검증
+        if (!restoration.isOwner(memberId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        // 2. 완료 상태 검증
+        if (!restoration.isCompleted()) {
+            throw new CustomException(ErrorCode.BAD_REQUEST, "완료된 복원만 공유할 수 있습니다.");
+        }
+
+        // 3. Private → Public 버킷 복사 (GCS 내부 복사, 빠르고 비용 없음)
+        String publicObjectPath = storageService.copyToPublic(
+                restoration.getRestoredUrl(),
+                StoragePath.TEMP_PUBLIC,  // temp/{memberId}/{uuid}.png
+                memberId,
+                "shared.png"
+        );
+
+        log.info("[PhotoRestorationService.shareToPublic] Shared: restorationId={}, publicPath={}",
+                restorationId, publicObjectPath);
+
+        // 4. objectPath + 메타데이터 반환
+        return com.finders.api.domain.photo.dto.ShareResponse.of(
+                publicObjectPath,
+                restoration.getRestoredWidth(),
+                restoration.getRestoredHeight()
+        );
+    }
+
     @Transactional
     public void completeRestoration(String predictionId, String restoredImageUrl) {
         PhotoRestoration restoration = restorationRepository.findByReplicatePredictionId(predictionId)
@@ -177,8 +225,8 @@ public class PhotoRestorationService {
             return;
         }
 
-        // 1. Replicate 결과 이미지 다운로드 및 GCS 업로드
-        String restoredPath = downloadAndStoreResult(restoredImageUrl, restoration.getMemberId());
+        // 1. Replicate 결과 이미지 다운로드 및 GCS 업로드 (메타데이터 포함)
+        RestoredImageResult result = downloadAndStoreResult(restoredImageUrl, restoration.getMemberId());
 
         // 2. 토큰 차감 (복원 성공 시점에 차감)
         tokenService.useTokens(
@@ -189,10 +237,11 @@ public class PhotoRestorationService {
                 "AI 사진 복원 완료"
         );
 
-        // 3. 상태 업데이트
-        restoration.complete(restoredPath);
+        // 3. 상태 업데이트 (메타데이터 포함)
+        restoration.complete(result.objectPath(), result.width(), result.height());
 
-        log.info("[PhotoRestorationService.completeRestoration] Completed: id={}, predictionId={}", restoration.getId(), predictionId);
+        log.info("[PhotoRestorationService.completeRestoration] Completed: id={}, predictionId={}, size={}x{}",
+                restoration.getId(), predictionId, result.width(), result.height());
     }
 
     @Transactional
@@ -221,12 +270,12 @@ public class PhotoRestorationService {
     }
 
     /**
-     * Replicate 결과 이미지를 다운로드하여 GCS에 저장
+     * Replicate 결과 이미지를 다운로드하여 GCS에 저장하고 메타데이터 추출
      * <p>
      * 이 메서드는 백엔드에서 직접 업로드해야 하는 유일한 케이스입니다.
-     * (webhook으로 받은 결과 URL → 다운로드 → GCS 저장)
+     * (webhook으로 받은 결과 URL → 다운로드 → 메타데이터 추출 → GCS 저장)
      */
-    private String downloadAndStoreResult(String resultUrl, Long memberId) {
+    private RestoredImageResult downloadAndStoreResult(String resultUrl, Long memberId) {
         log.info("[PhotoRestorationService.downloadAndStoreResult] Downloading result image: url={}", resultUrl);
 
         try {
@@ -241,7 +290,10 @@ public class PhotoRestorationService {
                 throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "복원 결과 이미지 다운로드 실패");
             }
 
-            // 2. GCS에 직접 업로드 (byte[] 사용)
+            // 2. 메타데이터 추출 (width, height)
+            ImageDimensions dimensions = extractImageDimensions(imageBytes);
+
+            // 3. GCS에 직접 업로드 (byte[] 사용)
             StorageResponse.Upload upload = storageService.uploadBytes(
                     imageBytes,
                     "image/png",
@@ -250,8 +302,10 @@ public class PhotoRestorationService {
                     "restored.png"
             );
 
-            log.info("[PhotoRestorationService.downloadAndStoreResult] Result image stored: path={}", upload.objectPath());
-            return upload.objectPath();
+            log.info("[PhotoRestorationService.downloadAndStoreResult] Result image stored: path={}, size={}x{}",
+                    upload.objectPath(), dimensions.width(), dimensions.height());
+
+            return new RestoredImageResult(upload.objectPath(), dimensions.width(), dimensions.height());
 
         } catch (CustomException e) {
             throw e;
@@ -260,4 +314,50 @@ public class PhotoRestorationService {
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "복원 결과 이미지 저장 실패: " + e.getMessage());
         }
     }
+
+    /**
+     * 이미지 바이트에서 width/height 추출
+     */
+    private ImageDimensions extractImageDimensions(byte[] imageBytes) {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes)) {
+            Metadata metadata = ImageMetadataReader.readMetadata(bis);
+
+            // PNG 디렉토리 먼저 시도
+            PngDirectory pngDirectory = metadata.getFirstDirectoryOfType(PngDirectory.class);
+            if (pngDirectory != null) {
+                Integer width = pngDirectory.getInteger(PngDirectory.TAG_IMAGE_WIDTH);
+                Integer height = pngDirectory.getInteger(PngDirectory.TAG_IMAGE_HEIGHT);
+                if (width != null && height != null) {
+                    return new ImageDimensions(width, height);
+                }
+            }
+
+            // JPEG 디렉토리 시도
+            JpegDirectory jpegDirectory = metadata.getFirstDirectoryOfType(JpegDirectory.class);
+            if (jpegDirectory != null) {
+                Integer width = jpegDirectory.getInteger(JpegDirectory.TAG_IMAGE_WIDTH);
+                Integer height = jpegDirectory.getInteger(JpegDirectory.TAG_IMAGE_HEIGHT);
+                if (width != null && height != null) {
+                    return new ImageDimensions(width, height);
+                }
+            }
+
+            log.warn("[PhotoRestorationService.extractImageDimensions] Could not extract dimensions from metadata");
+            return new ImageDimensions(null, null);
+
+        } catch (Exception e) {
+            log.error("[PhotoRestorationService.extractImageDimensions] Failed to extract dimensions: {}", e.getMessage());
+            return new ImageDimensions(null, null);
+        }
+    }
+
+    /**
+     * 이미지 크기 정보
+     */
+    private record ImageDimensions(Integer width, Integer height) {}
+
+    /**
+     * 복원된 이미지 결과 (경로 + 메타데이터)
+     */
+    private record RestoredImageResult(String objectPath, Integer width, Integer height) {}
 }

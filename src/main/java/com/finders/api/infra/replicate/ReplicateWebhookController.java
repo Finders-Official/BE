@@ -1,15 +1,21 @@
 package com.finders.api.infra.replicate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finders.api.domain.photo.service.PhotoRestorationService;
+import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
+import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
 
 /**
  * Replicate Webhook 콜백 컨트롤러
@@ -24,9 +30,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReplicateWebhookController {
 
     private final PhotoRestorationService restorationService;
+    private final ReplicateWebhookVerifier webhookVerifier;
+    private final ObjectMapper objectMapper;
 
     @PostMapping
-    public ApiResponse<Void> handleWebhook(@RequestBody ReplicateResponse.Prediction payload) {
+    public ApiResponse<Void> handleWebhook(
+            @RequestHeader(value = "webhook-id", required = false) String webhookId,
+            @RequestHeader(value = "webhook-timestamp", required = false) String webhookTimestamp,
+            @RequestHeader(value = "webhook-signature", required = false) String webhookSignature,
+            @RequestBody String rawBody
+    ) {
+        // 1. Webhook 서명 검증
+        webhookVerifier.verify(webhookId, webhookTimestamp, webhookSignature, rawBody);
+
+        // 2. JSON 파싱
+        ReplicateResponse.Prediction payload;
+        try {
+            payload = objectMapper.readValue(rawBody, ReplicateResponse.Prediction.class);
+        } catch (IOException e) {
+            log.error("[ReplicateWebhook] JSON 파싱 실패: {}", e.getMessage());
+            throw new CustomException(ErrorCode.BAD_REQUEST, "잘못된 Webhook 페이로드 형식입니다.");
+        }
         log.info("[ReplicateWebhook] Received: id={}, status={}", payload.id(), payload.status());
 
         if (payload.isSucceeded()) {
