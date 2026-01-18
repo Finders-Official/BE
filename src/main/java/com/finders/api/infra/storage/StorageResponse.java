@@ -39,6 +39,16 @@ public class StorageResponse {
     ) {
     }
 
+    public record PresignedUrl(
+            String url,
+            String objectPath,
+            long expiresAtEpochSecond
+    ) {
+        public static PresignedUrl of(String url, String objectPath, long expiresAtEpochSecond) {
+            return new PresignedUrl(url, objectPath, expiresAtEpochSecond);
+        }
+    }
+
     /**
      * 삭제 결과
      */

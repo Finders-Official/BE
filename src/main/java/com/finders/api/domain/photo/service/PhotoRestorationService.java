@@ -10,7 +10,6 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.infra.replicate.ReplicateClient;
 import com.finders.api.infra.replicate.ReplicateResponse;
-import com.finders.api.infra.storage.ByteArrayMultipartFile;
 import com.finders.api.infra.storage.StoragePath;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
@@ -40,6 +39,15 @@ public class PhotoRestorationService {
     private final ReplicateClient replicateClient;
     private final WebClient webClient;
 
+    /**
+     * 복원 요청 생성
+     * <p>
+     * 프론트에서 Presigned URL로 GCS에 직접 업로드한 후, objectPath만 전달받습니다.
+     *
+     * @param memberId 회원 ID
+     * @param request  복원 요청 (originalPath, maskPath)
+     * @return 생성된 복원 정보
+     */
     @Transactional
     public RestorationResponse.Created createRestoration(Long memberId, RestorationRequest.Create request) {
         // 1. 토큰 잔액 확인 (차감은 복원 완료 시점에)
@@ -47,40 +55,30 @@ public class PhotoRestorationService {
             throw new CustomException(ErrorCode.INSUFFICIENT_TOKEN);
         }
 
-        // 2. 원본 이미지 업로드 (Private 버킷)
-        StorageResponse.Upload originalUpload = storageService.uploadPrivate(
-                request.originalImage(),
-                StoragePath.RESTORATION_ORIGINAL,
-                memberId
-        );
+        // 2. 경로 검증 (프론트에서 전달받은 경로가 유효한지)
+        validateRestorationPath(request.originalPath(), StoragePath.RESTORATION_ORIGINAL, memberId);
+        validateRestorationPath(request.maskPath(), StoragePath.RESTORATION_MASK, memberId);
 
-        // 3. 마스크 이미지 업로드 (프론트에서 받은 그대로)
-        StorageResponse.Upload maskUpload = storageService.uploadPrivate(
-                request.maskImage(),
-                StoragePath.RESTORATION_MASK,
-                memberId
-        );
-
-        // 4. 복원 요청 저장 (토큰 차감은 완료 시점에)
+        // 3. 복원 요청 저장 (토큰 차감은 완료 시점에)
         PhotoRestoration restoration = PhotoRestoration.builder()
                 .memberId(memberId)
-                .originalUrl(originalUpload.objectPath())
-                .maskUrl(maskUpload.objectPath())
+                .originalUrl(request.originalPath())
+                .maskUrl(request.maskPath())
                 .tokenUsed(RESTORATION_TOKEN_COST)
                 .build();
 
         restoration = restorationRepository.save(restoration);
 
-        // 5. Replicate API 호출
-        String originalSignedUrl = storageService.getSignedUrl(originalUpload.objectPath(), SIGNED_URL_EXPIRY_MINUTES).url();
-        String maskSignedUrl = storageService.getSignedUrl(maskUpload.objectPath(), SIGNED_URL_EXPIRY_MINUTES).url();
+        // 4. Replicate API 호출을 위한 Signed URL 생성
+        String originalSignedUrl = storageService.getSignedUrl(request.originalPath(), SIGNED_URL_EXPIRY_MINUTES).url();
+        String maskSignedUrl = storageService.getSignedUrl(request.maskPath(), SIGNED_URL_EXPIRY_MINUTES).url();
 
         ReplicateResponse.Prediction prediction = replicateClient.createInpaintingPrediction(
                 originalSignedUrl,
                 maskSignedUrl
         );
 
-        // 6. 상태 업데이트
+        // 5. 상태 업데이트
         restoration.startProcessing(prediction.id());
 
         int currentBalance = tokenService.getBalance(memberId);
@@ -94,6 +92,27 @@ public class PhotoRestorationService {
                 .tokenUsed(RESTORATION_TOKEN_COST)
                 .remainingBalance(currentBalance)  // 아직 차감 전이므로 현재 잔액
                 .build();
+    }
+
+    /**
+     * 복원 경로 검증
+     * - 경로 형식이 올바른지
+     * - 본인의 memberId로 된 경로인지
+     */
+    private void validateRestorationPath(String objectPath, StoragePath expectedType, Long memberId) {
+        if (objectPath == null || objectPath.isBlank()) {
+            throw new CustomException(ErrorCode.BAD_REQUEST, "이미지 경로가 비어있습니다.");
+        }
+
+        StoragePath actualType = StoragePath.fromObjectPath(objectPath);
+        if (actualType != expectedType) {
+            throw new CustomException(ErrorCode.BAD_REQUEST, "잘못된 이미지 경로입니다: " + objectPath);
+        }
+
+        Long pathMemberId = actualType.extractId(objectPath);
+        if (!memberId.equals(pathMemberId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN, "본인의 이미지만 사용할 수 있습니다.");
+        }
     }
 
     public RestorationResponse.Detail getRestoration(Long memberId, Long restorationId) {
@@ -201,6 +220,12 @@ public class PhotoRestorationService {
                 .orElseThrow(() -> new CustomException(ErrorCode.PHOTO_NOT_FOUND));
     }
 
+    /**
+     * Replicate 결과 이미지를 다운로드하여 GCS에 저장
+     * <p>
+     * 이 메서드는 백엔드에서 직접 업로드해야 하는 유일한 케이스입니다.
+     * (webhook으로 받은 결과 URL → 다운로드 → GCS 저장)
+     */
     private String downloadAndStoreResult(String resultUrl, Long memberId) {
         log.info("[PhotoRestorationService.downloadAndStoreResult] Downloading result image: url={}", resultUrl);
 
@@ -216,20 +241,13 @@ public class PhotoRestorationService {
                 throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "복원 결과 이미지 다운로드 실패");
             }
 
-            // 2. MultipartFile로 변환
-            String filename = "restored.png";
-            ByteArrayMultipartFile multipartFile = new ByteArrayMultipartFile(
-                    "file",
-                    filename,
+            // 2. GCS에 직접 업로드 (byte[] 사용)
+            StorageResponse.Upload upload = storageService.uploadBytes(
+                    imageBytes,
                     "image/png",
-                    imageBytes
-            );
-
-            // 3. GCS에 업로드
-            StorageResponse.Upload upload = storageService.uploadPrivate(
-                    multipartFile,
                     StoragePath.RESTORATION_RESTORED,
-                    memberId
+                    memberId,
+                    "restored.png"
             );
 
             log.info("[PhotoRestorationService.downloadAndStoreResult] Result image stored: path={}", upload.objectPath());
