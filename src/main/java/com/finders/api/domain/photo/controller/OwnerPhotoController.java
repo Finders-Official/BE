@@ -15,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 @Slf4j
-@Tag(name = "Owner Photo", description = "오너용 현상/스캔 등록 API")
+@Tag(name = "Owner Photo", description = "오너용 현상/스캔/인화 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/owner/photo-labs")
@@ -45,12 +45,12 @@ public class OwnerPhotoController {
     @Operation(
             summary = "오너 - 현상 주문 생성",
             description = """
-                스캔 이미지는 사전에 private 버킷에 업로드되어 있어야 하며,
-                request.scannedPhotos의 imageKey를 통해 DB에만 저장합니다.
-                
-                - reservationId가 있으면 예약 기반
-                - 없으면 memberId 필수
-                """
+                    스캔 이미지는 사전에 private 버킷에 업로드되어 있어야 하며,
+                    request.scannedPhotos의 imageKey를 통해 DB에만 저장합니다.
+                    
+                    - reservationId가 있으면 예약 기반
+                    - 없으면 memberId 필수
+                    """
     )
     @PostMapping("/{photoLabId}/development-orders")
     @PreAuthorize("hasRole('OWNER')")
@@ -74,9 +74,9 @@ public class OwnerPhotoController {
     @Operation(
             summary = "오너 - (주문 기준) 스캔 이미지 메타데이터 DB 등록",
             description = """
-                presigned url로 private 버킷에 업로드 완료한 뒤,
-                objectPath(imageKey)들을 scanned_photo 테이블에 일괄 저장합니다.
-                """
+                    presigned url로 private 버킷에 업로드 완료한 뒤,
+                    objectPath(imageKey)들을 scanned_photo 테이블에 일괄 저장합니다.
+                    """
     )
     @PostMapping("/{photoLabId}/development-orders/{developmentOrderId}/scanned-photos")
     @PreAuthorize("hasRole('OWNER')")
@@ -123,4 +123,42 @@ public class OwnerPhotoController {
         return ApiResponse.success(SuccessCode.OK, response);
     }
 
+    @PatchMapping("/{photoLabId}/print-orders/{printOrderId}/printing")
+    @PreAuthorize("hasRole('OWNER')")
+    public ApiResponse<OwnerPhotoResponse.PrintOrderStatusUpdated> startPrinting(
+            @AuthenticationPrincipal AuthUser owner,
+            @PathVariable Long photoLabId,
+            @PathVariable Long printOrderId,
+            @RequestBody @Valid OwnerPhotoRequest.StartPrinting request
+    ) {
+        OwnerPhotoResponse.PrintOrderStatusUpdated result =
+                ownerPhotoCommandService.startPrinting(photoLabId, owner.memberId(), printOrderId, request);
+        return ApiResponse.success(SuccessCode.OK, result);
+    }
+
+    @PatchMapping("/{photoLabId}/print-orders/{printOrderId}/shipping")
+    @PreAuthorize("hasRole('OWNER')")
+    public ApiResponse<OwnerPhotoResponse.PrintOrderStatusUpdated> registerShipping(
+            @AuthenticationPrincipal AuthUser owner,
+            @PathVariable Long photoLabId,
+            @PathVariable Long printOrderId,
+            @RequestBody @Valid OwnerPhotoRequest.RegisterShipping request
+    ) {
+        OwnerPhotoResponse.PrintOrderStatusUpdated result =
+                ownerPhotoCommandService.registerShipping(photoLabId, owner.memberId(), printOrderId, request);
+        return ApiResponse.success(SuccessCode.OK, result);
+    }
+
+    @PatchMapping("/{photoLabId}/print-orders/{printOrderId}/status")
+    @PreAuthorize("hasRole('OWNER')")
+    public ApiResponse<OwnerPhotoResponse.PrintOrderStatusUpdated> updatePrintOrderStatus(
+            @AuthenticationPrincipal AuthUser owner,
+            @PathVariable Long photoLabId,
+            @PathVariable Long printOrderId,
+            @RequestBody @Valid OwnerPhotoRequest.UpdatePrintOrderStatus request
+    ) {
+        OwnerPhotoResponse.PrintOrderStatusUpdated result =
+                ownerPhotoCommandService.updatePrintOrderStatus(photoLabId, owner.memberId(), printOrderId, request);
+        return ApiResponse.success(SuccessCode.OK, result);
+    }
 }
