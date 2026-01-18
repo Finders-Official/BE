@@ -28,14 +28,14 @@ public class PhotoRestoration extends BaseTimeEntity {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(name = "original_url", length = 500, nullable = false)
-    private String originalUrl;
+    @Column(name = "original_path", length = 500, nullable = false)
+    private String originalPath;
 
-    @Column(name = "mask_url", length = 500, nullable = false)
-    private String maskUrl;
+    @Column(name = "mask_path", length = 500, nullable = false)
+    private String maskPath;
 
-    @Column(name = "restored_url", length = 500)
-    private String restoredUrl;
+    @Column(name = "restored_path", length = 500)
+    private String restoredPath;
 
     @Column(name = "restored_width")
     private Integer restoredWidth;
@@ -64,10 +64,10 @@ public class PhotoRestoration extends BaseTimeEntity {
     private String feedbackComment;
 
     @Builder
-    private PhotoRestoration(Long memberId, String originalUrl, String maskUrl, int tokenUsed) {
+    private PhotoRestoration(Long memberId, String originalPath, String maskPath, int tokenUsed) {
         this.memberId = memberId;
-        this.originalUrl = originalUrl;
-        this.maskUrl = maskUrl;
+        this.originalPath = originalPath;
+        this.maskPath = maskPath;
         this.tokenUsed = tokenUsed;
         this.status = RestorationStatus.PENDING;
     }
@@ -77,9 +77,9 @@ public class PhotoRestoration extends BaseTimeEntity {
         this.replicatePredictionId = predictionId;
     }
 
-    public void complete(String restoredUrl, Integer width, Integer height) {
+    public void complete(String restoredPath, Integer width, Integer height) {
         this.status = RestorationStatus.COMPLETED;
-        this.restoredUrl = restoredUrl;
+        this.restoredPath = restoredPath;
         this.restoredWidth = width;
         this.restoredHeight = height;
     }
