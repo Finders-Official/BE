@@ -50,8 +50,19 @@ public class PhotoRequest {
 
             @Schema(description = "선택한 스캔 사진 및 수량 목록", requiredMode = Schema.RequiredMode.REQUIRED)
             @NotEmpty(message = "photos는 최소 1개 이상이어야 합니다.")
-            List<@Valid SelectedPhoto> photos
-    ) { }
+            List<@Valid SelectedPhoto> photos,
+
+            @Valid
+            DeliveryAddress deliveryAddress
+    ) {
+        public record DeliveryAddress(
+                @NotBlank String recipientName,
+                @NotBlank String phone,
+                @NotBlank String zipcode,
+                @NotBlank String address,
+                String addressDetail
+        ) {}
+    }
 
     @Builder
     @Schema(name = "SelectedPhoto", description = "견적 계산에 포함할 스캔 사진 + 수량")
