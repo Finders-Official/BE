@@ -1,15 +1,21 @@
 package com.finders.api.infra.replicate;
 
-import com.finders.api.domain.photo.service.PhotoRestorationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finders.api.domain.photo.service.command.PhotoRestorationCommandService;
+import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
+import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
 
 /**
  * Replicate Webhook 콜백 컨트롤러
@@ -23,29 +29,47 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/webhooks/replicate")
 public class ReplicateWebhookController {
 
-    private final PhotoRestorationService restorationService;
+    private final PhotoRestorationCommandService commandService;
+    private final ReplicateWebhookVerifier webhookVerifier;
+    private final ObjectMapper objectMapper;
 
     @PostMapping
-    public ApiResponse<Void> handleWebhook(@RequestBody ReplicateResponse.Prediction payload) {
+    public ApiResponse<Void> handleWebhook(
+            @RequestHeader(value = "webhook-id", required = false) String webhookId,
+            @RequestHeader(value = "webhook-timestamp", required = false) String webhookTimestamp,
+            @RequestHeader(value = "webhook-signature", required = false) String webhookSignature,
+            @RequestBody String rawBody
+    ) {
+        // 1. Webhook 서명 검증
+        webhookVerifier.verify(webhookId, webhookTimestamp, webhookSignature, rawBody);
+
+        // 2. JSON 파싱
+        ReplicateResponse.Prediction payload;
+        try {
+            payload = objectMapper.readValue(rawBody, ReplicateResponse.Prediction.class);
+        } catch (IOException e) {
+            log.error("[ReplicateWebhook] JSON 파싱 실패: {}", e.getMessage());
+            throw new CustomException(ErrorCode.BAD_REQUEST, "잘못된 Webhook 페이로드 형식입니다.");
+        }
         log.info("[ReplicateWebhook] Received: id={}, status={}", payload.id(), payload.status());
 
         if (payload.isSucceeded()) {
             String resultUrl = payload.getFirstOutput();
             if (resultUrl != null) {
                 try {
-                    restorationService.completeRestoration(payload.id(), resultUrl);
+                    commandService.completeRestoration(payload.id(), resultUrl);
                 } catch (Exception e) {
                     // completeRestoration 실패 시 별도 트랜잭션으로 실패 처리
                     log.error("[ReplicateWebhook] Failed to complete restoration: id={}, error={}",
                             payload.id(), e.getMessage(), e);
-                    restorationService.failRestoration(payload.id(), e.getMessage());
+                    commandService.failRestoration(payload.id(), e.getMessage());
                 }
             } else {
                 log.error("[ReplicateWebhook] Succeeded but no output: id={}", payload.id());
-                restorationService.failRestoration(payload.id(), "복원 결과 이미지가 없습니다.");
+                commandService.failRestoration(payload.id(), "복원 결과 이미지가 없습니다.");
             }
         } else if (payload.isFailed()) {
-            restorationService.failRestoration(payload.id(), payload.error());
+            commandService.failRestoration(payload.id(), payload.error());
         } else {
             log.debug("[ReplicateWebhook] Ignored status: id={}, status={}", payload.id(), payload.status());
         }
