@@ -4,10 +4,16 @@ import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.photo.dto.OwnerPhotoRequest;
 import com.finders.api.domain.photo.dto.OwnerPhotoResponse;
+import com.finders.api.domain.photo.entity.Delivery;
 import com.finders.api.domain.photo.entity.DevelopmentOrder;
+import com.finders.api.domain.photo.entity.PrintOrder;
 import com.finders.api.domain.photo.entity.ScannedPhoto;
 import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;
+import com.finders.api.domain.photo.enums.PrintOrderStatus;
+import com.finders.api.domain.photo.enums.ReceiptMethod;
+import com.finders.api.domain.photo.repository.DeliveryRepository;
 import com.finders.api.domain.photo.repository.DevelopmentOrderRepository;
+import com.finders.api.domain.photo.repository.PrintOrderRepository;
 import com.finders.api.domain.photo.repository.ScannedPhotoRepository;
 import com.finders.api.domain.reservation.entity.Reservation;
 import com.finders.api.domain.reservation.repository.ReservationRepository;
@@ -15,8 +21,10 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StoragePath;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,11 +43,15 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
     private final PhotoLabRepository photoLabRepository;
     private final ReservationRepository reservationRepository;
     private final MemberUserRepository memberUserRepository;
+    private final PrintOrderRepository printOrderRepository;
     private final DevelopmentOrderRepository developmentOrderRepository;
     private final ScannedPhotoRepository scannedPhotoRepository;
+    private final DeliveryRepository deliveryRepository;
     private final StorageService storageService;
 
+
     private static final DateTimeFormatter ORDER_DATE_FMT = DateTimeFormatter.ofPattern("yyMMdd");
+
 
     @Override
     public OwnerPhotoResponse.PresignedUrls createScanUploadPresignedUrls(
@@ -64,18 +76,42 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
         int count = request.count();
         String orderCode = order.getOrderCode();
 
+        // 1) 파일명(UUID) 리스트 생성
+        List<String> fileNames = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            fileNames.add(UUID.randomUUID().toString().replace("-", ""));
+        }
+
+        // 2) bulk presigned url 발급
+        // StoragePath 규칙은 너희 프로젝트에 맞춰 넣어줘야 함.
+        // 예: StoragePath.SCANNED_UPLOAD 같은 enum이 있다고 가정
+        List<StorageResponse.PresignedUrl> presignedUrls =
+                storageService.generateBulkPresignedUrls(
+                        StoragePath.SCANNED_PHOTO,
+                        photoLabId,
+                        fileNames
+                );
+
+        // 3) objectPath 조립 + Item 매핑
         List<OwnerPhotoResponse.Item> items = new ArrayList<>(count);
+
         Long expiresAt = null;
 
-        for (int i = 1; i <= count; i++) {
-            String filename = UUID.randomUUID().toString().replace("-", "");
+        for (int i = 0; i < presignedUrls.size(); i++) {
+            StorageResponse.PresignedUrl p = presignedUrls.get(i);
 
-            String objectPath = String.format("scanned/%d/orders/%s/%s", photoLabId, orderCode, filename);
+            String objectPath = p.objectPath();
 
-            StorageResponse.SignedUrl signed = storageService.getSignedUrl(objectPath, null);
-            if (expiresAt == null) expiresAt = signed.expiresAtEpochSecond();
+            if (objectPath == null || objectPath.isBlank()) {
+                String filename = fileNames.get(i);
+                objectPath = String.format("scanned/%d/orders/%s/%s", photoLabId, orderCode, filename);
+            }
 
-            items.add(OwnerPhotoResponse.Item.of(i, objectPath, signed.url()));
+            if (expiresAt == null) {
+                expiresAt = p.expiresAtEpochSecond();
+            }
+
+            items.add(OwnerPhotoResponse.Item.of(i + 1, objectPath, p.url()));
         }
 
         return OwnerPhotoResponse.PresignedUrls.of(
@@ -86,6 +122,7 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
                 items
         );
     }
+
 
     @Override
     public Long createDevelopmentOrder(
@@ -199,6 +236,117 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
         order.updateStatus(target);
 
         return OwnerPhotoResponse.DevelopmentOrderStatusUpdated.of(order.getId(), order.getStatus());
+    }
+
+    @Override
+    public OwnerPhotoResponse.PrintOrderStatusUpdated startPrinting(
+            Long photoLabId,
+            Long ownerId,
+            Long printOrderId,
+            OwnerPhotoRequest.StartPrinting request
+    ) {
+        // 1) photoLab 존재 확인
+        PhotoLab lab = photoLabRepository.findById(photoLabId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        // 2) owner 검증
+        if (!lab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.PHOTO_OWNER_MISMATCH);
+        }
+
+        // 3) printOrder 존재 확인
+        PrintOrder order = printOrderRepository.findById(printOrderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PHOTO_PRINT_ORDER_NOT_FOUND));
+
+        // 4) 주문이 해당 현상소 주문인지 검증
+        if (!order.getPhotoLab().getId().equals(photoLabId)) {
+            throw new CustomException(ErrorCode.PHOTO_ORDER_PHOTOLAB_MISMATCH);
+        }
+
+        // 5) 상태 전이/업데이트
+        order.startPrinting(request.estimatedAt());
+
+        return OwnerPhotoResponse.PrintOrderStatusUpdated.of(order.getId(), order.getStatus());
+    }
+
+    @Override
+    public OwnerPhotoResponse.PrintOrderStatusUpdated registerShipping(
+            Long photoLabId,
+            Long ownerId,
+            Long printOrderId,
+            OwnerPhotoRequest.RegisterShipping request
+    ) {
+        // 1) photoLab 존재 확인
+        PhotoLab lab = photoLabRepository.findById(photoLabId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        // 2) owner 검증 (photoLab의 ownerId와 auth ownerId 일치)
+        if (!lab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.PHOTO_OWNER_MISMATCH);
+        }
+
+        // 3) printOrder 존재 확인
+        PrintOrder order = printOrderRepository.findById(printOrderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PHOTO_PRINT_ORDER_NOT_FOUND));
+
+        // 4) 주문이 해당 현상소 주문인지 검증
+        if (!order.getPhotoLab().getId().equals(photoLabId)) {
+            throw new CustomException(ErrorCode.PHOTO_ORDER_PHOTOLAB_MISMATCH);
+        }
+
+        // 5) 배송 주문만 가능
+        if (order.getReceiptMethod() != ReceiptMethod.DELIVERY) {
+            throw new CustomException(ErrorCode.PHOTO_PRINT_STATUS_NOT_ALLOWED);
+        }
+
+        // 6) delivery upsert (없으면 생성, 있으면 업데이트)
+        Delivery delivery = deliveryRepository.findByPrintOrderId(order.getId())
+                .orElseGet(() -> deliveryRepository.save(Delivery.create(order)));
+
+        LocalDateTime shippedAt =
+                (request.shippedAt() != null) ? request.shippedAt() : LocalDateTime.now();
+
+        delivery.updateCarrier(request.carrier());
+        delivery.updateTrackingNumber(request.trackingNumber());
+        delivery.markShipped(shippedAt);
+
+        // 7) 주문 상태 변경: SHIPPED
+        order.updateStatusByOwner(PrintOrderStatus.SHIPPED);
+
+        return OwnerPhotoResponse.PrintOrderStatusUpdated.of(order.getId(), order.getStatus());
+    }
+
+    @Override
+    public OwnerPhotoResponse.PrintOrderStatusUpdated updatePrintOrderStatus(
+            Long photoLabId,
+            Long ownerId,
+            Long printOrderId,
+            OwnerPhotoRequest.UpdatePrintOrderStatus request
+    ) {
+        // 1) photoLab 존재 확인
+        PhotoLab lab = photoLabRepository.findById(photoLabId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        // 2) owner 검증
+        if (!lab.getOwner().getId().equals(ownerId)) {
+            throw new CustomException(ErrorCode.PHOTO_OWNER_MISMATCH);
+        }
+
+        // 3) printOrder 존재 확인
+        PrintOrder order = printOrderRepository.findById(printOrderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PHOTO_PRINT_ORDER_NOT_FOUND));
+
+        // 4) 주문이 해당 현상소 주문인지 검증
+        if (!order.getPhotoLab().getId().equals(photoLabId)) {
+            throw new CustomException(ErrorCode.PHOTO_ORDER_PHOTOLAB_MISMATCH);
+        }
+
+        PrintOrderStatus target = request.status();
+
+        // 6) 상태 변경 (완료면 completedAt도 찍힘)
+        order.updateStatusByOwner(target);
+
+        return OwnerPhotoResponse.PrintOrderStatusUpdated.of(order.getId(), order.getStatus());
     }
 
     private String generateOrderCode(Long photoLabId) {
