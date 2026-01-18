@@ -23,7 +23,7 @@ public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
         String getAddress();
         Double getDistanceVal();
     }
-    @Query(value = "SELECT *, " +
+    @Query(value = "SELECT id, name, address, " +
             // 직선 거리 계산
             "IF(:locationAgreed = true, ST_Distance_Sphere(point(:lng, :lat), point(longitude, latitude)), NULL) AS distance_val " +
             "FROM photo_lab " +
