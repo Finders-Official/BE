@@ -1,7 +1,11 @@
 package com.finders.api.infra.storage;
 
+import com.finders.api.global.exception.CustomException;
+import com.finders.api.global.response.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Arrays;
 
 /**
  * GCS 저장 경로 패턴
@@ -27,11 +31,14 @@ public enum StoragePath {
     /** 현상소 QR 코드: photo-labs/{photoLabId}/qr.png */
     LAB_QR("photo-labs/%d/qr.png", true),
 
-    /** 게시글 이미지: posts/{postId}/{uuid}.{ext} */
+    /** 게시글 이미지: posts/{memberId}/{uuid}.{ext} */
     POST_IMAGE("posts/%d/%s", true),
 
     /** 프로모션 이미지: promotions/{promotionId}/{uuid}.{ext} */
     PROMOTION("promotions/%d/%s", true),
+
+    /** 1:1 문의 이미지: inquiries/{memberId}/{uuid}.{ext} */
+    INQUIRY("inquiries/%d/%s", true),
 
     /** 임시 업로드 (public): temp/{memberId}/{uuid}.{ext} - 30일 후 자동 삭제 */
     TEMP_PUBLIC("temp/%d/%s", true),
@@ -66,5 +73,36 @@ public enum StoragePath {
      */
     public String format(Object... args) {
         return String.format(pattern, args);
+    }
+
+    // 경로 문자열 분석 -> 해당하는 StoragePath 상수 반환
+    public static StoragePath fromObjectPath(String objectPath) {
+        return Arrays.stream(values())
+                .filter(path -> {
+                    String root = path.getPattern().split("/")[0];
+                    if (root.equals("temp") && objectPath.startsWith("temp/orders")) {
+                        return path == SCANNED_PHOTO;
+                    }
+                    return objectPath.startsWith(root);
+                })
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.STORAGE_INVALID_PATH));
+    }
+
+    public Long extractId(String objectPath) {
+        try {
+            String[] parts = objectPath.split("/");
+            if (this == SCANNED_PHOTO) return Long.parseLong(parts[2]); // temp/orders/{id}
+            return Long.parseLong(parts[1]); // 그 외 보통 {category}/{id}
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            // 경로가 예상보다 짧거나(Index), ID 자리에 숫자가 아닌 값이 온 경우(Format)
+            throw new CustomException(ErrorCode.STORAGE_INVALID_PATH);
+        }
+    }
+
+    // 공통 API 사용 가능 여부 확인
+    public boolean isCommon() {
+        return this == PROFILE || this == POST_IMAGE || this == TEMP_PUBLIC || this == INQUIRY ||
+                this == RESTORATION_ORIGINAL || this == RESTORATION_MASK || this == RESTORATION_RESTORED;
     }
 }

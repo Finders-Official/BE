@@ -61,6 +61,39 @@ List<Store> list;
 Long id;
 ```
 
+### Image Fields
+
+GCS 이미지 저장 필드명 규칙:
+
+| 레이어 | 필드명 | 저장값 | 예시 |
+|--------|--------|--------|------|
+| **Entity/DB** | `objectPath` | GCS 경로 | `posts/123/abc.jpg` |
+| **Response DTO** | `imageUrl` | 전체 URL | `https://storage.googleapis.com/finders-public/posts/123/abc.jpg` |
+| **Request DTO** | `objectPath` | GCS 경로 (presigned URL 업로드 후) | `temp/456/xyz.jpg` |
+
+```java
+// Entity (DB 저장)
+@Entity
+public class PostImage {
+    @Column(name = "object_path", nullable = false, length = 500)
+    private String objectPath;  // GCS 경로만 저장
+}
+
+// Response DTO (API 응답)
+public record PostResponse(
+    String imageUrl  // 서비스 레이어에서 전체 URL로 변환
+) {}
+
+// Request DTO (클라이언트 → 서버)
+public record PostRequest(
+    String objectPath  // presigned URL 업로드 후 경로 전달
+) {}
+```
+
+**예외 케이스**:
+- `PhotoRestoration`: `originalPath`, `maskPath`, `restoredPath` (복수 이미지이므로 접두사 사용)
+- `Member.profileImage`, `PhotoLab.qrCodeUrl`: 기존 필드명 유지 (1:1 관계)
+
 ---
 
 ## Git Conventions
