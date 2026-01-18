@@ -48,10 +48,10 @@ public class ReplicateWebhookController {
         try {
             payload = objectMapper.readValue(rawBody, ReplicateResponse.Prediction.class);
         } catch (IOException e) {
-            log.error("[ReplicateWebhook] JSON 파싱 실패: {}", e.getMessage());
+            log.error("[ReplicateWebhookController.handleWebhook] JSON 파싱 실패: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.BAD_REQUEST, "잘못된 Webhook 페이로드 형식입니다.");
         }
-        log.info("[ReplicateWebhook] Received: id={}, status={}", payload.id(), payload.status());
+        log.info("[ReplicateWebhookController.handleWebhook] Received: id={}, status={}", payload.id(), payload.status());
 
         if (payload.isSucceeded()) {
             String resultUrl = payload.getFirstOutput();
@@ -60,18 +60,18 @@ public class ReplicateWebhookController {
                     commandService.completeRestoration(payload.id(), resultUrl);
                 } catch (Exception e) {
                     // completeRestoration 실패 시 별도 트랜잭션으로 실패 처리
-                    log.error("[ReplicateWebhook] Failed to complete restoration: id={}, error={}",
+                    log.error("[ReplicateWebhookController.handleWebhook] Failed to complete restoration: id={}, error={}",
                             payload.id(), e.getMessage(), e);
                     commandService.failRestoration(payload.id(), e.getMessage());
                 }
             } else {
-                log.error("[ReplicateWebhook] Succeeded but no output: id={}", payload.id());
+                log.error("[ReplicateWebhookController.handleWebhook] Succeeded but no output: id={}", payload.id());
                 commandService.failRestoration(payload.id(), "복원 결과 이미지가 없습니다.");
             }
         } else if (payload.isFailed()) {
             commandService.failRestoration(payload.id(), payload.error());
         } else {
-            log.debug("[ReplicateWebhook] Ignored status: id={}, status={}", payload.id(), payload.status());
+            log.debug("[ReplicateWebhookController.handleWebhook] Ignored status: id={}, status={}", payload.id(), payload.status());
         }
 
         return ApiResponse.success(SuccessCode.OK);

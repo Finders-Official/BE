@@ -69,7 +69,7 @@ public class GcsStorageService implements StorageService {
                 log.warn("[GcsStorageService.initSigner] Signed URL 생성 불가: serviceAccountEmail 미설정");
             }
         } catch (IOException e) {
-            log.error("[GcsStorageService.initSigner] Signer 초기화 실패: {}", e.getMessage());
+            log.error("[GcsStorageService.initSigner] Signer 초기화 실패: {}", e.getMessage(), e);
         }
     }
 
@@ -269,7 +269,7 @@ public class GcsStorageService implements StorageService {
                     (int) file.getSize()
             );
         } catch (IOException e) {
-            log.error("[GcsStorageService.uploadPublic] Upload failed: {}", e.getMessage());
+            log.error("[GcsStorageService.uploadPublic] Upload failed: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.STORAGE_UPLOAD_FAILED, "Public 버킷 업로드 실패");
         }
     }
@@ -301,7 +301,7 @@ public class GcsStorageService implements StorageService {
                     (int) file.getSize()
             );
         } catch (IOException e) {
-            log.error("[GcsStorageService.uploadPrivate] Upload failed: {}", e.getMessage());
+            log.error("[GcsStorageService.uploadPrivate] Upload failed: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.STORAGE_UPLOAD_FAILED, "Private 버킷 업로드 실패");
         }
     }
