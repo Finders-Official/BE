@@ -30,8 +30,8 @@ public class PhotoLabDocument extends BaseTimeEntity {
     @Column(name = "document_type", nullable = false, length = 30)
     private DocumentType documentType;
 
-    @Column(name = "file_url", nullable = false, length = 500)
-    private String fileUrl;
+    @Column(name = "object_path", nullable = false, length = 500)
+    private String objectPath;
 
     @Column(name = "file_name", length = 200)
     private String fileName;
@@ -43,13 +43,13 @@ public class PhotoLabDocument extends BaseTimeEntity {
     private PhotoLabDocument(
             PhotoLab photoLab,
             DocumentType documentType,
-            String fileUrl,
+            String objectPath,
             String fileName,
             LocalDateTime verifiedAt
     ) {
         this.photoLab = photoLab;
         this.documentType = documentType;
-        this.fileUrl = fileUrl;
+        this.objectPath = objectPath;
         this.fileName = fileName;
         this.verifiedAt = verifiedAt;
     }
