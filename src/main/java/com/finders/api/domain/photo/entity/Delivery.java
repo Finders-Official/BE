@@ -121,12 +121,33 @@ public class Delivery extends BaseEntity {
                 .build();
     }
 
-   public static Delivery create(PrintOrder printOrder) {
-       Delivery delivery = new Delivery();
-       delivery.printOrder = printOrder;
-       delivery.status = DeliveryStatus.PENDING;
-       return delivery;
-   }
+    public static Delivery create(PrintOrder printOrder) {
+        Delivery delivery = new Delivery();
+        delivery.printOrder = printOrder;
+        delivery.status = DeliveryStatus.PENDING;
+        return delivery;
+    }
+
+    public static Delivery create(
+            PrintOrder printOrder,
+            String recipientName,
+            String phone,
+            String zipcode,
+            String address,
+            String addressDetail,
+            int deliveryFee
+    ) {
+        return Delivery.builder()
+                .printOrder(printOrder)
+                .recipientName(recipientName)
+                .phone(phone)
+                .zipcode(zipcode)
+                .address(address)
+                .addressDetail(addressDetail)
+                .deliveryFee(deliveryFee)
+                .status(DeliveryStatus.PENDING)
+                .build();
+    }
 
     public void updateCarrier(String carrier) {
         this.carrier = carrier;
