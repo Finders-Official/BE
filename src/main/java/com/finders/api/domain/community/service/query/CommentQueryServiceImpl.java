@@ -46,6 +46,6 @@ public class CommentQueryServiceImpl implements CommentQueryService {
 
     private String getFullUrl(String path) {
         if (path == null || path.isBlank()) return null;
-        return storageService.getSignedUrl(path, SIGNED_URL_EXPIRY_MINUTES).url();
+        return storageService.getPublicUrl(path);
     }
 }

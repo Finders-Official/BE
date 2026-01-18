@@ -11,6 +11,7 @@ public record ReplicateProperties(
         String baseUrl,
         String modelVersion,
         String webhookBaseUrl,
+        String webhookSecret,
         Integer timeoutSeconds,
         Integer maxRetries
 ) {
