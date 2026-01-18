@@ -55,12 +55,12 @@ public class PhotoLabResponse {
             String address,
             String distance
     ) {
-        public static PhotoLabSearchDTO from(PhotoLab photoLab, String distance) {
+        public static PhotoLabSearchDTO from(PhotoLab photoLab, String distance, boolean locationAgreed) {
             return PhotoLabSearchDTO.builder()
                     .labId(photoLab.getId())
                     .name(photoLab.getName())
                     .address(photoLab.getAddress())
-                    .distance(distance)
+                    .distance(locationAgreed ? distance : null) // 위치 정보 미동의 시 null
                     .build();
         }
     }

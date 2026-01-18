@@ -61,6 +61,39 @@ List<Store> list;
 Long id;
 ```
 
+### Image Fields
+
+GCS 이미지 저장 필드명 규칙:
+
+| 레이어 | 필드명 | 저장값 | 예시 |
+|--------|--------|--------|------|
+| **Entity/DB** | `objectPath` | GCS 경로 | `posts/123/abc.jpg` |
+| **Response DTO** | `imageUrl` | 전체 URL | `https://storage.googleapis.com/finders-public/posts/123/abc.jpg` |
+| **Request DTO** | `objectPath` | GCS 경로 (presigned URL 업로드 후) | `temp/456/xyz.jpg` |
+
+```java
+// Entity (DB 저장)
+@Entity
+public class PostImage {
+    @Column(name = "object_path", nullable = false, length = 500)
+    private String objectPath;  // GCS 경로만 저장
+}
+
+// Response DTO (API 응답)
+public record PostResponse(
+    String imageUrl  // 서비스 레이어에서 전체 URL로 변환
+) {}
+
+// Request DTO (클라이언트 → 서버)
+public record PostRequest(
+    String objectPath  // presigned URL 업로드 후 경로 전달
+) {}
+```
+
+**예외 케이스**:
+- `PhotoRestoration`: `originalPath`, `maskPath`, `restoredPath` (복수 이미지이므로 접두사 사용)
+- `Member.profileImage`, `PhotoLab.qrCodeUrl`: 기존 필드명 유지 (1:1 관계)
+
 ---
 
 ## Git Conventions
@@ -155,3 +188,45 @@ git commit -m "chore: 코드 포맷팅 적용"
 - 브랜치명에 이슈 번호 필수 포함
 - 커밋 메시지 이슈 번호는 선택 (참고용)
 - PR 머지 시 이슈 자동 종료: `Closes #14`, `Fixes #14`
+
+---
+
+### Release 프로세스
+
+GitHub Releases를 통해 버전을 관리합니다. 태그를 푸시하면 자동으로 릴리스가 생성됩니다.
+
+#### 릴리스 생성 방법
+
+```bash
+# 1. main 브랜치로 이동
+git checkout main
+git pull origin main
+
+# 2. 태그 생성 (Semantic Versioning 사용)
+git tag v1.0.0
+
+# 3. 태그 푸시 → 자동으로 GitHub Release 생성됨
+git push origin v1.0.0
+```
+
+#### 버전 규칙 (Semantic Versioning)
+
+| 버전 | 변경 시점 | 예시 |
+|------|----------|------|
+| `MAJOR` | 호환되지 않는 API 변경 | `v1.0.0` → `v2.0.0` |
+| `MINOR` | 하위 호환 기능 추가 | `v1.0.0` → `v1.1.0` |
+| `PATCH` | 하위 호환 버그 수정 | `v1.0.0` → `v1.0.1` |
+| Pre-release | 테스트 버전 | `v1.0.0-beta`, `v1.0.0-rc.1` |
+
+#### 릴리스 노트 자동 생성
+
+`.github/release.yml` 설정에 따라 PR 라벨 기반으로 릴리스 노트가 자동 분류됩니다.
+
+| 라벨 | 카테고리 |
+|------|----------|
+| `enhancement` | ✨ New Features |
+| `bug` | 🐛 Bug Fixes |
+| `documentation` | 📚 Documentation |
+| `task` | 📋 Tasks |
+
+> **Tip**: PR 생성 시 적절한 라벨을 붙이면 릴리스 노트가 더 보기 좋게 정리됩니다.

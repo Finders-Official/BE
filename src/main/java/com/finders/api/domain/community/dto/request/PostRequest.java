@@ -1,9 +1,9 @@
 package com.finders.api.domain.community.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,12 +20,10 @@ public class PostRequest {
             String content,
 
             @Size(max = 10, message = "사진은 최대 10장가지 가능합니다.")
-            List<MultipartFile> images,
+            List<PostImageRequestDTO> images,
 
             boolean isSelfDeveloped,
             Long labId,
-
-            @Size(min = 20, max = 300, message = "리뷰는 최소 20자, 최대 300자 이내여야 합니다.")
             String reviewContent
     ){}
 
@@ -33,5 +31,17 @@ public class PostRequest {
     public record CreateCommentDTO(
             @NotBlank(message = "댓글 내용은 필수입니다.")
             String content
+    ) {}
+
+    // 이미지 관련
+    public record PostImageRequestDTO(
+            @NotBlank(message = "이미지 경로는 필수입니다.")
+            String objectPath,
+
+            @NotNull(message = "가로 길이는 필수입니다.")
+            Integer width,
+
+            @NotNull(message = "세로 길이는 필수입니다.")
+            Integer height
     ) {}
 }
