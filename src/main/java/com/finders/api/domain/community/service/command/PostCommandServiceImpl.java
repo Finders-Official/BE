@@ -86,7 +86,7 @@ public class PostCommandServiceImpl implements PostCommandService {
 
         String profileUrl = null;
         if (memberUser.getProfileImage() != null) {
-            profileUrl = storageService.getSignedUrl(memberUser.getProfileImage(), 60).url();
+            profileUrl = storageService.getPublicUrl(memberUser.getProfileImage());
         }
 
         return PostResponse.PostDetailResDTO.from(post, false, true, profileUrl, imageResDTOs);
