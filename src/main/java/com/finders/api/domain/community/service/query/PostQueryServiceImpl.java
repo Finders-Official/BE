@@ -64,15 +64,25 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
-    public PostResponse.PostPreviewListDTO searchPosts(String keyword, Long memberId, Pageable pageable) {
-        Page<Post> posts = postRepository.searchPostsByKeyword(keyword, pageable);
-        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts.getContent(), memberId));
+    public PostResponse.PostPreviewListDTO searchPosts(String keyword, String filter, Long memberId, Pageable pageable) {
+        List<Post> posts = postQueryRepository.searchPosts(
+                keyword,
+                filter,
+                pageable.getPageNumber(),
+                pageable.getPageSize()
+        );
+
+        Long totalCount = postQueryRepository.countSearchPosts(keyword, filter);
+
+        List<PostResponse.PostPreviewDTO> previewDTOs = convertToPreviewDTOs(posts, memberId);
+
+        boolean isLast = (long) (pageable.getPageNumber() + 1) * pageable.getPageSize() >= totalCount;
+
+        return PostResponse.PostPreviewListDTO.from(previewDTOs, totalCount, isLast);
     }
 
     private PostResponse.PostImageResDTO toPostImageResDTO(com.finders.api.domain.community.entity.PostImage image) {
-        if (image == null) {
-            return null;
-        }
+        if (image == null) return null;
         return PostResponse.PostImageResDTO.from(image, getFullUrl(image.getObjectPath()));
     }
 
