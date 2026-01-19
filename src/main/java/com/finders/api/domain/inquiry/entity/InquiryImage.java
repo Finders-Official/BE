@@ -21,23 +21,23 @@ public class InquiryImage extends BaseTimeEntity {
     @JoinColumn(name = "inquiry_id", nullable = false)
     private Inquiry inquiry;
 
-    @Column(nullable = false, length = 500)
-    private String imageUrl;
+    @Column(name = "object_path", nullable = false, length = 500)
+    private String objectPath;
 
     @Column(name = "display_order")
     private Integer displayOrder;
 
     @Builder
-    private InquiryImage(Inquiry inquiry, String imageUrl, Integer displayOrder) {
+    private InquiryImage(Inquiry inquiry, String objectPath, Integer displayOrder) {
         this.inquiry = inquiry;
-        this.imageUrl = imageUrl;
+        this.objectPath = objectPath;
         this.displayOrder = displayOrder != null ? displayOrder : 0;
     }
 
-    public static InquiryImage create(Inquiry inquiry, String imageUrl, Integer displayOrder) {
+    public static InquiryImage create(Inquiry inquiry, String objectPath, Integer displayOrder) {
         return InquiryImage.builder()
                 .inquiry(inquiry)
-                .imageUrl(imageUrl)
+                .objectPath(objectPath)
                 .displayOrder(displayOrder)
                 .build();
     }

@@ -1,5 +1,6 @@
 package com.finders.api.domain.inquiry.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -21,8 +22,12 @@ public class InquiryRequest {
             @Size(max = 500, message = "문의 내용은 500자 이내여야 합니다.")
             String content,
 
+            @Schema(
+                    description = "GCS objectPath 목록 (Presigned URL 업로드 후 전달)",
+                    example = "[\"temp/123/abc.png\", \"inquiries/456/def.jpg\"]"
+            )
             @Size(max = 5, message = "이미지는 최대 5개까지 첨부할 수 있습니다.")
-            List<String> imageUrls
+            List<String> imageUrls  // objectPath를 전달받음
     ) {}
 
     /**

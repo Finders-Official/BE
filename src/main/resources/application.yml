@@ -147,6 +147,7 @@ sentry:
   traces-sample-rate: 1.0
   send-default-pii: false
   in-app-includes: com.finders  # 스택트레이스에서 우리 코드 하이라이트
+  exception-resolver-order: -2147483648  # @ExceptionHandler보다 먼저 예외 캡처 (HIGHEST_PRECEDENCE)
   logging:
     minimum-event-level: warn  # WARN 레벨 이상 캡처 (400대 에러 포함)
     minimum-breadcrumb-level: info  # Breadcrumb은 INFO 레벨부터

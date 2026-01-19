@@ -97,7 +97,27 @@ public class InquiryResponse {
                     .status(inquiry.getStatus())
                     .photoLab(inquiry.getPhotoLab() != null ? PhotoLabInfoDTO.from(inquiry.getPhotoLab()) : null)
                     .member(MemberInfoDTO.from(inquiry))
-                    .imageUrls(inquiry.getImages().stream().map(InquiryImage::getImageUrl).toList())
+                    .imageUrls(inquiry.getImages().stream().map(InquiryImage::getObjectPath).toList())
+                    .createdAt(inquiry.getCreatedAt())
+                    .replies(inquiry.getReplies().stream().map(ReplyDTO::from).toList())
+                    .build();
+        }
+
+        /**
+         * URL 변환된 이미지 리스트와 함께 DTO 생성
+         *
+         * @param inquiry   문의 엔티티
+         * @param imageUrls 변환된 Public URL 리스트
+         */
+        public static InquiryDetailDTO fromWithUrls(Inquiry inquiry, List<String> imageUrls) {
+            return InquiryDetailDTO.builder()
+                    .id(inquiry.getId())
+                    .title(inquiry.getTitle())
+                    .content(inquiry.getContent())
+                    .status(inquiry.getStatus())
+                    .photoLab(inquiry.getPhotoLab() != null ? PhotoLabInfoDTO.from(inquiry.getPhotoLab()) : null)
+                    .member(MemberInfoDTO.from(inquiry))
+                    .imageUrls(imageUrls)
                     .createdAt(inquiry.getCreatedAt())
                     .replies(inquiry.getReplies().stream().map(ReplyDTO::from).toList())
                     .build();
