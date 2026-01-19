@@ -10,5 +10,5 @@ public interface PostQueryService {
 
     PostResponse.PostPreviewListDTO getPopularPosts(Long memberId);
 
-    PostResponse.PostPreviewListDTO searchPosts(String keyword, Long memberId, Pageable pageable);
+    PostResponse.PostPreviewListDTO searchPosts(String keyword, String filter, Long memberId, Pageable pageable);
 }

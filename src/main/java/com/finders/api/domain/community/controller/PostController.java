@@ -138,10 +138,11 @@ public class PostController {
     @GetMapping("/search")
     public ApiResponse<PostResponse.PostPreviewListDTO> searchPosts(
             @RequestParam(name = "keyword") String keyword,
+            @RequestParam(name = "filter") String filter,
             @AuthenticationPrincipal AuthUser authUser,
             @ParameterObject
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.searchPosts(keyword, authUser.memberId(), pageable));
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.searchPosts(keyword, filter, authUser.memberId(), pageable));
     }
 }

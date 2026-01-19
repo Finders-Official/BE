@@ -2,6 +2,8 @@ package com.finders.api.domain.community.repository;
 
 import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.enums.CommunityStatus;
+import com.finders.api.domain.store.entity.QPhotoLab;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -33,5 +35,43 @@ public class PostQueryRepository {
                 .orderBy(post.likeCount.desc(), post.createdAt.desc()) // 좋아요 순, 같으면 최신순
                 .limit(POPULAR_POSTS_LIMIT)
                 .fetch();
+    }
+
+    public List<Post> searchPosts(String keyword, String filter, int page, int size) {
+        return queryFactory
+                .selectFrom(post)
+                .leftJoin(post.photoLab, QPhotoLab.photoLab).fetchJoin()
+                .where(
+                        post.status.eq(CommunityStatus.ACTIVE),
+                        createSearchCondition(filter, keyword)
+                )
+                .orderBy(post.createdAt.desc())
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+    }
+
+    public Long countSearchPosts(String keyword, String filter) {
+        return queryFactory
+                .select(post.count())
+                .from(post)
+                .where(
+                        post.status.eq(CommunityStatus.ACTIVE),
+                        createSearchCondition(filter, keyword)
+                )
+                .fetchOne();
+    }
+
+    private BooleanExpression createSearchCondition(String filter, String keyword) {
+        if (keyword == null || keyword.isBlank()) return null;
+
+        return switch (filter) {
+            case "TITLE" -> post.title.containsIgnoreCase(keyword);
+            case "TITLE_CONTENT" -> post.title.containsIgnoreCase(keyword)
+                    .or(post.content.containsIgnoreCase(keyword));
+            case "LAB_NAME" -> post.photoLab.name.containsIgnoreCase(keyword);
+            case "LAB_REVIEW" -> post.labReview.containsIgnoreCase(keyword);
+            default -> post.title.containsIgnoreCase(keyword);
+        };
     }
 }
