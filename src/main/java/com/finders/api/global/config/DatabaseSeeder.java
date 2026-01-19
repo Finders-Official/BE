@@ -345,6 +345,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 .name("관리자")
                 .email("admin@finders.it.kr")
                 .phone("010-0000-0000")
+                .passwordHash("$2a$10$dummyHashForDevEnvironmentOnly")
                 .build();
         return memberRepository.save(admin);
     }
@@ -358,6 +359,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .name(OWNER_NAMES[i])
                     .email(OWNER_EMAILS[i])
                     .phone("010-" + faker.number().digits(4) + "-" + faker.number().digits(4))
+                    .passwordHash("$2a$10$dummyHashForDevEnvironmentOnly")
                     .build();
             ownersToSave.add(owner);
         }
