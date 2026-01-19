@@ -5,6 +5,7 @@ import com.finders.api.domain.inquiry.dto.response.InquiryResponse;
 import com.finders.api.domain.inquiry.entity.Inquiry;
 import com.finders.api.domain.inquiry.entity.InquiryReply;
 import com.finders.api.domain.inquiry.enums.InquiryStatus;
+import com.finders.api.domain.inquiry.repository.InquiryReplyRepository;
 import com.finders.api.domain.inquiry.repository.InquiryRepository;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.repository.MemberRepository;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class InquiryCommandServiceImpl implements InquiryCommandService {
 
     private final InquiryRepository inquiryRepository;
+    private final InquiryReplyRepository inquiryReplyRepository;
     private final MemberRepository memberRepository;
     private final PhotoLabRepository photoLabRepository;
 
@@ -71,6 +73,7 @@ public class InquiryCommandServiceImpl implements InquiryCommandService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         InquiryReply reply = InquiryReply.create(inquiry, replier, request.content());
+        inquiryReplyRepository.save(reply);
 
         return InquiryResponse.ReplyCreateDTO.from(reply);
     }
@@ -92,6 +95,7 @@ public class InquiryCommandServiceImpl implements InquiryCommandService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         InquiryReply reply = InquiryReply.create(inquiry, replier, request.content());
+        inquiryReplyRepository.save(reply);
 
         return InquiryResponse.ReplyCreateDTO.from(reply);
     }
