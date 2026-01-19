@@ -5,7 +5,7 @@
 
 ---
 
-## 테이블 목록 (35개)
+## 테이블 목록 (36개)
 
 | 도메인             | 테이블                       | 설명                           |
 |-----------------|---------------------------|------------------------------|
@@ -33,6 +33,7 @@
 |                 | `scanned_photo`           | 스캔된 사진                       |
 |                 | `print_order`             | 인화 주문                        |
 |                 | `print_order_item`        | 인화 주문 상세                     |
+|                 | `print_order_photo`       | 인화 대상 사진 + 수량 (주문-스캔사진 매핑)   |
 |                 | `delivery`                | 배송 정보                        |
 |                 | `photo_restoration`       | AI 사진 복원 요청                  |
 | **community**   | `post`                    | 게시글/리뷰 (자가현상 여부 포함)          |
@@ -610,6 +611,11 @@ CREATE TABLE development_order
     CONSTRAINT fk_dev_order_reservation FOREIGN KEY (reservation_id) REFERENCES reservation (id),
     CONSTRAINT fk_dev_order_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab (id),
     CONSTRAINT fk_dev_order_member FOREIGN KEY (member_id) REFERENCES member (id),
+    is_develop     BOOLEAN     NOT NULL DEFAULT FALSE,
+    is_scan        BOOLEAN     NOT NULL DEFAULT FALSE,
+    is_print       BOOLEAN     NOT NULL DEFAULT FALSE,
+    roll_count     INT UNSIGNED NOT NULL DEFAULT 1,
+
     CONSTRAINT chk_dev_status CHECK (status IN ('RECEIVED', 'DEVELOPING', 'SCANNING', 'COMPLETED'))
 ) ENGINE=InnoDB COMMENT='현상 주문';
 
@@ -638,6 +644,11 @@ CREATE TABLE print_order
     receipt_method VARCHAR(20) NOT NULL DEFAULT 'PICKUP',
     estimated_at   DATETIME NULL,
     completed_at   DATETIME NULL,
+    deposit_receipt_object_path VARCHAR(500) NULL,
+    depositor_name              VARCHAR(50)  NULL,
+    deposit_bank_name           VARCHAR(50)  NULL,
+    payment_submitted_at        DATETIME     NULL,
+
     created_at     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -653,25 +664,43 @@ CREATE TABLE print_order
 
 CREATE TABLE print_order_item
 (
-    id               BIGINT      NOT NULL AUTO_INCREMENT,
-    print_order_id   BIGINT      NOT NULL,                  -- FK
-    scanned_photo_id BIGINT      NOT NULL,
-    paper_type       VARCHAR(20) NOT NULL DEFAULT 'GLOSSY',
-    print_method     VARCHAR(20) NOT NULL DEFAULT 'INKJET', -- 인화방식 (INKJET, LASER, etc)
-    size             VARCHAR(20) NOT NULL,
-    process          VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
-    quantity         INT UNSIGNED    NOT NULL DEFAULT 1,
-    unit_price       INT UNSIGNED    NOT NULL,
-    total_price      INT UNSIGNED    NOT NULL,
-    created_at       DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id             BIGINT      NOT NULL AUTO_INCREMENT,
+    print_order_id BIGINT      NOT NULL, -- FK
+
+    film_type      VARCHAR(20) NOT NULL,
+    paper_type     VARCHAR(30) NOT NULL,
+    print_method   VARCHAR(20) NOT NULL,
+    size           VARCHAR(20) NOT NULL,
+    frame_type     VARCHAR(20) NOT NULL,
+
+    unit_price     INT UNSIGNED NOT NULL,
+    total_price    INT UNSIGNED NOT NULL,
+
+    created_at     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
     PRIMARY KEY (id),
-    INDEX            idx_print_item_order (print_order_id),
-    CONSTRAINT fk_print_item_order FOREIGN KEY (print_order_id) REFERENCES print_order (id),
-    CONSTRAINT fk_print_item_photo FOREIGN KEY (scanned_photo_id) REFERENCES scanned_photo (id),
-    CONSTRAINT chk_paper_type CHECK (paper_type IN ('GLOSSY', 'MATTE', 'SILK', 'LUSTER')),
-    CONSTRAINT chk_print_method CHECK (print_method IN ('INKJET', 'LASER', 'SILVER_HALIDE')),
-    CONSTRAINT chk_print_process CHECK (process IN ('NORMAL', 'BORDER', 'BORDERLESS'))
-) ENGINE=InnoDB COMMENT='인화 상세';
+    INDEX          idx_print_item_order (print_order_id),
+    CONSTRAINT fk_print_item_order FOREIGN KEY (print_order_id) REFERENCES print_order (id)
+) ENGINE=InnoDB COMMENT='인화 옵션/가격 상세';
+
+CREATE TABLE print_order_photo
+(
+    id              BIGINT   NOT NULL AUTO_INCREMENT,
+    print_order_id  BIGINT   NOT NULL,
+    scanned_photo_id BIGINT  NOT NULL,
+    quantity        INT      NOT NULL,
+
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_pop_order_photo (print_order_id, scanned_photo_id),
+
+    CONSTRAINT fk_pop_print_order FOREIGN KEY (print_order_id) REFERENCES print_order (id),
+    CONSTRAINT fk_pop_scanned_photo FOREIGN KEY (scanned_photo_id) REFERENCES scanned_photo (id)
+) ENGINE=InnoDB COMMENT='인화 주문-스캔사진 매핑(수량 포함)';
+
 
 CREATE TABLE delivery
 (
@@ -993,7 +1022,7 @@ CREATE TABLE payment
 | 버전  | 날짜       | 변경 내용 |
 |-------|-----------|----------|
 | **3.0.0** | **2026-01-18** | 버전 체계 재정비: 이전 변경 이력 아카이빙 (Git 히스토리 참조), 현재 스키마 기준 메이저 버전 설정 (35개 테이블) |
-
+| **3.0.1** | **2026-01-19** | 인화 도메인 스키마 반영: `development_order`에 작업 선택 컬럼(`is_develop/is_scan/is_print/roll_count`) 추가, `print_order`에 입금 캡처/입금자/은행/제출시각 컬럼 추가, `print_order_item` 구조를 옵션 단위로 변경(`film_type/paper_type/print_method/size/frame_type`), 인화 대상 사진 매핑 테이블 `print_order_photo` 추가 |
 ---
 
 **참고**: v2.5.1 이전 변경 이력은 Git 커밋 히스토리에서 확인 가능합니다.
