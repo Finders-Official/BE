@@ -71,12 +71,12 @@ jobs:
             cd ~/app
             echo "${{ secrets.ENV_PROD }}" > .env.prod
             
-            # 2. 최신 이미지 Pull
-            sudo docker compose -f docker-compose.prod.yml pull
-            
+            # 2. 최신 이미지 Pull (-p로 프로젝트 이름 명시: dev와 충돌 방지)
+            sudo docker compose -p finders-prod -f docker-compose.prod.yml pull
+
             # 3. 기존 컨테이너 내리고 새로 시작
-            sudo docker compose -f docker-compose.prod.yml down
-            sudo docker compose -f docker-compose.prod.yml up -d
+            sudo docker compose -p finders-prod -f docker-compose.prod.yml down
+            sudo docker compose -p finders-prod -f docker-compose.prod.yml up -d
             
             # 4. 배포 검증 (Health Check) 로직
             echo "배포 후 Health Check 시작..."
@@ -97,5 +97,5 @@ jobs:
             
             # 5. 실패 시 처리
             echo "❌ 배포 실패: 서비스가 제한 시간 내에 뜨지 않았습니다."
-            sudo docker compose -f docker-compose.prod.yml logs --tail=100
+            sudo docker compose -p finders-prod -f docker-compose.prod.yml logs --tail=100
             exit 1 # GitHub Actions를 '실패(Red)'로 처리
