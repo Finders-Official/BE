@@ -249,12 +249,19 @@ ssh [사용자]@34.50.19.146
 ```
 
 ### Docker 컨테이너 관리
-```bash
-# Prod 컨테이너 로그
-sudo docker compose -f docker-compose.prod.yml logs -f
 
-# Dev 컨테이너 로그
-sudo docker compose -f docker-compose.dev.yml logs -f
+> **중요**: `-p` 플래그로 프로젝트 이름을 명시해야 dev/prod가 서로 충돌하지 않습니다.
+
+```bash
+# Prod 컨테이너 관리
+sudo docker compose -p finders-prod -f docker-compose.prod.yml logs -f
+sudo docker compose -p finders-prod -f docker-compose.prod.yml down
+sudo docker compose -p finders-prod -f docker-compose.prod.yml up -d
+
+# Dev 컨테이너 관리
+sudo docker compose -p finders-dev -f docker-compose.dev.yml logs -f
+sudo docker compose -p finders-dev -f docker-compose.dev.yml down
+sudo docker compose -p finders-dev -f docker-compose.dev.yml up -d
 
 # 컨테이너 상태 확인
 sudo docker ps
