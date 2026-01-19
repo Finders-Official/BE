@@ -1,32 +1,32 @@
 # ========================================
-# Finders API - 배포 환경 (GCP)
+# Finders API - 개발 환경 (GCP)
 # ========================================
 # 사용법:
 #   1. 이미지 최신화:
-#      docker compose -f docker-compose.prod.yml pull
+#      docker compose -f docker-compose.dev.yml pull
 #
 #   2. 컨테이너 실행 (재배포):
-#      docker compose -f docker-compose.prod.yml up -d
+#      docker compose -f docker-compose.dev.yml up -d
 #
 #   3. 로그 확인:
-#      docker compose -f docker-compose.prod.yml logs -f
+#      docker compose -f docker-compose.dev.yml logs -f
 #
 #   4. 종료:
-#      docker compose -f docker-compose.prod.yml down
+#      docker compose -f docker-compose.dev.yml down
 # ========================================
 
 services:
   backend:
-    image: findersofficial/finders-api:latest
+    image: findersofficial/finders-api:dev
 
-    container_name: finders-api
+    container_name: finders-dev-api
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8081:8080"
     env_file:
-      - .env.prod
+      - .env.dev
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Seoul
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
@@ -37,7 +37,7 @@ services:
     logging:
       driver: "gcplogs"
       options:
-        labels: "app=finders-api,env=prod"
+        labels: "app=finders-dev-api,env=dev"
 
 networks:
   default:

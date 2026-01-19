@@ -64,6 +64,9 @@ public class SwaggerConfig {
             case "prod" -> List.of(
                     new Server().url("https://api.finders.it.kr/api").description("Production Server")
             );
+            case "dev" -> List.of(
+                    new Server().url("https://dev-api.finders.it.kr/api").description("Development Server")
+            );
             default -> List.of(
                     new Server().url("http://localhost:8080/api").description("Local Server")
             );

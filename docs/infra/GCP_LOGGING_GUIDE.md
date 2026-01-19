@@ -33,21 +33,21 @@
 
 #### 애플리케이션 로그 조회
 ```
-resource.type="global"
-logName="projects/project-37afc2aa-d3d3-4a1a-8cd/logs/java.log"
+resource.type="gce_instance"
+logName="projects/project-37afc2aa-d3d3-4a1a-8cd/logs/gcplogs"
 ```
 
 #### 에러 로그만 조회
 ```
-resource.type="global"
-logName=~"java.log"
+resource.type="gce_instance"
+logName=~"gcplogs"
 severity>=ERROR
 ```
 
 #### 특정 클래스 로그 조회
 ```
-resource.type="global"
-logName=~"java.log"
+resource.type="gce_instance"
+logName=~"gcplogs"
 jsonPayload.logger_name=~"com.finders.api"
 ```
 
@@ -59,10 +59,10 @@ jsonPayload.logger_name=~"com.finders.api"
 
 | 용도 | 필터 |
 |------|------|
-| 전체 앱 로그 | `logName=~"java.log"` |
-| ERROR 이상 | `logName=~"java.log" severity>=ERROR` |
-| 특정 키워드 | `logName=~"java.log" jsonPayload.message=~"키워드"` |
-| 특정 로거 | `logName=~"java.log" jsonPayload.logger_name=~"GcsStorageService"` |
+| 전체 앱 로그 | `logName=~"gcplogs"` |
+| ERROR 이상 | `logName=~"gcplogs" severity>=ERROR` |
+| 특정 키워드 | `logName=~"gcplogs" jsonPayload.message=~"키워드"` |
+| 특정 로거 | `logName=~"gcplogs" jsonPayload.logger_name=~"GcsStorageService"` |
 
 ### Severity 레벨 매핑
 
@@ -91,42 +91,10 @@ jsonPayload.logger_name=~"com.finders.api"
 - 네트워크 트래픽
 - 디스크 I/O
 
-## SSH 접속 (대안)
-
-Cloud Logging이 기본이지만, Docker 로그를 직접 확인할 수도 있습니다.
-
-### 접속 방법
-1. **Compute Engine** → **VM 인스턴스** 이동
-2. 해당 인스턴스의 **SSH** 버튼 클릭
-3. 브라우저에서 터미널 열림
-
-### Docker 로그 확인
-```bash
-# 실시간 로그 (실행 중인 컨테이너)
-docker logs -f finders-api
-
-# 최근 100줄
-docker logs --tail 100 finders-api
-
-# 에러만 필터링
-docker logs finders-api 2>&1 | grep -i error
-
-# 타임스탬프 포함
-docker logs -t finders-api
-```
-
-> **참고**: 컨테이너 재시작 시 이전 로그가 사라질 수 있습니다. 영구 보관이 필요하면 Cloud Logging을 사용하세요.
-
-## 문제 해결
-
-### "권한이 없습니다" 오류
-- 올바른 Google 계정으로 로그인했는지 확인
-- 프로젝트 관리자에게 권한 요청
-
-### 로그가 보이지 않음
-- 시간 범위 설정 확인
-- 필터 조건 확인 (너무 좁은 조건)
-- 프로젝트가 올바르게 선택되었는지 확인
+### 로깅 방식 변경에 따른 안내
+- 현재 docker-compose.prod.yml에 gcplogs 드라이버가 설정되어 있습니다. 
+- 이 설정이 활성화되면 서버 터미널에서 docker logs -f 명령어를 입력해도 로그가 출력되지 않습니다. 
+- 실시간 로그 확인은 반드시 GCP 로그 탐색기를 이용해 주세요.
 
 ## 참고 링크
 

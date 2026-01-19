@@ -1,12 +1,12 @@
-name: Finders CD (Deploy to Prod)
+name: Finders CD (Deploy to Dev)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-api
-  CONTAINER_NAME: finders-api
+  CONTAINER_NAME: finders-dev-api
 
 permissions:
   contents: read
@@ -28,7 +28,6 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build without Test
-        # CI에서 이미 테스트를 통과했다고 믿고, 배포 속도를 위해 테스트는 건너뜁니다.
         run: ./gradlew build -x test
 
       # 4. Docker Hub 로그인
@@ -38,15 +37,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 5. Docker 이미지 빌드 및 푸시
+      # 5. Docker 이미지 빌드 및 푸시 (dev 태그)
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.DOCKER_IMAGE }}:latest
+          tags: ${{ env.DOCKER_IMAGE }}:dev
 
-      # 6. docker-compose.prod.yml 파일을 서버로 전송 (SCP)
+      # 6. docker-compose.dev.yml 파일을 서버로 전송 (SCP)
       - name: Copy Docker Compose file to Server
         uses: appleboy/scp-action@master
         with:
@@ -54,12 +53,12 @@ jobs:
           username: ${{ secrets.GCE_USER }}
           key: ${{ secrets.GCE_SSH_KEY }}
           port: 22
-          source: "docker-compose.prod.yml"
+          source: "docker-compose.dev.yml"
           target: "/home/${{ secrets.GCE_USER }}/app"
           strip_components: 0
 
-      # 7. GCE 서버에 배포 및 검증 (Health Check 추가됨)
-      - name: Deploy to GCE
+      # 7. GCE 서버에 배포 및 검증 (Health Check)
+      - name: Deploy to GCE (Dev)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.GCE_HOST }}
@@ -69,33 +68,33 @@ jobs:
           script: |
             # 1. 앱 디렉토리 이동 및 환경변수 설정
             cd ~/app
-            echo "${{ secrets.ENV_PROD }}" > .env.prod
-            
-            # 2. 최신 이미지 Pull (-p로 프로젝트 이름 명시: dev와 충돌 방지)
-            sudo docker compose -p finders-prod -f docker-compose.prod.yml pull
+            echo "${{ secrets.ENV_DEV }}" > .env.dev
+
+            # 2. 최신 이미지 Pull (-p로 프로젝트 이름 명시: prod와 충돌 방지)
+            sudo docker compose -p finders-dev -f docker-compose.dev.yml pull
 
             # 3. 기존 컨테이너 내리고 새로 시작
-            sudo docker compose -p finders-prod -f docker-compose.prod.yml down
-            sudo docker compose -p finders-prod -f docker-compose.prod.yml up -d
-            
+            sudo docker compose -p finders-dev -f docker-compose.dev.yml down
+            sudo docker compose -p finders-dev -f docker-compose.dev.yml up -d
+
             # 4. 배포 검증 (Health Check) 로직
             echo "배포 후 Health Check 시작..."
-            
+
             # 최대 60초(5초*12회) 대기
             for i in {1..12}; do
-              RESPONSE=$(curl -s http://localhost:8080/api/actuator/health || true)
-            
+              RESPONSE=$(curl -s http://localhost:8081/api/actuator/health || true)
+
               if [[ "$RESPONSE" == *"UP"* ]]; then
-                echo "✅ 서비스 정상 실행 확인! (Attempt $i)"
+                echo "✅ Dev 서비스 정상 실행 확인! (Attempt $i)"
                 sudo docker image prune -f  # 불필요한 이미지 정리
                 exit 0 # 성공으로 종료
               fi
-            
+
               echo "서비스 시작 대기 중... ($i/12)"
               sleep 5
             done
-            
+
             # 5. 실패 시 처리
             echo "❌ 배포 실패: 서비스가 제한 시간 내에 뜨지 않았습니다."
-            sudo docker compose -p finders-prod -f docker-compose.prod.yml logs --tail=100
+            sudo docker compose -p finders-dev -f docker-compose.dev.yml logs --tail=100
             exit 1 # GitHub Actions를 '실패(Red)'로 처리

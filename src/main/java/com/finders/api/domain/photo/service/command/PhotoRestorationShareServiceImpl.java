@@ -41,7 +41,7 @@ public class PhotoRestorationShareServiceImpl implements PhotoRestorationShareSe
 
         // 3. Private → Public 버킷 복사 (GCS 내부 복사, 빠르고 비용 없음)
         String publicObjectPath = storageService.copyToPublic(
-                restoration.getRestoredUrl(),
+                restoration.getRestoredPath(),
                 StoragePath.TEMP_PUBLIC,  // temp/{memberId}/{uuid}.png
                 memberId,
                 "shared.png"

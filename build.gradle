@@ -67,7 +67,6 @@ dependencies {
     // ========================================
     implementation platform('com.google.cloud:libraries-bom:26.51.0')
     implementation 'com.google.cloud:google-cloud-storage'
-    implementation 'com.google.cloud:google-cloud-logging-logback'
 
     // ========================================
     // Sentry (Error Monitoring)
@@ -101,8 +100,15 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // FixtureMonkey (테스트 데이터 자동 생성)
-    testImplementation 'com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.11'
+    // ========================================
+    // Fixture Monkey (Mock 데이터 자동 생성)
+    // ========================================
+    // dev 환경에서 Mock 데이터 생성용 (런타임에서도 사용)
+    implementation 'com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.11'
+    implementation 'com.navercorp.fixturemonkey:fixture-monkey-jakarta-validation:1.1.11'
+
+    // DataFaker (실제 같은 데이터 생성)
+    implementation 'net.datafaker:datafaker:2.4.2'
 }
 
 // ========================================

@@ -2,6 +2,7 @@ package com.finders.api.domain.inquiry.service.query;
 
 import com.finders.api.domain.inquiry.dto.response.InquiryResponse;
 import com.finders.api.domain.inquiry.entity.Inquiry;
+import com.finders.api.domain.inquiry.entity.InquiryImage;
 import com.finders.api.domain.inquiry.enums.InquiryStatus;
 import com.finders.api.domain.inquiry.repository.InquiryQueryRepository;
 import com.finders.api.domain.inquiry.repository.InquiryRepository;
@@ -9,12 +10,15 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -23,6 +27,7 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
     private final InquiryRepository inquiryRepository;
     private final InquiryQueryRepository inquiryQueryRepository;
     private final PhotoLabRepository photoLabRepository;
+    private final StorageService storageService;
 
     @Override
     public InquiryResponse.InquiryListDTO getMyInquiries(Long memberId, int page, int size) {
@@ -41,7 +46,16 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
             throw new CustomException(ErrorCode.INQUIRY_ACCESS_DENIED);
         }
 
-        return InquiryResponse.InquiryDetailDTO.from(inquiry);
+        // objectPath를 Public URL로 변환
+        List<String> imageUrls = inquiry.getImages().stream()
+                .map(InquiryImage::getObjectPath)
+                .map(storageService::getPublicUrl)
+                .toList();
+
+        log.debug("[InquiryQueryServiceImpl.getInquiryDetail] objectPath → Public URL 변환 완료: inquiryId={}, imageCount={}",
+                inquiryId, imageUrls.size());
+
+        return InquiryResponse.InquiryDetailDTO.fromWithUrls(inquiry, imageUrls);
     }
 
     @Override
@@ -75,7 +89,16 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
             throw new CustomException(ErrorCode.INQUIRY_ACCESS_DENIED);
         }
 
-        return InquiryResponse.InquiryDetailDTO.from(inquiry);
+        // objectPath를 Public URL로 변환
+        List<String> imageUrls = inquiry.getImages().stream()
+                .map(InquiryImage::getObjectPath)
+                .map(storageService::getPublicUrl)
+                .toList();
+
+        log.debug("[InquiryQueryServiceImpl.getPhotoLabInquiryDetail] objectPath → Public URL 변환 완료: inquiryId={}, photoLabId={}, imageCount={}",
+                inquiryId, photoLabId, imageUrls.size());
+
+        return InquiryResponse.InquiryDetailDTO.fromWithUrls(inquiry, imageUrls);
     }
 
     @Override
@@ -95,6 +118,15 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
             throw new CustomException(ErrorCode.INQUIRY_ACCESS_DENIED);
         }
 
-        return InquiryResponse.InquiryDetailDTO.from(inquiry);
+        // objectPath를 Public URL로 변환
+        List<String> imageUrls = inquiry.getImages().stream()
+                .map(InquiryImage::getObjectPath)
+                .map(storageService::getPublicUrl)
+                .toList();
+
+        log.debug("[InquiryQueryServiceImpl.getServiceInquiryDetail] objectPath → Public URL 변환 완료: inquiryId={}, imageCount={}",
+                inquiryId, imageUrls.size());
+
+        return InquiryResponse.InquiryDetailDTO.fromWithUrls(inquiry, imageUrls);
     }
 }
