@@ -67,7 +67,6 @@ dependencies {
     // ========================================
     implementation platform('com.google.cloud:libraries-bom:26.51.0')
     implementation 'com.google.cloud:google-cloud-storage'
-    implementation 'com.google.cloud:google-cloud-logging-logback'
 
     // ========================================
     // Sentry (Error Monitoring)
