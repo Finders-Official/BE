@@ -1,5 +1,50 @@
 # Infrastructure
 
+## 환경 분리 구조
+
+| 환경 | 브랜치 | 도메인 | GCE 포트 | Cloud SQL DB | 용도 |
+|------|--------|--------|----------|--------------|------|
+| **Local** | - | localhost:8080 | - | Docker MySQL | 로컬 개발 |
+| **Dev** | develop | dev-api.finders.it.kr | 8081 | finders_dev | FE 연동 테스트, Mock 데이터 |
+| **Prod** | main | api.finders.it.kr | 8080 | finders | 데모데이, 실제 운영 |
+
+### 아키텍처 다이어그램
+
+```
+                    Cloudflare Zero Trust
+                           │
+          ┌────────────────┴────────────────┐
+          ▼                                 ▼
+   api.finders.it.kr              dev-api.finders.it.kr
+          │                                 │
+          ▼                                 ▼
+┌─────────────────────────────────────────────────────┐
+│              GCE (e2-medium, 4GB RAM)               │
+│  ┌─────────────────┐       ┌─────────────────┐     │
+│  │  finders-api    │       │ finders-dev-api │     │
+│  │  (port 8080)    │       │  (port 8081)    │     │
+│  └────────┬────────┘       └────────┬────────┘     │
+└───────────┼─────────────────────────┼───────────────┘
+            │                         │
+            ▼                         ▼
+┌─────────────────────────────────────────────────────┐
+│              Cloud SQL (finders-db)                 │
+│  ┌─────────────────┐       ┌─────────────────┐     │
+│  │     finders     │       │   finders_dev   │     │
+│  │    (prod DB)    │       │    (dev DB)     │     │
+│  └─────────────────┘       └─────────────────┘     │
+└─────────────────────────────────────────────────────┘
+```
+
+### 브랜치 전략
+
+```
+feature/* → develop (PR) → dev 환경 자동 배포
+develop → main (PR) → prod 환경 자동 배포
+```
+
+---
+
 ## GCP 프로젝트 정보
 
 | 항목 | 값 |
@@ -29,10 +74,20 @@
 | **예상 비용** | **~$27/월** |
 
 ### 접속 정보
+
+**Prod 환경**
 ```
 Host: 34.64.50.136
 Port: 3306
 Database: finders
+User: finders
+```
+
+**Dev 환경**
+```
+Host: 34.64.50.136
+Port: 3306
+Database: finders_dev
 User: finders
 ```
 
@@ -166,13 +221,24 @@ User: finders
 Password: finders123
 ```
 
-### 배포 서버 (Cloud SQL)
+### Dev 환경 (Cloud SQL)
+```
+Host: 34.64.50.136
+Port: 3306
+Database: finders_dev
+User: finders
+Password: [.env.dev 참조]
+API URL: https://dev-api.finders.it.kr
+```
+
+### Prod 환경 (Cloud SQL)
 ```
 Host: 34.64.50.136
 Port: 3306
 Database: finders
 User: finders
 Password: [.env.prod 참조]
+API URL: https://api.finders.it.kr
 ```
 
 ### 배포 서버 SSH 접속
@@ -180,4 +246,16 @@ Password: [.env.prod 참조]
 gcloud compute ssh finders-server --zone=asia-northeast3-a
 # 또는
 ssh [사용자]@34.50.19.146
+```
+
+### Docker 컨테이너 관리
+```bash
+# Prod 컨테이너 로그
+sudo docker compose -f docker-compose.prod.yml logs -f
+
+# Dev 컨테이너 로그
+sudo docker compose -f docker-compose.dev.yml logs -f
+
+# 컨테이너 상태 확인
+sudo docker ps
 ```

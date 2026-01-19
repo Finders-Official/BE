@@ -47,9 +47,8 @@ Thumbs.db
 # Environment & Secrets
 # ========================================
 .env
-.env.local
-.env.prod
-.env.*.local
+.env.*
+!.env.example
 *.pem
 *.key
 *-key.json
