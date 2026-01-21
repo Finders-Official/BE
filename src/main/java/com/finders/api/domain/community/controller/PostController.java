@@ -191,4 +191,13 @@ public class PostController {
         searchHistoryCommandService.deleteAllSearchHistory(authUser.memberId());
         return ApiResponse.success(SuccessCode.OK, null);
     }
+
+    // 연관 검색어 관련 API
+    @Operation(summary = "검색어 자동완성", description = "입력 중인 키워드에 따른 연관 검색어 최대 8개를 조회합니다.")
+    @GetMapping("/search/autocomplete")
+    public ApiResponse<List<String>> getAutocompleteSuggestions(
+            @RequestParam(name = "keyword") String keyword
+    ) {
+        return ApiResponse.success(SuccessCode.OK, postQueryService.getAutocompleteSuggestions(keyword));
+    }
 }

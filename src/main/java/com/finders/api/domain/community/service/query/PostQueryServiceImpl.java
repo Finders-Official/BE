@@ -11,7 +11,6 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +24,8 @@ import java.util.Set;
 public class PostQueryServiceImpl implements PostQueryService {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int MAX_EXTRACT_LENGTH = 12;
+    private static final int AUTOCOMPLETE_TOTAL_LIMIT = 8;
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
@@ -113,5 +114,43 @@ public class PostQueryServiceImpl implements PostQueryService {
             return null;
         }
         return storageService.getPublicUrl(objectPath);
+    }
+
+    @Override
+    public List<String> getAutocompleteSuggestions(String keyword) {
+        if (keyword == null || keyword.isBlank()) return java.util.Collections.emptyList();
+
+        java.util.Set<String> suggestions = new java.util.LinkedHashSet<>();
+
+        suggestions.addAll(postQueryRepository.findTop3PhotoLabNames(keyword));
+
+        if (suggestions.size() < AUTOCOMPLETE_TOTAL_LIMIT) {
+            postQueryRepository.findTop10PostTitles(keyword).forEach(title ->
+                    suggestions.add(extractSnippet(title, keyword))
+            );
+        }
+
+        return suggestions.stream()
+                .limit(AUTOCOMPLETE_TOTAL_LIMIT)
+                .toList();
+    }
+
+    private String extractSnippet(String text, String keyword) {
+        if (text == null || text.isBlank()) return "";
+
+        int index = text.toLowerCase().indexOf(keyword.toLowerCase());
+        if (index == -1) return keyword;
+
+        int endOfKeyword = index + keyword.length();
+        int nextSpace = text.indexOf(" ", endOfKeyword + 1);
+
+        String candidate;
+        if (nextSpace != -1 && nextSpace < index + MAX_EXTRACT_LENGTH) {
+            candidate = text.substring(index, nextSpace).trim();
+        } else {
+            candidate = text.substring(index, Math.min(text.length(), index + MAX_EXTRACT_LENGTH)).trim();
+        }
+
+        return candidate.replaceAll("(했습니다|했네요|했어요|합니다|했습|해요|네요|은|는|이|가|을|를|에|의|로|와|과|도|에서|보다|너무|정말|매우)$", "").trim();
     }
 }
