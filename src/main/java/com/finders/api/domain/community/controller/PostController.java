@@ -52,9 +52,13 @@ public class PostController {
     @GetMapping
     public ApiResponse<PostResponse.PostPreviewListDTO> getPosts(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(defaultValue = "0") Integer page
+            @RequestParam(name = "page", defaultValue = "0") Integer page,
+            @RequestParam(name = "size", defaultValue = "20") Integer size
     ) {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPostList(page, authUser.memberId()));
+        return ApiResponse.success(
+                SuccessCode.POST_FOUND,
+                postQueryService.getPostList(page, size, authUser.memberId())
+        );
     }
 
     @Operation(summary = "게시물 작성", description = "게시글 등록 API입니다.")
