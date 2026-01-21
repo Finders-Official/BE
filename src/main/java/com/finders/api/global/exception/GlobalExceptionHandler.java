@@ -2,6 +2,7 @@ package com.finders.api.global.exception;
 
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.ErrorCode;
+import io.sentry.Sentry;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -132,6 +133,9 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         log.error("[UnhandledException] {} - {}", request.getRequestURI(), e.getMessage(), e);
+
+        // Sentry에 명시적으로 Exception 전송
+        Sentry.captureException(e);
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
