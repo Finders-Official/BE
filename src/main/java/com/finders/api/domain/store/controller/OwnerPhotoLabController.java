@@ -33,7 +33,9 @@ public class OwnerPhotoLabController {
     private final PhotoLabImageService photoLabImageService;
     private final PhotoLabDocumentService photoLabDocumentService;
 
-    @Operation(summary = "현상소 기본사항 등록 API")
+    @Operation(
+            summary = "현상소 기본사항 등록 API",
+            description = "현상소의 기본사항을 등록합니다.")
     @PreAuthorize("hasRole('OWNER')")
     @PostMapping
     public ApiResponse<PhotoLabResponse.Create> createPhotoLab(
@@ -59,7 +61,9 @@ public class OwnerPhotoLabController {
         );
     }
 
-    @Operation(summary = "현상소 이미지 등록")
+    @Operation(
+            summary = "현상소 이미지 등록",
+            description = "현상소 이미지를 등록합니다.")
     @PreAuthorize("hasRole('OWNER')")
     @PostMapping("/image")
     public ApiResponse<PhotoLabImageResponse.Create> registerPhotoLabImage(
@@ -98,7 +102,9 @@ public class OwnerPhotoLabController {
         );
     }
 
-    @Operation(summary = "현상소 사업자 서류 등록")
+    @Operation(
+            summary = "현상소 사업자 서류 등록",
+            description = "현상소 사업자 등록 서류를 등록합니다.")
     @PreAuthorize("hasRole('OWNER')")
     @PostMapping("/documents")
     public ApiResponse<PhotoLabDocumentResponse.Create> registerPhotoLabDocument(
