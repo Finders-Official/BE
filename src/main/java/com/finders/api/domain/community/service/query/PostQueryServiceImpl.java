@@ -2,6 +2,7 @@ package com.finders.api.domain.community.service.query;
 
 import com.finders.api.domain.community.dto.response.PostResponse;
 import com.finders.api.domain.community.entity.Post;
+import com.finders.api.domain.community.enums.PostSearchFilter;
 import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostQueryRepository;
 import com.finders.api.domain.community.repository.PostRepository;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,10 @@ public class PostQueryServiceImpl implements PostQueryService {
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_EXTRACT_LENGTH = 12;
     private static final int AUTOCOMPLETE_TOTAL_LIMIT = 8;
+
+    private static final Pattern SUFFIX_PATTERN = Pattern.compile(
+            "(했습니다|했네요|했어요|합니다|했습|해요|네요|은|는|이|가|을|를|에|의|로|와|과|도|에서|보다|너무|정말|매우)$"
+    );
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
@@ -69,7 +75,7 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
-    public PostResponse.PostPreviewListDTO searchPosts(String keyword, String filter, Long memberId, Pageable pageable) {
+    public PostResponse.PostPreviewListDTO searchPosts(String keyword, PostSearchFilter filter, Long memberId, Pageable pageable) {
         List<Post> posts = postQueryRepository.searchPosts(
                 keyword,
                 filter,
@@ -155,6 +161,6 @@ public class PostQueryServiceImpl implements PostQueryService {
             candidate = text.substring(index, Math.min(text.length(), index + MAX_EXTRACT_LENGTH)).trim();
         }
 
-        return candidate.replaceAll("(했습니다|했네요|했어요|합니다|했습|해요|네요|은|는|이|가|을|를|에|의|로|와|과|도|에서|보다|너무|정말|매우)$", "").trim();
+        return SUFFIX_PATTERN.matcher(candidate).replaceAll("").trim();
     }
 }

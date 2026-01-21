@@ -27,7 +27,10 @@ public class SearchHistoryCommandServiceImpl implements SearchHistoryCommandServ
     private static final int MAX_HISTORY_COUNT = 10;
 
     @Override
-    public void saveSearchHistory(MemberUser memberUser, String keyword) {
+    public void saveSearchHistory(Long memberId, String keyword) {
+        MemberUser memberUser = memberUserRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
         Post topPost = postRepository.findTopByKeywordOrderByLikes(keyword).orElse(null);
 
         String objectPath = null;
