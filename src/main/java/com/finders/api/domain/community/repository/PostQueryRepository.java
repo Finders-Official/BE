@@ -76,6 +76,14 @@ public class PostQueryRepository {
         };
     }
 
+    public Long countAllActivePosts() {
+        return queryFactory
+                .select(post.count())
+                .from(post)
+                .where(post.status.eq(CommunityStatus.ACTIVE))
+                .fetchOne();
+    }
+
     // 연관 검색어 관련
     public List<String> findTop3PhotoLabNames(String keyword) {
         return queryFactory
