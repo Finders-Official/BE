@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static com.finders.api.domain.community.entity.QPost.post;
+import static com.finders.api.domain.store.entity.QPhotoLab.photoLab;
 
 @Repository
 @RequiredArgsConstructor
@@ -74,4 +75,29 @@ public class PostQueryRepository {
             default -> post.title.containsIgnoreCase(keyword);
         };
     }
+
+    // 연관 검색어 관련
+    public List<String> findTop3PhotoLabNames(String keyword) {
+        return queryFactory
+                .select(photoLab.name)
+                .from(photoLab)
+                .where(photoLab.name.containsIgnoreCase(keyword))
+                .orderBy(photoLab.reviewCount.desc())
+                .limit(3)
+                .fetch();
+    }
+
+    public List<String> findTop10PostTitles(String keyword) {
+        return queryFactory
+                .select(post.title)
+                .from(post)
+                .where(
+                        post.status.eq(CommunityStatus.ACTIVE),
+                        post.title.containsIgnoreCase(keyword)
+                )
+                .orderBy(post.likeCount.desc())
+                .limit(10)
+                .fetch();
+    }
+
 }
