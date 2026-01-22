@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v3.0.0 | 2026-01-18
+> v3.0.2 | 2026-01-23
 
 ---
 
@@ -38,6 +38,7 @@
 |                 | `photo_restoration`       | AI 사진 복원 요청                  |
 | **community**   | `post`                    | 게시글/리뷰 (자가현상 여부 포함)          |
 |                 | `post_image`              | 게시글 이미지                      |
+|                 | `search_history`          | 최근 검색어 이력                    |
 |                 | `comments`                | 댓글                           |
 |                 | `post_like`               | 좋아요                          |
 | **inquiry**     | `inquiry`                 | 1:1 문의                       |
@@ -414,6 +415,7 @@ CREATE TABLE photo_lab
     work_count                INT UNSIGNED    NOT NULL DEFAULT 0,  -- 작업 총 횟수
     post_count                INT UNSIGNED    NOT NULL DEFAULT 0,  -- 작업 결과물에 필요함
     reservation_count         INT UNSIGNED  NOT NULL DEFAULT 0,    -- 예약 완료 시점에 업데이트
+    review_count              INT UNSIGNED  NOT NULL DEFAULT 0,
     avg_work_time             INT UNSIGNED    NULL,                -- 주문 완료 시점에(development_order.status = 'COMPLETED') 백엔드에서 직접 계산해서 저장
     status                    VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
     is_delivery_available     BOOLEAN      NOT NULL DEFAULT FALSE, -- TRUE: 배송가능, FALSE: 배송 불가능
@@ -830,6 +832,20 @@ CREATE TABLE post_like
     CONSTRAINT fk_like_member FOREIGN KEY (member_id) REFERENCES member (id)
 ) ENGINE=InnoDB COMMENT='좋아요';
 
+CREATE TABLE search_history (
+    id          BIGINT  NOT NULL AUTO_INCREMENT,
+    member_id   BIGINT  NOT NULL,
+    keyword     VARCHAR(100) NOT NULL,
+    object_path VARCHAR(500) NULL,
+    width       INT NULL,
+    height      INT NULL,
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX       idx_search_history_member (member_id, updated_at DESC),
+    CONSTRAINT  fk_search_history_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='최근 검색어 이력';
+
 -- ============================================
 -- 6. INQUIRY
 -- ============================================
@@ -1019,10 +1035,12 @@ CREATE TABLE payment
 
 ## 변경 이력
 
-| 버전  | 날짜       | 변경 내용 |
-|-------|-----------|----------|
-| **3.0.0** | **2026-01-18** | 버전 체계 재정비: 이전 변경 이력 아카이빙 (Git 히스토리 참조), 현재 스키마 기준 메이저 버전 설정 (35개 테이블) |
+| 버전        | 날짜             | 변경 내용                                                                                                                                                                                                                                                            |
+|-----------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **3.0.0** | **2026-01-18** | 버전 체계 재정비: 이전 변경 이력 아카이빙 (Git 히스토리 참조), 현재 스키마 기준 메이저 버전 설정 (35개 테이블)                                                                                                                                                                                            |
 | **3.0.1** | **2026-01-19** | 인화 도메인 스키마 반영: `development_order`에 작업 선택 컬럼(`is_develop/is_scan/is_print/roll_count`) 추가, `print_order`에 입금 캡처/입금자/은행/제출시각 컬럼 추가, `print_order_item` 구조를 옵션 단위로 변경(`film_type/paper_type/print_method/size/frame_type`), 인화 대상 사진 매핑 테이블 `print_order_photo` 추가 |
+| **3.0.2** | **2026-01-23** | photo_lab 테이블 내 review_count 추가, search_history 테이블 신규 생성                                                                                                                                                                                                        |
+
 ---
 
 **참고**: v2.5.1 이전 변경 이력은 Git 커밋 히스토리에서 확인 가능합니다.

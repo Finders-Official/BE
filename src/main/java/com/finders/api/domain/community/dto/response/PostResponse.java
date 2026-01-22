@@ -117,10 +117,16 @@ public class PostResponse {
 
     // 미리보기 리스트를 감싸는 DTO
     public record PostPreviewListDTO(
-            List<PostPreviewDTO> previewList
+            List<PostPreviewDTO> previewList,
+            Long totalCount,
+            boolean isLast
     ) {
+        public static PostPreviewListDTO from(List<PostPreviewDTO> previewDTOs, Long totalCount, boolean isLast) {
+            return new PostPreviewListDTO(previewDTOs, totalCount, isLast);
+        }
+
         public static PostPreviewListDTO from(List<PostPreviewDTO> previewDTOs) {
-            return new PostPreviewListDTO(previewDTOs);
+            return new PostPreviewListDTO(previewDTOs, (long) previewDTOs.size(), true);
         }
     }
 }
