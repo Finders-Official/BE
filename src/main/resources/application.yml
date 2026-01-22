@@ -168,3 +168,14 @@ cors:
 
 dev:
   secret-key: ${LOGIN_SECRET_KEY:local-dummy-key}
+
+# ========================================
+# Sendon 설정
+# ========================================
+sendon:
+  service-name: "Finders"
+  id: ${SENDON_ID:local-id}
+  api-key: ${SENDON_API_KEY:}
+  sender-key: ${SENDON_SENDER_KEY:}
+  template:
+    phone-code: ${SENDON_PHONE_TEMPLATE_CODE:}
