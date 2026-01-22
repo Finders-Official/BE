@@ -60,7 +60,7 @@ public class PostCommandServiceImpl implements PostCommandService {
             photoLab = photoLabRepository.findById(request.labId())
                     .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
-            photoLab.incrementReviewCount();
+            photoLabRepository.incrementReviewCount(request.labId());
         }
 
         Post post = Post.toEntity(request, memberUser, photoLab);

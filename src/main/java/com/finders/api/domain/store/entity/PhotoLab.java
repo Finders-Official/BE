@@ -87,10 +87,6 @@ public class PhotoLab extends BaseEntity {
     @Column(name = "qr_code_url", length = 500)
     private String qrCodeUrl;
 
-    public void incrementReviewCount() {
-        this.reviewCount++;
-    }
-
     @Builder
     private PhotoLab(
             MemberOwner owner,
