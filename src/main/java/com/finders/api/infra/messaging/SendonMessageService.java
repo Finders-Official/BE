@@ -46,9 +46,9 @@ public class SendonMessageService implements MessageService {
                     .setTo(Arrays.asList(receiver))
             );
 
-            log.info("[SendonMessageService] 알림톡 발송 성공 - 대상: {}", cleanPhone);
+            log.info("[SendonMessageService.sendVerificationCode] 알림톡 발송 성공 - 대상: {}", cleanPhone);
         } catch (Exception e) {
-            log.error("[SendonMessageService] 알림톡 발송 실패: {}", e.getMessage());
+            log.error("[SendonMessageService.sendVerificationCode] 알림톡 발송 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR);
         }
     }
