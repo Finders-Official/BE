@@ -21,13 +21,11 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.security.JwtTokenProvider;
 import com.finders.api.global.security.RefreshTokenHasher;
-import io.sendon.Sendon;
+import com.finders.api.infra.messaging.MessageService;
 import io.sendon.kakao.request.AlimtalkBuilder;
-import io.sendon.kakao.request.SendAlimtalk;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,16 +45,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final TermsRepository termsRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenHasher refreshTokenHasher;
-    private final Sendon sendon;
-
-    @Value("${sendon.service-name}")
-    private String serviceName;
-
-    @Value("${sendon.sender-key}")
-    private String senderKey;
-
-    @Value("${sendon.template.phone-code}")
-    private String phoneTemplateCode;
+    private final MessageService messageService;
 
     // 인증번호 대조용 저장소 (3분)
     private final Map<String, VerificationData> phoneVerificationStorage = new ConcurrentHashMap<>();
@@ -75,29 +64,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         VerificationData data = new VerificationData(request.phone(), code, LocalDateTime.now().plusMinutes(3));
         phoneVerificationStorage.put(requestId, data);
 
-        // 실제 Sendon 알림톡 발송
-        try {
-            Map<String, Object> receiver = new HashMap<>();
-            String cleanPhone = request.phone().replaceAll("[^0-9]", "");
-            receiver.put("phone", cleanPhone);
-
-            Map<String, String> variables = new HashMap<>();
-            variables.put("#{서비스명}", serviceName);
-            variables.put("#{인증번호}", code);
-
-            receiver.put("variables", variables);
-
-            sendon.kakao.sendAlimtalk(new AlimtalkBuilder()
-                    .setProfileId(senderKey)
-                    .setTemplateId(phoneTemplateCode)
-                    .setTo(Arrays.asList(receiver))
-            );
-
-            log.info("[Alimtalk] 발송 요청 완료 - 대상: {}, 인증번호: {}", cleanPhone, code);
-
-        } catch (Exception e) {
-            log.error("[Alimtalk] 센드온 호출 중 에러 발생: {}", e.getMessage());
-        }
+        // 알림톡 발송 요청 (Console or Sendon)
+        messageService.sendVerificationCode(request.phone(), code);
 
         return new MemberPhoneResponse.SentInfo(requestId, 180);
     }
