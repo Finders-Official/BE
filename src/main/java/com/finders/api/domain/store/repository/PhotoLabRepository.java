@@ -5,6 +5,7 @@ import com.finders.api.domain.store.enums.PhotoLabStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,6 +16,10 @@ public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
     List<PhotoLab> findTop8ByOrderByReservationCountDescIdAsc();
 
     Optional<PhotoLab> findByIdAndStatus(Long id, PhotoLabStatus status);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PhotoLab p SET p.reviewCount = p.reviewCount + 1 WHERE p.id = :id")
+    void incrementReviewCount(@Param("id") Long id);
 
     // 커뮤니티 현상소 검색
     interface PhotoLabSearchResult {
