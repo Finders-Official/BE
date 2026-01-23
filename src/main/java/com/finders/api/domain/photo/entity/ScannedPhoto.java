@@ -26,8 +26,8 @@ public class ScannedPhoto extends BaseTimeEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private DevelopmentOrder order;
 
-    @Column(name = "image_key", length = 500, nullable = false)
-    private String imageKey;
+    @Column(name = "object_path", length = 500, nullable = false)
+    private String objectPath;
 
     @Column(name = "file_name", length = 200)
     private String fileName;
@@ -37,13 +37,13 @@ public class ScannedPhoto extends BaseTimeEntity {
 
     public static ScannedPhoto create(
             DevelopmentOrder order,
-            String imageKey,
+            String objectPath,
             String fileName,
             Integer displayOrder
     ) {
         ScannedPhoto photo = new ScannedPhoto();
         photo.order = order;
-        photo.imageKey = imageKey;
+        photo.objectPath = objectPath;
         photo.fileName = fileName;
         photo.displayOrder = displayOrder;
         return photo;
