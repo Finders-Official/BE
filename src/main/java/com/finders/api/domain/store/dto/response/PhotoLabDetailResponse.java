@@ -17,6 +17,7 @@ public class PhotoLabDetailResponse {
             Double distanceKm,
             boolean isFavorite,
             Integer workCount,
+            Integer reviewCount,
             Integer avgWorkTime,
             Notice mainNotice,
             List<String> postImageUrls
