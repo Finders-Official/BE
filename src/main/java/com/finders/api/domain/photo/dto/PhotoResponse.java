@@ -213,7 +213,7 @@ public class PhotoResponse {
                     .scannedPhotoId(photo.getId())
                     .displayOrder(photo.getDisplayOrder())
                     .fileName(photo.getFileName())
-                    .imageKey(photo.getImageKey())
+                    .imageKey(photo.getObjectPath())
                     .signedUrl(signedUrl)
                     .expiresAt(expiresAt)
                     .createdAt(photo.getCreatedAt())
