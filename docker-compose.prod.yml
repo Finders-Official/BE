@@ -38,6 +38,20 @@ services:
       driver: "gcplogs"
       options:
         labels: "app=finders-api,env=prod"
+    networks:
+      - finders-network # 💡 공용 네트워크에 합류
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: finders-tunnel
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    networks:
+      - finders-network
 
 networks:
   default:
