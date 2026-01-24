@@ -10,6 +10,7 @@ env:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   deploy:
@@ -46,56 +47,65 @@ jobs:
           push: true
           tags: ${{ env.DOCKER_IMAGE }}:latest
 
-      # 6. docker-compose.prod.yml 파일을 서버로 전송 (SCP)
-      - name: Copy Docker Compose file to Server
-        uses: appleboy/scp-action@master
+      # 6. GCP 인증 (Workload Identity 사용)
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
         with:
-          host: ${{ secrets.GCE_HOST }}
-          username: ${{ secrets.GCE_USER }}
-          key: ${{ secrets.GCE_SSH_KEY }}
-          port: 22
-          source: "docker-compose.prod.yml"
-          target: "/home/${{ secrets.GCE_USER }}/app"
-          strip_components: 0
+          workload_identity_provider: '${{ secrets.WIF_PROVIDER }}'
+          service_account: '${{ secrets.WIF_SERVICE_ACCOUNT }}'
 
-      # 7. GCE 서버에 배포 및 검증 (Health Check 추가됨)
-      - name: Deploy to GCE
-        uses: appleboy/ssh-action@master
+      # 7. Google Cloud SDK 설정
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
         with:
-          host: ${{ secrets.GCE_HOST }}
-          username: ${{ secrets.GCE_USER }}
-          key: ${{ secrets.GCE_SSH_KEY }}
-          port: 22
-          script: |
-            # 1. 앱 디렉토리 이동 및 환경변수 설정
-            cd ~/app
-            echo "${{ secrets.ENV_PROD }}" > .env.prod
-            
-            # 2. 최신 이미지 Pull (-p로 프로젝트 이름 명시: dev와 충돌 방지)
-            sudo docker compose -p finders-prod -f docker-compose.prod.yml pull
+          project_id: '${{ secrets.GCP_PROJECT_ID }}'
 
-            # 3. 기존 컨테이너 내리고 새로 시작
-            sudo docker compose -p finders-prod -f docker-compose.prod.yml down
-            sudo docker compose -p finders-prod -f docker-compose.prod.yml up -d
-            
-            # 4. 배포 검증 (Health Check) 로직
-            echo "배포 후 Health Check 시작..."
-            
-            # 최대 60초(5초*12회) 대기
-            for i in {1..12}; do
-              RESPONSE=$(curl -s http://localhost:8080/api/actuator/health || true)
-            
-              if [[ "$RESPONSE" == *"UP"* ]]; then
-                echo "✅ 서비스 정상 실행 확인! (Attempt $i)"
-                sudo docker image prune -f  # 불필요한 이미지 정리
-                exit 0 # 성공으로 종료
-              fi
-            
-              echo "서비스 시작 대기 중... ($i/12)"
-              sleep 5
-            done
-            
-            # 5. 실패 시 처리
-            echo "❌ 배포 실패: 서비스가 제한 시간 내에 뜨지 않았습니다."
-            sudo docker compose -p finders-prod -f docker-compose.prod.yml logs --tail=100
-            exit 1 # GitHub Actions를 '실패(Red)'로 처리
+      # 8. IAP를 통해 파일 전송 및 배포 실행
+      - name: 'Deploy to GCE via IAP'
+        run: |
+          # A. 서버에 해당 디렉토리가 없으면 생성 (권한 주의)
+          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet \
+            --command="sudo mkdir -p /projects/Spring && sudo chown -R ${{ secrets.GCE_USER }}:${{ secrets.GCE_USER }} /projects/Spring"
+          
+          # B. docker-compose 파일 전송
+          gcloud compute scp docker-compose.prod.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:/projects/Spring/docker-compose.prod.yml \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet
+          
+          # C. 원격 명령어 실행
+          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet \
+            --command="
+              cd /projects/Spring
+          
+              # 환경변수 파일 생성
+              echo '${{ secrets.ENV_PROD }}' > .env.prod
+          
+              # 배포 프로세스 (프로젝트 이름 finders-prod 명시)
+              sudo docker compose -p finders-prod -f docker-compose.prod.yml pull
+              sudo docker compose -p finders-prod -f docker-compose.prod.yml down
+              sudo docker compose -p finders-prod -f docker-compose.prod.yml up -d
+          
+              echo '배포 후 Health Check 시작...'
+              for i in {1..12}; do
+                # 8080 포트 확인 (Cloudflare 설정과 일치해야 함)
+                RESPONSE=\$(curl -s http://localhost:8080/api/actuator/health || true)
+                if [[ \"\$RESPONSE\" == *\"UP\"* ]]; then
+                  echo '✅ 운영 서버 정상 실행 확인!'
+                  sudo docker image prune -f
+                  exit 0
+                fi
+                echo \"대기 중... (\$i/12)\"
+                sleep 5
+              done
+              exit 1
+            "
