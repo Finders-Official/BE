@@ -22,7 +22,6 @@ import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.security.JwtTokenProvider;
 import com.finders.api.global.security.RefreshTokenHasher;
 import com.finders.api.infra.messaging.MessageService;
-import io.sendon.kakao.request.AlimtalkBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -30,7 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
