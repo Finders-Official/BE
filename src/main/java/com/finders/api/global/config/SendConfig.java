@@ -10,17 +10,12 @@ import org.springframework.context.annotation.Profile;
 @Profile({"dev", "prod"})
 public class SendConfig {
 
-    @Value("${sendon.id}")
-    private String id;
-
-    @Value("${sendon.api-key}")
-    private String apiKey;
-
-    @Value("${sendon.is-test}")
-    private boolean isTest;
-
     @Bean
-    public Sendon sendon() {
+    public Sendon sendon(
+            @Value("${sendon.id}") String id,
+            @Value("${sendon.api-key}") String apiKey,
+            @Value("${sendon.is-test}") boolean isTest
+    ) {
         return Sendon.getInstance(id, apiKey, isTest);
     }
 }
