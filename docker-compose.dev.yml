@@ -38,7 +38,9 @@ services:
       driver: "gcplogs"
       options:
         labels: "app=finders-dev-api,env=dev"
+    networks:
+      - finders-network
 
 networks:
-  default:
+  finders-network:
     driver: bridge
