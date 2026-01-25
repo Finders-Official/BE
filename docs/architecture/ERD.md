@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v3.0.2 | 2026-01-23
+> v3.0.3 | 2026-01-25
 
 ---
 
@@ -527,8 +527,8 @@ CREATE TABLE photo_lab_document
 CREATE TABLE region
 (
     id         BIGINT      NOT NULL AUTO_INCREMENT,
-    sigungu    VARCHAR(50) NOT NULL, -- 시/군/구
-    sido       BIGINT NULL,          -- 상위 시/도 (region.id)
+    regionName    VARCHAR(50) NOT NULL, -- 지역명
+    parentRegion       BIGINT NULL,          -- 시/도 에 해당할 경우 NULL
     created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME NULL,
@@ -1040,6 +1040,7 @@ CREATE TABLE payment
 | **3.0.0** | **2026-01-18** | 버전 체계 재정비: 이전 변경 이력 아카이빙 (Git 히스토리 참조), 현재 스키마 기준 메이저 버전 설정 (35개 테이블)                                                                                                                                                                                            |
 | **3.0.1** | **2026-01-19** | 인화 도메인 스키마 반영: `development_order`에 작업 선택 컬럼(`is_develop/is_scan/is_print/roll_count`) 추가, `print_order`에 입금 캡처/입금자/은행/제출시각 컬럼 추가, `print_order_item` 구조를 옵션 단위로 변경(`film_type/paper_type/print_method/size/frame_type`), 인화 대상 사진 매핑 테이블 `print_order_photo` 추가 |
 | **3.0.2** | **2026-01-23** | photo_lab 테이블 내 review_count 추가, search_history 테이블 신규 생성                                                                                                                                                                                                        |
+| **3.0.3** | **2026-01-25** | region 테이블 칼럼명 변경 sido -> parentRegion, sigungu -> regionName                                                                                                                                                                                                    |
 
 ---
 
