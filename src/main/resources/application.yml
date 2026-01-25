@@ -46,6 +46,21 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  # ========================================
+  # Redis 설정 (캐싱 및 장애 대응)
+  # ========================================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: 100ms # 0.1초
+      timeout: 100ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
 # ========================================
 # Server 설정
 # ========================================
