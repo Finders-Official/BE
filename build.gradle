@@ -110,6 +110,9 @@ dependencies {
     // DataFaker (실제 같은 데이터 생성)
     implementation 'net.datafaker:datafaker:2.4.2'
 
+    // Sendon (카카오톡 알림톡 대행사)
+    implementation 'io.sendon:sendon-sdk-java:1.0.4'
+
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'

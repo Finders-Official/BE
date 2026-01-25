@@ -21,6 +21,7 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.security.JwtTokenProvider;
 import com.finders.api.global.security.RefreshTokenHasher;
+import com.finders.api.infra.messaging.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -45,6 +46,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final TermsRepository termsRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenHasher refreshTokenHasher;
+    private final MessageService messageService;
 
     // 인증번호 대조용 저장소 (3분)
     private final Map<String, VerificationData> phoneVerificationStorage = new ConcurrentHashMap<>();
@@ -63,9 +65,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         VerificationData data = new VerificationData(request.phone(), code, LocalDateTime.now().plusMinutes(3));
         phoneVerificationStorage.put(requestId, data);
 
-        log.info("[MemberCommandServiceImpl.sendPhoneVerificationCode] 인증번호 발송 대상: {}, 발급된 인증번호: {}", request.phone(), code);
-
-        // TODO: 실제 SMS 전송
+        // 알림톡 발송 요청 (Console or Sendon)
+        messageService.sendVerificationCode(request.phone(), code);
 
         return new MemberPhoneResponse.SentInfo(requestId, 180);
     }

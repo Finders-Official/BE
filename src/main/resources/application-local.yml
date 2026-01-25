@@ -39,3 +39,7 @@ cors:
   allowed-origins:
     - http://localhost:3000
     - http://localhost:5173
+
+# Sendon (로컬 비활성화)
+sendon:
+  is-test: true
