@@ -321,7 +321,10 @@ public class DatabaseSeeder implements CommandLineRunner {
         // 시/도 생성 (parentRegion = null)
         List<Region> sidoList = new ArrayList<>();
         for (String sidoName : SIDO_NAMES) {
-            Region sido = new Region(null, sidoName);
+            Region sido = Region.builder()
+                    .parentRegion(null)
+                    .regionName(sidoName)
+                    .build();
             sidoList.add(sido);
         }
         regionRepository.saveAll(sidoList);
@@ -330,7 +333,10 @@ public class DatabaseSeeder implements CommandLineRunner {
         List<Region> districtsToSave = new ArrayList<>();
         for (int i = 0; i < sidoList.size(); i++) {
             for (String district : DISTRICT_DATA[i]) {
-                Region region = new Region(sidoList.get(i), district);
+                Region region = Region.builder()
+                        .parentRegion(sidoList.get(i))
+                        .regionName(district)
+                        .build();
                 districtsToSave.add(region);
             }
         }

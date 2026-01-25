@@ -526,17 +526,18 @@ CREATE TABLE photo_lab_document
 
 CREATE TABLE region
 (
-    id         BIGINT      NOT NULL AUTO_INCREMENT,
-    regionName    VARCHAR(50) NOT NULL, -- 지역명
-    parentRegion       BIGINT NULL,          -- 시/도 에 해당할 경우 NULL
-    created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at DATETIME NULL,
+    id                BIGINT       NOT NULL AUTO_INCREMENT,
+    region_name       VARCHAR(50)  NOT NULL COMMENT '지역명',
+    parent_region_id  BIGINT       NULL COMMENT '상위 지역 ID (최상위 지역은 NULL)',
+    created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at        DATETIME     NULL,
     PRIMARY KEY (id),
-    INDEX      idx_region_sido (sido),
-    UNIQUE KEY uk_region_sigungu_sido (sigungu, sido),
-    CONSTRAINT fk_region_sido FOREIGN KEY (sido) REFERENCES region (id)
-) ENGINE=InnoDB COMMENT='지역 (시/도, 시/군/구)';
+    INDEX idx_region_parent (parent_region_id),
+    UNIQUE KEY uk_region_name_parent (region_name, parent_region_id),
+    CONSTRAINT fk_region_parent_region
+        FOREIGN KEY (parent_region_id) REFERENCES region (id)
+) ENGINE=InnoDB COMMENT='지역 (계층 구조: 상위/하위)';
 
 -- ============================================
 -- 3. RESERVATION

@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -38,7 +39,8 @@ public class Region extends BaseTimeEntity {
     @Column(name = "region_name", nullable = false, length = 50)
     private String regionName;
 
-    public Region(Region parentRegion, String regionName) {
+    @Builder
+    private Region(Region parentRegion, String regionName) {
         this.parentRegion = parentRegion;
         this.regionName = regionName;
     }
