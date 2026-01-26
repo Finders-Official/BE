@@ -112,6 +112,10 @@ dependencies {
 
     // Sendon (카카오톡 알림톡 대행사)
     implementation 'io.sendon:sendon-sdk-java:1.0.4'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
 
 // ========================================
