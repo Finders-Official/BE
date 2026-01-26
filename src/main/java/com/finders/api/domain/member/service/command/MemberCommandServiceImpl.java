@@ -11,10 +11,8 @@ import com.finders.api.domain.member.dto.response.MemberResponse;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
-import com.finders.api.domain.member.repository.MemberAgreementRepository;
-import com.finders.api.domain.member.repository.MemberOwnerRepository;
-import com.finders.api.domain.member.repository.MemberRepository;
-import com.finders.api.domain.member.repository.MemberUserRepository;
+import com.finders.api.domain.member.entity.SocialAccount;
+import com.finders.api.domain.member.repository.*;
 import com.finders.api.domain.terms.entity.MemberAgreement;
 import com.finders.api.domain.terms.repository.TermsRepository;
 import com.finders.api.global.exception.CustomException;
@@ -39,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberCommandServiceImpl implements MemberCommandService {
+    private final SocialAccountRepository socialAccountRepository;
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
     private final MemberOwnerRepository memberOwnerRepository;
@@ -127,6 +126,15 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 .build();
 
         MemberUser savedUser = memberUserRepository.save(memberUser);
+
+        // SocialAccount 연동 정보 저장
+        SocialAccount socialAccount = SocialAccount.builder()
+                .provider(payload.provider())
+                .providerId(payload.providerId())
+                .user(savedUser)
+                .build();
+
+        socialAccountRepository.save(socialAccount);
 
         // 약관 동의 내역 저장
         List<MemberAgreement> agreements = request.agreements().stream()
