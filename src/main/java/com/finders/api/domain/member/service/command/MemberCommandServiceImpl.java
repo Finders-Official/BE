@@ -51,6 +51,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final RefreshTokenHasher refreshTokenHasher;
     private final MessageService messageService;
 
+    private static final java.security.SecureRandom random = new java.security.SecureRandom();
+
     private static final String PHONE_CODE_KEY = "auth:phone:code:";
     private static final String VERIFIED_PHONE_KEY = "auth:phone:verified:";
 
@@ -59,7 +61,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     public MemberPhoneResponse.SentInfo sendPhoneVerificationCode(MemberPhoneRequest.SendCode request) {
 
         String requestId = UUID.randomUUID().toString();
-        String code = String.valueOf(new java.security.SecureRandom().nextInt(900000) + 100000); // 6자리 랜덤 번호
+        String code = String.valueOf(random.nextInt(900000) + 100000); // 6자리 랜덤 번호
 
         // 유효 시간 3분 설정
         VerificationData data = new VerificationData(request.phone(), code, LocalDateTime.now().plusMinutes(RedisConfig.AUTH_CODE_TTL_MINUTES));
