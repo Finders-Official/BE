@@ -318,19 +318,25 @@ public class DatabaseSeeder implements CommandLineRunner {
     private List<Region> createRegions() {
         List<Region> regions = new ArrayList<>();
 
-        // 시/도 생성 (sido = null)
+        // 시/도 생성 (parentRegion = null)
         List<Region> sidoList = new ArrayList<>();
         for (String sidoName : SIDO_NAMES) {
-            Region sido = new Region(null, sidoName);
+            Region sido = Region.builder()
+                    .parentRegion(null)
+                    .regionName(sidoName)
+                    .build();
             sidoList.add(sido);
         }
         regionRepository.saveAll(sidoList);
 
-        // 시/군/구 생성 (sido가 부모 지역)
+        // 시/군/구 생성 (parentRegion이 상위 지역)
         List<Region> districtsToSave = new ArrayList<>();
         for (int i = 0; i < sidoList.size(); i++) {
             for (String district : DISTRICT_DATA[i]) {
-                Region region = new Region(sidoList.get(i), district);
+                Region region = Region.builder()
+                        .parentRegion(sidoList.get(i))
+                        .regionName(district)
+                        .build();
                 districtsToSave.add(region);
             }
         }
