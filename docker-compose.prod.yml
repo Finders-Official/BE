@@ -21,6 +21,9 @@ services:
 
     container_name: finders-api
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "8080:8080"
     env_file:
@@ -28,7 +31,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       TZ: Asia/Seoul
-      SPRING_DATA_REDIS_HOST: finders-redis
+      SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
@@ -45,13 +48,16 @@ services:
   redis:
     image: redis:latest
     container_name: finders-redis
-    ports:
-      - "6379:6379"
-    networks:
-      - finders-network
-    restart: always
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./redis/data:/data
+    networks:
+      - finders-network
 
   tunnel:
     image: cloudflare/cloudflared:latest
