@@ -68,8 +68,8 @@ public class OwnerPhotoRequest {
      */
     public record ScannedPhotoItem(
             @Schema(example = "scanned/1/orders/D11201011234/ab12cd34ef56...", description = "스토리지에 업로드된 이미지 키(object key)")
-            @NotNull(message = "imageKey는 필수입니다.")
-            String imageKey,
+            @NotNull(message = "objectPath는 필수입니다.")
+            String objectPath,
 
             @Schema(example = "IMG_0001.JPG", description = "원본 파일명(선택)")
             String fileName,

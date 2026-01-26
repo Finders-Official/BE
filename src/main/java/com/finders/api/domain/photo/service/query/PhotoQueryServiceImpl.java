@@ -187,7 +187,7 @@ public class PhotoQueryServiceImpl implements PhotoQueryService {
                 scannedPhotoRepository.findByOrderIdOrderByDisplayOrderAsc(developmentOrderId, pageable);
 
         List<String> keys = slice.getContent().stream()
-                .map(ScannedPhoto::getImageKey)
+                .map(ScannedPhoto::getObjectPath)
                 .toList();
 
         Map<String, StorageResponse.SignedUrl> signedMap =
@@ -195,7 +195,7 @@ public class PhotoQueryServiceImpl implements PhotoQueryService {
 
         List<PhotoResponse.ScanResult> content = slice.getContent().stream()
                 .map(photo -> {
-                    StorageResponse.SignedUrl signed = signedMap.get(photo.getImageKey());
+                    StorageResponse.SignedUrl signed = signedMap.get(photo.getObjectPath());
                     if (signed == null) {
                         // 사진이 없는 경우
                         return PhotoResponse.ScanResult.from(photo, null, null);
