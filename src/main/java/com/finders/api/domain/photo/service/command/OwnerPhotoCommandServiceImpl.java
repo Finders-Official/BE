@@ -199,7 +199,7 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
         List<ScannedPhoto> photos = request.scannedPhotos().stream()
                 .map(item -> ScannedPhoto.create(
                         order,
-                        item.imageKey(),
+                        item.objectPath(),
                         item.fileName(),
                         item.displayOrder()
                 ))
