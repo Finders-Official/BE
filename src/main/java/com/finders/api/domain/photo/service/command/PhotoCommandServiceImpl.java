@@ -9,6 +9,7 @@ import com.finders.api.domain.photo.entity.PrintOrderPhoto;
 import com.finders.api.domain.photo.entity.ScannedPhoto;
 import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;
 import com.finders.api.domain.photo.enums.ReceiptMethod;
+import com.finders.api.domain.photo.policy.PrintPricePolicy;
 import com.finders.api.domain.photo.repository.DeliveryRepository;
 import com.finders.api.domain.photo.repository.DevelopmentOrderRepository;
 import com.finders.api.domain.photo.repository.PrintOrderItemRepository;
@@ -26,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class PhotoCommandServiceImpl implements PhotoCommandService {
+
+    private final PrintPricePolicy printPricePolicy;
 
     private final DevelopmentOrderRepository developmentOrderRepository;
     private final ScannedPhotoRepository scannedPhotoRepository;
@@ -81,24 +84,18 @@ public class PhotoCommandServiceImpl implements PhotoCommandService {
         }
 
         // 3) 가격 계산 (견적 로직과 동일)
-        int totalQuantity = request.photos().stream()
-                .mapToInt(PhotoRequest.SelectedPhoto::quantity)
-                .sum();
-
-        if (totalQuantity <= 0) {
-            throw new CustomException(ErrorCode.BAD_REQUEST, "수량은 1 이상이어야 합니다.");
+        PrintPricePolicy.PriceResult price;
+        try {
+            price = printPricePolicy.calculate(request);
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.BAD_REQUEST, e.getMessage());
         }
 
-        int unitPrice =
-                request.size().basePrice()
-                        + request.filmType().extra(request.size().basePrice())
-                        + request.printMethod().extraPrice()
-                        + request.paperType().extraPrice()
-                        + request.frameType().extraPrice();
+        int unitPrice = price.unitPrice();
+        int printTotalPrice = price.printTotalPrice();
+        int deliveryFee = price.deliveryFee();
+        int orderTotalPrice = price.orderTotalPrice();
 
-        int printTotalPrice = unitPrice * totalQuantity;
-        int deliveryFee = (request.receiptMethod() == ReceiptMethod.DELIVERY) ? 3000 : 0;
-        int orderTotalPrice = printTotalPrice + deliveryFee;
 
         // 4) PrintOrder 생성/저장
         PrintOrder order = PrintOrder.create(
