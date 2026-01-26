@@ -200,7 +200,7 @@ public class PhotoResponse {
             @Schema(description = "원본 파일명", example = "IMG_0001.jpg")
             String fileName,
             @Schema(description = "저장 키(S3/GCS object key)", example = "scan/orders/101/IMG_0001.jpg")
-            String imageKey,
+            String objectPath,
             @Schema(description = "서명된 다운로드 URL", example = "https://storage.googleapis.com/...signature=...")
             String signedUrl,
             @Schema(description = "signedUrl 만료 epoch(ms)", example = "1768557000000")
@@ -213,7 +213,7 @@ public class PhotoResponse {
                     .scannedPhotoId(photo.getId())
                     .displayOrder(photo.getDisplayOrder())
                     .fileName(photo.getFileName())
-                    .imageKey(photo.getObjectPath())
+                    .objectPath(photo.getObjectPath())
                     .signedUrl(signedUrl)
                     .expiresAt(expiresAt)
                     .createdAt(photo.getCreatedAt())
