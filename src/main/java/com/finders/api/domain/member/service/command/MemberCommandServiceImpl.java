@@ -229,6 +229,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         VerifiedPhoneInfo info = (VerifiedPhoneInfo) redisTemplate.opsForValue().get(VERIFIED_PHONE_KEY + token);
 
         if (info == null || info.isExpired()) {
+            if (info != null) {
+                redisTemplate.delete(VERIFIED_PHONE_KEY + token);
+            }
             throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_FAILED);
         }
 
