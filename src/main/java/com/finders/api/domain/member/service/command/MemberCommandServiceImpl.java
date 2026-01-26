@@ -132,6 +132,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 .provider(payload.provider())
                 .providerId(payload.providerId())
                 .user(savedUser)
+                .socialEmail(payload.email())
                 .build();
 
         socialAccountRepository.save(socialAccount);
