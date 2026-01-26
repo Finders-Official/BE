@@ -154,6 +154,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         refreshTokenHasher.saveRefreshToken(savedUser.getId(), refreshToken);
 
+        verifiedTokenStorage.remove(request.verifiedPhoneToken());
+
         return new MemberResponse.SignupResult(
                 accessToken,
                 refreshToken,
@@ -228,8 +230,6 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         if (!cleanStoredPhone.equals(cleanRequestedPhone)) {
             throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_FAILED);
         }
-
-        verifiedTokenStorage.remove(token);
     }
 
     private void checkMandatoryAgreements(List<MemberRequest.AgreementRequest> agreements) {
