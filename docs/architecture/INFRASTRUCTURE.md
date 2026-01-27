@@ -67,28 +67,43 @@ develop → main (PR) → prod 환경 자동 배포
 | RAM | 1.7 GB |
 | 저장용량 | 10 GB SSD |
 | 가용성 | 단일 영역 |
-| 공개 IP | `34.64.50.136` |
+| 공개 IP | 비활성화됨 |
+| Private IP | `10.68.240.3` |
 | 포트 | 3306 |
 | 백업 | 자동 |
-| 승인된 네트워크 | `34.50.19.146/32` (finders-server) |
+| 네트워크 | finders-vpc (VPC 내부 통신 전용) |
 | **예상 비용** | **~$27/월** |
 
 ### 접속 정보
 
+> **주의**: Cloud SQL 공개 IP가 비활성화되어 **IAP 터널**을 통해서만 접속 가능합니다.
+
+**IAP 터널 접속 방법**
+```bash
+# 1. 터널 열기 (로컬 3307 → Cloud SQL 3306)
+gcloud compute ssh finders-server-v2 \
+  --zone=asia-northeast3-a \
+  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --tunnel-through-iap \
+  -- -L 3307:10.68.240.3:3306
+
+# 2. DB 클라이언트에서 연결
+Host: localhost
+Port: 3307
+```
+
 **Prod 환경**
 ```
-Host: 34.64.50.136
-Port: 3306
 Database: finders
 User: finders
+Password: [.env.prod 참조]
 ```
 
 **Dev 환경**
 ```
-Host: 34.64.50.136
-Port: 3306
 Database: finders_dev
 User: finders
+Password: [.env.dev 참조]
 ```
 
 ---
@@ -146,16 +161,28 @@ User: finders
 
 | 항목 | 값 |
 |------|-----|
-| 인스턴스 이름 | `finders-server` |
+| 인스턴스 이름 | `finders-server-v2` |
 | 머신 유형 | e2-medium |
 | vCPU | 2 vCPU |
 | RAM | 4 GB |
 | 부팅 디스크 | Ubuntu 22.04 LTS, 20GB |
 | 리전/영역 | asia-northeast3-a (서울) |
-| **외부 IP (고정)** | **34.50.19.146** |
-| 내부 IP | 10.178.0.2 |
-| 방화벽 | HTTP(80), HTTPS(443) 허용 |
+| 외부 IP | 없음 (IAP 터널 사용) |
+| 내부 IP | `10.0.2.2` |
+| VPC/서브넷 | `finders-vpc` / `private-app-subnet` |
+| 네트워크 태그 | `api-server`, `http-server`, `https-server` |
+| SSH 접속 | IAP 터널 필수 |
 | **예상 비용** | **~$34/월** |
+
+### SSH 접속 방법
+
+```bash
+# IAP 터널을 통한 SSH 접속
+gcloud compute ssh finders-server-v2 \
+  --zone=asia-northeast3-a \
+  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --tunnel-through-iap
+```
 
 ---
 
@@ -198,8 +225,8 @@ User: finders
 [cloudflared 데몬] (Compute Engine 내부)
     ↓
 [Spring Boot :8080]
-    ↓ MySQL 3306
-[Cloud SQL: 34.64.50.136]
+    ↓ MySQL 3306 (VPC 내부 Private IP)
+[Cloud SQL: 10.68.240.3]
 
 [Compute Engine] → [Cloud Storage: finders-public]   (공개 이미지)
                  → [Cloud Storage: finders-private]  (비공개 파일, Signed URL)
@@ -259,31 +286,40 @@ User: finders
 Password: finders123
 ```
 
-### Dev 환경 (Cloud SQL)
-```
-Host: 34.64.50.136
-Port: 3306
-Database: finders_dev
+### Dev/Prod 환경 (Cloud SQL via IAP 터널)
+
+> Cloud SQL 공개 IP 비활성화됨. IAP 터널 필수!
+
+```bash
+# 1. IAP 터널 열기
+gcloud compute ssh finders-server-v2 \
+  --zone=asia-northeast3-a \
+  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --tunnel-through-iap \
+  -- -L 3307:10.68.240.3:3306
+
+# 2. IntelliJ/DBeaver 등 DB 클라이언트에서 연결
+Host: localhost
+Port: 3307
+Database: finders_dev (또는 finders)
 User: finders
-Password: [.env.dev 참조]
-API URL: https://dev-api.finders.it.kr
+Password: [.env.dev/.env.prod 참조]
 ```
 
-### Prod 환경 (Cloud SQL)
-```
-Host: 34.64.50.136
-Port: 3306
-Database: finders
-User: finders
-Password: [.env.prod 참조]
-API URL: https://api.finders.it.kr
-```
+| 환경 | Database | API URL |
+|------|----------|---------|
+| Dev | finders_dev | https://dev-api.finders.it.kr |
+| Prod | finders | https://api.finders.it.kr |
 
 ### 배포 서버 SSH 접속
+
+> **주의**: 외부 IP가 없으므로 IAP 터널 필수!
+
 ```bash
-gcloud compute ssh finders-server --zone=asia-northeast3-a
-# 또는
-ssh [사용자]@34.50.19.146
+gcloud compute ssh finders-server-v2 \
+  --zone=asia-northeast3-a \
+  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --tunnel-through-iap
 ```
 
 ### Docker 컨테이너 관리
