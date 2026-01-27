@@ -21,9 +21,6 @@ services:
 
     container_name: finders-dev-api
     restart: unless-stopped
-    depends_on:
-      redis-dev:
-        condition: service_healthy
     ports:
       - "8081:8080"
     env_file:
@@ -31,8 +28,6 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Seoul
-      SPRING_DATA_REDIS_HOST: redis-dev
-      SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
       interval: 30s
@@ -43,17 +38,6 @@ services:
       driver: "gcplogs"
       options:
         labels: "app=finders-dev-api,env=dev"
-    networks:
-      - finders-network
-  redis-dev:
-    image: redis:latest
-    container_name: finders-redis-dev
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - finders-network
 
