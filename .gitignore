@@ -90,3 +90,14 @@ docker-compose.override.yml
 docs/INFRASTRUCTURE.md
 docs/infra/scripts/grant-iam-permissions.sh
 docs/infra/dashboards/
+
+# ========================================
+# Scripts (민감 정보 포함)
+# ========================================
+scripts/
+
+# ========================================
+# SQL Tools (VS Code)
+# ========================================
+*.session.sql
+sql/local/

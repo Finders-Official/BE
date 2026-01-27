@@ -46,12 +46,22 @@ ps aux | grep java
 ```
 
 ### Cloud SQL 연결 테스트
-```bash
-# 내부 IP로 연결 (VPC 내부에서)
-mysql -h 10.x.x.x -u finders -p
 
-# 공개 IP로 연결 (승인된 네트워크에서만)
-mysql -h 34.64.50.136 -u finders -p
+> **주의**: Cloud SQL 공개 IP가 비활성화됨. IAP 터널 필수!
+
+```bash
+# 1. IAP 터널 열기 (새 터미널에서)
+gcloud compute ssh finders-server-v2 \
+  --zone=asia-northeast3-a \
+  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --tunnel-through-iap \
+  -- -L 3307:10.68.240.3:3306
+
+# 2. 로컬에서 연결 (터널 열린 상태에서)
+mysql -h localhost -P 3307 -u finders -p
+
+# VPC 내부 (GCE 서버에서 직접)
+mysql -h 10.68.240.3 -u finders -p
 ```
 
 ---
@@ -233,18 +243,27 @@ dig api.finders.it.kr
 
 ### DB 연결 안 될 때
 
+> **참고**: Cloud SQL 공개 IP 비활성화됨. IAP 터널 필수!
+
 ```bash
 # 1. Cloud SQL 인스턴스 상태
 gcloud sql instances describe finders-db
 
-# 2. 네트워크 연결 테스트
-telnet 34.64.50.136 3306
+# 2. IAP 터널이 열려있는지 확인
+# (별도 터미널에서 터널 명령 실행 중이어야 함)
+lsof -i :3307  # 로컬 3307 포트 사용 중인지 확인
 
-# 3. 방화벽 규칙 확인 (Cloud SQL)
-gcloud sql instances describe finders-db \
-  --format="value(settings.ipConfiguration.authorizedNetworks)"
+# 3. IAP 터널 열기 (안 열려있다면)
+gcloud compute ssh finders-server-v2 \
+  --zone=asia-northeast3-a \
+  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --tunnel-through-iap \
+  -- -L 3307:10.68.240.3:3306
 
-# 4. Spring Boot 로그 확인
+# 4. 연결 테스트
+mysql -h localhost -P 3307 -u finders -p
+
+# 5. Spring Boot 로그 확인
 sudo journalctl -u spring-boot | grep -i "database\|connection"
 ```
 
@@ -367,5 +386,5 @@ sudo journalctl -u spring-boot | grep ERROR | tail -n 20 | jq .
 
 ---
 
-**마지막 업데이트**: 2025-01-19
-**다음 검토**: 네트워크 설정 변경 시
+**마지막 업데이트**: 2025-01-27
+**다음 검토**: 방화벽 규칙 정리 후

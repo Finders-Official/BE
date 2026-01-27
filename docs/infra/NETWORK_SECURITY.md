@@ -386,21 +386,62 @@ mysql -h db.finders.internal -u finders -p
 ## 보안 체크리스트
 
 ### 현재 필수 (즉시 확인)
-- [ ] Cloudflare Tunnel 정상 작동 확인
+- [x] Cloudflare Tunnel 정상 작동 확인
 - [ ] SSH 포트 본인 IP만 허용
-- [ ] Cloud SQL 공개 IP 제거 (Private IP 사용)
+- [x] Cloud SQL 공개 IP 비활성화 완료 (Private IP: `10.68.240.3`)
 - [ ] Spring Security JWT 설정 확인
-- [ ] 환경 변수 (.env) Git에 커밋 안 됨 확인
+- [x] 환경 변수 (.env) Git에 커밋 안 됨 확인
+
+### TODO: Cloud SQL SSL 강제 설정 (선택)
+> 현재 `requireSsl: false` 상태. VPC 내부 통신이라 시급하지 않음.
+
+```bash
+# SSL 필수로 변경 (모든 클라이언트가 SSL 없이 연결 불가해짐)
+gcloud sql instances patch finders-db --require-ssl
+
+# 확인
+gcloud sql instances describe finders-db --format="yaml(settings.ipConfiguration.requireSsl)"
+```
+
+**주의**: 활성화 전 GCE 서버의 Spring Boot가 SSL로 연결하는지 확인 필요!
+
+### TODO: 방화벽 규칙 정리 (배포 안정화 후)
+
+> 현재 불필요하게 열린 규칙들. 배포 테스트 완료 후 정리 권장.
+
+**즉시 삭제 권장 (높은 위험):**
+```bash
+# 전역 SSH 허용 삭제 (IAP로 대체됨)
+gcloud compute firewall-rules delete default-allow-ssh --quiet
+
+# RDP 삭제 (Linux 서버라 불필요)
+gcloud compute firewall-rules delete default-allow-rdp --quiet
+
+# Spring Boot 전역 허용 삭제 (Cloudflare Tunnel 사용)
+gcloud compute firewall-rules delete allow-spring-boot --quiet
+```
+
+**나중에 정리 (중간 위험):**
+```bash
+# Cloudflare Tunnel 사용 시 HTTP/HTTPS 직접 노출 불필요
+gcloud compute firewall-rules delete default-allow-http --quiet
+gcloud compute firewall-rules delete default-allow-https --quiet
+gcloud compute firewall-rules delete finders-vpc-allow-http --quiet
+gcloud compute firewall-rules delete finders-vpc-allow-https --quiet
+
+# API 트래픽도 Cloudflare IP만 허용하도록 변경 검토
+# gcloud compute firewall-rules update allow-api-traffic --source-ranges=173.245.48.0/20,103.21.244.0/22,...
+```
 
 ### 단기 (1~2주 내)
-- [ ] 방화벽 규칙 최소 권한으로 변경
+- [ ] 방화벽 규칙 최소 권한으로 변경 (위 TODO 참조)
 - [ ] nginx 블루-그린 배포 설정
 - [ ] 접속 로그 수집 (Cloudflare Logs)
 - [ ] SSL 인증서 자동 갱신 확인
 
 ### 중기 (서비스 오픈 전)
-- [ ] VPC 커스텀 설정
-- [ ] Private Subnet으로 DB 이전
+- [x] VPC 커스텀 설정 완료 (`finders-vpc`)
+- [x] Private Subnet으로 DB 이전 완료
 - [ ] Bastion/Cloudflare Zero Trust 설정
 - [ ] 백업 자동화
 - [ ] 모니터링 대시보드 구축
@@ -470,8 +511,8 @@ mysql -h db.finders.internal -u finders -p
 
 ## 문의 및 업데이트
 
-- **문서 최종 수정**: 2025-01-19
-- **다음 검토 예정**: VPC 설정 후
+- **문서 최종 수정**: 2025-01-27
+- **다음 검토 예정**: 방화벽 규칙 정리 후
 - **담당자**: DevOps 팀
 
 네트워크 구성 변경 시 이 문서를 반드시 업데이트하세요.
