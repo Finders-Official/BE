@@ -310,30 +310,19 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         boolean useDistance = shouldUseDistance(memberId, lat, lng);
 
-        List<PhotoLabListResponse.Card> cards = favoriteSlice.getContent().stream()
-                .map(f -> {
-                    PhotoLab favoritePhotoLab = f.getPhotoLab();
+        Slice<PhotoLabListResponse.Card> cards = favoriteSlice.map(f -> {
+            PhotoLab favoritePhotoLab = f.getPhotoLab();
+            Double distanceKm = useDistance ? distanceKmOrNull(lat, lng, favoritePhotoLab) : null;
+            return PhotoLabListResponse.Card.from(
+                    favoritePhotoLab,
+                    imageUrlsByLabId.getOrDefault(favoritePhotoLab.getId(), Collections.emptyList()),
+                    tagsByLabId.getOrDefault(favoritePhotoLab.getId(), Collections.emptyList()),
+                    distanceKm,
+                    true
+            );
+        });
 
-                    Double distanceKm = useDistance ? distanceKmOrNull(lat, lng, favoritePhotoLab) : null;
-
-                    return PhotoLabListResponse.Card.from(
-                            favoritePhotoLab,
-                            imageUrlsByLabId.getOrDefault(favoritePhotoLab.getId(), Collections.emptyList()),
-                            tagsByLabId.getOrDefault(favoritePhotoLab.getId(), Collections.emptyList()),
-                            distanceKm,
-                            true
-                    );
-                })
-                .toList();
-
-        return new PhotoLabFavoriteResponse.SliceResponse(
-                cards,
-                new PhotoLabFavoriteResponse.PageInfo(
-                        favoriteSlice.getNumber(),
-                        favoriteSlice.getSize(),
-                        favoriteSlice.isLast()
-                )
-        );
+        return PhotoLabFavoriteResponse.SliceResponse.from(cards);
     }
       
     @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
