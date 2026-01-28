@@ -289,7 +289,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Slice<FavoritePhotoLab> favoriteSlice = photoLabFavoriteRepository.findSliceByMember_Id(memberId, pageable);
+        Slice<FavoritePhotoLab> favoriteSlice = photoLabFavoriteRepository.findSliceByMemberId(memberId, pageable);
 
         if (favoriteSlice.isEmpty()) {
             return new PhotoLabFavoriteResponse.SliceResponse(
