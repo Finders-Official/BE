@@ -30,7 +30,7 @@ public class PhotoLabService {
     private final RegionRepository regionRepository;
 
     @Transactional
-    @CacheEvict(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = "'top'")
+    @CacheEvict(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
     public PhotoLabResponse.Create createPhotoLab(Long ownerId, PhotoLabRequest.Create request) {
         log.info("[PhotoLabService.createPhotoLab] ownerId: {}", ownerId);
 

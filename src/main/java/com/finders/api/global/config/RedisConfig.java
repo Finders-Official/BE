@@ -25,6 +25,7 @@ public class RedisConfig {
     public static final String AUTH_CODE_CACHE = "authCode";
     public static final String POPULAR_PHOTO_LABS_CACHE = "popularPhotoLabs";
     public static final String PHOTO_LAB_REGION_COUNTS_CACHE = "photoLabRegionCounts";
+    public static final String PHOTO_LAB_REGION_COUNTS_CACHE_KEY = "'top'";
 
     private static final long DEFAULT_CACHE_TTL_MINUTES = 10L;
     private static final long AUTH_CODE_TTL_MINUTES = 5L;
