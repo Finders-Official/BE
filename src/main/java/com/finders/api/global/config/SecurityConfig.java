@@ -97,10 +97,15 @@ public class SecurityConfig {
                         ).hasAnyRole("USER", "GUEST")
                         // GUEST만 허용
                         .requestMatchers("/members/social/signup/complete").hasRole("GUEST")
+                        // USER만 허용
+                        .requestMatchers("/users/**").hasRole("USER")
                         // OWNER만 허용
-                        .requestMatchers("/owner/**").hasRole("OWNER")
+                        .requestMatchers(
+                                "/owner/**",
+                                "/auth/owner/**"
+                        ).hasRole("OWNER")
                         // USER, OWNER 모두 허용 (인증된 사용자)
-                        .anyRequest().hasAnyRole("USER", "OWNER")
+                        .anyRequest().authenticated()
                 )
 
                 // JWT 필터 추가
