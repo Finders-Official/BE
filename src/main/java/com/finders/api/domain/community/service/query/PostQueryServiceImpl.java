@@ -163,4 +163,35 @@ public class PostQueryServiceImpl implements PostQueryService {
 
         return SUFFIX_PATTERN.matcher(candidate).replaceAll("").trim();
     }
+
+    @Override
+    public PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Integer page, Integer size) {
+        List<Post> posts = postQueryRepository.findByMemberId(memberId, page, size);
+
+        Long totalCount = postQueryRepository.countByMemberId(memberId);
+        boolean isLast = (long) (page + 1) * size >= totalCount;
+
+        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId), totalCount, isLast);
+    }
+
+    @Override
+    public PostResponse.PostPreviewListDTO getPostLikesList(Long memberId, Integer page, Integer size) {
+        List<Post> posts = postQueryRepository.findLikedPostsByMemberId(memberId, page, size);
+
+        Long totalCount = postQueryRepository.countMyLikedPosts(memberId);
+        boolean isLast = (long) (page + 1) * size >= totalCount;
+
+        List<PostResponse.PostPreviewDTO> previewDTOs = posts.stream()
+                .map(post -> {
+                    boolean isLiked = true;
+
+                    com.finders.api.domain.community.entity.PostImage firstImage =
+                            post.getPostImageList().isEmpty() ? null : post.getPostImageList().get(0);
+
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, toPostImageResDTO(firstImage));
+                })
+                .toList();
+
+        return PostResponse.PostPreviewListDTO.from(previewDTOs, totalCount, isLast);
+    }
 }

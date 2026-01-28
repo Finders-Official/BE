@@ -12,6 +12,7 @@ import java.util.List;
 
 import static com.finders.api.domain.community.entity.QPost.post;
 import static com.finders.api.domain.store.entity.QPhotoLab.photoLab;
+import static com.finders.api.domain.community.entity.QPostLike.postLike;
 
 @Repository
 @RequiredArgsConstructor
@@ -107,6 +108,55 @@ public class PostQueryRepository {
                 .orderBy(post.likeCount.desc())
                 .limit(10)
                 .fetch();
+    }
+
+    public List<Post> findLikedPostsByMemberId(Long memberId, int page, int size) {
+        return queryFactory
+                .selectFrom(post)
+                .join(postLike).on(postLike.post.eq(post))
+                .where(
+                        postLike.memberUser.id.eq(memberId),
+                        post.status.eq(CommunityStatus.ACTIVE)
+                )
+                .orderBy(postLike.createdAt.desc())
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+    }
+
+    public Long countMyLikedPosts(Long memberId) {
+        return queryFactory
+                .select(post.count())
+                .from(postLike)
+                .join(postLike.post, post)
+                .where(
+                        postLike.memberUser.id.eq(memberId),
+                        post.status.eq(CommunityStatus.ACTIVE)
+                )
+                .fetchOne();
+    }
+    public List<Post> findByMemberId(Long memberId, int page, int size) {
+        return queryFactory
+                .selectFrom(post)
+                .where(
+                        post.memberUser.id.eq(memberId),
+                        post.status.eq(CommunityStatus.ACTIVE)
+                )
+                .orderBy(post.createdAt.desc())
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+    }
+
+    public Long countByMemberId(Long memberId) {
+        return queryFactory
+                .select(post.count())
+                .from(post)
+                .where(
+                        post.memberUser.id.eq(memberId),
+                        post.status.eq(CommunityStatus.ACTIVE)
+                )
+                .fetchOne();
     }
 
 }

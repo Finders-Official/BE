@@ -8,10 +8,12 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.Region;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.domain.store.repository.RegionRepository;
+import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class PhotoLabService {
     private final RegionRepository regionRepository;
 
     @Transactional
+    @CacheEvict(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
     public PhotoLabResponse.Create createPhotoLab(Long ownerId, PhotoLabRequest.Create request) {
         log.info("[PhotoLabService.createPhotoLab] ownerId: {}", ownerId);
 
