@@ -11,10 +11,12 @@ import com.finders.api.domain.reservation.repository.ReservationRepository;
 import com.finders.api.domain.reservation.repository.ReservationSlotRepository;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
+import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,7 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
     private final ReservationSlotRepository reservationSlotRepository;
 
     @Override
+    @CacheEvict(value = RedisConfig.POPULAR_PHOTO_LABS_CACHE, key = "'top8'")
     public ReservationResponse.Created createReservation(Long photoLabId, Long memberId, ReservationRequest.Create request) {
 
         log.info("[ReservationCommandServiceImpl.createReservation] photoLabId: {}, memberId: {}", photoLabId, memberId);
@@ -62,9 +65,11 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
     }
 
     @Override
+    @CacheEvict(value = RedisConfig.POPULAR_PHOTO_LABS_CACHE, key = "'top8'")
     public ReservationResponse.Cancel cancelReservation(Long photoLabId, Long reservationId, Long memberId) {
 
-        Reservation reservation = reservationRepository.findByIdAndPhotoLabIdAndUserId(reservationId, photoLabId,memberId)
+        Reservation reservation = reservationRepository
+                .findByIdAndPhotoLabIdAndUserIdForUpdate(reservationId, photoLabId, memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
         if (reservation.getStatus() == ReservationStatus.CANCELED) {

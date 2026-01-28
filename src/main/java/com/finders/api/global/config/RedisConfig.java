@@ -24,10 +24,12 @@ public class RedisConfig {
 
     public static final String AUTH_CODE_CACHE = "authCode";    // 전화번호 인증번호용
     public static final String VERIFIED_PHONE_CACHE = "verifiedPhone";  // 전화번호 증빙 토큰용
+    public static final String POPULAR_PHOTO_LABS_CACHE = "popularPhotoLabs";
 
     private static final long DEFAULT_CACHE_TTL_MINUTES = 10L;
     public static final long AUTH_CODE_TTL_MINUTES = 3L;
     public static final long VERIFIED_PHONE_TTL_MINUTES = 10L;
+    private static final long POPULAR_PHOTO_LABS_TTL_MINUTES = 60L;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -50,6 +52,7 @@ public class RedisConfig {
                 .cacheDefaults(config)
                 .withCacheConfiguration(AUTH_CODE_CACHE, config.entryTtl(Duration.ofMinutes(AUTH_CODE_TTL_MINUTES)))
                 .withCacheConfiguration(VERIFIED_PHONE_CACHE, config.entryTtl(Duration.ofMinutes(VERIFIED_PHONE_TTL_MINUTES)))
+                .withCacheConfiguration(POPULAR_PHOTO_LABS_CACHE, config.entryTtl(Duration.ofMinutes(POPULAR_PHOTO_LABS_TTL_MINUTES)))
                 .build();
     }
 
