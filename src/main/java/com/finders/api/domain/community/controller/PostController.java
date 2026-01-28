@@ -155,7 +155,8 @@ public class PostController {
     public ApiResponse<PostResponse.PostPreviewListDTO> getPopularPosts(
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(authUser.memberId()));
+        Long memberId = (authUser != null) ? authUser.memberId() : null;
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(memberId));
     }
 
     // 커뮤니티 게시물 검색
