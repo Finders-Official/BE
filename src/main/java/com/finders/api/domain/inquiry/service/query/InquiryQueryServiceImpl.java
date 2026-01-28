@@ -109,7 +109,7 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
                 .map(storageService::getPublicUrl)
                 .toList();
 
-        log.debug("[InquiryQueryServiceImpl] objectPath → Public URL 변환 완료: inquiryId={}, imageCount={}",
+        log.debug("[InquiryQueryServiceImpl.createInquiryDetailDTOWithPublicUrls] objectPath → Public URL 변환 완료: inquiryId={}, imageCount={}",
                 inquiry.getId(), imageUrls.size());
 
         return InquiryResponse.InquiryDetailDTO.fromWithUrls(inquiry, imageUrls);
