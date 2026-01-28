@@ -24,5 +24,5 @@ public interface PhotoLabFavoriteRepository extends JpaRepository<FavoritePhotoL
             "join fetch f.photoLab " +
             "where f.member.id = :memberId " +
             "order by f.createdAt desc")
-    Slice<FavoritePhotoLab> findSliceByMember_Id(@Param("memberId") Long memberId, Pageable pageable);
+    Slice<FavoritePhotoLab> findSliceByMemberId(@Param("memberId") Long memberId, Pageable pageable);
 }
