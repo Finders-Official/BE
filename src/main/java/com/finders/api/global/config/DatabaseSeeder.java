@@ -92,6 +92,11 @@ public class DatabaseSeeder implements CommandLineRunner {
     private static final String[] LAB_ADDRESS_DETAILS = {"1층", "2층", "3층"};
     private static final int[] LAB_AVG_WORK_TIMES = {3, 5, 4};
 
+    // ===== Constants: Print Order Pricing =====
+    private static final int PRINT_ORDER_PICKUP_PRICE = 5000;
+    private static final int PRINT_ORDER_DELIVERY_PRICE = 8000;
+    private static final int DELIVERY_FEE = 3000;
+
     // ===== Constants: Region Data =====
     private static final String[] SIDO_NAMES = {"서울", "경기", "부산"};
     private static final String[][] DISTRICT_DATA = {
@@ -798,7 +803,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                         .user(devOrder.getUser())
                         .orderCode(generateOrderCode("PO"))
                         .status(com.finders.api.domain.photo.enums.PrintOrderStatus.PENDING)
-                        .totalPrice(isDeliveryOrder ? 8000 : 5000)
+                        .totalPrice(isDeliveryOrder ? PRINT_ORDER_DELIVERY_PRICE : PRINT_ORDER_PICKUP_PRICE)
                         .receiptMethod(receiptMethod)
                         .build();
 
@@ -815,7 +820,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                             .address("서울 강남구 테헤란로 123")
                             .addressDetail("아파트 101호")
                             .status(DeliveryStatus.PENDING)
-                            .deliveryFee(3000)
+                            .deliveryFee(DELIVERY_FEE)
                             .build();
                     entityManager.persist(delivery);
                 }
@@ -1079,7 +1084,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private void createSearchHistory() {
         String[] keywords = {"필름 현상", "흑백 필름", "스캔", "인화", "강남 현상소"};
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < keywords.length; i++) {
             MemberUser user = users.get(i % users.size());
             SearchHistory history = SearchHistory.builder()
                     .memberUser(user)
