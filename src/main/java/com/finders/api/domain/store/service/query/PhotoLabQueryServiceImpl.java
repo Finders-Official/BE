@@ -278,7 +278,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     }
 
     @Override
-    @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = "'top'")
+    @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
     public List<PhotoLabRegionCountResponse> getPhotoLabCountsByRegion() {
         return photoLabRepository.countPhotoLabsByTopRegion();
     }
