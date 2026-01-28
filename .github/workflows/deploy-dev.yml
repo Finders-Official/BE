@@ -62,16 +62,16 @@ jobs:
       # 8. IAP를 통해 파일 전송 및 배포 실행
       - name: 'Deploy to GCE via IAP'
         run: |
-          # A. 서버 디렉토리 준비
+          # [변경 A] 서버 디렉토리 생성 (sudo 사용으로 안전하게)
           gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
-            --command="sudo mkdir -p /projects/Spring && sudo chown -R ${{ secrets.GCE_USER }}:${{ secrets.GCE_USER }} /projects/Spring"
+            --command="sudo mkdir -p /projects/Spring"
 
-          # B. docker-compose.dev.yml 파일 전송
-          gcloud compute scp docker-compose.dev.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:/projects/Spring/docker-compose.dev.yml \
+          # [변경 B] 파일을 일단 '홈 디렉토리(~)'로 전송 (권한 에러 원천 봉쇄)
+          gcloud compute scp docker-compose.dev.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.dev.yml \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
@@ -84,12 +84,15 @@ jobs:
             --tunnel-through-iap \
             --quiet \
             --command="
+              # [변경 C] 홈에 있는 파일을 sudo로 목적지 이동
+              sudo mv ~/docker-compose.dev.yml /projects/Spring/docker-compose.dev.yml
+          
               cd /projects/Spring
           
-              # 개발 환경변수 설정
-              echo '${{ secrets.ENV_DEV }}' > .env.dev
+              # [변경 D] 환경변수 파일도 sudo tee로 생성 (권한 이슈 방지)
+              echo '${{ secrets.ENV_DEV }}' | sudo tee .env.dev > /dev/null
           
-              # 배포 프로세스 (프로젝트 이름 finders-dev, 파일명 .dev.yml 명시)
+              # 배포 프로세스
               sudo docker compose -p finders-dev -f docker-compose.dev.yml pull
               sudo docker compose -p finders-dev -f docker-compose.dev.yml down
               sudo docker compose -p finders-dev -f docker-compose.dev.yml up -d
