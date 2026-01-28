@@ -63,16 +63,17 @@ jobs:
       # 8. IAP를 통해 파일 전송 및 배포 실행
       - name: 'Deploy to GCE via IAP'
         run: |
-          # A. 서버에 해당 디렉토리가 없으면 생성 (권한 주의)
+          # A. 서버 디렉토리는 sudo로 만들고, 소유권 변경은 생략해도 됩니다.
           gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
-            --command="sudo mkdir -p /projects/Spring && sudo chown -R ${{ secrets.GCE_USER }}:${{ secrets.GCE_USER }} /projects/Spring"
+            --command="sudo mkdir -p /projects/Spring"
           
-          # B. docker-compose 파일 전송
-          gcloud compute scp docker-compose.prod.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:/projects/Spring/docker-compose.prod.yml \
+          # B. 파일을 목적지(/projects/Spring)가 아닌 '홈 디렉토리(~/)로' 전송합니다.
+          # 홈 디렉토리는 로그인한 사용자에게 항상 쓰기 권한이 있어 절대 에러가 나지 않습니다.
+          gcloud compute scp docker-compose.prod.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.prod.yml \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
@@ -85,19 +86,21 @@ jobs:
             --tunnel-through-iap \
             --quiet \
             --command="
+              # [변경 C] 홈에 안전하게 도착한 파일을 sudo 권한으로 목적지에 옮깁니다.
+              sudo mv ~/docker-compose.prod.yml /projects/Spring/docker-compose.prod.yml
+          
               cd /projects/Spring
           
-              # 환경변수 파일 생성
-              echo '${{ secrets.ENV_PROD }}' > .env.prod
+              # [변경 D] 환경변수 파일도 sudo 권한으로 생성하기 위해 tee 명령어를 사용합니다.
+              echo '${{ secrets.ENV_PROD }}' | sudo tee .env.prod > /dev/null
           
-              # 배포 프로세스 (프로젝트 이름 finders-prod 명시)
+              # 배포 프로세스
               sudo docker compose -p finders-prod -f docker-compose.prod.yml pull
               sudo docker compose -p finders-prod -f docker-compose.prod.yml down
               sudo docker compose -p finders-prod -f docker-compose.prod.yml up -d
           
               echo '배포 후 Health Check 시작...'
               for i in {1..12}; do
-                # 8080 포트 확인 (Cloudflare 설정과 일치해야 함)
                 RESPONSE=\$(curl -s http://localhost:8080/api/actuator/health || true)
                 if [[ \"\$RESPONSE\" == *\"UP\"* ]]; then
                   echo '✅ 운영 서버 정상 실행 확인!'
