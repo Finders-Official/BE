@@ -66,8 +66,7 @@ public class SecurityConfig {
             // HM-010 커뮤니티 사진 미리 보기
             "/posts/preview",
             // 개발용 토큰 발급
-            "/dev/login",
-            "/owner/**"
+            "/dev/login"
     };
 
     @Bean
@@ -102,8 +101,10 @@ public class SecurityConfig {
                         ).hasAnyRole("USER", "GUEST")
                         // GUEST만 허용
                         .requestMatchers("/members/social/signup/complete").hasRole("GUEST")
-                        // USER만 허용
-                        .anyRequest().hasRole("USER")
+                        // OWNER만 허용
+                        .requestMatchers("/owner/**").hasRole("OWNER")
+                        // USER, OWNER 모두 허용 (인증된 사용자)
+                        .anyRequest().hasAnyRole("USER", "OWNER")
                 )
 
                 // JWT 필터 추가
