@@ -68,6 +68,9 @@ public class PhotoLab extends BaseEntity {
     @Column(name = "reservation_count", nullable = false)
     private Integer reservationCount = 0;
 
+    @Column(name = "review_count", nullable = false)
+    private Integer reviewCount = 0;
+
     @Column(name = "avg_work_time")
     private Integer avgWorkTime;
 

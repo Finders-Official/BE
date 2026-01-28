@@ -7,7 +7,9 @@ import com.finders.api.domain.store.entity.PhotoLabTag;
 import com.finders.api.domain.store.repository.PhotoLabImageRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
+import com.finders.api.global.config.RedisConfig;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
     private final PhotoLabTagQueryRepository photoLabTagQueryRepository;
 
     @Override
+    @Cacheable(value = RedisConfig.POPULAR_PHOTO_LABS_CACHE, key = "'top8'")
     public List<PhotoLabPopularResponse.Card> getPopularPhotoLabs() {
         List<PhotoLab> photoLabs = photoLabRepository.findTop8ByOrderByReservationCountDescIdAsc();
         if (photoLabs.isEmpty()) {

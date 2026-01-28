@@ -7,7 +7,8 @@
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
     <!-- ========================================
-         Console Appender (로컬/테스트용)
+         Console Appender
+         - Docker gcplogs 드라이버가 GCP Cloud Logging으로 전송
          ======================================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -16,19 +17,7 @@
     </appender>
 
     <!-- ========================================
-         Cloud Logging Appender (GCP 배포용)
-         - Structured JSON 형식으로 Cloud Logging에 전송
-         - 로그 레벨이 Cloud Logging Severity로 자동 매핑됨
-         ======================================== -->
-    <appender name="CLOUD_LOGGING" class="com.google.cloud.logging.logback.LoggingAppender">
-        <!-- 로그 전송 플러시 레벨 (WARNING 이상은 즉시 전송) -->
-        <flushLevel>WARNING</flushLevel>
-        <!-- 추가 레이블 (필터링 시 활용) -->
-        <enhancer>com.google.cloud.logging.logback.TraceLoggingEnhancer</enhancer>
-    </appender>
-
-    <!-- ========================================
-         로컬 프로필: 콘솔 출력
+         로컬 프로필: 콘솔 출력 (상세)
          ======================================== -->
     <springProfile name="local">
         <root level="INFO">
@@ -50,17 +39,27 @@
     </springProfile>
 
     <!-- ========================================
-         운영 프로필: Cloud Logging + 콘솔
-         - Cloud Logging: Structured JSON (필터링/분석용)
-         - Console: Docker logs 백업용
+         개발 프로필: 콘솔 출력 (상세)
+         - Docker gcplogs가 GCP Cloud Logging으로 전송
+         ======================================== -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.finders" level="DEBUG"/>
+        <logger name="org.springframework.web" level="INFO"/>
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+    </springProfile>
+
+    <!-- ========================================
+         운영 프로필: 콘솔 출력 (최소화)
+         - Docker gcplogs가 GCP Cloud Logging으로 전송
          ======================================== -->
     <springProfile name="prod">
         <root level="INFO">
-            <appender-ref ref="CLOUD_LOGGING"/>
             <appender-ref ref="CONSOLE"/>
         </root>
         <logger name="com.finders" level="INFO"/>
-        <!-- 불필요한 로그 제거 -->
         <logger name="org.springframework.web" level="WARN"/>
         <logger name="org.hibernate" level="WARN"/>
     </springProfile>

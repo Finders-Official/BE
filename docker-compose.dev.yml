@@ -1,0 +1,62 @@
+# ========================================
+# Finders API - 개발 환경 (GCP)
+# ========================================
+# 사용법:
+#   1. 이미지 최신화:
+#      docker compose -f docker-compose.dev.yml pull
+#
+#   2. 컨테이너 실행 (재배포):
+#      docker compose -f docker-compose.dev.yml up -d
+#
+#   3. 로그 확인:
+#      docker compose -f docker-compose.dev.yml logs -f
+#
+#   4. 종료:
+#      docker compose -f docker-compose.dev.yml down
+# ========================================
+
+services:
+  backend:
+    image: findersofficial/finders-api:dev
+
+    container_name: finders-dev-api
+    restart: unless-stopped
+    depends_on:
+      redis-dev:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    env_file:
+      - .env.dev
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Seoul
+      SPRING_DATA_REDIS_HOST: redis-dev
+      SPRING_DATA_REDIS_PORT: 6379
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "gcplogs"
+      options:
+        labels: "app=finders-dev-api,env=dev"
+    networks:
+      - finders-network
+  redis-dev:
+    image: redis:latest
+    container_name: finders-redis-dev
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finders-network
+
+networks:
+  finders-network:
+    driver: bridge
