@@ -133,6 +133,8 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .tags(buildTags(photoLabId))
                 .address(photoLab.getAddress())
                 .addressDetail(photoLab.getAddressDetail())
+                .latitude(photoLab.getLatitude() != null ? photoLab.getLatitude().doubleValue() : null)
+                .longitude(photoLab.getLongitude() != null ? photoLab.getLongitude().doubleValue() : null)
                 .distanceKm(distanceKm)
                 .isFavorite(isFavorite)
                 .workCount(photoLab.getWorkCount())
