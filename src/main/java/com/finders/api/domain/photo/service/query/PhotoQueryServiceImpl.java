@@ -14,6 +14,7 @@ import com.finders.api.domain.photo.enums.print.FrameType;
 import com.finders.api.domain.photo.enums.print.PaperType;
 import com.finders.api.domain.photo.enums.print.PrintMethod;
 import com.finders.api.domain.photo.enums.print.PrintSize;
+import com.finders.api.domain.photo.policy.PrintPricePolicy;
 import com.finders.api.domain.photo.repository.DeliveryRepository;
 import com.finders.api.domain.photo.repository.DevelopmentOrderRepository;
 import com.finders.api.domain.photo.repository.PrintOrderRepository;
@@ -38,7 +39,7 @@ public class PhotoQueryServiceImpl implements PhotoQueryService {
 
     private static final int PREVIEW_LIMIT = 3;
     private static final int DELIVERY_FEE = 3000;
-    private static final int DEFAULT_BASE_PRICE = 1400;
+    private final PrintPricePolicy printPricePolicy;
 
     private final DevelopmentOrderRepository developmentOrderRepository;
     private final ScannedPhotoRepository scannedPhotoRepository;
@@ -156,10 +157,6 @@ public class PhotoQueryServiceImpl implements PhotoQueryService {
             }
         }
 
-        // =========================
-        // 3) 최종 DTO 조립
-        // =========================
-
         List<PhotoResponse.MyDevelopmentOrder> dtoList = orders.stream()
                 .map(order -> {
                     List<String> previewUrls = previewUrlMap.getOrDefault(order.getId(), List.of());
@@ -246,12 +243,10 @@ public class PhotoQueryServiceImpl implements PhotoQueryService {
     @Override
     public PhotoResponse.PrintQuote quote(Long memberId, PhotoRequest.PrintQuote request) {
 
-        // 1) 선택 사진 목록 추출
         List<Long> photoIds = request.photos().stream()
                 .map(PhotoRequest.SelectedPhoto::scannedPhotoId)
                 .toList();
 
-        // 2) 사진 소속/권한 검증 (한방 count)
         long validCount = scannedPhotoRepository.countAccessiblePhotos(
                 memberId,
                 request.developmentOrderId(),
@@ -262,49 +257,15 @@ public class PhotoQueryServiceImpl implements PhotoQueryService {
             throw new CustomException(ErrorCode.BAD_REQUEST, "선택한 사진 목록에 유효하지 않은 항목이 포함되어 있습니다.");
         }
 
-        // 3) 총 장수
-        int totalQty = request.photos().stream()
-                .mapToInt(p -> {
-                    if (p.quantity() < 1) {
-                        throw new CustomException(ErrorCode.BAD_REQUEST, "사진 수량(quantity)은 1 이상이어야 합니다.");
-                    }
-                    return p.quantity();
-                })
-                .sum();
-
-        // 4) 단가 계산 (null-safe)
-        int base = (request.size() != null)
-                ? request.size().basePrice()
-                : DEFAULT_BASE_PRICE;
-
-        int filmExtra = (request.filmType() != null)
-                ? request.filmType().extra(base)
-                : 0;
-
-        int methodExtra = (request.printMethod() != null)
-                ? request.printMethod().extraPrice()
-                : 0;
-
-        int paperExtra = (request.paperType() != null)
-                ? request.paperType().extraPrice()
-                : 0;
-
-        int frameExtra = (request.frameType() != null)
-                ? request.frameType().extraPrice()
-                : 0;
-
-        int unitPrice = base + filmExtra + methodExtra + paperExtra + frameExtra;
-
-        int printTotal = unitPrice * totalQty;
-        int deliveryFee = (request.receiptMethod() == ReceiptMethod.DELIVERY) ? DELIVERY_FEE : 0;
-        int grandTotal = printTotal + deliveryFee;
+        PrintPricePolicy.PriceResult price = printPricePolicy.calculate(request);
 
         return PhotoResponse.PrintQuote.builder()
-                .printAmount(printTotal)
-                .deliveryFee(deliveryFee)
-                .totalAmount(grandTotal)
+                .printAmount(price.printTotalPrice())
+                .deliveryFee(price.deliveryFee())
+                .totalAmount(price.orderTotalPrice())
                 .build();
     }
+
 
     @Override
     public PhotoResponse.PhotoLabAccount getPhotoLabAccount(Long memberId, Long developmentOrderId) {
