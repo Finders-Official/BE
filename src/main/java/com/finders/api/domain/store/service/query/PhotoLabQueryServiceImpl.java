@@ -9,6 +9,7 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabRegionCountResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabTag;
@@ -20,6 +21,7 @@ import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.terms.enums.TermsType;
+import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.PagedResponse;
@@ -27,6 +29,7 @@ import com.finders.api.global.response.SuccessCode;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -272,6 +275,12 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .toList();
 
         return PhotoLabResponse.PhotoLabSearchListDTO.from(dtos);
+    }
+
+    @Override
+    @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
+    public List<PhotoLabRegionCountResponse> getPhotoLabCountsByRegion() {
+        return photoLabRepository.countPhotoLabsByTopRegion();
     }
 
 }

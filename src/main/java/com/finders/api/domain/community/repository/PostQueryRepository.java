@@ -135,4 +135,28 @@ public class PostQueryRepository {
                 )
                 .fetchOne();
     }
+    public List<Post> findByMemberId(Long memberId, int page, int size) {
+        return queryFactory
+                .selectFrom(post)
+                .where(
+                        post.memberUser.id.eq(memberId),
+                        post.status.eq(CommunityStatus.ACTIVE)
+                )
+                .orderBy(post.createdAt.desc())
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+    }
+
+    public Long countByMemberId(Long memberId) {
+        return queryFactory
+                .select(post.count())
+                .from(post)
+                .where(
+                        post.memberUser.id.eq(memberId),
+                        post.status.eq(CommunityStatus.ACTIVE)
+                )
+                .fetchOne();
+    }
+
 }
