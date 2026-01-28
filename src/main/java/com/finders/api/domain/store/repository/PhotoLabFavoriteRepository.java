@@ -1,6 +1,8 @@
 package com.finders.api.domain.store.repository;
 
 import com.finders.api.domain.member.entity.FavoritePhotoLab;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,4 +18,11 @@ public interface PhotoLabFavoriteRepository extends JpaRepository<FavoritePhotoL
     boolean existsByMember_IdAndPhotoLab_Id(Long memberId, Long photoLabId);
 
     Optional<FavoritePhotoLab> findByMember_IdAndPhotoLab_Id(Long memberId, Long photoLabId);
+
+    // 무한 스크롤(Slice) 관심 현상소 조회
+    @Query("select f from FavoritePhotoLab f " +
+            "join fetch f.photoLab " +
+            "where f.member.id = :memberId " +
+            "order by f.createdAt desc")
+    Slice<FavoritePhotoLab> findSliceByMember_Id(@Param("memberId") Long memberId, Pageable pageable);
 }
