@@ -99,3 +99,25 @@ https://storage.googleapis.com/finders-private/orders/456/scan.jpg?X-Goog-Signat
 - [ ] `gcloud config set project project-37afc2aa-d3d3-4a1a-8cd` 실행
 - [ ] `gcloud auth application-default login` 실행
 - [ ] `gsutil ls gs://finders-public` 접근 확인
+
+## StorageService 메서드 사용 방식
+### 메서드 비교: generate vs get
+가장 중요한 차이점은 저장 경로(Object Path)의 결정 주체입니다.
+- generate... 메서드 계열: 신규 경로 생성 + URL 발급
+  - UUID 생성 O
+  - 파일을 처음 업로드할 때
+  - 중복 가능성 0%
+- get... 메서드 계열: 기존 경로 재사용 + URL 발급
+  - UUID 생성 X
+  - 이미 DB에 있는 파일을 덮어쓰기할 때
+  - 기존 파일이 있을 경우 교체됨
+
+### 상황별 메서드 활용법
+1. 프론트엔드에서 신규 파일을 올릴 때
+    클라이언트가 파일명만 던져주면, 서버가 "어디에 어떤 이름으로 저장할지"를 정해주는 방식 -> `generate...`
+2. 이미 업로드된 파일을 교체/수정할 때
+    DB에 이미 저장된 objectPath가 있고, 해당 위치에 파일을 다시 올리고 싶을 때 사용 -> `get...`
+3. Private 버킷의 파일을 조회할 때
+    보안상 외부 노출이 안 되는 Private 버킷의 파일을 클라이언트에게 일시적으로 보여줄 때 사용 -> `getSignedUrl`
+4. 서버에서 데이터를 가공하여 저장할 때
+    사용자를 거치지 않고 서버가 직접 파일을 생성하거나 수정해 저장할 때 사용 -> `uploadBytes`, `copyToPublic`
