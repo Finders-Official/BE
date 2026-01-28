@@ -14,7 +14,7 @@ public class ScannedPhotoCleanupScheduler {
 
     private final ScannedPhotoCleanupService service;
 
-    @Scheduled(cron = "0 0 0 * * ?")
+    @Scheduled(cron = "0 0 * * * ?")
     public void run() {
         log.info("[ScannedPhotoCleanupScheduler.run] 만료된 스캔 사진 삭제 작업을 시작합니다.");
         int deletedCount = service.cleanupExpired(LocalDateTime.now());
