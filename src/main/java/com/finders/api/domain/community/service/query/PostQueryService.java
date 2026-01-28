@@ -18,4 +18,6 @@ public interface PostQueryService {
     List<String> getAutocompleteSuggestions(String keyword);
 
     PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Integer page, Integer size);
+
+    PostResponse.PostPreviewListDTO getPostLikesList(Long memberId, Integer page, Integer size);
 }
