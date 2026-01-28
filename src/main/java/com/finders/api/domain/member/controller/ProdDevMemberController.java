@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/dev")
 @RequiredArgsConstructor
-@Profile("!local")
+@Profile("dev")
 public class ProdDevMemberController {
 
     private final JwtTokenProvider jwtTokenProvider;
