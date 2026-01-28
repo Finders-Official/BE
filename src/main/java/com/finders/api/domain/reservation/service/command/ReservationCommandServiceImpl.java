@@ -64,7 +64,8 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
     @Override
     public ReservationResponse.Cancel cancelReservation(Long photoLabId, Long reservationId, Long memberId) {
 
-        Reservation reservation = reservationRepository.findByIdAndPhotoLabIdAndUserId(reservationId, photoLabId,memberId)
+        Reservation reservation = reservationRepository
+                .findByIdAndPhotoLabIdAndUserIdForUpdate(reservationId, photoLabId, memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
         if (reservation.getStatus() == ReservationStatus.CANCELED) {

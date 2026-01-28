@@ -39,8 +39,9 @@ public class ReservationQueryServiceImpl implements ReservationQueryService {
     public ReservationResponse.AvailableTimes getAvailableTimes(Long photoLabId, LocalDate date) {
 
         // 현상소 존재 확인
-        photoLabRepository.findById(photoLabId)
-                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+        if (!photoLabRepository.existsById(photoLabId)) {
+            throw new CustomException(ErrorCode.STORE_NOT_FOUND);
+        }
 
         // 요일별 영업시간 조회
         DayOfWeek dow = date.getDayOfWeek();
