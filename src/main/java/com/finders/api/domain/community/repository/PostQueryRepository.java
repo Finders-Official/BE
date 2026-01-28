@@ -110,7 +110,7 @@ public class PostQueryRepository {
                 .fetch();
     }
 
-    public List<Post> findMyLikedForPosts(Long memberId, int page, int size) {
+    public List<Post> findLikedPostsByMemberId(Long memberId, int page, int size) {
         return queryFactory
                 .selectFrom(post)
                 .join(postLike).on(postLike.post.eq(post))
