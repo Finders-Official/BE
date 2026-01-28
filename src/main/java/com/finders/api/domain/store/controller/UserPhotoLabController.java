@@ -147,7 +147,8 @@ public class UserPhotoLabController {
 
     @Operation(
             summary = "지역별 현상소 개수 조회 API",
-            description = "parentRegionId가 null인 시/도(1차 지역) 기준으로, 그 아래에 속한 현상소 개수를 조회합니다.")
+            description = "PL-010\n\n" +
+                    "parentRegionId가 null인 시/도(1차 지역) 기준으로, 그 아래에 속한 현상소 개수를 조회합니다.")
     @GetMapping("/region")
     public ApiResponse<List<PhotoLabRegionCountResponse>> getPhotoLabCountsByRegion() {
         return ApiResponse.success(
