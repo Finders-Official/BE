@@ -1,7 +1,6 @@
 package com.finders.api.domain.member.controller;
 
 import com.finders.api.domain.member.entity.Member;
-import com.finders.api.domain.member.enums.MemberType;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
@@ -25,7 +24,7 @@ public class LocalMemberController {
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
 
-    @Operation(summary = "로컬 개발용 토큰 발급", description = "로컬 환경에서는 보안 키 없이 ID를 입력하여 토큰을 발급받습니다.")
+    @Operation(summary = "로컬 개발용 토큰 발급", description = "로컬 환경에서는 보안 키 없이 ID를 입력하여 토큰을 발급받습니다. 모든 role(USER, OWNER, ADMIN) 지원.")
     @GetMapping("/login")
     public ApiResponse<String> devLogin(
             @RequestParam Long memberId
@@ -33,11 +32,7 @@ public class LocalMemberController {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        if (member.getRole() != MemberType.USER) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
-
-        String token = jwtTokenProvider.createAccessToken(memberId, "USER");
+        String token = jwtTokenProvider.createAccessToken(memberId, member.getRole().name());
 
         return ApiResponse.success(SuccessCode.OK, "AccessToken: " + token);
     }
