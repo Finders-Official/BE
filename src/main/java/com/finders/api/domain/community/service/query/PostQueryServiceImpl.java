@@ -163,4 +163,14 @@ public class PostQueryServiceImpl implements PostQueryService {
 
         return SUFFIX_PATTERN.matcher(candidate).replaceAll("").trim();
     }
+
+    @Override
+    public PostResponse.PostPreviewListDTO getPostLikesList(Long memberId, Integer page, Integer size) {
+        List<Post> posts = postQueryRepository.findMyLikedForPosts(memberId, page, size);
+
+        Long totalCount = postQueryRepository.countMyLikedPosts(memberId);
+        boolean isLast = (long) (page + 1) * size >= totalCount;
+
+        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId), totalCount, isLast);
+    }
 }

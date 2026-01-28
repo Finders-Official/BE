@@ -129,4 +129,22 @@ public class PostResponse {
             return new PostPreviewListDTO(previewDTOs, (long) previewDTOs.size(), true);
         }
     }
+
+    // 찜 목록 조회 관련
+    @Builder
+    public record PostsLikesDTO(
+            Long postId,
+            String title,
+            PostResponse.PostImageResDTO image,
+            boolean isLiked
+    ) {
+        public static PostsLikesDTO from(Post post, PostResponse.PostImageResDTO imageResDTO, boolean isLiked) {
+            return PostsLikesDTO.builder()
+                    .postId(post.getId())
+                    .title(post.getTitle())
+                    .image(imageResDTO)
+                    .isLiked(isLiked)
+                    .build();
+        }
+    }
 }

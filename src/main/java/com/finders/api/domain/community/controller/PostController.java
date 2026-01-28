@@ -200,4 +200,15 @@ public class PostController {
     ) {
         return ApiResponse.success(SuccessCode.OK, postQueryService.getAutocompleteSuggestions(keyword));
     }
+
+    // 게시물 좋아요 목록
+    @Operation(summary = "관심 게시글 목록 조회", description = "좋아요 한 게시물 목록을 조회합니다.")
+    @GetMapping("/like")
+    public ApiResponse<PostResponse.PostPreviewListDTO> likePost(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        return ApiResponse.success(SuccessCode.OK, postQueryService.getPostLikesList(authUser.memberId(), page, size));
+    }
 }
