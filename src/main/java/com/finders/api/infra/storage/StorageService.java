@@ -20,6 +20,9 @@ public interface StorageService {
      */
     StorageResponse.PresignedUrl generatePresignedUrl(StoragePath storagePath, Long domainId, String originalFileName);
 
+    // Single upload path generation with a subPath (e.g., documentType)
+    StorageResponse.PresignedUrl generatePresignedUrl(StoragePath storagePath, Long domainId, String subPath, String originalFileName);
+
     /**
      * [신규 업로드용] 벌크 업로드 경로 생성 및 Presigned URL 발급
      * * - 차이점: 서버가 직접 UUID를 포함한 '고유한 저장 경로(Object Path)'를 새로 생성합니다.

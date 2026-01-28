@@ -3,10 +3,12 @@ package com.finders.api.domain.store.service.query;
 import com.finders.api.domain.store.dto.request.PhotoLabRequest;
 import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionCountResponse;
 import com.finders.api.global.response.PagedResponse;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface PhotoLabQueryService {
@@ -22,5 +24,8 @@ public interface PhotoLabQueryService {
             PhotoLabRequest.PhotoLabCommunitySearchRequest request
     );
 
+    // 관심 현상소 조회
+    PhotoLabFavoriteResponse.SliceResponse getFavoritePhotoLabs(Long memberId, int page, int size, Double lat, Double lng);
+  
     List<PhotoLabRegionCountResponse> getPhotoLabCountsByRegion();
 }
