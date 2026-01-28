@@ -7,6 +7,7 @@ import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabRegionCountResponse;
 import com.finders.api.domain.store.service.command.PhotoLabFavoriteCommandService;
 import com.finders.api.domain.store.service.query.PhotoLabPopularQueryService;
 import com.finders.api.domain.store.service.query.PhotoLabQueryService;
@@ -141,6 +142,18 @@ public class UserPhotoLabController {
         return ApiResponse.success(
                 SuccessCode.STORE_LIST_FOUND,
                 photoLabQueryService.searchCommunityPhotoLabs(request)
+        );
+    }
+
+    @Operation(
+            summary = "지역별 현상소 개수 조회 API",
+            description = "PL-010\n\n" +
+                    "parentRegionId가 null인 시/도(1차 지역) 기준으로, 그 아래에 속한 현상소 개수를 조회합니다.")
+    @GetMapping("/region")
+    public ApiResponse<List<PhotoLabRegionCountResponse>> getPhotoLabCountsByRegion() {
+        return ApiResponse.success(
+                SuccessCode.STORE_LIST_FOUND,
+                photoLabQueryService.getPhotoLabCountsByRegion()
         );
     }
 }
