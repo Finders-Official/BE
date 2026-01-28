@@ -57,12 +57,8 @@ public class SecurityConfig {
             "/auth/owner/**",
             // 토큰 재발급
             "/auth/reissue",
-            // 로그아웃
-            "/auth/logout",
             // Webhooks (외부 서비스 콜백)
             "/webhooks/**",
-            // TODO: Auth API 구현 후 제거 - 개발 테스트용
-            "/restorations/**",
             // HM-010 커뮤니티 사진 미리 보기
             "/posts/preview",
             // 개발용 토큰 발급
