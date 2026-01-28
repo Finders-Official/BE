@@ -100,10 +100,7 @@ public class SecurityConfig {
                         // USER만 허용
                         .requestMatchers("/users/**").hasRole("USER")
                         // OWNER만 허용
-                        .requestMatchers(
-                                "/owner/**",
-                                "/auth/owner/**"
-                        ).hasRole("OWNER")
+                        .requestMatchers("/owner/**").hasRole("OWNER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // USER, OWNER 모두 허용 (인증된 사용자)
                         .anyRequest().authenticated()
