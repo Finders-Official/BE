@@ -50,7 +50,7 @@ public class PostController {
     public ApiResponse<PostResponse.PostPreviewListDTO> getMyPosts(
             @AuthenticationPrincipal AuthUser authUser,
             @RequestParam(name = "page", defaultValue = "0") Integer page,
-            @RequestParam(name = "size", defaultValue = "20") Integer size
+            @RequestParam(name = "size", defaultValue = "10") Integer size
     ) {
         return ApiResponse.success(
                 SuccessCode.POST_FOUND,
