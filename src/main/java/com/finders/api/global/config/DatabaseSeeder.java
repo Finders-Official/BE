@@ -15,9 +15,11 @@ import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.payment.entity.Payment;
 import com.finders.api.domain.payment.enums.OrderType;
 import com.finders.api.domain.photo.entity.*;
+import com.finders.api.domain.photo.enums.DeliveryStatus;
 import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;
 import com.finders.api.domain.photo.enums.ReceiptMethod;
 import com.finders.api.domain.photo.enums.print.*;
+import com.finders.api.domain.community.entity.SearchHistory;
 import com.finders.api.domain.reservation.entity.Reservation;
 import com.finders.api.domain.reservation.entity.ReservationSlot;
 import com.finders.api.domain.reservation.enums.ReservationStatus;
@@ -34,7 +36,6 @@ import com.finders.api.domain.terms.enums.TermsType;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -48,7 +49,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -63,9 +63,34 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private static final String LOG_PREFIX = "[DatabaseSeeder.run]";
 
+    // ===== Constants: Admin Data =====
+    private static final String ADMIN_PASSWORD = "admin1234!";
+
     // ===== Constants: Owner Data =====
     private static final String[] OWNER_NAMES = {"김사장", "이대표", "박점장"};
     private static final String[] OWNER_EMAILS = {"owner1@finders.it.kr", "owner2@finders.it.kr", "owner3@finders.it.kr"};
+    private static final String[] OWNER_PHONES = {"010-1111-0001", "010-1111-0002", "010-1111-0003"};
+    private static final String OWNER_PASSWORD = "owner1234!";
+
+    // ===== Constants: User Data =====
+    private static final String[] USER_NAMES = {
+            "김민수", "이영희", "박지훈", "최서연", "정우성",
+            "강미나", "윤도현", "한소희", "조현우", "신예은"
+    };
+    private static final String[] USER_PHONES = {
+            "010-2222-0001", "010-2222-0002", "010-2222-0003", "010-2222-0004", "010-2222-0005",
+            "010-2222-0006", "010-2222-0007", "010-2222-0008", "010-2222-0009", "010-2222-0010"
+    };
+    private static final String[] USER_NICKNAMES = {
+            "민수_film", "영희_photo", "지훈_cam", "서연_snap", "우성_lens",
+            "미나_shot", "도현_roll", "소희_dev", "현우_print", "예은_scan"
+    };
+
+    // ===== Constants: PhotoLab Phone/Address =====
+    private static final String[] LAB_PHONES = {"02-1234-5678", "02-2345-6789", "02-3456-7890"};
+    private static final String[] LAB_ZIPCODES = {"06234", "04157", "04779"};
+    private static final String[] LAB_ADDRESS_DETAILS = {"1층", "2층", "3층"};
+    private static final int[] LAB_AVG_WORK_TIMES = {3, 5, 4};
 
     // ===== Constants: Region Data =====
     private static final String[] SIDO_NAMES = {"서울", "경기", "부산"};
@@ -128,8 +153,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final PhotoLabRepository photoLabRepository;
     private final ReservationSlotRepository reservationSlotRepository;
     private final EntityManager entityManager;
-
-    private final Faker faker = new Faker(new Locale("ko"));
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     // 생성된 데이터를 저장할 리스트들
     private List<Terms> termsList = new ArrayList<>();
@@ -246,6 +270,10 @@ public class DatabaseSeeder implements CommandLineRunner {
             createTokenHistory();
             log.info("{} Created token history", LOG_PREFIX);
 
+            // 23. SearchHistory (검색 기록)
+            createSearchHistory();
+            log.info("{} Created search history", LOG_PREFIX);
+
             log.info("{} ========================================", LOG_PREFIX);
             log.info("{} Database Seeding Completed Successfully!", LOG_PREFIX);
             log.info("{} ========================================", LOG_PREFIX);
@@ -351,7 +379,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 .name("관리자")
                 .email("admin@finders.it.kr")
                 .phone("010-0000-0000")
-                .passwordHash("$2a$10$dummyHashForDevEnvironmentOnly")
+                .passwordHash(passwordEncoder.encode(ADMIN_PASSWORD))
                 .build();
         return memberRepository.save(admin);
     }
@@ -359,13 +387,14 @@ public class DatabaseSeeder implements CommandLineRunner {
     // ===== Owners =====
     private List<MemberOwner> createOwners(int count) {
         List<MemberOwner> ownersToSave = new ArrayList<>();
+        String encodedOwnerPassword = passwordEncoder.encode(OWNER_PASSWORD);
 
         for (int i = 0; i < count; i++) {
             MemberOwner owner = MemberOwner.builder()
                     .name(OWNER_NAMES[i])
                     .email(OWNER_EMAILS[i])
-                    .phone("010-" + faker.number().digits(4) + "-" + faker.number().digits(4))
-                    .passwordHash("$2a$10$dummyHashForDevEnvironmentOnly")
+                    .phone(OWNER_PHONES[i])
+                    .passwordHash(encodedOwnerPassword)
                     .build();
             ownersToSave.add(owner);
         }
@@ -380,12 +409,12 @@ public class DatabaseSeeder implements CommandLineRunner {
     private List<MemberUser> createUsers(int count) {
         List<MemberUser> usersToSave = new ArrayList<>();
 
-        for (int i = 1; i <= count; i++) {
+        for (int i = 0; i < count; i++) {
             MemberUser user = MemberUser.builder()
-                    .name(faker.name().fullName())
-                    .email("user" + i + "@test.com")
-                    .phone("010-" + faker.number().digits(4) + "-" + faker.number().digits(4))
-                    .nickname("유저" + i + "_" + faker.internet().username().substring(0, Math.min(4, faker.internet().username().length())))
+                    .name(USER_NAMES[i])
+                    .email("user" + (i + 1) + "@test.com")
+                    .phone(USER_PHONES[i])
+                    .nickname(USER_NICKNAMES[i])
                     .profileImage(null)
                     .build();
             usersToSave.add(user);
@@ -399,7 +428,6 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     // ===== MemberAgreement =====
     private void createMemberAgreements() {
-        // 필수 약관 (SERVICE, PRIVACY)만 동의
         Terms serviceTerms = termsList.stream().filter(t -> t.getType() == TermsType.SERVICE).findFirst().orElse(null);
         Terms privacyTerms = termsList.stream().filter(t -> t.getType() == TermsType.PRIVACY).findFirst().orElse(null);
 
@@ -409,13 +437,16 @@ public class DatabaseSeeder implements CommandLineRunner {
         allMembers.addAll(users);
 
         List<MemberAgreement> agreementsToSave = new ArrayList<>();
-        for (Member member : allMembers) {
+        for (int idx = 0; idx < allMembers.size(); idx++) {
+            Member member = allMembers.get(idx);
+            int daysAgo = 7 + idx;
+
             if (serviceTerms != null) {
                 MemberAgreement agreement = MemberAgreement.builder()
                         .member(member)
                         .terms(serviceTerms)
                         .isAgreed(true)
-                        .agreedAt(LocalDateTime.now().minusDays(faker.number().numberBetween(1, 30)))
+                        .agreedAt(LocalDateTime.now().minusDays(daysAgo))
                         .build();
                 agreementsToSave.add(agreement);
             }
@@ -425,13 +456,12 @@ public class DatabaseSeeder implements CommandLineRunner {
                         .member(member)
                         .terms(privacyTerms)
                         .isAgreed(true)
-                        .agreedAt(LocalDateTime.now().minusDays(faker.number().numberBetween(1, 30)))
+                        .agreedAt(LocalDateTime.now().minusDays(daysAgo))
                         .build();
                 agreementsToSave.add(agreement);
             }
         }
 
-        // Batch persist
         for (MemberAgreement agreement : agreementsToSave) {
             entityManager.persist(agreement);
         }
@@ -442,34 +472,30 @@ public class DatabaseSeeder implements CommandLineRunner {
     private void createSocialAccounts() {
         List<SocialAccount> accountsToSave = new ArrayList<>();
 
-        // 일부 유저에게 소셜 계정 연동
         for (int i = 0; i < users.size(); i++) {
             MemberUser user = users.get(i);
 
             if (i % 2 == 0) {
-                // 카카오 계정
                 SocialAccount kakaoAccount = SocialAccount.builder()
                         .user(user)
                         .provider(SocialProvider.KAKAO)
-                        .providerId("kakao_" + faker.number().digits(10))
+                        .providerId("kakao_" + String.format("%010d", 1000000000L + i))
                         .socialEmail(user.getEmail())
                         .build();
                 accountsToSave.add(kakaoAccount);
             }
 
             if (i % 3 == 0) {
-                // 애플 계정
                 SocialAccount appleAccount = SocialAccount.builder()
                         .user(user)
                         .provider(SocialProvider.APPLE)
-                        .providerId("apple_" + UUID.randomUUID().toString())
+                        .providerId("apple_user_" + (i + 1))
                         .socialEmail(user.getEmail())
                         .build();
                 accountsToSave.add(appleAccount);
             }
         }
 
-        // Batch persist
         for (SocialAccount account : accountsToSave) {
             entityManager.persist(account);
         }
@@ -535,34 +561,25 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .region(region)
                     .name(LAB_DATA[i][0])
                     .description(LAB_DATA[i][1])
-                    .phone("02-" + faker.number().digits(4) + "-" + faker.number().digits(4))
-                    .zipcode("0" + faker.number().digits(4))
+                    .phone(LAB_PHONES[i])
+                    .zipcode(LAB_ZIPCODES[i])
                     .address(LAB_DATA[i][2])
-                    .addressDetail(faker.number().numberBetween(1, 10) + "층")
+                    .addressDetail(LAB_ADDRESS_DETAILS[i])
                     .latitude(new BigDecimal(LAB_DATA[i][3]))
                     .longitude(new BigDecimal(LAB_DATA[i][4]))
                     .status(PhotoLabStatus.ACTIVE)
                     .isDeliveryAvailable(i % 2 == 0)
                     .maxReservationsPerHour(3)
-                    .avgWorkTime(faker.number().numberBetween(3, 7))
+                    .avgWorkTime(LAB_AVG_WORK_TIMES[i])
                     .build();
 
             photoLabsResult.add(photoLabRepository.save(lab));
             entityManager.flush();
 
-            // 영업시간 추가
             createBusinessHours(lab);
-
-            // 이미지 추가
             createLabImages(lab);
-
-            // 공지사항 추가
             createLabNotices(lab);
-
-            // 서류 추가
             createLabDocuments(lab);
-
-            // 태그 추가
             createLabTags(lab, i);
         }
 
@@ -692,8 +709,9 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     // ===== Reservations =====
     private void createReservations() {
-        // 일부 슬롯에 예약 생성
         int reservationCount = 0;
+        int[] rollCounts = {2, 1, 3, 2, 4, 1, 3, 2, 1, 2};
+
         for (int i = 0; i < slots.size() && reservationCount < 10; i += 10) {
             ReservationSlot slot = slots.get(i);
             MemberUser user = users.get(reservationCount % users.size());
@@ -706,14 +724,13 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .isDevelop(true)
                     .isScan(true)
                     .isPrint(reservationCount % 2 == 0)
-                    .rollCount(faker.number().numberBetween(1, 5))
+                    .rollCount(rollCounts[reservationCount])
                     .requestMessage("테스트 예약입니다. 조심히 다뤄주세요.")
                     .build();
 
             entityManager.persist(reservation);
             reservations.add(reservation);
 
-            // 슬롯 예약 카운트 증가
             slot.increaseReservedCountOrThrow();
             reservationCount++;
         }
@@ -769,23 +786,40 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     // ===== PrintOrders =====
     private void createPrintOrders() {
-        // 완료된 현상 주문 중 인화 옵션이 있는 것에 인화 주문 생성
+        int orderIndex = 0;
         for (DevelopmentOrder devOrder : developmentOrders) {
             if (devOrder.getStatus() == DevelopmentOrderStatus.COMPLETED && devOrder.hasPrintTask()) {
+                boolean isDeliveryOrder = (orderIndex % 2 == 1);
+                ReceiptMethod receiptMethod = isDeliveryOrder ? ReceiptMethod.DELIVERY : ReceiptMethod.PICKUP;
+
                 PrintOrder printOrder = PrintOrder.builder()
                         .developmentOrder(devOrder)
                         .photoLab(devOrder.getPhotoLab())
                         .user(devOrder.getUser())
                         .orderCode(generateOrderCode("PO"))
                         .status(com.finders.api.domain.photo.enums.PrintOrderStatus.PENDING)
-                        .totalPrice(5000)
-                        .receiptMethod(ReceiptMethod.PICKUP)
+                        .totalPrice(isDeliveryOrder ? 8000 : 5000)
+                        .receiptMethod(receiptMethod)
                         .build();
 
                 entityManager.persist(printOrder);
                 entityManager.flush();
 
-                // PrintOrderItem 생성
+                if (isDeliveryOrder) {
+                    MemberUser user = devOrder.getUser();
+                    Delivery delivery = Delivery.builder()
+                            .printOrder(printOrder)
+                            .recipientName(user.getName())
+                            .phone(user.getPhone())
+                            .zipcode("06234")
+                            .address("서울 강남구 테헤란로 123")
+                            .addressDetail("아파트 101호")
+                            .status(DeliveryStatus.PENDING)
+                            .deliveryFee(3000)
+                            .build();
+                    entityManager.persist(delivery);
+                }
+
                 PrintOrderItem item = PrintOrderItem.builder()
                         .printOrder(printOrder)
                         .filmType(FilmType.COLOR_NEG)
@@ -798,7 +832,6 @@ public class DatabaseSeeder implements CommandLineRunner {
                         .build();
                 entityManager.persist(item);
 
-                // PrintOrderPhoto 생성 (스캔된 사진 연결)
                 List<ScannedPhoto> orderPhotos = scannedPhotos.stream()
                         .filter(p -> p.getOrder().getId().equals(devOrder.getId()))
                         .limit(3)
@@ -812,6 +845,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                             .build();
                     entityManager.persist(pop);
                 }
+
+                orderIndex++;
             }
         }
     }
@@ -858,10 +893,13 @@ public class DatabaseSeeder implements CommandLineRunner {
     private void createPostInteractions() {
         List<PostLike> likesToSave = new ArrayList<>();
         List<Comment> commentsToSave = new ArrayList<>();
+        int[] likeCounts = {3, 2, 4, 2, 3};
+        int[] commentCounts = {2, 1, 3, 2, 1};
 
-        for (Post post : posts) {
-            // 좋아요 추가
-            int likeCount = faker.number().numberBetween(1, 5);
+        for (int postIdx = 0; postIdx < posts.size(); postIdx++) {
+            Post post = posts.get(postIdx);
+            int likeCount = likeCounts[postIdx % likeCounts.length];
+
             for (int i = 0; i < likeCount && i < users.size(); i++) {
                 MemberUser user = users.get(i);
                 if (!user.getId().equals(post.getMemberUser().getId())) {
@@ -874,21 +912,19 @@ public class DatabaseSeeder implements CommandLineRunner {
                 }
             }
 
-            // 댓글 추가
-            int commentCount = faker.number().numberBetween(1, 3);
+            int commentCount = commentCounts[postIdx % commentCounts.length];
             for (int i = 0; i < commentCount; i++) {
                 MemberUser commenter = users.get((i + 1) % users.size());
                 Comment comment = Comment.builder()
                         .post(post)
                         .memberUser(commenter)
-                        .content(COMMENT_CONTENTS[faker.number().numberBetween(0, COMMENT_CONTENTS.length)])
+                        .content(COMMENT_CONTENTS[(postIdx + i) % COMMENT_CONTENTS.length])
                         .build();
                 commentsToSave.add(comment);
                 post.increaseCommentCount();
             }
         }
 
-        // Batch persist
         for (PostLike like : likesToSave) {
             entityManager.persist(like);
         }
@@ -1033,8 +1069,22 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         }
 
-        // Batch persist
         for (TokenHistory history : historiesToSave) {
+            entityManager.persist(history);
+        }
+        entityManager.flush();
+    }
+
+    // ===== SearchHistory =====
+    private void createSearchHistory() {
+        String[] keywords = {"필름 현상", "흑백 필름", "스캔", "인화", "강남 현상소"};
+
+        for (int i = 0; i < 5; i++) {
+            MemberUser user = users.get(i % users.size());
+            SearchHistory history = SearchHistory.builder()
+                    .memberUser(user)
+                    .keyword(keywords[i])
+                    .build();
             entityManager.persist(history);
         }
         entityManager.flush();
