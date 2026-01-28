@@ -9,6 +9,7 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabRegionCountResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabTag;
@@ -272,6 +273,11 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .toList();
 
         return PhotoLabResponse.PhotoLabSearchListDTO.from(dtos);
+    }
+
+    @Override
+    public List<PhotoLabRegionCountResponse> getPhotoLabCountsByRegion() {
+        return photoLabRepository.countPhotoLabsByTopRegion();
     }
 
 }
