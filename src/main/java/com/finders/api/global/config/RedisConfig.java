@@ -24,10 +24,12 @@ public class RedisConfig {
 
     public static final String AUTH_CODE_CACHE = "authCode";
     public static final String POPULAR_PHOTO_LABS_CACHE = "popularPhotoLabs";
+    public static final String PHOTO_LAB_REGION_COUNTS_CACHE = "photoLabRegionCounts";
 
     private static final long DEFAULT_CACHE_TTL_MINUTES = 10L;
     private static final long AUTH_CODE_TTL_MINUTES = 5L;
     private static final long POPULAR_PHOTO_LABS_TTL_MINUTES = 60L;
+    private static final long PHOTO_LAB_REGION_COUNTS_TTL_MINUTES = 60L;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -50,6 +52,7 @@ public class RedisConfig {
                 .cacheDefaults(config)
                 .withCacheConfiguration(AUTH_CODE_CACHE, config.entryTtl(Duration.ofMinutes(AUTH_CODE_TTL_MINUTES)))
                 .withCacheConfiguration(POPULAR_PHOTO_LABS_CACHE, config.entryTtl(Duration.ofMinutes(POPULAR_PHOTO_LABS_TTL_MINUTES)))
+                .withCacheConfiguration(PHOTO_LAB_REGION_COUNTS_CACHE, config.entryTtl(Duration.ofMinutes(PHOTO_LAB_REGION_COUNTS_TTL_MINUTES)))
                 .build();
     }
 
