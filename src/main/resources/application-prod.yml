@@ -53,6 +53,15 @@ sentry:
 
 # CORS 설정은 환경변수(CORS_ALLOWED_ORIGINS)로 관리
 
+# ========================================
+# Swagger 비활성화 (운영 환경)
+# ========================================
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 # Sendon
 sendon:
   is-test: false
