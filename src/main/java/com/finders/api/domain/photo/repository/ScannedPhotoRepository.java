@@ -2,10 +2,12 @@ package com.finders.api.domain.photo.repository;
 
 import com.finders.api.domain.photo.entity.ScannedPhoto;
 import com.finders.api.domain.photo.repository.projection.ScanPreviewProjection;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -43,4 +45,11 @@ public interface ScannedPhotoRepository extends JpaRepository<ScannedPhoto, Long
             @Param("developmentOrderId") Long developmentOrderId,
             @Param("photoIds") List<Long> photoIds
     );
+
+    @Modifying
+    @Query("""
+        DELETE FROM ScannedPhoto sp
+        WHERE sp.createdAt < :expiredAt
+    """)
+    int deleteExpired(@Param("expiredAt") LocalDateTime expiredAt);
 }
