@@ -19,6 +19,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -142,5 +144,31 @@ public class UserPhotoLabController {
                 SuccessCode.STORE_LIST_FOUND,
                 photoLabQueryService.searchCommunityPhotoLabs(request)
         );
+    }
+
+    @Operation(
+            summary = "관심 현상소 목록 조회(무한 스크롤)",
+            description = "사용자가 관심 등록한 현상소 목록을 최근 등록순으로 조회합니다.\n\n" +
+                    "### [주요 기능]\n" +
+                    "- **무한 스크롤**: Slice 방식을 사용하여 전체 페이지 수 대신 '다음 페이지 존재 여부(hasNext)'를 반환합니다.\n" +
+                    "- **최신순 정렬**: 가장 최근에 관심 등록한 현상소가 목록 상단에 노출됩니다.\n" +
+                    "- **거리 계산**: 위도(lat)와 경도(lng)를 쿼리 파라미터로 전달하면 각 현상소와의 거리를 계산하여 반환합니다. (단, 사용자의 위치 정보 활용 약관 동의가 필요하며 미동의 시 distance는 null로 반환됩니다." +
+                    "- sort 부분은 무시하셔도 됩니다.)"
+    )
+    @GetMapping("/favorites")
+    public ApiResponse<PhotoLabFavoriteResponse.SliceResponse> getFavoritePhotoLabs(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PageableDefault(size = 10) Pageable pageable,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng
+    ) {
+        PhotoLabFavoriteResponse.SliceResponse response = photoLabQueryService.getFavoritePhotoLabs(
+                authUser.memberId(),
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                lat,
+                lng
+        );
+        return ApiResponse.success(SuccessCode.STORE_FAVORITE_LIST_FOUND, response);
     }
 }
