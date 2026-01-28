@@ -46,6 +46,21 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  # ========================================
+  # Redis 설정 (캐싱 및 장애 대응)
+  # ========================================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: 500ms # 0.5초
+      timeout: 500ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
 # ========================================
 # Server 설정
 # ========================================
@@ -147,6 +162,7 @@ sentry:
   traces-sample-rate: 1.0
   send-default-pii: false
   in-app-includes: com.finders  # 스택트레이스에서 우리 코드 하이라이트
+  exception-resolver-order: -2147483648  # @ExceptionHandler보다 먼저 예외 캡처 (HIGHEST_PRECEDENCE)
   logging:
     minimum-event-level: warn  # WARN 레벨 이상 캡처 (400대 에러 포함)
     minimum-breadcrumb-level: info  # Breadcrumb은 INFO 레벨부터
@@ -167,3 +183,14 @@ cors:
 
 dev:
   secret-key: ${LOGIN_SECRET_KEY:local-dummy-key}
+
+# ========================================
+# Sendon 설정
+# ========================================
+sendon:
+  service-name: "Finders"
+  id: ${SENDON_ID:local-id}
+  api-key: ${SENDON_API_KEY:}
+  sender-key: ${SENDON_SENDER_KEY:}
+  template:
+    phone-code: ${SENDON_PHONE_TEMPLATE_CODE:}

@@ -4,11 +4,15 @@ import com.finders.api.domain.community.dto.request.PostRequest;
 import com.finders.api.domain.community.dto.response.CommentResponse;
 import com.finders.api.domain.community.dto.response.PostLikeResponse;
 import com.finders.api.domain.community.dto.response.PostResponse;
+import com.finders.api.domain.community.dto.response.SearchHistoryResponse;
+import com.finders.api.domain.community.enums.PostSearchFilter;
 import com.finders.api.domain.community.service.command.CommentCommandService;
 import com.finders.api.domain.community.service.command.PostCommandService;
 import com.finders.api.domain.community.service.command.PostLikeCommandService;
+import com.finders.api.domain.community.service.command.SearchHistoryCommandService;
 import com.finders.api.domain.community.service.query.CommentQueryService;
 import com.finders.api.domain.community.service.query.PostQueryService;
+import com.finders.api.domain.community.service.query.SearchHistoryQueryService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
@@ -24,6 +28,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @Tag(name = "Community", description = "사진 수다 관련 API")
 @RestController
@@ -36,15 +42,21 @@ public class PostController {
     private final CommentCommandService commentCommandService;
     private final CommentQueryService commentQueryService;
     private final PostLikeCommandService postLikeCommandService;
+    private final SearchHistoryCommandService searchHistoryCommandService;
+    private final SearchHistoryQueryService searchHistoryQueryService;
 
     // 게시글 관련
     @Operation(summary = "피드 목록 조회")
     @GetMapping
     public ApiResponse<PostResponse.PostPreviewListDTO> getPosts(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(defaultValue = "0") Integer page
+            @RequestParam(name = "page", defaultValue = "0") Integer page,
+            @RequestParam(name = "size", defaultValue = "20") Integer size
     ) {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPostList(page, authUser.memberId()));
+        return ApiResponse.success(
+                SuccessCode.POST_FOUND,
+                postQueryService.getPostList(page, size, authUser.memberId())
+        );
     }
 
     @Operation(summary = "게시물 작성", description = "게시글 등록 API입니다.")
@@ -138,10 +150,54 @@ public class PostController {
     @GetMapping("/search")
     public ApiResponse<PostResponse.PostPreviewListDTO> searchPosts(
             @RequestParam(name = "keyword") String keyword,
+            @RequestParam(name = "filter", defaultValue = "TITLE") PostSearchFilter filter,
             @AuthenticationPrincipal AuthUser authUser,
             @ParameterObject
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.searchPosts(keyword, authUser.memberId(), pageable));
+        PostResponse.PostPreviewListDTO response = postQueryService.searchPosts(keyword, filter, authUser.memberId(), pageable);
+
+        if (keyword != null && !keyword.isBlank()) {
+            searchHistoryCommandService.saveSearchHistory(authUser.memberId(), keyword);
+        }
+
+        return ApiResponse.success(SuccessCode.POST_FOUND, response);
+    }
+
+    // 최근 검색어 관련 API
+    @Operation(summary = "최근 검색어 목록 조회", description = "로그인한 유저의 최근 검색어 10개를 조회합니다.")
+    @GetMapping("/search/history")
+    public ApiResponse<List<SearchHistoryResponse.SearchHistoryResDTO>> getRecentHistories(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        return ApiResponse.success(SuccessCode.OK, searchHistoryQueryService.getRecentSearchHistories(authUser.memberId()));
+    }
+
+    @Operation(summary = "최근 검색어 개별 삭제", description = "X 버튼을 눌러 특정 검색 기록을 삭제합니다.")
+    @DeleteMapping("/search/history/{historyId}")
+    public ApiResponse<Void> deleteHistory(
+            @PathVariable Long historyId,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        searchHistoryCommandService.deleteSearchHistory(historyId, authUser.memberId());
+        return ApiResponse.success(SuccessCode.OK, null);
+    }
+
+    @Operation(summary = "최근 검색어 전체 삭제", description = "모든 검색 기록을 일괄 삭제합니다.")
+    @DeleteMapping("/search/history/all")
+    public ApiResponse<Void> deleteAllHistories(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        searchHistoryCommandService.deleteAllSearchHistory(authUser.memberId());
+        return ApiResponse.success(SuccessCode.OK, null);
+    }
+
+    // 연관 검색어 관련 API
+    @Operation(summary = "검색어 자동완성", description = "입력 중인 키워드에 따른 연관 검색어 최대 8개를 조회합니다.")
+    @GetMapping("/search/autocomplete")
+    public ApiResponse<List<String>> getAutocompleteSuggestions(
+            @RequestParam(name = "keyword") String keyword
+    ) {
+        return ApiResponse.success(SuccessCode.OK, postQueryService.getAutocompleteSuggestions(keyword));
     }
 }

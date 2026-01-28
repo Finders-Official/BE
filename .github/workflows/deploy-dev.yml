@@ -1,0 +1,113 @@
+name: Finders CD (Deploy to Dev)
+
+on:
+  push:
+    branches: [ "develop" ]
+
+env:
+  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-api
+  CONTAINER_NAME: finders-dev-api
+
+permissions:
+  contents: read
+  id-token: write # WIF 사용을 위해 반드시 필요합니다.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build without Test
+        run: ./gradlew build -x test
+
+      # 4. Docker Hub 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 5. Docker 이미지 빌드 및 푸시 (dev 태그)
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.DOCKER_IMAGE }}:dev
+
+      # 6. GCP 인증 (JSON 키 대신 Workload Identity 사용)
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: '${{ secrets.WIF_PROVIDER }}'
+          service_account: '${{ secrets.WIF_SERVICE_ACCOUNT }}'
+
+      # 7. Google Cloud SDK 설정
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          project_id: '${{ secrets.GCP_PROJECT_ID }}'
+
+      # 8. IAP를 통해 파일 전송 및 배포 실행
+      - name: 'Deploy to GCE via IAP'
+        run: |
+          # [변경 A] 서버 디렉토리 생성 (sudo 사용으로 안전하게)
+          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet \
+            --command="sudo mkdir -p /projects/Spring"
+
+          # [변경 B] 파일을 일단 '홈 디렉토리(~)'로 전송 (권한 에러 원천 봉쇄)
+          gcloud compute scp docker-compose.dev.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.dev.yml \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet
+
+          # C. 원격 명령어 실행
+          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet \
+            --command="
+              # [변경 C] 홈에 있는 파일을 sudo로 목적지 이동
+              sudo mv ~/docker-compose.dev.yml /projects/Spring/docker-compose.dev.yml
+          
+              cd /projects/Spring
+          
+              # [변경 D] 환경변수 파일도 sudo tee로 생성 (권한 이슈 방지)
+              echo '${{ secrets.ENV_DEV }}' | sudo tee .env.dev > /dev/null
+          
+              # 배포 프로세스
+              sudo docker compose -p finders-dev -f docker-compose.dev.yml pull
+              sudo docker compose -p finders-dev -f docker-compose.dev.yml down
+              sudo docker compose -p finders-dev -f docker-compose.dev.yml up -d
+          
+              echo '배포 후 Health Check 시작...'
+              for i in {1..12}; do
+                # 개발 서버 포트 8081 확인
+                RESPONSE=\$(curl -s http://localhost:8081/api/actuator/health || true)
+                if [[ \"\$RESPONSE\" == *\"UP\"* ]]; then
+                  echo '✅ 개발 서버 정상 실행 확인!'
+                  sudo docker image prune -f
+                  exit 0
+                fi
+                echo \"대기 중... (\$i/12)\"
+                sleep 5
+              done
+              exit 1
+            "

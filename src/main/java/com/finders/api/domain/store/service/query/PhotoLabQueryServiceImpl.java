@@ -133,6 +133,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .distanceKm(distanceKm)
                 .isFavorite(isFavorite)
                 .workCount(photoLab.getWorkCount())
+                .reviewCount(photoLab.getReviewCount())
                 .avgWorkTime(photoLab.getAvgWorkTime())
                 .mainNotice(notice)
                 .postImageUrls(buildPostImageUrls(photoLabId))

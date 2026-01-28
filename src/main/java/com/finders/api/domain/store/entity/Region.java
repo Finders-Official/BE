@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,8 +20,8 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "region",
         indexes = {
-                @Index(name = "idx_region_sido", columnList = "sido"),
-                @Index(name = "uk_region_sigungu_sido", columnList = "sigungu, sido", unique = true)
+                @Index(name = "idx_region_parent", columnList = "parent_region_id"),
+                @Index(name = "uk_region_name_parent", columnList = "region_name, parent_region_id", unique = true)
         }
 )
 @Getter
@@ -32,14 +33,15 @@ public class Region extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sido")
-    private Region sido;
+    @JoinColumn(name = "parent_region_id")
+    private Region parentRegion;
 
-    @Column(nullable = false, length = 50)
-    private String sigungu;
+    @Column(name = "region_name", nullable = false, length = 50)
+    private String regionName;
 
-    public Region(Region sido, String sigungu) {
-        this.sido = sido;
-        this.sigungu = sigungu;
+    @Builder
+    private Region(Region parentRegion, String regionName) {
+        this.parentRegion = parentRegion;
+        this.regionName = regionName;
     }
 }

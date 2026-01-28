@@ -38,7 +38,10 @@ public class UserPhotoLabController {
     private final PhotoLabQueryService photoLabQueryService;
     private final PhotoLabFavoriteCommandService photoLabFavoriteCommandService;
 
-    @Operation(summary = "인기 현상소 조회 API")
+    @Operation(
+            summary = "인기 현상소 조회 API",
+            description = "HM-010, PL-011-1\n\n" +
+                    "인기 현상소를 1위부터 8위까지 조회합니다.")
     @GetMapping("/popular")
     public ApiResponse<List<PhotoLabPopularResponse.Card>> getPopularPhotoLabs() {
         return ApiResponse.success(
@@ -47,7 +50,11 @@ public class UserPhotoLabController {
         );
     }
 
-    @Operation(summary = "현상소 목록 조회 API")
+    @Operation(
+            summary = "현상소 목록 조회 API",
+            description = "PL-010, PL-011-3\n\n" +
+                    "(파라미터 순서대로)검색어, 특징태그, 지역필터, 날짜필터를 기반으로 해당하는 현상소를 조회합니다.\n\n" +
+                    "*위치 기반 알고리즘: 위치 사용 약관 동의 o -> 가까운 위치 + 작업 건수 순으로 정렬, 위치 사용 약관 동의 x -> 작업 건수 순으로 정렬")
     @GetMapping
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
             @AuthenticationPrincipal AuthUser user,
@@ -76,7 +83,10 @@ public class UserPhotoLabController {
         return photoLabQueryService.getPhotoLabs(condition);
     }
 
-    @Operation(summary = "현상소 상세 조회 API")
+    @Operation(
+            summary = "현상소 상세 조회 API",
+            description = "PL-020\n\n" +
+                    "특정 현상소에 대한 상세페이지를 조회합니다.")
     @GetMapping("/{photoLabId}")
     public ApiResponse<PhotoLabDetailResponse.Detail> getPhotoLabDetail(
             @PathVariable Long photoLabId,
@@ -91,7 +101,10 @@ public class UserPhotoLabController {
         );
     }
 
-    @Operation(summary = "현상소 즐겨찾기 추가 API")
+    @Operation(
+            summary = "현상소 즐겨찾기 추가 API",
+            description="즐겨찾기 별 버튼\n\n" +
+                    "특정 현상소를 관심 현상소로 등록합니다.")
     @PostMapping("/{photoLabId}/favorites")
     public ApiResponse<PhotoLabFavoriteResponse.Status> addFavorite(
             @PathVariable Long photoLabId,
@@ -103,7 +116,10 @@ public class UserPhotoLabController {
         );
     }
 
-    @Operation(summary = "현상소 즐겨찾기 삭제 API")
+    @Operation(
+            summary = "현상소 즐겨찾기 삭제 API",
+            description = "즐겨찾기 별 버튼\n\n" +
+                    "특정 현상소를 관심 현상소에서 삭제합니다.")
     @DeleteMapping("/{photoLabId}/favorites")
     public ApiResponse<PhotoLabFavoriteResponse.Status> removeFavorite(
             @PathVariable Long photoLabId,
