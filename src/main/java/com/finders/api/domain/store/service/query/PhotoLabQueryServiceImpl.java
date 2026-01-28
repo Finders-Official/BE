@@ -334,6 +334,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                         favoriteSlice.isLast()
                 )
         );
+    }
       
     @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
     public List<PhotoLabRegionCountResponse> getPhotoLabCountsByRegion() {
