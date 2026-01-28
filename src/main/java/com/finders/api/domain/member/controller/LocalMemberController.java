@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/dev")
 @RequiredArgsConstructor
 @Profile("local")
-public class LocalDevMemberController {
+public class LocalMemberController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
