@@ -106,26 +106,4 @@ public interface StorageService {
      * @return 복사된 파일의 objectPath (예: "temp/456/xyz.png")
      */
     String copyToPublic(String sourceObjectPath, StoragePath storagePath, Long domainId, String fileName);
-
-    /**
-     * MultipartFile을 Public 버킷에 업로드
-     *
-     * @param file        업로드할 파일
-     * @param storagePath 저장 경로 타입
-     * @param domainId    도메인 ID
-     * @return 업로드 결과
-     */
-    StorageResponse.Upload uploadPublic(org.springframework.web.multipart.MultipartFile file, StoragePath storagePath, Long domainId);
-
-    /**
-     * MultipartFile을 Private 버킷에 업로드
-     *
-     * @param file        업로드할 파일
-     * @param storagePath 저장 경로 타입
-     * @param domainId    도메인 ID
-     * @param subPath     추가 하위 경로 (documentType 등)
-     * @return 업로드 결과
-     */
-    StorageResponse.Upload uploadPrivate(org.springframework.web.multipart.MultipartFile file, StoragePath storagePath, Long domainId, String subPath);
-
 }
