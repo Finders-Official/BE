@@ -73,14 +73,24 @@ public class GcsStorageService implements StorageService {
         }
     }
 
-    // 단건 업로드 경로 생성 및 Presigned URL 발급
+    /**
+     * [신규 업로드용] 단건 업로드 경로 생성 및 Presigned URL 발급
+     * * - 차이점: 서버가 직접 UUID를 포함한 '고유한 저장 경로(Object Path)'를 새로 생성합니다.
+     * - 용도: 클라이언트가 파일을 처음 업로드할 때 사용하며, 파일명 중복을 방지합니다.
+     * - 프로세스: 파일명 수신 -> UUID 결합 및 경로 생성 -> 생성된 경로로 URL 발급
+     */
     @Override
     public StorageResponse.PresignedUrl generatePresignedUrl(StoragePath storagePath, Long domainId, String originalFileName) {
         String objectPath = createUniquePath(storagePath, domainId, originalFileName);
         return getPresignedUrl(objectPath, storagePath.isPublic(), null);
     }
 
-    // 벌크 업로드 경로 생성 및 Presigned URL 발급
+    /**
+     * [신규 업로드용] 벌크 업로드 경로 생성 및 Presigned URL 발급
+     * * - 차이점: 서버가 직접 UUID를 포함한 '고유한 저장 경로(Object Path)'를 새로 생성합니다.
+     * - 용도: 클라이언트가 파일을 처음 업로드할 때 사용하며, 파일명 중복을 방지합니다.
+     * - 프로세스: 파일명 수신 -> UUID 결합 및 경로 생성 -> 생성된 경로로 URL 발급
+     */
     @Override
     public List<StorageResponse.PresignedUrl> generateBulkPresignedUrls(StoragePath storagePath, Long domainId, List<String> fileNames) {
         if (fileNames == null || fileNames.isEmpty()) {
@@ -93,9 +103,10 @@ public class GcsStorageService implements StorageService {
     }
 
     /**
-     * 업로드(PUT)용 Presigned URL 생성 (단일)
-     * - isPublic에 따라 버킷을 동적으로 선택합니다.
-     * - 새로운 응답 DTO(PresignedUrl)를 사용하여 objectPath를 함께 반환합니다.
+     * [기존 경로 재사용/덮어쓰기용] 업로드(PUT)용 Presigned URL 생성 (단건)
+     * * - 차이점: 서버가 경로를 생성하지 않고, 파라미터로 받은 '기존 objectPaths'를 그대로 사용합니다.
+     * - 용도: 이미 DB에 저장된 파일 경로에 대해 다시 업로드(덮어쓰기) 권한이 필요할 때 사용합니다.
+     * - 프로세스: 기존 경로 수신 -> 해당 경로에 대해 즉시 서명(Sign)된 URL 발급
      */
     @Override
     public StorageResponse.PresignedUrl getPresignedUrl(String objectPath, boolean isPublic, Integer expiryMinutes) {
@@ -128,8 +139,10 @@ public class GcsStorageService implements StorageService {
     }
 
     /**
-     * 업로드(PUT)용 Presigned URL 생성 (벌크/리스트)
-     * - 오너의 스캔본 업로드와 같이 여러 개의 URL이 필요할 때 사용합니다.
+     * [기존 경로 재사용/덮어쓰기용] 업로드(PUT)용 Presigned URL 생성 (벌크/리스트)
+     * * - 차이점: 서버가 경로를 생성하지 않고, 파라미터로 받은 '기존 objectPaths'를 그대로 사용합니다.
+     * - 용도: 이미 DB에 저장된 파일 경로에 대해 다시 업로드(덮어쓰기) 권한이 필요할 때 사용합니다.
+     * - 프로세스: 기존 경로 수신 -> 해당 경로에 대해 즉시 서명(Sign)된 URL 발급
      */
     @Override
     public List<StorageResponse.PresignedUrl> getPresignedUrls(List<String> objectPaths, boolean isPublic, Integer expiryMinutes) {
