@@ -16,7 +16,7 @@ public class PhotoLabFavoriteResponse {
             List<PhotoLabListResponse.Card> photoLabs,
             PageInfo pageInfo
     ) {
-        public static SliceResponse of(Slice<PhotoLabListResponse.Card> slice) {
+        public static SliceResponse from(Slice<PhotoLabListResponse.Card> slice) {
             return new SliceResponse(
                     slice.getContent(),
                     new PageInfo(
