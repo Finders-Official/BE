@@ -3,10 +3,12 @@ package com.finders.api.domain.store.service.query;
 import com.finders.api.domain.community.entity.PostImage;
 import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.PostImageRepository;
+import com.finders.api.domain.member.entity.FavoritePhotoLab;
 import com.finders.api.domain.member.service.query.MemberQueryService;
 import com.finders.api.domain.store.dto.request.PhotoLabRequest;
 import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionCountResponse;
@@ -31,6 +33,8 @@ import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -133,6 +137,8 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .tags(buildTags(photoLabId))
                 .address(photoLab.getAddress())
                 .addressDetail(photoLab.getAddressDetail())
+                .latitude(photoLab.getLatitude() != null ? photoLab.getLatitude().doubleValue() : null)
+                .longitude(photoLab.getLongitude() != null ? photoLab.getLongitude().doubleValue() : null)
                 .distanceKm(distanceKm)
                 .isFavorite(isFavorite)
                 .workCount(photoLab.getWorkCount())
@@ -278,6 +284,49 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     }
 
     @Override
+    public PhotoLabFavoriteResponse.SliceResponse getFavoritePhotoLabs(Long memberId, int page, int size, Double lat, Double lng) {
+        if (page < 0 || size <= 0) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Slice<FavoritePhotoLab> favoriteSlice = photoLabFavoriteRepository.findSliceByMemberId(memberId, pageable);
+
+        if (favoriteSlice.isEmpty()) {
+            return new PhotoLabFavoriteResponse.SliceResponse(
+                    Collections.emptyList(),
+                    new PhotoLabFavoriteResponse.PageInfo(page, size, true)
+            );
+        }
+
+        List<PhotoLab> photoLabs = favoriteSlice.getContent().stream()
+                .map(FavoritePhotoLab::getPhotoLab)
+                .toList();
+        List<Long> photoLabIds = photoLabs.stream()
+                .map(PhotoLab::getId)
+                .toList();
+
+        Map<Long, List<String>> imageUrlsByLabId = buildImageUrlMap(photoLabIds);
+        Map<Long, List<String>> tagsByLabId = buildTagMap(photoLabIds);
+
+        boolean useDistance = shouldUseDistance(memberId, lat, lng);
+
+        Slice<PhotoLabListResponse.Card> cards = favoriteSlice.map(f -> {
+            PhotoLab favoritePhotoLab = f.getPhotoLab();
+            Double distanceKm = useDistance ? distanceKmOrNull(lat, lng, favoritePhotoLab) : null;
+            return PhotoLabListResponse.Card.from(
+                    favoritePhotoLab,
+                    imageUrlsByLabId.getOrDefault(favoritePhotoLab.getId(), Collections.emptyList()),
+                    tagsByLabId.getOrDefault(favoritePhotoLab.getId(), Collections.emptyList()),
+                    distanceKm,
+                    true
+            );
+        });
+
+        return PhotoLabFavoriteResponse.SliceResponse.from(cards);
+    }
+      
     @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
     public List<PhotoLabRegionCountResponse> getPhotoLabCountsByRegion() {
         return photoLabRepository.countPhotoLabsByTopRegion();

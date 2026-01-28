@@ -59,6 +59,16 @@ grant_sa_impersonation() {
     echo "    ✓ 완료 (Presigned URL 로컬 테스트 가능)"
 }
 
+grant_sa_self_impersonation() {
+    echo "  → 서비스 계정 Self-Impersonation 권한 부여 중..."
+    echo "    (GCE VM에서 Presigned URL 생성에 필요)"
+    gcloud iam service-accounts add-iam-policy-binding "$SERVICE_ACCOUNT" \
+        --member="serviceAccount:${SERVICE_ACCOUNT}" \
+        --role="roles/iam.serviceAccountTokenCreator" \
+        --quiet > /dev/null 2>&1
+    echo "    ✓ 완료"
+}
+
 # -----------------------------------------------------------------------------
 # 메인 실행
 # -----------------------------------------------------------------------------
@@ -67,6 +77,11 @@ echo "========================================"
 echo "GCP IAM 권한 부여 스크립트"
 echo "프로젝트: ${PROJECT_ID}"
 echo "========================================"
+echo ""
+
+echo "🔐 서비스 계정 Self-Impersonation 설정"
+echo "----------------------------------------"
+grant_sa_self_impersonation
 echo ""
 
 # 팀원 수 확인
