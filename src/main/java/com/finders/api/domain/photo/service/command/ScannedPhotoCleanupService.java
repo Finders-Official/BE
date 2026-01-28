@@ -1,4 +1,4 @@
-package com.finders.api.domain.photo.scheduler;
+package com.finders.api.domain.photo.service.command;
 
 import com.finders.api.domain.photo.policy.ScannedPhotoRetentionPolicy;
 import com.finders.api.domain.photo.repository.ScannedPhotoRepository;
