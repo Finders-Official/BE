@@ -46,16 +46,7 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
             throw new CustomException(ErrorCode.INQUIRY_ACCESS_DENIED);
         }
 
-        // objectPath를 Public URL로 변환
-        List<String> imageUrls = inquiry.getImages().stream()
-                .map(InquiryImage::getObjectPath)
-                .map(storageService::getPublicUrl)
-                .toList();
-
-        log.debug("[InquiryQueryServiceImpl.getInquiryDetail] objectPath → Public URL 변환 완료: inquiryId={}, imageCount={}",
-                inquiryId, imageUrls.size());
-
-        return InquiryResponse.InquiryDetailDTO.fromWithUrls(inquiry, imageUrls);
+        return createInquiryDetailDTOWithPublicUrls(inquiry);
     }
 
     @Override
@@ -89,16 +80,7 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
             throw new CustomException(ErrorCode.INQUIRY_ACCESS_DENIED);
         }
 
-        // objectPath를 Public URL로 변환
-        List<String> imageUrls = inquiry.getImages().stream()
-                .map(InquiryImage::getObjectPath)
-                .map(storageService::getPublicUrl)
-                .toList();
-
-        log.debug("[InquiryQueryServiceImpl.getPhotoLabInquiryDetail] objectPath → Public URL 변환 완료: inquiryId={}, photoLabId={}, imageCount={}",
-                inquiryId, photoLabId, imageUrls.size());
-
-        return InquiryResponse.InquiryDetailDTO.fromWithUrls(inquiry, imageUrls);
+        return createInquiryDetailDTOWithPublicUrls(inquiry);
     }
 
     @Override
@@ -118,14 +100,17 @@ public class InquiryQueryServiceImpl implements InquiryQueryService {
             throw new CustomException(ErrorCode.INQUIRY_ACCESS_DENIED);
         }
 
-        // objectPath를 Public URL로 변환
+        return createInquiryDetailDTOWithPublicUrls(inquiry);
+    }
+
+    private InquiryResponse.InquiryDetailDTO createInquiryDetailDTOWithPublicUrls(Inquiry inquiry) {
         List<String> imageUrls = inquiry.getImages().stream()
                 .map(InquiryImage::getObjectPath)
                 .map(storageService::getPublicUrl)
                 .toList();
 
-        log.debug("[InquiryQueryServiceImpl.getServiceInquiryDetail] objectPath → Public URL 변환 완료: inquiryId={}, imageCount={}",
-                inquiryId, imageUrls.size());
+        log.debug("[InquiryQueryServiceImpl] objectPath → Public URL 변환 완료: inquiryId={}, imageCount={}",
+                inquiry.getId(), imageUrls.size());
 
         return InquiryResponse.InquiryDetailDTO.fromWithUrls(inquiry, imageUrls);
     }
