@@ -30,7 +30,7 @@ public class TermsSocialMapping extends BaseEntity {
     private String socialTag; // 소셜 측에서 사용하는 태그 (예: "service_privacy")
 
     @Builder
-    public TermsSocialMapping(Terms terms, SocialProvider provider, String socialTag) {
+    private TermsSocialMapping(Terms terms, SocialProvider provider, String socialTag) {
         this.terms = terms;
         this.provider = provider;
         this.socialTag = socialTag;
