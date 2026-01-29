@@ -1,5 +1,6 @@
 package com.finders.api.global.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
@@ -27,12 +28,14 @@ public class RedisConfig {
     public static final String POPULAR_PHOTO_LABS_CACHE = "popularPhotoLabs";
     public static final String PHOTO_LAB_REGION_COUNTS_CACHE = "photoLabRegionCounts";
     public static final String PHOTO_LAB_REGION_COUNTS_CACHE_KEY = "'top'";
+    public static final String POPULAR_POSTS_CACHE = "popularPosts"; // 홈페이지 사진 수다 미리 보기
 
     private static final long DEFAULT_CACHE_TTL_MINUTES = 10L;
     public static final long AUTH_CODE_TTL_MINUTES = 3L;
     public static final long VERIFIED_PHONE_TTL_MINUTES = 10L;
     private static final long POPULAR_PHOTO_LABS_TTL_MINUTES = 60L;
     private static final long PHOTO_LAB_REGION_COUNTS_TTL_MINUTES = 60L;
+    private static final long POPULAR_POSTS_TTL_MINUTES = 10L;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -57,6 +60,7 @@ public class RedisConfig {
                 .withCacheConfiguration(VERIFIED_PHONE_CACHE, config.entryTtl(Duration.ofMinutes(VERIFIED_PHONE_TTL_MINUTES)))
                 .withCacheConfiguration(POPULAR_PHOTO_LABS_CACHE, config.entryTtl(Duration.ofMinutes(POPULAR_PHOTO_LABS_TTL_MINUTES)))
                 .withCacheConfiguration(PHOTO_LAB_REGION_COUNTS_CACHE, config.entryTtl(Duration.ofMinutes(PHOTO_LAB_REGION_COUNTS_TTL_MINUTES)))
+                .withCacheConfiguration(POPULAR_POSTS_CACHE, config.entryTtl(Duration.ofMinutes(POPULAR_POSTS_TTL_MINUTES)))
                 .build();
     }
 
@@ -64,10 +68,12 @@ public class RedisConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
-                ObjectMapper.DefaultTyping.NON_FINAL
-        );
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType(Object.class)
+                .build();
+        objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.EVERYTHING);
         return objectMapper;
     }
 }

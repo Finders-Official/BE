@@ -1,5 +1,6 @@
 package com.finders.api.domain.community.repository;
 
+import com.finders.api.domain.community.dto.response.PostCacheDTO;
 import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.enums.PostSearchFilter;
@@ -7,6 +8,7 @@ import com.finders.api.domain.store.entity.QPhotoLab;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
@@ -31,13 +33,25 @@ public class PostQueryRepository {
                 .fetch();
     }
 
-    public List<Post> findTop10PopularPosts() {
-        return queryFactory
+    @Cacheable(value = "popularPosts", key = "'home_top10'")
+    public List<PostCacheDTO> findTop10PopularPosts() {
+        List<Post> posts = queryFactory
                 .selectFrom(post)
+                .leftJoin(post.postImageList).fetchJoin()
                 .where(post.status.eq(CommunityStatus.ACTIVE))
                 .orderBy(post.likeCount.desc(), post.createdAt.desc()) // 좋아요 순, 같으면 최신순
                 .limit(POPULAR_POSTS_LIMIT)
                 .fetch();
+
+        return posts.stream()
+                .map(p -> PostCacheDTO.builder()
+                        .id(p.getId())
+                        .title(p.getTitle())
+                        .likeCount(p.getLikeCount())
+                        .commentCount(p.getCommentCount())
+                        .objectPath(p.getPostImageList().isEmpty() ? null : p.getPostImageList().get(0).getObjectPath())
+                        .build())
+                .toList();
     }
 
     public List<Post> searchPosts(String keyword, PostSearchFilter filter, int page, int size) {

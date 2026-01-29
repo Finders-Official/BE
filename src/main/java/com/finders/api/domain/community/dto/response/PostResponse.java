@@ -113,6 +113,17 @@ public class PostResponse {
                     .isLiked(isLiked)
                     .build();
         }
+
+        public static PostPreviewDTO fromCache(PostCacheDTO cache, boolean isLiked, String fullImageUrl) {
+            return PostPreviewDTO.builder()
+                    .postId(cache.getId())
+                    .title(cache.getTitle())
+                    .likeCount(cache.getLikeCount())
+                    .commentCount(cache.getCommentCount())
+                    .isLiked(isLiked)
+                    .image(new PostImageResDTO(fullImageUrl, null, null))
+                    .build();
+        }
     }
 
     // 미리보기 리스트를 감싸는 DTO
