@@ -43,7 +43,7 @@ public class KakaoTermsClient implements OAuthTermsClient {
                 .header("Authorization", "KakaoAK " + adminKey)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (request, res) -> {
-                    log.error("[KakaoTermsClient] 약관 조회 실패 - ID: {}", providerId);
+                    log.error("[KakaoTermsClient.getAgreedTermsTags] 약관 조회 실패 - ID: {}", providerId);
                     throw new CustomException(ErrorCode.KAKAO_TERMS_FETCH_FAILED);
                 })
                 .body(KakaoTermsResponse.class); // 여기서 자동 매핑!
