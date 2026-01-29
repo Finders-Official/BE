@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class MemberAgreeementQueryImpl implements MemberAgreementQueryService{
+public class MemberAgreeementQueryServiceImpl implements MemberAgreementQueryService{
     
     private final MemberAgreementRepository memberAgreementRepository;
 
