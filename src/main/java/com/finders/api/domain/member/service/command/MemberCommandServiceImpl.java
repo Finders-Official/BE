@@ -15,6 +15,7 @@ import com.finders.api.domain.member.entity.SocialAccount;
 import com.finders.api.domain.member.repository.*;
 import com.finders.api.domain.terms.entity.MemberAgreement;
 import com.finders.api.domain.terms.repository.TermsRepository;
+import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.security.JwtTokenProvider;
@@ -23,9 +24,11 @@ import com.finders.api.infra.messaging.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberCommandServiceImpl implements MemberCommandService {
+    private final RedisTemplate<String, Object> redisTemplate;
     private final SocialAccountRepository socialAccountRepository;
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
@@ -47,54 +51,59 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final RefreshTokenHasher refreshTokenHasher;
     private final MessageService messageService;
 
-    // 인증번호 대조용 저장소 (3분)
-    private final Map<String, VerificationData> phoneVerificationStorage = new ConcurrentHashMap<>();
-    // 인증 완료 증빙 토큰 저장소 (10분)
-    private final Map<String, VerifiedPhoneInfo> verifiedTokenStorage = new ConcurrentHashMap<>();
+    private static final java.security.SecureRandom random = new java.security.SecureRandom();
+
+    private static final String PHONE_CODE_KEY = "auth:phone:code:";
+    private static final String VERIFIED_PHONE_KEY = "auth:phone:verified:";
 
     // 휴대폰 인증번호 요청
     @Override
     public MemberPhoneResponse.SentInfo sendPhoneVerificationCode(MemberPhoneRequest.SendCode request) {
 
         String requestId = UUID.randomUUID().toString();
-        java.security.SecureRandom random = new java.security.SecureRandom();
         String code = String.valueOf(random.nextInt(900000) + 100000); // 6자리 랜덤 번호
 
         // 유효 시간 3분 설정
-        VerificationData data = new VerificationData(request.phone(), code, LocalDateTime.now().plusMinutes(3));
-        phoneVerificationStorage.put(requestId, data);
+        VerificationData data = new VerificationData(request.phone(), code, LocalDateTime.now().plusMinutes(RedisConfig.AUTH_CODE_TTL_MINUTES));
+
+        redisTemplate.opsForValue().set(PHONE_CODE_KEY + requestId, data, Duration.ofMinutes(RedisConfig.AUTH_CODE_TTL_MINUTES));
 
         // 알림톡 발송 요청 (Console or Sendon)
         messageService.sendVerificationCode(request.phone(), code);
 
-        return new MemberPhoneResponse.SentInfo(requestId, 180);
+        return new MemberPhoneResponse.SentInfo(requestId, (int) (RedisConfig.AUTH_CODE_TTL_MINUTES * 60));
     }
 
     // 휴대폰 인증번호 확인
     @Override
     public MemberPhoneResponse.VerificationResult verifyPhoneCode(MemberPhoneRequest.VerifyCode request, boolean isSignupFlow) {
-        VerificationData data = phoneVerificationStorage.get(request.requestId());
+        String codeKey = PHONE_CODE_KEY + request.requestId();
+
+        VerificationData data = (VerificationData) redisTemplate.opsForValue().get(codeKey);
 
         if (data == null || data.isExpired()) {
-            phoneVerificationStorage.remove(request.requestId());
             throw new CustomException(ErrorCode.AUTH_PHONE_CODE_EXPIRED);
         }
 
-        if (!data.code().equals(request.code())) {
+        if (!data.getCode().equals(request.code())) {
             throw new CustomException(ErrorCode.AUTH_PHONE_CODE_MISMATCH);
         }
 
-        phoneVerificationStorage.remove(request.requestId());
+        // 인증 성공 시 인증번호 삭제
+        redisTemplate.delete(codeKey);
 
         // 증빙 토큰 생성 및 저장
         String verifiedPhoneToken = "vpt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        verifiedTokenStorage.put(verifiedPhoneToken,
-                new VerifiedPhoneInfo(data.phone(), LocalDateTime.now().plusMinutes(10)));
+        VerifiedPhoneInfo info = new VerifiedPhoneInfo(data.getPhone(), LocalDateTime.now().plusMinutes(RedisConfig.VERIFIED_PHONE_TTL_MINUTES));
+
+        redisTemplate.opsForValue().set(VERIFIED_PHONE_KEY + verifiedPhoneToken, info, Duration.ofMinutes(RedisConfig.VERIFIED_PHONE_TTL_MINUTES));
+
+        int ttlSeconds = (int) (RedisConfig.VERIFIED_PHONE_TTL_MINUTES * 60);
 
         if (isSignupFlow) {
-            return MemberPhoneResponse.VerificationResult.signup(verifiedPhoneToken, data.phone(), 600);
+            return MemberPhoneResponse.VerificationResult.signup(verifiedPhoneToken, data.getPhone(), ttlSeconds);
         } else {
-            return MemberPhoneResponse.VerificationResult.myPage(verifiedPhoneToken, data.phone(), 600);
+            return MemberPhoneResponse.VerificationResult.myPage(verifiedPhoneToken, data.getPhone(), ttlSeconds);
         }
     }
 
@@ -154,7 +163,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         refreshTokenHasher.saveRefreshToken(savedUser.getId(), refreshToken);
 
-        verifiedTokenStorage.remove(request.verifiedPhoneToken());
+        redisTemplate.delete(VERIFIED_PHONE_KEY + request.verifiedPhoneToken());
 
         return new MemberResponse.SignupResult(
                 accessToken,
@@ -217,14 +226,16 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     }
 
     private void validateVPT(String phone, String token) {
-        VerifiedPhoneInfo info = verifiedTokenStorage.get(token);
+        VerifiedPhoneInfo info = (VerifiedPhoneInfo) redisTemplate.opsForValue().get(VERIFIED_PHONE_KEY + token);
 
         if (info == null || info.isExpired()) {
-            if (info != null) verifiedTokenStorage.remove(token);
+            if (info != null) {
+                redisTemplate.delete(VERIFIED_PHONE_KEY + token);
+            }
             throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_FAILED);
         }
 
-        String cleanStoredPhone = info.phone().replaceAll("[^0-9]", "");
+        String cleanStoredPhone = info.getPhone().replaceAll("[^0-9]", "");
         String cleanRequestedPhone = phone.replaceAll("[^0-9]", "");
 
         if (!cleanStoredPhone.equals(cleanRequestedPhone)) {
