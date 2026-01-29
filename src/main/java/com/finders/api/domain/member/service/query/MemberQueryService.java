@@ -1,6 +1,5 @@
 package com.finders.api.domain.member.service.query;
 
-import com.finders.api.domain.member.dto.request.MemberRequest;
 import com.finders.api.domain.member.dto.response.MemberResponse;
 import com.finders.api.domain.member.entity.Member;
 
