@@ -150,7 +150,7 @@ public enum ErrorCode implements BaseCode {
     // External API
     // ========================================
     EXTERNAL_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_503", "외부 API 호출에 실패했습니다."),
-
+    KAKAO_TERMS_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "KAKAO_502", "카카오 약관 동의 내역을 불러오는 중 오류가 발생했습니다."),
     // ========================================
     // Storage (GCS)
     // ========================================
