@@ -1,5 +1,6 @@
 package com.finders.api.domain.community.service.query;
 
+import com.finders.api.domain.community.dto.response.PostCacheDTO;
 import com.finders.api.domain.community.dto.response.PostResponse;
 import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.enums.PostSearchFilter;
@@ -70,8 +71,18 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     @Override
     public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
-        List<Post> posts = postQueryRepository.findTop10PopularPosts();
-        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId));
+        List<PostCacheDTO> cachedPosts = postQueryRepository.findTop10PopularPosts();
+
+        List<PostResponse.PostPreviewDTO> previews = cachedPosts.stream()
+                .map(dto -> {
+                    boolean isLiked = (memberId != null) && postLikeRepository.existsByPostIdAndMemberUserId(dto.getId(), memberId);
+
+                    String fullImageUrl = (dto.getObjectPath() != null) ? storageService.getPublicUrl(dto.getObjectPath()) : null;
+
+                    return PostResponse.PostPreviewDTO.fromCache(dto, isLiked, fullImageUrl);
+                })
+                .toList();
+        return PostResponse.PostPreviewListDTO.from(previews);
     }
 
     @Override
