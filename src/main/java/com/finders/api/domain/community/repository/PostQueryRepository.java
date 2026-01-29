@@ -35,12 +35,21 @@ public class PostQueryRepository {
 
     @Cacheable(value = "popularPosts", key = "'home_top10'")
     public List<PostCacheDTO> findTop10PopularPosts() {
-        List<Post> posts = queryFactory
-                .selectFrom(post)
-                .leftJoin(post.postImageList).fetchJoin()
+        List<Long> ids = queryFactory
+                .select(post.id)
+                .from(post)
                 .where(post.status.eq(CommunityStatus.ACTIVE))
                 .orderBy(post.likeCount.desc(), post.createdAt.desc()) // 좋아요 순, 같으면 최신순
                 .limit(POPULAR_POSTS_LIMIT)
+                .fetch();
+
+        if (ids.isEmpty()) return List.of();
+
+        List<Post> posts = queryFactory
+                .selectFrom(post)
+                .leftJoin(post.postImageList).fetchJoin()
+                .where(post.id.in(ids))
+                .orderBy(post.likeCount.desc(), post.createdAt.desc())
                 .fetch();
 
         return posts.stream()
