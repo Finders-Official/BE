@@ -1,6 +1,5 @@
 package com.finders.api.domain.community.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.store.entity.PhotoLab;
@@ -18,7 +17,6 @@ import java.util.List;
 @Getter
 @Table(name = "post")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Post extends BaseEntity {
 
     @Id
@@ -73,7 +71,6 @@ public class Post extends BaseEntity {
 
     @OneToMany(mappedBy = "post")
     @OrderBy("displayOrder ASC")
-    @JsonIgnoreProperties("post")
     private List<PostImage> postImageList = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)

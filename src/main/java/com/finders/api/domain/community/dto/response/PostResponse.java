@@ -116,10 +116,10 @@ public class PostResponse {
 
         public static PostPreviewDTO fromCache(PostCacheDTO cache, boolean isLiked, String fullImageUrl) {
             return PostPreviewDTO.builder()
-                    .postId(cache.getId())
-                    .title(cache.getTitle())
-                    .likeCount(cache.getLikeCount())
-                    .commentCount(cache.getCommentCount())
+                    .postId(cache.id())
+                    .title(cache.title())
+                    .likeCount(cache.likeCount())
+                    .commentCount(cache.commentCount())
                     .isLiked(isLiked)
                     .image(new PostImageResDTO(fullImageUrl, null, null))
                     .build();

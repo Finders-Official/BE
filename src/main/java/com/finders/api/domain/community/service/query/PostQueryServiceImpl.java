@@ -73,11 +73,21 @@ public class PostQueryServiceImpl implements PostQueryService {
     public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
         List<PostCacheDTO> cachedPosts = postQueryRepository.findTop10PopularPosts();
 
+        Set<Long> likedPostIds;
+        if (memberId != null && !cachedPosts.isEmpty()) {
+            List<Long> postIds = cachedPosts.stream().map(PostCacheDTO::id).toList();
+            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
+        } else {
+            likedPostIds = java.util.Collections.emptySet();
+        }
+
         List<PostResponse.PostPreviewDTO> previews = cachedPosts.stream()
                 .map(dto -> {
-                    boolean isLiked = (memberId != null) && postLikeRepository.existsByPostIdAndMemberUserId(dto.getId(), memberId);
+                    boolean isLiked = likedPostIds.contains(dto.id());
 
-                    String fullImageUrl = (dto.getObjectPath() != null) ? storageService.getPublicUrl(dto.getObjectPath()) : null;
+                    String fullImageUrl = (dto.objectPath() != null)
+                            ? storageService.getPublicUrl(dto.objectPath())
+                            : null;
 
                     return PostResponse.PostPreviewDTO.fromCache(dto, isLiked, fullImageUrl);
                 })
