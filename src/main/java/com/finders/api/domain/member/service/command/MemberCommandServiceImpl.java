@@ -13,7 +13,6 @@ import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.entity.SocialAccount;
 import com.finders.api.domain.member.repository.*;
-import com.finders.api.domain.member.service.query.MemberUserQueryService;
 import com.finders.api.domain.terms.entity.MemberAgreement;
 import com.finders.api.domain.terms.repository.TermsRepository;
 import com.finders.api.global.config.RedisConfig;
