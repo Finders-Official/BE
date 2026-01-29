@@ -32,7 +32,10 @@ import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.domain.store.repository.RegionRepository;
 import com.finders.api.domain.terms.entity.MemberAgreement;
 import com.finders.api.domain.terms.entity.Terms;
+import com.finders.api.domain.terms.entity.TermsSocialMapping;
 import com.finders.api.domain.terms.enums.TermsType;
+import com.finders.api.domain.terms.repository.TermsRepository;
+import com.finders.api.domain.terms.repository.TermsSocialMappingRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -275,6 +278,8 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final RegionRepository regionRepository;
     private final PhotoLabRepository photoLabRepository;
     private final ReservationSlotRepository reservationSlotRepository;
+    private final TermsRepository termsRepository;
+    private final TermsSocialMappingRepository termsSocialMappingRepository;
     private final EntityManager entityManager;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
@@ -308,6 +313,10 @@ public class DatabaseSeeder implements CommandLineRunner {
             // 1. Terms (약관)
             createTerms();
             log.info("{} Created {} terms", LOG_PREFIX, termsList.size());
+
+            // TermsSocialMapping 생성
+            createTermsSocialMappings();
+            log.info("{} Created social mappings for Kakao tags", LOG_PREFIX);
 
             // 2. Region (지역)
             List<Region> regions = createRegions();
@@ -483,20 +492,29 @@ public class DatabaseSeeder implements CommandLineRunner {
                 .effectiveDate(TERMS_EFFECTIVE_DATE)
                 .build();
 
-        Terms notification = Terms.builder()
-                .type(TermsType.NOTIFICATION)
+        Terms serviceInfo = Terms.builder()
+                .type(TermsType.SERVICE_INFO)
                 .version("1.0")
                 .title("알림 수신 동의")
                 .content("""
                         ### 필수 알림 (동의 필수)
 
                         - 현상 서비스 예약 확정, 취소, 진행 상태 안내
-                        - 서비스 운영 관련 공지
+                        - 서비스 운영 관련 공지""")
+                .isRequired(true)
+                .isActive(true)
+                .effectiveDate(TERMS_EFFECTIVE_DATE)
+                .build();
 
+        Terms marketing = Terms.builder()
+                .type(TermsType.MARKETING)
+                .version("1.0")
+                .title("알림 수신 동의")
+                .content("""
                         ### 선택 알림 (선택)
 
                         - 이벤트, 프로모션, 신규 기능 안내""")
-                .isRequired(true)
+                .isRequired(false)
                 .isActive(true)
                 .effectiveDate(TERMS_EFFECTIVE_DATE)
                 .build();
@@ -524,7 +542,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         termsToSave.add(service);
         termsToSave.add(privacy);
         termsToSave.add(location);
-        termsToSave.add(notification);
+        termsToSave.add(serviceInfo);
+        termsToSave.add(marketing);
 
         // Batch persist
         for (Terms terms : termsToSave) {
@@ -533,6 +552,33 @@ public class DatabaseSeeder implements CommandLineRunner {
         entityManager.flush();
 
         termsList.addAll(termsToSave);
+    }
+
+    // ===== TermsSocialMapping =====
+    private void createTermsSocialMappings() {
+        List<TermsSocialMapping> mappings = new ArrayList<>();
+
+        // 각 약관 타입별로 매핑 생성 (카카오 예시)
+        termsList.forEach(terms -> {
+            String tag = switch (terms.getType()) {
+                case SERVICE -> "service_policy";
+                case PRIVACY -> "privacy_policy";
+                case SERVICE_INFO -> "required_notice";
+                case MARKETING -> "marketing_info";
+                case LOCATION -> "location_policy";
+                default -> null;
+            };
+
+            if (tag != null) {
+                mappings.add(TermsSocialMapping.builder()
+                        .terms(terms)
+                        .provider(SocialProvider.KAKAO)
+                        .socialTag(tag)
+                        .build());
+            }
+        });
+
+        termsSocialMappingRepository.saveAll(mappings);
     }
 
     // ===== Regions =====
@@ -623,6 +669,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private void createMemberAgreements() {
         Terms serviceTerms = termsList.stream().filter(t -> t.getType() == TermsType.SERVICE).findFirst().orElse(null);
         Terms privacyTerms = termsList.stream().filter(t -> t.getType() == TermsType.PRIVACY).findFirst().orElse(null);
+        Terms serviceInfoTerms = termsList.stream().filter(t -> t.getType() == TermsType.SERVICE_INFO).findFirst().orElse(null);
 
         List<Member> allMembers = new ArrayList<>();
         allMembers.add(admin);
@@ -648,6 +695,16 @@ public class DatabaseSeeder implements CommandLineRunner {
                 MemberAgreement agreement = MemberAgreement.builder()
                         .member(member)
                         .terms(privacyTerms)
+                        .isAgreed(true)
+                        .agreedAt(LocalDateTime.now().minusDays(daysAgo))
+                        .build();
+                agreementsToSave.add(agreement);
+            }
+
+            if (serviceInfoTerms != null) {
+                MemberAgreement agreement = MemberAgreement.builder()
+                        .member(member)
+                        .terms(serviceInfoTerms)
                         .isAgreed(true)
                         .agreedAt(LocalDateTime.now().minusDays(daysAgo))
                         .build();
