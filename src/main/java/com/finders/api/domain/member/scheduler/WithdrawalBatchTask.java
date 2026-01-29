@@ -6,6 +6,7 @@ import com.finders.api.domain.member.repository.MemberAddressRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.member.repository.SocialAccountRepository;
 import com.finders.api.domain.member.repository.TokenHistoryRepository;
+import com.finders.api.domain.terms.repository.MemberAgreementRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,6 +23,7 @@ public class WithdrawalBatchTask {
 
     private final MemberUserRepository memberUserRepository;
     private final MemberAddressRepository memberAddressRepository;
+    private final MemberAgreementRepository memberAgreementRepository;
     private final SocialAccountRepository socialAccountRepository;
     private final TokenHistoryRepository tokenHistoryRepository;
 
@@ -42,12 +44,14 @@ public class WithdrawalBatchTask {
                     .findAllByStatusAndDeletedAtBefore(MemberStatus.WITHDRAWN, threshold);
 
             if (!membersToAnonymize.isEmpty()) {
+                // 약관 동의 기록 삭제 Hard Delete
+                memberAgreementRepository.deleteAllByMemberIn(membersToAnonymize);
+
                 // 토큰 히스토리 삭제 Hard Delete
                 tokenHistoryRepository.deleteAllByMemberIn(membersToAnonymize);
 
                 // 회원들의 배송지 정보 일괄 Hard Delete
                 memberAddressRepository.deleteAllByMemberIn(membersToAnonymize);
-                log.info("[WithdrawalBatchTask.cleanupDeletedUsers] 회원 배송지 정보 삭제 완료: {}명의 주소 데이터", membersToAnonymize.size());
 
                 for (MemberUser memberUser : membersToAnonymize) {
                     memberUser.anonymize();
