@@ -14,6 +14,7 @@ import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.entity.SocialAccount;
 import com.finders.api.domain.member.repository.*;
 import com.finders.api.domain.terms.entity.MemberAgreement;
+import com.finders.api.domain.terms.repository.MemberAgreementRepository;
 import com.finders.api.domain.terms.repository.TermsRepository;
 import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
