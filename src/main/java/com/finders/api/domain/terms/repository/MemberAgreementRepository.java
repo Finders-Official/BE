@@ -1,4 +1,4 @@
-package com.finders.api.domain.member.repository;
+package com.finders.api.domain.terms.repository;
 
 import com.finders.api.domain.terms.entity.MemberAgreement;
 import com.finders.api.domain.terms.enums.TermsType;
