@@ -74,7 +74,8 @@ public enum ErrorCode implements BaseCode {
     MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER_409", "이미 존재하는 회원입니다."),
     MEMBER_NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_410", "이미 사용 중인 닉네임입니다."),
     MEMBER_EMAIL_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_411", "이미 사용 중인 이메일입니다."),
-    MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화된 계정입니다."),
+    MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화되었거나 이미 탈퇴한 계정입니다."),
+    MEMBER_WITHDRAWAL_LOCKED(HttpStatus.FORBIDDEN, "MEMBER_400", "진행 중인 예약 또는 현상 서비스가 있어 탈퇴가 불가능합니다."),
 
     // 휴대폰 인증 증빙 관련 (VPT 검증)
     MEMBER_PHONE_VERIFY_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER_420", "휴대폰 인증이 필요합니다."),
@@ -150,6 +151,7 @@ public enum ErrorCode implements BaseCode {
     // External API
     // ========================================
     EXTERNAL_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_503", "외부 API 호출에 실패했습니다."),
+    KAKAO_UNLINK_FAILED(HttpStatus.BAD_REQUEST, "KAKAO_500", "카카오 연결 끊기 중 오류가 발생했습니다."),
 
     // ========================================
     // Storage (GCS)
