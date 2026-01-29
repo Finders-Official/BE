@@ -19,7 +19,7 @@ public class KakaoUnlinkClient implements OAuthUnlinkClient {
 
     private final RestClient restClient;
 
-    @Value("${kakao.admin-key}")
+    @Value("${oauth2.kakao.admin-key}")
     private String adminKey;
 
     @Override
