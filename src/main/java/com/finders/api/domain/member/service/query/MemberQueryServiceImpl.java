@@ -3,7 +3,7 @@ package com.finders.api.domain.member.service.query;
 import com.finders.api.domain.member.dto.response.MemberResponse;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.entity.MemberUser;
-import com.finders.api.domain.member.repository.MemberAgreementRepository;
+import com.finders.api.domain.terms.repository.MemberAgreementRepository;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.member.repository.SocialAccountRepository;
