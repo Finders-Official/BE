@@ -2,6 +2,7 @@ package com.finders.api.domain.member.scheduler;
 
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.enums.MemberStatus;
+import com.finders.api.domain.member.repository.MemberAddressRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.member.repository.SocialAccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.List;
 public class WithdrawalBatchTask {
 
     private final MemberUserRepository memberUserRepository;
+    private final MemberAddressRepository memberAddressRepository;
     private final SocialAccountRepository socialAccountRepository;
 
     @Transactional
@@ -38,6 +40,10 @@ public class WithdrawalBatchTask {
                     .findAllByStatusAndDeletedAtBefore(MemberStatus.WITHDRAWN, threshold);
 
             if (!membersToAnonymize.isEmpty()) {
+                // 회원들의 배송지 정보 일괄 Hard Delete
+                memberAddressRepository.deleteAllByMemberIn(membersToAnonymize);
+                log.info("[WithdrawalBatchTask.cleanupDeletedUsers] 회원 배송지 정보 삭제 완료: {}명의 주소 데이터", membersToAnonymize.size());
+
                 for (MemberUser memberUser : membersToAnonymize) {
                     memberUser.anonymize();
                 }
