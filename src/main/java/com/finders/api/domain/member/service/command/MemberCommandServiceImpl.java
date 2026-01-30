@@ -16,12 +16,14 @@ import com.finders.api.domain.member.repository.*;
 import com.finders.api.domain.terms.entity.MemberAgreement;
 import com.finders.api.domain.terms.repository.MemberAgreementRepository;
 import com.finders.api.domain.terms.repository.TermsRepository;
+import com.finders.api.domain.terms.service.command.MemberAgreementCommandService;
 import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.security.JwtTokenProvider;
 import com.finders.api.global.security.RefreshTokenHasher;
 import com.finders.api.infra.messaging.MessageService;
+import com.finders.api.infra.oauth.OAuthTermsClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -40,6 +42,7 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class MemberCommandServiceImpl implements MemberCommandService {
     private final RedisTemplate<String, Object> redisTemplate;
+    private final List<OAuthTermsClient> oAuthTermsClients;
     private final SocialAccountRepository socialAccountRepository;
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
@@ -49,6 +52,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenHasher refreshTokenHasher;
     private final MessageService messageService;
+    private final MemberAgreementCommandService memberAgreementCommandService;
 
     private static final java.security.SecureRandom random = new java.security.SecureRandom();
 
@@ -121,9 +125,6 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             throw new CustomException(ErrorCode.MEMBER_NICKNAME_DUPLICATED);
         }
 
-        // 필수 약관 체크
-        checkMandatoryAgreements(request.agreements());
-
         // MemberUser 엔티티 생성 및 저장
         MemberUser memberUser = MemberUser.builder()
                 .name(payload.name())
@@ -135,6 +136,15 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         MemberUser savedUser = memberUserRepository.save(memberUser);
 
+        // 약관 동의 여부 저장
+        OAuthTermsClient targetClient = oAuthTermsClients.stream()
+                .filter(client -> client.getProvider() == payload.provider())
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.AUTH_UNSUPPORTED_PROVIDER));
+
+        List<String> socialAgreedTags = targetClient.getAgreedTermsTags(payload.providerId());
+        memberAgreementCommandService.saveAgreementsFromSocial(savedUser, payload.provider(), socialAgreedTags);
+
         // SocialAccount 연동 정보 저장
         SocialAccount socialAccount = SocialAccount.builder()
                 .provider(payload.provider())
@@ -144,17 +154,6 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 .build();
 
         socialAccountRepository.save(socialAccount);
-
-        // 약관 동의 내역 저장
-        List<MemberAgreement> agreements = request.agreements().stream()
-                .map(req -> MemberAgreement.builder()
-                        .member(memberUser)
-                        .terms(termsRepository.getReferenceById(req.termsId()))
-                        .isAgreed(req.isAgreed())
-                        .agreedAt(LocalDateTime.now())
-                        .build())
-                .toList();
-        memberAgreementRepository.saveAll(agreements);
 
         // 정식 서비스 이용을 위한 Access/Refresh Token 발급
         String accessToken = jwtTokenProvider.createAccessToken(savedUser.getId(), "USER");
@@ -167,7 +166,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         return new MemberResponse.SignupResult(
                 accessToken,
                 refreshToken,
-                new MemberResponse.MemberSummary(memberUser.getId(), memberUser.getNickname())
+                new MemberResponse.MemberSummary(savedUser.getId(), savedUser.getNickname())
         );
     }
 
@@ -239,19 +238,6 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         if (!cleanStoredPhone.equals(cleanRequestedPhone)) {
             throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_FAILED);
-        }
-    }
-
-    private void checkMandatoryAgreements(List<MemberRequest.AgreementRequest> agreements) {
-        // 실제 운영 시에는 DB나 환경설정에서 필수 약관 ID 리스트를 가져와야 함
-        List<Long> mandatoryTermsIds = List.of(1L, 2L); // 예시: 1번, 2번이 필수 약관
-
-        boolean allMandatoryAgreed = mandatoryTermsIds.stream()
-                .allMatch(id -> agreements.stream()
-                        .anyMatch(a -> a.termsId().equals(id) && a.isAgreed()));
-
-        if (!allMandatoryAgreed) {
-            throw new CustomException(ErrorCode.MEMBER_MANDATORY_TERMS_NOT_AGREED);
         }
     }
 }
