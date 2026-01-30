@@ -1,5 +1,10 @@
 # Finders API
 
+[![CI](https://github.com/Finders-Official/Spring/actions/workflows/ci.yml/badge.svg)](https://github.com/Finders-Official/Spring/actions/workflows/ci.yml)
+[![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 > 뷰파인더 너머, 취향을 찾다 - 필름 현상소 연결 플랫폼
 
 ## Tech Stack
@@ -13,7 +18,7 @@
 | ORM | Spring Data JPA, QueryDSL 5.1 |
 | Security | Spring Security, JWT |
 | API Docs | SpringDoc OpenAPI (Swagger) |
-| Cloud | GCP (Compute Engine, Cloud SQL, Cloud Storage, Vision AI) |
+| Cloud | GCP (Compute Engine, Cloud SQL, Cloud Storage) |
 
 ## Getting Started
 
@@ -137,6 +142,8 @@ src/main/java/com/finders/api/
 
 ## Documentation
 
+전체 문서 목록은 [docs/README.md](docs/README.md)를 참고하세요.
+
 ### Architecture
 - [Architecture](docs/architecture/ARCHITECTURE.md) - 시스템 아키텍처
 - [ERD](docs/architecture/ERD.md) - 데이터베이스 설계서
@@ -148,9 +155,18 @@ src/main/java/com/finders/api/
 - [API](docs/development/API.md) - API 명세
 
 ### Guides
-- [GCS Setup](docs/guides/GCS-setup.md) - GCS 설정 가이드
-- [StorageService](docs/guides/StorageService.md) - StorageService 사용법
+- [GCS Setup](docs/guides/GCS_SETUP.md) - GCS 설정 가이드
+- [Local Development](docs/guides/LOCAL_DEVELOPMENT.md) - 로컬 개발 환경 설정
+- [Remote DB Access](docs/guides/REMOTE_DB_ACCESS.md) - 원격 DB 접속 가이드
+- [AuthenticationPrincipal](docs/guides/AUTHENTICATION_PRINCIPAL.md) - 인증 객체 사용법
+
+### Infrastructure
+- [Infrastructure Docs](docs/infra/README.md) - 인프라 문서 인덱스
+
+## Contributing
+
+기여 방법은 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고하세요.
 
 ## License
 
-Private - All rights reserved
+이 프로젝트는 [Apache License 2.0](LICENSE) 하에 배포됩니다.

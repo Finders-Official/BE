@@ -238,4 +238,4 @@ alias finders-db='gcloud compute ssh finders-server-v2 --zone=asia-northeast3-a 
 
 ---
 
-**마지막 업데이트**: 2025-01-27
+**마지막 업데이트**: 2026-01-30

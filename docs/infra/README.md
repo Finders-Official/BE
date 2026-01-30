@@ -24,45 +24,45 @@
 ## 🎯 상황별 가이드
 
 ### "네트워크가 처음이에요"
-1. 📚 [NETWORK_BASICS.md](./NETWORK_BASICS.md) 읽기
-2. 🔐 [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "보안 계층 이해하기" 섹션
-3. 💻 간단한 실습 (ping, dig 등)
+1. [NETWORK_BASICS.md](./NETWORK_BASICS.md) 읽기
+2. [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "보안 계층 이해하기" 섹션
+3. 간단한 실습 (ping, dig 등)
 
 **예상 시간**: 2~3시간
 
 ---
 
 ### "서버 배포 준비 중이에요"
-1. 📋 [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "현재 상태" 확인
-2. ✅ "보안 체크리스트" 따라하기
-3. 🛠️ [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md)에서 필요한 명령어 찾기
+1. [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "현재 상태" 확인
+2. "보안 체크리스트" 따라하기
+3. [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md)에서 필요한 명령어 찾기
 
 **예상 시간**: 1~2일
 
 ---
 
 ### "방화벽 설정이 필요해요"
-1. 📖 [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "3단계: Compute Engine 방화벽" 읽기
-2. 🔍 [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md)의 "방화벽 관련" 섹션
-3. ⚡ 명령어 실행
+1. [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "3단계: Compute Engine 방화벽" 읽기
+2. [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md)의 "방화벽 관련" 섹션
+3. 명령어 실행
 
 **예상 시간**: 30분
 
 ---
 
 ### "VPC 설정을 하고 싶어요"
-1. 📚 [NETWORK_BASICS.md](./NETWORK_BASICS.md)의 "VPC" 섹션 이해
-2. 📋 [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "4단계: VPC 커스텀 설정"
-3. ⚠️ 주의: 서비스 중단 가능, 계획된 점검 시간에 진행
+1. [NETWORK_BASICS.md](./NETWORK_BASICS.md)의 "VPC" 섹션 이해
+2. [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "4단계: VPC 커스텀 설정"
+3. 주의: 서비스 중단 가능, 계획된 점검 시간에 진행
 
 **예상 시간**: 반나절
 
 ---
 
 ### "Cloudflare Tunnel 문제 해결"
-1. 🔍 [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md)의 "문제 해결" 섹션
-2. 📋 [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "Cloudflare" 섹션
-3. 🆘 해결 안 되면 팀에 문의
+1. [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md)의 "문제 해결" 섹션
+2. [NETWORK_SECURITY.md](./NETWORK_SECURITY.md)의 "Cloudflare" 섹션
+3. 해결 안 되면 팀에 문의
 
 **예상 시간**: 10~30분
 
@@ -88,18 +88,18 @@
 
 ## 📊 현재 인프라 상태
 
-### 운영 중 ✅
+### 운영 중
 - Cloudflare Zero Trust Tunnel
 - GCP Compute Engine (e2-medium)
 - Cloud SQL (MySQL 8.0)
 - Cloud Storage (public/private)
 
-### 설정 예정 ⚠️
+### 설정 예정
 - 방화벽 최소 권한 설정
 - nginx 블루-그린 배포
 - VPC 커스텀 설정
 
-### 고려 중 💭
+### 고려 중
 - 멀티 가용영역
 - 자동 스케일링
 - 백업 자동화
@@ -109,11 +109,11 @@
 ## 🆘 긴급 상황
 
 ### 서비스 장애 시 순서
-1. ✅ [Health Check](https://api.finders.it.kr/health)
-2. 🔍 [Cloudflare Dashboard](https://dash.cloudflare.com/) 확인
-3. 📊 [GCP Console](https://console.cloud.google.com/) 확인
-4. 📝 [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md) 문제 해결 섹션
-5. 👥 팀에 알림
+1. [Health Check](https://api.finders.it.kr/health)
+2. [Cloudflare Dashboard](https://dash.cloudflare.com/) 확인
+3. [GCP Console](https://console.cloud.google.com/) 확인
+4. [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md) 문제 해결 섹션
+5. 팀에 알림
 
 ### 자주 발생하는 문제
 | 증상 | 원인 | 해결 |
@@ -134,7 +134,7 @@
 
 ### 어떻게 업데이트하나요?
 1. 해당 문서 파일 수정
-2. "문서 최종 수정" 날짜 변경
+2. "마지막 업데이트" 날짜 변경
 3. 변경 사항 커밋
 4. 팀에 공유
 
@@ -173,11 +173,10 @@
 
 ---
 
-## 📅 마지막 업데이트
+## 마지막 업데이트
 
-- **날짜**: 2025-01-19
+- **마지막 업데이트**: 2026-01-30
 - **작성자**: DevOps 팀
-- **다음 검토**: VPC 설정 완료 후
 
 ---
 
@@ -198,4 +197,4 @@ docs/
     └─ ERD.md (데이터베이스)
 ```
 
-**Happy Networking! 🚀**
+**마지막 업데이트**: 2026-01-30

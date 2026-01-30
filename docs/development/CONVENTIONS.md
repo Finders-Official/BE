@@ -226,7 +226,7 @@ git push origin v1.0.0
 |------|----------|
 | `enhancement` | ✨ New Features |
 | `bug` | 🐛 Bug Fixes |
-| `documentation` | 📚 Documentation |
-| `task` | 📋 Tasks |
+| `documentation` | Documentation |
+| `task` | Tasks |
 
 > **Tip**: PR 생성 시 적절한 라벨을 붙이면 릴리스 노트가 더 보기 좋게 정리됩니다.

@@ -21,7 +21,7 @@ gcloud auth login
 gcloud config set project project-37afc2aa-d3d3-4a1a-8cd
 ```
 
-## 3. 서비스 계정 Impersonation 설정 ⭐
+## 3. 서비스 계정 Impersonation 설정
 
 Presigned URL 생성을 위해 서비스 계정을 Impersonate 합니다:
 
@@ -70,7 +70,7 @@ http://localhost:8080/swagger-ui.html 접속 → **[TEST] Storage** 섹션
 
 → Execute 후 응답에서 `signedUrl` 복사 → **브라우저에서 열어보기**
 
-이미지가 보이면 성공! 🎉
+이미지가 보이면 성공!
 
 ### Step 3: 파일 삭제 (정리)
 
@@ -108,5 +108,5 @@ http://localhost:8080/swagger-ui.html 접속 → **[TEST] Storage** 섹션
 
 ## 관련 문서
 
-- [GCS 설정 가이드](./GCS-setup.md)
+- [GCS 설정 가이드](./GCS_SETUP.md)
 - [GCP 로그 확인 가이드](../infra/GCP_LOGGING_GUIDE.md)

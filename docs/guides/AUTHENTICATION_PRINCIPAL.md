@@ -1,4 +1,4 @@
-## 🔐 커스텀 인증 객체(AuthUser) 사용 가이드
+## 커스텀 인증 객체(AuthUser) 사용 가이드
 
 보안 계층의 독립성과 성능 최적화를 위해, 세션에 JPA 엔티티(Member 등)를 직접 담지 않고 **가벼운 DTO 객체인 AuthUser**를 사용합니다.
 
@@ -14,7 +14,7 @@ AuthUser는 UserDetails를 구현한 Java Record 객체로, 토큰 검증 시점
 
 컨트롤러 메서드의 파라미터에서 @AuthenticationPrincipal 어노테이션을 사용하여 현재 로그인한 유저 정보를 가져옵니다.
 
-#### ✅ 기본 사용법
+#### 기본 사용법
 ``` Java
 @GetMapping("/api/v1/members/me")
 public ApiResponse<MemberResponse.MyProfile> getMyProfile(
@@ -26,7 +26,7 @@ public ApiResponse<MemberResponse.MyProfile> getMyProfile(
 }
 ```
 ]
-#### ⚠️ 주의사항
+#### 주의사항
 - 타입 명시: 반드시 AuthUser 타입을 명시해야 합니다. 
 - Null 체크: SecurityConfig에서 permitAll()로 설정된 공공 API의 경우, 비로그인 상태라면 authUser는 null이 됩니다. 필요한 경우 null 체크 로직을 넣으세요.
 
@@ -49,13 +49,13 @@ public ApiResponse<?> createNotice(@AuthenticationPrincipal AuthUser authUser) {
 ```
 
 ### 4. 서비스 레이어와의 협업 규칙 (중요)
-#### ❌ 엔티티/인증 객체를 직접 넘기지 마세요
+#### 엔티티/인증 객체를 직접 넘기지 마세요
 서비스 레이어의 메서드에 AuthUser 객체나 MemberUser 엔티티를 통째로 넘기는 것은 지양합니다.
 
-#### ✅ 유저 ID(memberId)만 넘기세요
+#### 유저 ID(memberId)만 넘기세요
 서비스 레이어에서는 오직 **Long memberId**만 받아서 필요한 경우 직접 조회하여 사용합니다.
 
-💡 Tip: 서비스 레이어 타입 체크 JPA 상속 구조를 사용하므로, instanceof MemberUser를 사용할 때는 Hibernate.unproxy(member)를 통해 실제 객체를 꺼낸 뒤 검증하는 것을 권장합니다.
+Tip: 서비스 레이어 타입 체크 JPA 상속 구조를 사용하므로, instanceof MemberUser를 사용할 때는 Hibernate.unproxy(member)를 통해 실제 객체를 꺼낸 뒤 검증하는 것을 권장합니다.
 
 ``` Java
 // Controller
