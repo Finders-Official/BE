@@ -47,4 +47,7 @@ public interface DevelopmentOrderRepository extends JpaRepository<DevelopmentOrd
             @Param("memberId") Long memberId
     );
     Optional<DevelopmentOrder> findByUserIdAndStatusNot(Long userId, DevelopmentOrderStatus status);
+
+    // 완료되지 않은 현상 주문이 존재하는지 확인
+    boolean existsByUserIdAndStatusNot(Long userId, DevelopmentOrderStatus status);
 }
