@@ -61,6 +61,8 @@ public class SecurityConfig {
             "/webhooks/**",
             // HM-010 커뮤니티 사진 미리 보기
             "/posts/preview",
+            // HM-010 커뮤니티 사진 미리 보기
+            "photo-labs/popular",
             // 개발용 토큰 발급
             "/dev/login"
     };
