@@ -1,6 +1,7 @@
 package com.finders.api.domain.member.repository;
 
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.member.enums.MemberStatus;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface MemberUserRepository extends JpaRepository<MemberUser, Long> {
@@ -34,4 +37,7 @@ public interface MemberUserRepository extends JpaRepository<MemberUser, Long> {
     @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")})
     @Query("SELECT m FROM MemberUser m WHERE m.id = :id")
     Optional<MemberUser> findByIdWithLock(@Param("id") Long id);
+
+    // 상태가 WITHDRAWN이고, 삭제된 지 특정 시점이 지난 회원 목록 조회
+    List<MemberUser> findAllByStatusAndDeletedAtBefore(MemberStatus status, LocalDateTime threshold);
 }
