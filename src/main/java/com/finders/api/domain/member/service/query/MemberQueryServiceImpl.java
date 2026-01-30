@@ -7,7 +7,6 @@ import com.finders.api.domain.terms.repository.MemberAgreementRepository;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.member.repository.SocialAccountRepository;
-import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -24,16 +23,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
     private final SocialAccountRepository socialAccountRepository;
-    private final MemberAgreementRepository memberAgreementRepository;
 
     @Override
     public boolean isNicknameAvailable(String nickname) {
         return !memberUserRepository.existsByNickname(nickname);
-    }
-
-    @Override
-    public boolean hasAgreedToTerms(Long memberId, TermsType type) {
-        return memberAgreementRepository.existsByMember_IdAndTerms_TypeAndIsAgreed(memberId, type, true);
     }
 
     @Override

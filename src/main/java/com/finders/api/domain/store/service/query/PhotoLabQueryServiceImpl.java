@@ -4,7 +4,6 @@ import com.finders.api.domain.community.entity.PostImage;
 import com.finders.api.domain.community.enums.CommunityStatus;
 import com.finders.api.domain.community.repository.PostImageRepository;
 import com.finders.api.domain.member.entity.FavoritePhotoLab;
-import com.finders.api.domain.member.service.query.MemberQueryService;
 import com.finders.api.domain.store.dto.request.PhotoLabRequest;
 import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
@@ -23,6 +22,7 @@ import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.terms.enums.TermsType;
+import com.finders.api.domain.terms.service.query.MemberAgreementQueryService;
 import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
@@ -61,7 +61,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final PhotoLabFavoriteRepository photoLabFavoriteRepository;
     private final PhotoLabNoticeRepository photoLabNoticeRepository;
     private final PostImageRepository postImageRepository;
-    private final MemberQueryService memberQueryService;
+    private final MemberAgreementQueryService memberAgreementQueryService;
     private final StorageService storageService;
 
     // 커뮤니티 현상소 검색 관련
@@ -243,7 +243,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         if (lat == null || lng == null || memberId == null) {
             return false;
         }
-        return memberQueryService.hasAgreedToTerms(memberId, TermsType.LOCATION);
+        return memberAgreementQueryService.hasAgreedToTerms(memberId, TermsType.LOCATION);
     }
 
     // 커뮤니티 현상소 검색
