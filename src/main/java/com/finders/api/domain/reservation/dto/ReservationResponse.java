@@ -2,7 +2,10 @@ package com.finders.api.domain.reservation.dto;
 
 import com.finders.api.domain.reservation.entity.Reservation;
 
+import com.finders.api.domain.store.entity.PhotoLabNotice;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,11 +51,13 @@ public class ReservationResponse {
             LocalTime reservationTime,
             List<String> taskTypes,
             Integer filmCount,
+            String photoLabNotice,
             String memo,
-            String address,
-            String addressDetail
+            BigDecimal latitude,
+            BigDecimal longtitude,
+            LocalDateTime compltedAt
     ) {
-        public static Detail from(Reservation reservation) {
+        public static Detail from(Reservation reservation, PhotoLabNotice photoLabNotice, LocalDateTime completedAt) {
             List<String> taskTypes = new ArrayList<>();
             if (reservation.isDevelop()) taskTypes.add("DEVELOP");
             if (reservation.isScan()) taskTypes.add("SCAN");
@@ -65,9 +70,11 @@ public class ReservationResponse {
                     .reservationTime(reservation.getSlot().getReservationTime())
                     .taskTypes(taskTypes)
                     .filmCount(reservation.getRollCount())
+                    .photoLabNotice(photoLabNotice.getContent())
                     .memo(reservation.getRequestMessage())
-                    .address(reservation.getPhotoLab().getAddress())
-                    .addressDetail(reservation.getPhotoLab().getAddressDetail())
+                    .latitude(reservation.getPhotoLab().getLatitude())
+                    .longtitude(reservation.getPhotoLab().getLongitude())
+                    .compltedAt(completedAt)
                     .build();
         }
     }
