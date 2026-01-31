@@ -53,14 +53,14 @@ public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
     );
 
     @Query("select new com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse(" +
-            "coalesce(pr.id, r.id), " +
+            "cast(coalesce(pr.id, r.id) as long), " +
             "coalesce(pr.regionName, r.regionName), " +
             "count(l)) " +
             "from PhotoLab l " +
             "join l.region r " +
             "left join r.parentRegion pr " +
             "where l.status = com.finders.api.domain.store.enums.PhotoLabStatus.ACTIVE " +
-            "group by coalesce(pr.id, r.id), coalesce(pr.regionName, r.regionName) " +
-            "order by coalesce(pr.id, r.id)")
+            "group by cast(coalesce(pr.id, r.id) as long), coalesce(pr.regionName, r.regionName) " +
+            "order by cast(coalesce(pr.id, r.id) as long)")
     List<PhotoLabParentRegionCountResponse> countPhotoLabsByTopRegion();
 }
