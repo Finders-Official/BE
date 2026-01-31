@@ -31,7 +31,6 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
-import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
@@ -56,7 +55,6 @@ import org.springframework.data.domain.PageRequest;
 public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     private static final int POST_IMAGE_LIMIT = 10;
-    private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
 
     private final PhotoLabQueryRepository photoLabQueryRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
@@ -162,8 +160,9 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         Map<Long, List<String>> result = new HashMap<>();
         for (PhotoLabImage image : images) {
             Long photoLabId = image.getPhotoLab().getId();
+            String imageUrl = storageService.getPublicUrl(image.getObjectPath());
             result.computeIfAbsent(photoLabId, key -> new java.util.ArrayList<>())
-                    .add(image.getObjectPath());
+                    .add(imageUrl);
         }
         return result;
     }
@@ -209,18 +208,10 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
             return List.of();
         }
 
-        List<String> keys = postImages.stream()
+        return postImages.stream()
                 .map(PostImage::getObjectPath)
-                .toList();
-
-        Map<String, StorageResponse.SignedUrl> signedMap = storageService.getSignedUrls(keys, SIGNED_URL_EXPIRY_MINUTES);
-
-        return keys.stream()
-                .map(key -> {
-                    StorageResponse.SignedUrl signedUrl = signedMap.get(key);
-                    return signedUrl != null ? signedUrl.url() : null;
-                })
                 .filter(Objects::nonNull)
+                .map(storageService::getPublicUrl)
                 .toList();
     }
 
