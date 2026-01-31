@@ -1,15 +1,23 @@
 package com.finders.api.domain.reservation.service.query;
 
+import com.finders.api.domain.photo.repository.DevelopmentOrderRepository;
+import com.finders.api.domain.reservation.calculator.BusinessHourCalculator;
+import com.finders.api.domain.reservation.calculator.EstimatedTimeCalculator;
 import com.finders.api.domain.reservation.dto.ReservationResponse;
 import com.finders.api.domain.reservation.entity.Reservation;
 import com.finders.api.domain.reservation.entity.ReservationSlot;
 import com.finders.api.domain.reservation.repository.ReservationRepository;
 import com.finders.api.domain.reservation.repository.ReservationSlotRepository;
+import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabBusinessHour;
+import com.finders.api.domain.store.entity.PhotoLabNotice;
+import com.finders.api.domain.store.enums.NoticeType;
 import com.finders.api.domain.store.repository.PhotoLabBusinessHourRepository;
+import com.finders.api.domain.store.repository.PhotoLabNoticeRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,9 +39,13 @@ public class ReservationQueryServiceImpl implements ReservationQueryService {
 
     private final PhotoLabRepository photoLabRepository;
     private final PhotoLabBusinessHourRepository photoLabBusinessHourRepository;
+    private final PhotoLabNoticeRepository photoLabNoticeRepository;
 
     private final ReservationSlotRepository reservationSlotRepository;
     private final ReservationRepository reservationRepository;
+    private final DevelopmentOrderRepository developmentOrderRepository;
+
+    private final BusinessHourCalculator businessHourCalculator;
 
     @Override
     public ReservationResponse.AvailableTimes getAvailableTimes(Long photoLabId, LocalDate date) {
@@ -92,7 +104,31 @@ public class ReservationQueryServiceImpl implements ReservationQueryService {
                 .findDetailByIdAndPhotoLabIdAndMemberId(reservationId, photoLabId, memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
 
-        return ReservationResponse.Detail.from(reservation);
+        PhotoLabNotice photoLabNotice = photoLabNoticeRepository
+                .findTopByPhotoLabIdAndNoticeTypeOrderByCreatedAtDesc(
+                        photoLabId,
+                        NoticeType.GENERAL
+                )
+                .orElse(null);
+
+        PhotoLab photoLab = reservation.getPhotoLab();
+
+        int base = photoLab.getAvgWorkTime() != null ? photoLab.getAvgWorkTime() : 0;
+
+        int waitingRollCount = developmentOrderRepository.sumUncompletedRollCount(photoLabId);
+
+        int N = photoLab.getLoadBaseRoll();
+        int m = photoLab.getLoadAddMinutes();
+
+        int totalMinutes = EstimatedTimeCalculator.totalMinutes(base, waitingRollCount, N, m);
+
+        LocalDateTime completedAt = businessHourCalculator.calculateCompletedAt(
+                photoLabId,
+                LocalDateTime.now(),
+                totalMinutes
+        );
+
+        return ReservationResponse.Detail.from(reservation, photoLabNotice,completedAt);
     }
 
 
