@@ -335,10 +335,11 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     public PhotoLabRegionFilterResponse getPhotoLabCountsByRegion() {
         List<PhotoLabParentRegionCountResponse> parents = photoLabRepository.countPhotoLabsByTopRegion();
         List<PhotoLabRegionItemResponse> regions = regionRepository.findAll().stream()
+                .filter(region -> region.getParentRegion() != null)
                 .map(region -> new PhotoLabRegionItemResponse(
                         region.getId(),
                         region.getRegionName(),
-                        region.getParentRegion() != null ? region.getParentRegion().getId() : null
+                        region.getParentRegion().getId()
                 ))
                 .toList();
         return new PhotoLabRegionFilterResponse(parents, regions);

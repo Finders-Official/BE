@@ -27,7 +27,7 @@ public class RedisConfig {
     public static final String VERIFIED_PHONE_CACHE = "verifiedPhone";  // 전화번호 증빙 토큰용
     public static final String POPULAR_PHOTO_LABS_CACHE = "popularPhotoLabs";
     public static final String PHOTO_LAB_REGION_COUNTS_CACHE = "photoLabRegionCounts";
-    public static final String PHOTO_LAB_REGION_COUNTS_CACHE_KEY = "'top'";
+    public static final String PHOTO_LAB_REGION_COUNTS_CACHE_KEY = "'all'";
     public static final String POPULAR_POSTS_CACHE = "popularPosts"; // 홈페이지 사진 수다 미리 보기
 
     private static final long DEFAULT_CACHE_TTL_MINUTES = 10L;
