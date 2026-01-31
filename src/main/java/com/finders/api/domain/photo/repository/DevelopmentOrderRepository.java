@@ -16,8 +16,6 @@ public interface DevelopmentOrderRepository extends JpaRepository<DevelopmentOrd
      */
     boolean existsByOrderCode(String orderCode);
 
-    boolean existsByReservationId(Long reservationId);
-
     @Query(
             value = """
         select d
@@ -50,4 +48,12 @@ public interface DevelopmentOrderRepository extends JpaRepository<DevelopmentOrd
 
     // 완료되지 않은 현상 주문이 존재하는지 확인
     boolean existsByUserIdAndStatusNot(Long userId, DevelopmentOrderStatus status);
+
+    @Query("""
+        select coalesce(sum(d.rollCount), 0)
+        from DevelopmentOrder d
+        where d.photoLab.id = :photoLabId
+          and d.completedAt is null
+    """)
+    int sumUncompletedRollCount(@Param("photoLabId") Long photoLabId);
 }
