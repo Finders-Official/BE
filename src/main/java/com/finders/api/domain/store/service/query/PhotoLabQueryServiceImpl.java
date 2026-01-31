@@ -334,14 +334,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
     public PhotoLabRegionFilterResponse getPhotoLabCountsByRegion() {
         List<PhotoLabParentRegionCountResponse> parents = photoLabRepository.countPhotoLabsByTopRegion();
-        List<PhotoLabRegionItemResponse> regions = regionRepository.findAll().stream()
-                .filter(region -> region.getParentRegion() != null)
-                .map(region -> new PhotoLabRegionItemResponse(
-                        region.getId(),
-                        region.getRegionName(),
-                        region.getParentRegion().getId()
-                ))
-                .toList();
+        List<PhotoLabRegionItemResponse> regions = regionRepository.findAllRegionItems();
         return new PhotoLabRegionFilterResponse(parents, regions);
     }
 
