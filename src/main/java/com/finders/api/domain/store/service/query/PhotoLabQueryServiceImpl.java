@@ -10,7 +10,9 @@ import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
-import com.finders.api.domain.store.dto.response.PhotoLabRegionCountResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabRegionFilterResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabRegionItemResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabTag;
@@ -20,6 +22,7 @@ import com.finders.api.domain.store.repository.PhotoLabImageRepository;
 import com.finders.api.domain.store.repository.PhotoLabNoticeRepository;
 import com.finders.api.domain.store.repository.PhotoLabQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
+import com.finders.api.domain.store.repository.RegionRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.domain.terms.service.query.MemberAgreementQueryService;
@@ -63,6 +66,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final PostImageRepository postImageRepository;
     private final MemberAgreementQueryService memberAgreementQueryService;
     private final StorageService storageService;
+    private final RegionRepository regionRepository;
 
     // 커뮤니티 현상소 검색 관련
     private final PhotoLabRepository photoLabRepository;
@@ -328,8 +332,10 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     }
       
     @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
-    public List<PhotoLabRegionCountResponse> getPhotoLabCountsByRegion() {
-        return photoLabRepository.countPhotoLabsByTopRegion();
+    public PhotoLabRegionFilterResponse getPhotoLabCountsByRegion() {
+        List<PhotoLabParentRegionCountResponse> parents = photoLabRepository.countPhotoLabsByTopRegion();
+        List<PhotoLabRegionItemResponse> regions = regionRepository.findAllRegionItems();
+        return new PhotoLabRegionFilterResponse(parents, regions);
     }
 
 }
