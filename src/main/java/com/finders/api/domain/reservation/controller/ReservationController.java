@@ -61,8 +61,8 @@ public class ReservationController {
     }
 
     @Operation(
-            summary = "현상소 예약내역 조회",
-            description = "예약 상세 정보를 조회합니다."
+            summary = "현상소 예약내역 완료 조회",
+            description = "예약 완료 상세 정보를 조회합니다."
     )
     @GetMapping("/{photoLabId}/reservations/{reservationId}")
     public ApiResponse<ReservationResponse.Detail> getReservation(
