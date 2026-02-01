@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -47,8 +46,13 @@ public class PhotoLabDocumentService {
 
         validateFileName(fileName);
 
-        String objectPath = createDocumentObjectPath(photoLabId, documentType, fileName);
-        return storageService.getPresignedUrl(objectPath, false, null);
+        String documentTypeSegment = documentType.name().toLowerCase();
+        return storageService.generatePresignedUrl(
+                StoragePath.LAB_DOCUMENT,
+                photoLabId,
+                documentTypeSegment,
+                fileName
+        );
     }
 
     @Transactional
@@ -102,10 +106,5 @@ public class PhotoLabDocumentService {
         }
     }
 
-    private String createDocumentObjectPath(Long photoLabId, DocumentType documentType, String fileName) {
-        String uniqueFileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
-        String documentTypeSegment = documentType.name().toLowerCase();
-        return StoragePath.LAB_DOCUMENT.format(photoLabId, documentTypeSegment, uniqueFileName);
-    }
 }
 

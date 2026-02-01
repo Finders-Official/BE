@@ -80,6 +80,18 @@ public class GcsStorageService implements StorageService {
         return getPresignedUrl(objectPath, storagePath.isPublic(), null);
     }
 
+    // 단건 업로드 경로 생성 및 Presigned URL 발급 (subPath 포함)
+    @Override
+    public StorageResponse.PresignedUrl generatePresignedUrl(
+            StoragePath storagePath,
+            Long domainId,
+            String subPath,
+            String originalFileName
+    ) {
+        String objectPath = createUniquePath(storagePath, domainId, subPath, originalFileName);
+        return getPresignedUrl(objectPath, storagePath.isPublic(), null);
+    }
+
     // 벌크 업로드 경로 생성 및 Presigned URL 발급
     @Override
     public List<StorageResponse.PresignedUrl> generateBulkPresignedUrls(StoragePath storagePath, Long domainId, List<String> fileNames) {
@@ -312,6 +324,11 @@ public class GcsStorageService implements StorageService {
     private String createUniquePath(StoragePath storagePath, Long domainId, String fileName) {
         String uniqueFileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
         return storagePath.format(domainId, uniqueFileName);
+    }
+
+    private String createUniquePath(StoragePath storagePath, Long domainId, String subPath, String fileName) {
+        String uniqueFileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
+        return storagePath.format(domainId, subPath, uniqueFileName);
     }
 
     private void validateSignerInitialized() {

@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -109,7 +108,7 @@ public class PhotoQueryServiceImpl implements PhotoQueryService {
                 scannedPhotoRepository.findPreviewByOrderIds(orderIds, PREVIEW_LIMIT);
 
         List<String> keys = previews.stream()
-                .map(ScanPreviewProjection::getImageKey)
+                .map(ScanPreviewProjection::getObjectPath)
                 .toList();
 
         Map<String, StorageResponse.SignedUrl> signedMap =
@@ -117,7 +116,7 @@ public class PhotoQueryServiceImpl implements PhotoQueryService {
 
         Map<Long, List<String>> previewUrlMap = new HashMap<>();
         for (ScanPreviewProjection p : previews) {
-            StorageResponse.SignedUrl signed = signedMap.get(p.getImageKey());
+            StorageResponse.SignedUrl signed = signedMap.get(p.getObjectPath());
             if (signed == null) continue;
 
             previewUrlMap.computeIfAbsent(p.getOrderId(), k -> new ArrayList<>())

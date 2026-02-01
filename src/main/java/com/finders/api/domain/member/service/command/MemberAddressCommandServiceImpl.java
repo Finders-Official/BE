@@ -6,6 +6,7 @@ import com.finders.api.domain.member.entity.MemberAddress;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberAddressRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
+import com.finders.api.domain.member.service.query.MemberUserQueryService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberAddressCommandServiceImpl implements MemberAddressCommandService {
 
     private final MemberAddressRepository memberAddressRepository;
-    private final MemberUserRepository memberUserRepository;
+
+    private final MemberUserQueryService memberUserQueryService;
 
     @Override
     public MemberAddressResponse.AddressDetail createAddress(Long memberId, MemberAddressRequest.Create request) {
-        MemberUser user = memberUserRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        MemberUser user = memberUserQueryService.getActiveMember(memberId);
 
         // 첫 번째 배송지인지 확인
         boolean isFirstAddress = !memberAddressRepository.existsByUserId(memberId);

@@ -85,6 +85,7 @@ oauth2:
   kakao:
     client-id: ${KAKAO_CLIENT_ID:}
     client-secret: ${KAKAO_CLIENT_SECRET:}
+    admin-key: ${KAKAO_ADMIN_KEY:}
     redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:5173/auth/kakao/callback}
   apple:
     client-id: ${APPLE_CLIENT_ID:}

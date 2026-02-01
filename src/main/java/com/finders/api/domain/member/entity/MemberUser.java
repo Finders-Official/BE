@@ -1,5 +1,6 @@
 package com.finders.api.domain.member.entity;
 
+import com.finders.api.domain.member.enums.MemberStatus;
 import com.finders.api.domain.member.enums.MemberType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -22,7 +24,7 @@ import java.time.LocalDateTime;
 @PrimaryKeyJoinColumn(name = "member_id")
 public class MemberUser extends Member {
 
-    @Column(name = "nickname", nullable = false, length = 20)
+    @Column(name = "nickname", nullable = false, length = 100)
     private String nickname;
 
     @Column(name = "profile_image", length = 500)
@@ -90,5 +92,27 @@ public class MemberUser extends Member {
     public int addTokens(int amount) {
         this.tokenBalance += amount;
         return this.tokenBalance;
+    }
+
+    public void withdraw() {
+        super.deactivate();
+        this.nickname = "withdrawn_" + UUID.randomUUID().toString();
+    }
+
+    // 탈퇴 후 실행될 개인정보 익명화
+    @Override
+    public void anonymize() {
+        super.anonymize();
+        this.profileImage = null;
+        this.tokenBalance = 0;
+        this.lastTokenRefreshAt = null;
+    }
+
+    // 상태가 탈퇴인 경우 무조건 "알 수 없음"을 반환
+    public String getNickname() {
+        if (this.getStatus() == MemberStatus.WITHDRAWN) {
+            return "알 수 없음";
+        }
+        return this.nickname;
     }
 }

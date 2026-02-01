@@ -1,5 +1,6 @@
 package com.finders.api.domain.store.repository;
 
+import com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.enums.PhotoLabStatus;
 import java.util.List;
@@ -50,4 +51,16 @@ public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
             @Param("lng") Double lng,
             @Param("locationAgreed") boolean locationAgreed
     );
+
+    @Query("select new com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse(" +
+            "cast(coalesce(pr.id, r.id) as long), " +
+            "coalesce(pr.regionName, r.regionName), " +
+            "count(l)) " +
+            "from PhotoLab l " +
+            "join l.region r " +
+            "left join r.parentRegion pr " +
+            "where l.status = com.finders.api.domain.store.enums.PhotoLabStatus.ACTIVE " +
+            "group by cast(coalesce(pr.id, r.id) as long), coalesce(pr.regionName, r.regionName) " +
+            "order by cast(coalesce(pr.id, r.id) as long)")
+    List<PhotoLabParentRegionCountResponse> countPhotoLabsByTopRegion();
 }

@@ -87,6 +87,13 @@ public class PhotoLab extends BaseEntity {
     @Column(name = "qr_code_url", length = 500)
     private String qrCodeUrl;
 
+    @Column(name = "load_base_roll", nullable = false)
+    private Integer loadBaseRoll;
+
+    @Column(name = "load_add_minutes", nullable = false)
+    private Integer loadAddMinutes;
+
+
     @Builder
     private PhotoLab(
             MemberOwner owner,
@@ -106,7 +113,9 @@ public class PhotoLab extends BaseEntity {
             PhotoLabStatus status,
             Boolean isDeliveryAvailable,
             Integer maxReservationsPerHour,
-            String qrCodeUrl
+            String qrCodeUrl,
+            Integer loadBaseRoll,
+            Integer loadAddMinutes
     ) {
         this.owner = owner;
         this.region = region;
@@ -126,5 +135,7 @@ public class PhotoLab extends BaseEntity {
         this.isDeliveryAvailable = isDeliveryAvailable != null && isDeliveryAvailable;
         this.maxReservationsPerHour = maxReservationsPerHour != null ? maxReservationsPerHour : 3;
         this.qrCodeUrl = qrCodeUrl;
+        this.loadBaseRoll = loadBaseRoll != null ? loadBaseRoll : 1;
+        this.loadAddMinutes = loadAddMinutes != null ? loadAddMinutes : 120;
     }
 }

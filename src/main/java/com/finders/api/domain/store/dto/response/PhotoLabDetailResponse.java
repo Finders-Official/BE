@@ -14,6 +14,8 @@ public class PhotoLabDetailResponse {
             List<String> tags,
             String address,
             String addressDetail,
+            Double latitude,
+            Double longitude,
             Double distanceKm,
             boolean isFavorite,
             Integer workCount,

@@ -63,7 +63,62 @@ gsutil ls gs://finders-private
 | 환경 | 인증 방법 | 설정 |
 |------|----------|------|
 | **로컬 개발** | ADC | 위의 `gcloud auth application-default login` 실행 |
-| **GCP 서버** | 자동 | 설정 필요 없음 |
+| **GCP 서버** | VM 서비스 계정 | 아래 "GCE VM 설정" 참고 |
+
+---
+
+## GCE VM 설정 (서버 배포 시 필수!)
+
+GCE VM에서 GCS Presigned URL(Signed URL)을 생성하려면 추가 설정이 필요합니다.
+
+### 1. OAuth Scope 설정
+
+VM 생성 시 또는 수정 시 다음 scope가 필요합니다:
+
+| Scope | 설명 |
+|-------|------|
+| `https://www.googleapis.com/auth/cloud-platform` | 모든 GCP API (권장) |
+| `https://www.googleapis.com/auth/iam` | IAM API만 (최소 권한) |
+
+#### GCP Console에서 설정
+1. **Compute Engine → VM 인스턴스 → [인스턴스 선택]**
+2. **중지** (scope 변경은 VM 중지 필요)
+3. **수정 → Access scopes**
+4. "Allow full access to all Cloud APIs" 선택 또는
+5. "Set access for each API" → **Cloud IAM** → **Enabled**
+6. **저장 → 시작**
+
+#### gcloud CLI로 설정
+```bash
+# VM 중지
+gcloud compute instances stop [VM_NAME] --zone=[ZONE]
+
+# Scope 변경
+gcloud compute instances set-service-account [VM_NAME] \
+  --zone=[ZONE] \
+  --scopes=cloud-platform
+
+# VM 시작
+gcloud compute instances start [VM_NAME] --zone=[ZONE]
+```
+
+### 2. IAM 권한 설정
+
+서비스 계정이 **자기 자신을 impersonate** 할 수 있어야 합니다:
+
+```bash
+# 서비스 계정에 TokenCreator 역할 부여 (self-impersonation)
+gcloud iam service-accounts add-iam-policy-binding \
+  [SERVICE_ACCOUNT_EMAIL] \
+  --member="serviceAccount:[SERVICE_ACCOUNT_EMAIL]" \
+  --role="roles/iam.serviceAccountTokenCreator"
+```
+
+### 체크리스트 (GCE 배포)
+
+- [ ] VM에 `cloud-platform` 또는 `iam` scope 설정
+- [ ] 서비스 계정에 `iam.serviceAccountTokenCreator` 역할 부여 (self-impersonation)
+- [ ] `GCS_SERVICE_ACCOUNT_EMAIL` 환경변수 설정
 
 ---
 
@@ -94,8 +149,66 @@ https://storage.googleapis.com/finders-private/orders/456/scan.jpg?X-Goog-Signat
 
 ## 체크리스트
 
+### 로컬 개발
 - [ ] gcloud CLI 설치 완료
 - [ ] `gcloud auth login` 실행
 - [ ] `gcloud config set project project-37afc2aa-d3d3-4a1a-8cd` 실행
 - [ ] `gcloud auth application-default login` 실행
 - [ ] `gsutil ls gs://finders-public` 접근 확인
+
+### GCE 서버 배포
+- [ ] VM OAuth Scope에 `cloud-platform` 또는 `iam` 포함
+- [ ] 서비스 계정에 `iam.serviceAccountTokenCreator` 역할 (self-impersonation)
+- [ ] `GCS_SERVICE_ACCOUNT_EMAIL` 환경변수 설정
+
+---
+
+## 트러블슈팅
+
+### Presigned URL 생성 시 500 에러
+
+#### 증상
+```json
+{
+  "success": false,
+  "code": "COMMON_500",
+  "message": "서버 내부 오류가 발생했습니다."
+}
+```
+
+#### 원인 1: OAuth Scope 부족
+```
+Caused by: java.io.IOException: Error code 403 trying to sign provided bytes: 
+Request had insufficient authentication scopes.
+```
+
+**해결**: VM에 `cloud-platform` 또는 `iam` scope 추가 (위의 "GCE VM 설정" 참고)
+
+#### 원인 2: IAM 권한 부족
+```
+Caused by: com.google.api.client.googleapis.json.GoogleJsonResponseException: 
+403 Forbidden - The caller does not have permission
+```
+
+**해결**: 서비스 계정에 `iam.serviceAccountTokenCreator` 역할 부여
+```bash
+gcloud iam service-accounts add-iam-policy-binding \
+  [SERVICE_ACCOUNT_EMAIL] \
+  --member="serviceAccount:[SERVICE_ACCOUNT_EMAIL]" \
+  --role="roles/iam.serviceAccountTokenCreator"
+```
+
+#### 원인 3: Signer 초기화 실패
+서버 시작 로그에서 확인:
+```
+[GcsStorageService.initSigner] Signed URL 생성 불가: serviceAccountEmail 미설정
+```
+
+**해결**: `GCS_SERVICE_ACCOUNT_EMAIL` 환경변수 설정
+
+### 현재 VM Scope 확인 방법
+```bash
+gcloud compute instances describe [VM_NAME] \
+  --zone=[ZONE] \
+  --format="yaml(serviceAccounts)"
+```

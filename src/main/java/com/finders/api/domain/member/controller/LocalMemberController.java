@@ -1,5 +1,8 @@
 package com.finders.api.domain.member.controller;
 
+import com.finders.api.domain.member.entity.Member;
+import com.finders.api.domain.member.repository.MemberRepository;
+import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.SuccessCode;
@@ -15,27 +18,22 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/dev")
 @RequiredArgsConstructor
-@Profile("!local")
-public class ProdDevMemberController {
+@Profile("local")
+public class LocalMemberController {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final MemberRepository memberRepository;
 
-    @Value("${dev.secret-key:}")
-    private String devSecretKey;
-
-
-    @Operation(summary = "서버용 토큰 발급", description = "서버 환경에서는 반드시 SecretKey 헤더에 보안 키를 포함해야 합니다.")
+    @Operation(summary = "로컬 개발용 토큰 발급", description = "로컬 환경에서는 보안 키 없이 ID를 입력하여 토큰을 발급받습니다. 모든 role(USER, OWNER, ADMIN) 지원.")
     @GetMapping("/login")
     public ApiResponse<String> devLogin(
-            @RequestHeader("SecretKey") String secretKey,
             @RequestParam Long memberId
     ) {
-        // 보안 키 검증 (설정값이 비어있거나 틀리면 거부)
-        if (devSecretKey.isEmpty() || !devSecretKey.equals(secretKey)) {
-            return ApiResponse.error(ErrorCode.UNAUTHORIZED, "보안 키가 틀렸습니다.");
-        }
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        String token = jwtTokenProvider.createAccessToken(memberId, "USER");
+        String token = jwtTokenProvider.createAccessToken(memberId, member.getRole().name());
+
         return ApiResponse.success(SuccessCode.OK, "AccessToken: " + token);
     }
 }

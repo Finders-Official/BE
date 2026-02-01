@@ -1,7 +1,10 @@
 package com.finders.api.domain.reservation.repository;
 
 import com.finders.api.domain.reservation.entity.Reservation;
+import com.finders.api.domain.reservation.enums.ReservationStatus;
 import jakarta.persistence.LockModeType;
+
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -41,4 +44,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("photoLabId") Long photoLabId,
             @Param("memberId") Long memberId
     );
+
+    // 특정 회원의 예약 중 지정된 상태들에 해당하는 예약이 있는지 확인
+    boolean existsByUserIdAndStatusIn(Long userId, Collection<ReservationStatus> statuses);
 }

@@ -48,6 +48,7 @@ public enum SuccessCode implements BaseCode {
     // ========================================
     STORE_FOUND(HttpStatus.OK, "STORE_200", "현상소 조회에 성공했습니다."),
     STORE_LIST_FOUND(HttpStatus.OK, "STORE_200", "현상소 목록 조회에 성공했습니다."),
+    STORE_FAVORITE_LIST_FOUND(HttpStatus.OK, "STORE_200", "관심 현상소 목록 조회가 완료되었습니다."),
 
     // ========================================
     // Reservation (예약)
