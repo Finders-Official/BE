@@ -41,7 +41,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -157,14 +156,14 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
             return Collections.emptyMap();
         }
 
-        Map<Long, List<String>> result = new HashMap<>();
-        for (PhotoLabImage image : images) {
-            Long photoLabId = image.getPhotoLab().getId();
-            String imageUrl = storageService.getPublicUrl(image.getObjectPath());
-            result.computeIfAbsent(photoLabId, key -> new java.util.ArrayList<>())
-                    .add(imageUrl);
-        }
-        return result;
+        return images.stream()
+                .collect(Collectors.groupingBy(
+                        image -> image.getPhotoLab().getId(),
+                        Collectors.mapping(
+                                image -> storageService.getPublicUrl(image.getObjectPath()),
+                                Collectors.toList()
+                        )
+                ));
     }
 
     private List<String> buildImageUrls(Long photoLabId) {
