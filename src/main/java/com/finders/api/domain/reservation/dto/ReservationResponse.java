@@ -78,6 +78,8 @@ public class ReservationResponse {
                     .latitude(reservation.getPhotoLab().getLatitude())
                     .longitude(reservation.getPhotoLab().getLongitude())
                     .estimatedCompletion(completedAt)
+                    .address(reservation.getPhotoLab().getAddress())
+                    .addressDetail(reservation.getPhotoLab().getAddressDetail())
                     .build();
         }
     }
