@@ -123,6 +123,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND));
     }
 
+    private final com.finders.api.infra.discord.DiscordWebhookService discordWebhookService;
+
+    public GlobalExceptionHandler(com.finders.api.infra.discord.DiscordWebhookService discordWebhookService) {
+        this.discordWebhookService = discordWebhookService;
+    }
+
     /**
      * 기타 모든 예외 처리
      */
@@ -132,6 +138,9 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         log.error("[UnhandledException] {} - {}", request.getRequestURI(), e.getMessage(), e);
+
+        // Discord 알림 전송 (비동기)
+        discordWebhookService.sendErrorNotification(e, request);
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())

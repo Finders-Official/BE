@@ -65,3 +65,10 @@ springdoc:
 # Sendon
 sendon:
   is-test: false
+
+# ========================================
+# Discord (에러 알림 활성화)
+# ========================================
+discord:
+  enabled: true  # 운영 환경에서 활성화
+  webhook-url: ${DISCORD_WEBHOOK_URL}

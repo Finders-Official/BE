@@ -169,6 +169,13 @@ sentry:
     minimum-breadcrumb-level: info  # Breadcrumb은 INFO 레벨부터
 
 # ========================================
+# Discord 설정 (에러 알림)
+# ========================================
+discord:
+  webhook-url: ${DISCORD_WEBHOOK_URL:}
+  enabled: false  # local/dev 환경에서는 비활성화 (prod에서만 활성화)
+
+# ========================================
 # Logging 설정
 # ========================================
 logging:
