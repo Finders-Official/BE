@@ -54,8 +54,11 @@ public class ReservationResponse {
             String photoLabNotice,
             String memo,
             BigDecimal latitude,
-            BigDecimal longtitude,
-            LocalDateTime compltedAt
+            BigDecimal longitude,
+            LocalDateTime estimatedCompletion,
+            String address,
+            String addressDetail
+
     ) {
         public static Detail from(Reservation reservation, PhotoLabNotice photoLabNotice, LocalDateTime completedAt) {
             List<String> taskTypes = new ArrayList<>();
@@ -73,8 +76,10 @@ public class ReservationResponse {
                     .photoLabNotice(photoLabNotice.getContent())
                     .memo(reservation.getRequestMessage())
                     .latitude(reservation.getPhotoLab().getLatitude())
-                    .longtitude(reservation.getPhotoLab().getLongitude())
-                    .compltedAt(completedAt)
+                    .longitude(reservation.getPhotoLab().getLongitude())
+                    .estimatedCompletion(completedAt)
+                    .address(reservation.getPhotoLab().getAddress())
+                    .addressDetail(reservation.getPhotoLab().getAddressDetail())
                     .build();
         }
     }
