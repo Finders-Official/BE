@@ -2,7 +2,9 @@ package com.finders.api.global.exception;
 
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.discord.DiscordWebhookService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -17,16 +19,13 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * 전역 예외 처리기
- */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-    /**
-     * CustomException 처리
-     */
+    private final DiscordWebhookService discordWebhookService;
+
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Void>> handleCustomException(
             CustomException e,
@@ -39,9 +38,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(e.getErrorCode(), e.getMessage()));
     }
 
-    /**
-     * Validation 예외 처리 (@Valid)
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(
             MethodArgumentNotValidException e,
@@ -61,9 +57,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.INVALID_INPUT, errors));
     }
 
-    /**
-     * 필수 파라미터 누락 예외
-     */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingParameterException(
             MissingServletRequestParameterException e,
@@ -77,9 +70,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.MISSING_PARAMETER, message));
     }
 
-    /**
-     * 파라미터 타입 불일치 예외
-     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatchException(
             MethodArgumentTypeMismatchException e,
@@ -93,9 +83,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.TYPE_MISMATCH, message));
     }
 
-    /**
-     * 허용되지 않은 HTTP 메서드 예외
-     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodNotAllowedException(
             HttpRequestMethodNotSupportedException e,
@@ -108,9 +95,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.METHOD_NOT_ALLOWED));
     }
 
-    /**
-     * 404 Not Found 예외
-     */
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotFoundException(
             NoHandlerFoundException e,
@@ -123,15 +107,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND));
     }
 
-    private final com.finders.api.infra.discord.DiscordWebhookService discordWebhookService;
-
-    public GlobalExceptionHandler(com.finders.api.infra.discord.DiscordWebhookService discordWebhookService) {
-        this.discordWebhookService = discordWebhookService;
-    }
-
-    /**
-     * 기타 모든 예외 처리
-     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(
             Exception e,
@@ -139,8 +114,11 @@ public class GlobalExceptionHandler {
     ) {
         log.error("[UnhandledException] {} - {}", request.getRequestURI(), e.getMessage(), e);
 
-        // Discord 알림 전송 (비동기)
-        discordWebhookService.sendErrorNotification(e, request);
+        try {
+            discordWebhookService.sendErrorNotification(e, request.getMethod(), request.getRequestURI());
+        } catch (Exception ignored) {
+            log.warn("[DiscordWebhook] Failed to send notification", ignored);
+        }
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())

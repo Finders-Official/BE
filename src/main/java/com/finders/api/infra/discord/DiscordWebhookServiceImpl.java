@@ -1,7 +1,6 @@
 package com.finders.api.infra.discord;
 
 import com.finders.api.infra.discord.dto.DiscordMessage;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -10,125 +9,114 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Discord Webhook 알림 서비스 구현체
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DiscordWebhookServiceImpl implements DiscordWebhookService {
 
-    private final WebClient discordWebClient;
+    private static final int EMBED_COLOR_ERROR = 0xE74C3C;
+    private static final int STACK_TRACE_MAX_LINES = 5;
+    private static final int FIELD_MAX_LENGTH = 900;
+    private static final long DEDUPE_WINDOW_MS = 60_000;
+    private static final int MAX_DEDUPE_ENTRIES = 100;
+
+    private final WebClient webClient;
     private final DiscordProperties properties;
 
-    // 중복 알림 방지를 위한 최근 에러 추적 (1분 내 동일 에러 스킵)
-    private final Set<String> recentErrors = ConcurrentHashMap.newKeySet();
+    private final ConcurrentHashMap<String, Long> recentErrors = new ConcurrentHashMap<>();
 
-    public void sendErrorNotification(Exception exception, HttpServletRequest request) {
+    @Override
+    public void sendErrorNotification(Exception exception, String httpMethod, String requestUri) {
         if (!properties.isEnabled()) {
             return;
         }
 
         if (properties.webhookUrl() == null || properties.webhookUrl().isBlank()) {
-            log.warn("[DiscordWebhookClient] Webhook URL is not configured");
+            log.warn("[DiscordWebhook] Webhook URL is not configured");
             return;
         }
 
-        // 중복 에러 체크
-        String errorKey = generateErrorKey(exception, request);
-        if (!recentErrors.add(errorKey)) {
-            log.debug("[DiscordWebhookClient] Duplicate error skipped: {}", errorKey);
+        String errorKey = exception.getClass().getName() + ":" + requestUri;
+        if (isDuplicate(errorKey)) {
+            log.debug("[DiscordWebhook] Duplicate error skipped: {}", errorKey);
             return;
         }
 
-        // 1분 후 중복 체크 해제
-        Thread.ofVirtual().start(() -> {
-            try {
-                Thread.sleep(60000);
-                recentErrors.remove(errorKey);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
+        DiscordMessage message = buildMessage(exception, httpMethod, requestUri);
 
-        // 비동기 전송 (Virtual Thread)
-        Thread.ofVirtual().start(() -> {
-            try {
-                sendWebhookRequest(exception, request);
-            } catch (Exception e) {
-                log.error("[DiscordWebhookClient] Failed to send Discord notification: {}", e.getMessage());
-            }
-        });
-    }
-
-    private void sendWebhookRequest(Exception exception, HttpServletRequest request) {
-        DiscordMessage.Embed embed = buildEmbed(exception, request);
-        DiscordMessage message = new DiscordMessage(embed);
-
-        discordWebClient.post()
+        webClient.post()
                 .uri(properties.webhookUrl())
                 .bodyValue(message)
                 .retrieve()
                 .toBodilessEntity()
                 .subscribe(
-                        response -> log.debug("[DiscordWebhookClient] Notification sent successfully"),
-                        error -> log.error("[DiscordWebhookClient] Failed to send webhook: {}", error.getMessage())
+                        response -> log.debug("[DiscordWebhook] Notification sent successfully"),
+                        error -> log.error("[DiscordWebhook] Failed to send webhook", error)
                 );
     }
 
-    private DiscordMessage.Embed buildEmbed(Exception exception, HttpServletRequest request) {
+    private boolean isDuplicate(String errorKey) {
+        long now = System.currentTimeMillis();
+
+        if (recentErrors.size() > MAX_DEDUPE_ENTRIES) {
+            recentErrors.entrySet().removeIf(entry -> now - entry.getValue() > DEDUPE_WINDOW_MS);
+        }
+
+        Long lastSeen = recentErrors.putIfAbsent(errorKey, now);
+        if (lastSeen == null) {
+            return false;
+        }
+
+        if (now - lastSeen > DEDUPE_WINDOW_MS) {
+            recentErrors.put(errorKey, now);
+            return false;
+        }
+
+        return true;
+    }
+
+    private DiscordMessage buildMessage(Exception exception, String httpMethod, String requestUri) {
         String exceptionName = exception.getClass().getSimpleName();
-        String message = exception.getMessage() != null ? exception.getMessage() : "No message";
-        String requestUri = request.getRequestURI();
-        String method = request.getMethod();
+        String exceptionMessage = exception.getMessage() != null ? exception.getMessage() : "No message";
 
-        List<DiscordMessage.Field> fields = new ArrayList<>();
-        fields.add(new DiscordMessage.Field("Exception", exceptionName, true));
-        fields.add(new DiscordMessage.Field("Method", method, true));
-        fields.add(new DiscordMessage.Field("URL", requestUri, false));
-        fields.add(new DiscordMessage.Field("Message", truncate(message, 1000), false));
+        List<DiscordMessage.Field> fields = List.of(
+                new DiscordMessage.Field("Exception", exceptionName, true),
+                new DiscordMessage.Field("Method", httpMethod, true),
+                new DiscordMessage.Field("URL", requestUri, false),
+                new DiscordMessage.Field("Message", truncate(exceptionMessage, FIELD_MAX_LENGTH), false),
+                new DiscordMessage.Field("Stack Trace", getStackTracePreview(exception), false)
+        );
 
-        // Stack trace (최상위 5줄만)
-        String stackTrace = getStackTracePreview(exception);
-        fields.add(new DiscordMessage.Field("Stack Trace", stackTrace, false));
-
-        return new DiscordMessage.Embed(
-                "🚨 서버 에러 발생",
+        DiscordMessage.Embed embed = new DiscordMessage.Embed(
+                "Server Error",
                 null,
-                15158332, // Red color
+                EMBED_COLOR_ERROR,
                 fields,
                 Instant.now()
         );
-    }
 
-    private String generateErrorKey(Exception exception, HttpServletRequest request) {
-        return exception.getClass().getName() + ":" + request.getRequestURI();
+        return new DiscordMessage(embed);
     }
 
     private String getStackTracePreview(Exception exception) {
         StringWriter sw = new StringWriter();
         exception.printStackTrace(new PrintWriter(sw));
-        String fullStack = sw.toString();
+        String fullStack = filterSensitiveInfo(sw.toString());
 
-        // 민감정보 필터링
-        String filtered = filterSensitiveInfo(fullStack);
-
-        // 첫 5줄만 추출
-        String[] lines = filtered.split("\n");
+        String[] lines = fullStack.split("\n");
         StringBuilder preview = new StringBuilder();
-        for (int i = 0; i < Math.min(5, lines.length); i++) {
+        for (int i = 0; i < Math.min(STACK_TRACE_MAX_LINES, lines.length); i++) {
             if (i > 0) preview.append("\n");
             preview.append(lines[i]);
         }
 
-        return truncate(preview.toString(), 1000);
+        return truncate(preview.toString(), FIELD_MAX_LENGTH);
     }
 
+    // regex: 민감정보 패턴 매칭 (password=xxx, token=xxx 등)
     private String filterSensitiveInfo(String stackTrace) {
         return stackTrace
                 .replaceAll("(?i)password[=:]\\s*\\S+", "password=***")
