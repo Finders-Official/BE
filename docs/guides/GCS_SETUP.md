@@ -1,8 +1,8 @@
 # GCS(Google Cloud Storage) 설정 가이드
 
-> 작성자: 스위트하트 김덕환
-> 작성일: 2026-01-03
 > 관련 이슈: #14
+>
+> **마지막 업데이트**: 2026-01-30
 
 ---
 
@@ -177,6 +177,7 @@ https://storage.googleapis.com/finders-private/orders/456/scan.jpg?X-Goog-Signat
     보안상 외부 노출이 안 되는 Private 버킷의 파일을 클라이언트에게 일시적으로 보여줄 때 사용 -> `getSignedUrl`
 4. 서버에서 데이터를 가공하여 저장할 때
     사용자를 거치지 않고 서버가 직접 파일을 생성하거나 수정해 저장할 때 사용 -> `uploadBytes`, `copyToPublic`
+
 ### GCE 서버 배포
 - [ ] VM OAuth Scope에 `cloud-platform` 또는 `iam` 포함
 - [ ] 서비스 계정에 `iam.serviceAccountTokenCreator` 역할 (self-impersonation)
