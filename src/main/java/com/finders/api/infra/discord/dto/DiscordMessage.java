@@ -3,9 +3,6 @@ package com.finders.api.infra.discord.dto;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Discord Embed 메시지 구조
- */
 public record DiscordMessage(
         List<Embed> embeds
 ) {
@@ -20,11 +17,6 @@ public record DiscordMessage(
             List<Field> fields,
             Instant timestamp
     ) {
-        public Embed {
-            if (color == 0) {
-                color = 15158332; // Default red color (#E74C3C)
-            }
-        }
     }
 
     public record Field(

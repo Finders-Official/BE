@@ -17,6 +17,6 @@ public record DiscordProperties(
     }
 
     public boolean isEnabled() {
-        return enabled != null && enabled;
+        return enabled;
     }
 }
