@@ -1,8 +1,8 @@
 package com.finders.api.domain.store.dto.response;
 
-public record PhotoLabRegionCountResponse(
+public record PhotoLabRegionItemResponse(
         Long regionId,
         String regionName,
-        Long photoLabCount
+        Long parentId
 ) {
 }
