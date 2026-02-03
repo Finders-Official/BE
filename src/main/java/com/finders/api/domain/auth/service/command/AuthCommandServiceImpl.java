@@ -85,6 +85,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             SignupTokenPayload payload = new SignupTokenPayload(
                     provider,
                     userInfo.providerId(),
+                    userInfo.accessToken(),
                     userInfo.name(),
                     userInfo.nickname(),
                     userInfo.profileImage(),
