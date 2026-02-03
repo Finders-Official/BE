@@ -29,7 +29,7 @@ public class KakaoTermsClient implements OAuthTermsClient {
     @Override
     public List<String> getAgreedTermsTags(String accessToken) {
         KakaoTermsResponse response = restClient.get()
-                .uri("https://kapi.kakao.com/v2/user/service_terms")
+                .uri("/v2/user/service_terms")
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
                 .onStatus(status -> status.value() == 401, (req, res) -> {
