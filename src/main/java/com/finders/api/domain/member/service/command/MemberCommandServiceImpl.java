@@ -142,7 +142,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 .findFirst()
                 .orElseThrow(() -> new CustomException(ErrorCode.AUTH_UNSUPPORTED_PROVIDER));
 
-        List<String> socialAgreedTags = targetClient.getAgreedTermsTags(payload.providerId());
+        List<String> socialAgreedTags = targetClient.getAgreedTermsTags(payload.accessToken());
         memberAgreementCommandService.saveAgreementsFromSocial(savedUser, payload.provider(), socialAgreedTags);
 
         // SocialAccount 연동 정보 저장
