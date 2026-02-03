@@ -19,8 +19,8 @@ public class LocalKakaoTermsClient implements OAuthTermsClient {
     }
 
     @Override
-    public List<String> getAgreedTermsTags(String providerId) {
-        log.info("[LocalKakaoTermsClient.getAgreedTermsTags] 로컬 모드로 가짜 약관 데이터를 반환합니다. ID: {}", providerId);
+    public List<String> getAgreedTermsTags(String accessToken) {
+        log.info("[LocalKakaoTermsClient.getAgreedTermsTags] 로컬 모드로 가짜 약관 데이터를 반환합니다. ID: {}", accessToken);
 
         return List.of(
                 "service_policy",
