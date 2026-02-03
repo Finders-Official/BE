@@ -54,9 +54,11 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         SocialProvider provider = parseProvider(request.provider());
 
         OAuthClient client = oAuthClientFactory.getOAuthClient(provider);
+
+        String socialAccessToken = request.accessToken();
         OAuthUserInfo userInfo = client.getUserInfo(request.accessToken());
 
-        return resolveSocialLogin(provider, userInfo);
+        return resolveSocialLogin(provider, userInfo, socialAccessToken);
     }
 
     // 카카오 인가 코드로 로그인
@@ -71,11 +73,11 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         OAuthUserInfo userInfo = client.getUserInfo(socialAccessToken);
 
         // 공통 로그인 로직 실행
-        return resolveSocialLogin(provider, userInfo);
+        return resolveSocialLogin(provider, userInfo, socialAccessToken);
     }
 
     // 신규/기존 회원 판별 및 응답 생성
-    private ApiResponse<?> resolveSocialLogin(SocialProvider provider, OAuthUserInfo userInfo) {
+    private ApiResponse<?> resolveSocialLogin(SocialProvider provider, OAuthUserInfo userInfo, String socialAccessToken) {
         SocialAccount socialAccount = socialAccountRepository
                 .findByProviderAndProviderId(provider, userInfo.providerId())
                 .orElse(null);
@@ -85,7 +87,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             SignupTokenPayload payload = new SignupTokenPayload(
                     provider,
                     userInfo.providerId(),
-                    userInfo.accessToken(),
+                    socialAccessToken,
                     userInfo.name(),
                     userInfo.nickname(),
                     userInfo.profileImage(),
