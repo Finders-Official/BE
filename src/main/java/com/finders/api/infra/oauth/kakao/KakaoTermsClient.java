@@ -33,11 +33,11 @@ public class KakaoTermsClient implements OAuthTermsClient {
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
                 .onStatus(status -> status.value() == 401, (req, res) -> {
-                    log.warn("[KakaoTermsClient] access token 무효");
+                    log.warn("[KakaoTermsClient.getAgreedTermsTags] access token 무효");
                     throw new CustomException(ErrorCode.KAKAO_ACCESS_TOKEN_INVALID);
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    log.error("[KakaoTermsClient] 카카오 서버 오류");
+                    log.error("[KakaoTermsClient.getAgreedTermsTags] 카카오 서버 오류");
                     throw new CustomException(ErrorCode.KAKAO_SERVER_ERROR);
                 })
                 .body(KakaoTermsResponse.class);
