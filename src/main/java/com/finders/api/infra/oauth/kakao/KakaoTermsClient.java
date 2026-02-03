@@ -32,13 +32,21 @@ public class KakaoTermsClient implements OAuthTermsClient {
                 .uri("https://kapi.kakao.com/v2/user/service_terms")
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("[KakaoTermsClient.getAgreedTermsTags] 약관 조회 실패");
-                    throw new CustomException(ErrorCode.KAKAO_TERMS_FETCH_FAILED);
+                .onStatus(status -> status.value() == 401, (req, res) -> {
+                    log.warn("[KakaoTermsClient] access token 무효");
+                    throw new CustomException(ErrorCode.KAKAO_ACCESS_TOKEN_INVALID);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    log.error("[KakaoTermsClient] 카카오 서버 오류");
+                    throw new CustomException(ErrorCode.KAKAO_SERVER_ERROR);
                 })
                 .body(KakaoTermsResponse.class);
 
-        if (response == null || response.serviceTerms() == null) {
+        if (response == null) {
+            throw new CustomException(ErrorCode.KAKAO_TERMS_FETCH_FAILED);
+        }
+
+        if (response.serviceTerms() == null) {
             return List.of();
         }
 
