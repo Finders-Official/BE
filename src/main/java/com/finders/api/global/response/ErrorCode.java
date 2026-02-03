@@ -153,7 +153,8 @@ public enum ErrorCode implements BaseCode {
     EXTERNAL_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL_503", "외부 API 호출에 실패했습니다."),
     KAKAO_TERMS_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "KAKAO_502", "카카오 약관 동의 내역을 불러오는 중 오류가 발생했습니다."),
     KAKAO_UNLINK_FAILED(HttpStatus.BAD_REQUEST, "KAKAO_500", "카카오 연결 끊기 중 오류가 발생했습니다."),
-
+    KAKAO_ACCESS_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "KAKAO_401", "카카오 인증 정보가 만료되었거나 유효하지 않습니다."),
+    KAKAO_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "KAKAO_502", "카카오 서버 오류로 약관 정보를 불러오지 못했습니다."),
     // ========================================
     // Storage (GCS)
     // ========================================
