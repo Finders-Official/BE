@@ -1,5 +1,6 @@
 package com.finders.api.domain.community.service.query;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finders.api.domain.community.dto.response.PostCacheDTO;
 import com.finders.api.domain.community.dto.response.PostResponse;
 import com.finders.api.domain.community.entity.Post;
@@ -42,6 +43,7 @@ public class PostQueryServiceImpl implements PostQueryService {
     private final MemberUserRepository memberUserRepository;
     private final StorageService storageService;
     private final PopularPostCacheService popularPostCacheService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public PostResponse.PostDetailResDTO getPostDetail(Long postId, Long memberId) {
@@ -101,31 +103,9 @@ public class PostQueryServiceImpl implements PostQueryService {
     private List<PostCacheDTO> toPostCacheDTOs(List<?> raw) {
         if (raw == null || raw.isEmpty()) return List.of();
 
-        Object first = raw.get(0);
-        if (first instanceof PostCacheDTO) {
-            @SuppressWarnings("unchecked")
-            List<PostCacheDTO> typed = (List<PostCacheDTO>) raw;
-            return typed;
-        }
-
         return raw.stream()
-                .map(this::toPostCacheDTO)
+                .map(o -> objectMapper.convertValue(o, PostCacheDTO.class))
                 .toList();
-    }
-
-    private PostCacheDTO toPostCacheDTO(Object o) {
-        if (o instanceof PostCacheDTO dto) return dto;
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> map = (Map<String, Object>) o;
-
-        return PostCacheDTO.builder()
-                .id(((Number) map.get("id")).longValue())
-                .title((String) map.get("title"))
-                .likeCount(map.get("likeCount") == null ? 0 : ((Number) map.get("likeCount")).intValue())
-                .commentCount(map.get("commentCount") == null ? 0 : ((Number) map.get("commentCount")).intValue())
-                .objectPath((String) map.get("objectPath"))
-                .build();
     }
 
     @Override
