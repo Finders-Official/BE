@@ -15,7 +15,7 @@ public class PopularPostCacheService {
     private final PostQueryRepository postQueryRepository;
 
     @Cacheable(value = "popularPosts", key = "'home_top10'")
-    public List<PostCacheDTO> getPopularPosts() {
+    public List<?> getPopularPosts() {
         return postQueryRepository.findTop10PopularPosts();
     }
 }
