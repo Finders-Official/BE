@@ -58,4 +58,16 @@ public abstract class Member extends BaseEntity {
     public void updatePhone(String phone) {
         this.phone = phone;
     }
+
+    protected void deactivate() {
+        this.status = MemberStatus.WITHDRAWN;
+        super.softDelete();
+        this.refreshTokenHash = null;
+    }
+
+    protected void anonymize() {
+        this.name = "is_deleted";   // 마스킹 처리
+        this.email = null;
+        this.phone = null;
+    }
 }

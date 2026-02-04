@@ -7,6 +7,7 @@ import lombok.Builder;
 public record OAuthUserInfo(
         SocialProvider provider,
         String providerId,
+        String accessToken,
         String name,
         String nickname,
         String profileImage,

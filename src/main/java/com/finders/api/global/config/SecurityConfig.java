@@ -57,17 +57,14 @@ public class SecurityConfig {
             "/auth/owner/**",
             // 토큰 재발급
             "/auth/reissue",
-            // 로그아웃
-            "/auth/logout",
             // Webhooks (외부 서비스 콜백)
             "/webhooks/**",
-            // TODO: Auth API 구현 후 제거 - 개발 테스트용
-            "/restorations/**",
             // HM-010 커뮤니티 사진 미리 보기
             "/posts/preview",
+            // HM-010 인기 현상소 미리보기
+            "/photo-labs/popular",
             // 개발용 토큰 발급
-            "/dev/login",
-            "/owner/**"
+            "/dev/login"
     };
 
     @Bean
@@ -103,7 +100,12 @@ public class SecurityConfig {
                         // GUEST만 허용
                         .requestMatchers("/members/social/signup/complete").hasRole("GUEST")
                         // USER만 허용
-                        .anyRequest().hasRole("USER")
+                        .requestMatchers("/users/**").hasRole("USER")
+                        // OWNER만 허용
+                        .requestMatchers("/owner/**").hasRole("OWNER")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // USER, OWNER 모두 허용 (인증된 사용자)
+                        .anyRequest().authenticated()
                 )
 
                 // JWT 필터 추가

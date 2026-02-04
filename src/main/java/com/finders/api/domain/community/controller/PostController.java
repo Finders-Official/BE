@@ -45,6 +45,19 @@ public class PostController {
     private final SearchHistoryCommandService searchHistoryCommandService;
     private final SearchHistoryQueryService searchHistoryQueryService;
 
+    @Operation(summary = "내가 쓴 글 목록 조회", description = "로그인한 사용자가 작성한 게시글 목록을 조회합니다.")
+    @GetMapping("/me")
+    public ApiResponse<PostResponse.PostPreviewListDTO> getMyPosts(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam(name = "page", defaultValue = "0") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size
+    ) {
+        return ApiResponse.success(
+                SuccessCode.POST_FOUND,
+                postQueryService.getMyPosts(authUser.memberId(), page, size)
+        );
+    }
+
     // 게시글 관련
     @Operation(summary = "피드 목록 조회")
     @GetMapping
@@ -142,7 +155,8 @@ public class PostController {
     public ApiResponse<PostResponse.PostPreviewListDTO> getPopularPosts(
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(authUser.memberId()));
+        Long memberId = (authUser != null) ? authUser.memberId() : null;
+        return ApiResponse.success(SuccessCode.POST_FOUND, postQueryService.getPopularPosts(memberId));
     }
 
     // 커뮤니티 게시물 검색
@@ -199,5 +213,16 @@ public class PostController {
             @RequestParam(name = "keyword") String keyword
     ) {
         return ApiResponse.success(SuccessCode.OK, postQueryService.getAutocompleteSuggestions(keyword));
+    }
+
+    // 게시물 좋아요 목록
+    @Operation(summary = "관심 게시글 목록 조회", description = "좋아요 한 게시물 목록을 조회합니다.")
+    @GetMapping("/likes")
+    public ApiResponse<PostResponse.PostPreviewListDTO> likePost(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        return ApiResponse.success(SuccessCode.OK, postQueryService.getPostLikesList(authUser.memberId(), page, size));
     }
 }
