@@ -7,6 +7,7 @@ import com.finders.api.domain.community.enums.PostSearchFilter;
 import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostQueryRepository;
 import com.finders.api.domain.community.repository.PostRepository;
+import com.finders.api.domain.community.service.PopularPostCacheService;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.global.exception.CustomException;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -39,6 +41,7 @@ public class PostQueryServiceImpl implements PostQueryService {
     private final PostQueryRepository postQueryRepository;
     private final MemberUserRepository memberUserRepository;
     private final StorageService storageService;
+    private final PopularPostCacheService popularPostCacheService;
 
     @Override
     public PostResponse.PostDetailResDTO getPostDetail(Long postId, Long memberId) {
@@ -71,7 +74,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     @Override
     public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
-        List<PostCacheDTO> cachedPosts = postQueryRepository.findTop10PopularPosts();
+        List<PostCacheDTO> cachedPosts = toPostCacheDTOs(popularPostCacheService.getPopularPosts());
 
         Set<Long> likedPostIds;
         if (memberId != null && !cachedPosts.isEmpty()) {
@@ -93,6 +96,36 @@ public class PostQueryServiceImpl implements PostQueryService {
                 })
                 .toList();
         return PostResponse.PostPreviewListDTO.from(previews);
+    }
+
+    private List<PostCacheDTO> toPostCacheDTOs(List<?> raw) {
+        if (raw == null || raw.isEmpty()) return List.of();
+
+        Object first = raw.get(0);
+        if (first instanceof PostCacheDTO) {
+            @SuppressWarnings("unchecked")
+            List<PostCacheDTO> typed = (List<PostCacheDTO>) raw;
+            return typed;
+        }
+
+        return raw.stream()
+                .map(this::toPostCacheDTO)
+                .toList();
+    }
+
+    private PostCacheDTO toPostCacheDTO(Object o) {
+        if (o instanceof PostCacheDTO dto) return dto;
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) o;
+
+        return PostCacheDTO.builder()
+                .id(((Number) map.get("id")).longValue())
+                .title((String) map.get("title"))
+                .likeCount(map.get("likeCount") == null ? 0 : ((Number) map.get("likeCount")).intValue())
+                .commentCount(map.get("commentCount") == null ? 0 : ((Number) map.get("commentCount")).intValue())
+                .objectPath((String) map.get("objectPath"))
+                .build();
     }
 
     @Override
