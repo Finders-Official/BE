@@ -1,5 +1,6 @@
 package com.finders.api.domain.community.service.query;
 
+import com.finders.api.domain.community.dto.response.PostCacheDTO;
 import com.finders.api.domain.community.dto.response.PostResponse;
 import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.enums.PostSearchFilter;
@@ -70,8 +71,28 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     @Override
     public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
-        List<Post> posts = postQueryRepository.findTop10PopularPosts();
-        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId));
+        List<PostCacheDTO> cachedPosts = postQueryRepository.findTop10PopularPosts();
+
+        Set<Long> likedPostIds;
+        if (memberId != null && !cachedPosts.isEmpty()) {
+            List<Long> postIds = cachedPosts.stream().map(PostCacheDTO::id).toList();
+            likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
+        } else {
+            likedPostIds = java.util.Collections.emptySet();
+        }
+
+        List<PostResponse.PostPreviewDTO> previews = cachedPosts.stream()
+                .map(dto -> {
+                    boolean isLiked = likedPostIds.contains(dto.id());
+
+                    String fullImageUrl = (dto.objectPath() != null)
+                            ? storageService.getPublicUrl(dto.objectPath())
+                            : null;
+
+                    return PostResponse.PostPreviewDTO.fromCache(dto, isLiked, fullImageUrl);
+                })
+                .toList();
+        return PostResponse.PostPreviewListDTO.from(previews);
     }
 
     @Override
@@ -162,5 +183,36 @@ public class PostQueryServiceImpl implements PostQueryService {
         }
 
         return SUFFIX_PATTERN.matcher(candidate).replaceAll("").trim();
+    }
+
+    @Override
+    public PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Integer page, Integer size) {
+        List<Post> posts = postQueryRepository.findByMemberId(memberId, page, size);
+
+        Long totalCount = postQueryRepository.countByMemberId(memberId);
+        boolean isLast = (long) (page + 1) * size >= totalCount;
+
+        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId), totalCount, isLast);
+    }
+
+    @Override
+    public PostResponse.PostPreviewListDTO getPostLikesList(Long memberId, Integer page, Integer size) {
+        List<Post> posts = postQueryRepository.findLikedPostsByMemberId(memberId, page, size);
+
+        Long totalCount = postQueryRepository.countMyLikedPosts(memberId);
+        boolean isLast = (long) (page + 1) * size >= totalCount;
+
+        List<PostResponse.PostPreviewDTO> previewDTOs = posts.stream()
+                .map(post -> {
+                    boolean isLiked = true;
+
+                    com.finders.api.domain.community.entity.PostImage firstImage =
+                            post.getPostImageList().isEmpty() ? null : post.getPostImageList().get(0);
+
+                    return PostResponse.PostPreviewDTO.from(post, isLiked, toPostImageResDTO(firstImage));
+                })
+                .toList();
+
+        return PostResponse.PostPreviewListDTO.from(previewDTOs, totalCount, isLast);
     }
 }

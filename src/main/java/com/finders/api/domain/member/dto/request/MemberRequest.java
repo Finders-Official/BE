@@ -19,15 +19,7 @@ public class MemberRequest {
             @NotBlank String phone,
 
             @Schema(description = "휴대폰 인증 완료 증빙 토큰", example = "vpt_2b7c1d9a0f")
-            @NotBlank String verifiedPhoneToken,
-
-            @Schema(description = "약관 동의 리스트")
-            @NotEmpty List<AgreementRequest> agreements
-    ) {}
-
-    public record AgreementRequest(
-            @NotNull Long termsId,
-            @NotNull Boolean isAgreed
+            @NotBlank String verifiedPhoneToken
     ) {}
 
     public record UpdateProfile(

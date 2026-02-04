@@ -1,10 +1,12 @@
 package com.finders.api.domain.inquiry.repository;
 
 import com.finders.api.domain.inquiry.entity.Inquiry;
+import com.finders.api.domain.inquiry.enums.InquiryStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
@@ -21,4 +23,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
             "LEFT JOIN FETCH i.photoLab " +
             "WHERE i.id = :id")
     Optional<Inquiry> findByIdWithPhotoLab(@Param("id") Long id);
+
+    // 답변 대기 중인 문의가 있는지 확인
+    boolean existsByMemberIdAndStatusIn(Long memberId, Collection<InquiryStatus> statuses);
 }

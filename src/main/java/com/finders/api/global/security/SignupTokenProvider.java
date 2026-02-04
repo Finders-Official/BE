@@ -35,6 +35,7 @@ public class SignupTokenProvider {
                 .claim("type", "SIGNUP")
                 .claim("provider", payload.provider().name())
                 .claim("providerId", payload.providerId())
+                .claim("accessToken", payload.accessToken())
                 .claim("name", payload.name())
                 .claim("nickname", payload.nickname())
                 .claim("profileImage", payload.profileImage())
@@ -96,6 +97,7 @@ public class SignupTokenProvider {
         return new SignupTokenPayload(
                 SocialProvider.valueOf(claims.get("provider", String.class)),
                 claims.get("providerId", String.class),
+                claims.get("accessToken", String.class),
                 claims.get("name", String.class),
                 claims.get("nickname", String.class),
                 claims.get("profileImage", String.class),

@@ -82,36 +82,27 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
             fileNames.add(UUID.randomUUID().toString().replace("-", ""));
         }
 
-        // 2) bulk presigned url 발급
-        // StoragePath 규칙은 너희 프로젝트에 맞춰 넣어줘야 함.
-        // 예: StoragePath.SCANNED_UPLOAD 같은 enum이 있다고 가정
         List<StorageResponse.PresignedUrl> presignedUrls =
                 storageService.generateBulkPresignedUrls(
-                        StoragePath.SCANNED_PHOTO,
-                        photoLabId,
+                        StoragePath.SCANNED_PHOTO,   // private 버킷
+                        order.getId(),
                         fileNames
                 );
 
-        // 3) objectPath 조립 + Item 매핑
-        List<OwnerPhotoResponse.Item> items = new ArrayList<>(count);
+// 3) Item 매핑: "반드시" presignedUrls가 준 objectPath 그대로 저장/반환
+        List<OwnerPhotoResponse.Item> items = new ArrayList<>(presignedUrls.size());
 
         Long expiresAt = null;
-
         for (int i = 0; i < presignedUrls.size(); i++) {
             StorageResponse.PresignedUrl p = presignedUrls.get(i);
 
-            String objectPath = p.objectPath();
+            if (expiresAt == null) expiresAt = p.expiresAtEpochSecond();
 
-            if (objectPath == null || objectPath.isBlank()) {
-                String filename = fileNames.get(i);
-                objectPath = String.format("scanned/%d/orders/%s/%s", photoLabId, orderCode, filename);
-            }
-
-            if (expiresAt == null) {
-                expiresAt = p.expiresAtEpochSecond();
-            }
-
-            items.add(OwnerPhotoResponse.Item.of(i + 1, objectPath, p.url()));
+            items.add(OwnerPhotoResponse.Item.of(
+                    i + 1,
+                    p.objectPath(),
+                    p.url()
+            ));
         }
 
         return OwnerPhotoResponse.PresignedUrls.of(
