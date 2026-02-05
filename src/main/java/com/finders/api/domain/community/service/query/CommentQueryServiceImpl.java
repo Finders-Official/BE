@@ -30,22 +30,17 @@ public class CommentQueryServiceImpl implements CommentQueryService {
 
 
     @Override
-    public CommentResponse.CommentListDTO getCommentsByPost(Long postId, Long memberId, Integer page, Integer size) {
+    public Page<CommentResponse.CommentResDTO> getCommentsByPost(Long postId, Long memberId, Integer page, Integer size) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         PageRequest pageRequest = PageRequest.of(page, size);
-
         Page<Comment> commentPage = commentRepository.findAllByPostAndStatusOrderByCreatedAtDesc(post, CommunityStatus.ACTIVE, pageRequest);
 
-        List<CommentResponse.CommentResDTO> commentResDTOs = commentPage.getContent().stream()
-                .map(comment -> {
-                    String profileUrl = getFullUrl(comment.getMemberUser().getProfileImage());
-                    return CommentResponse.CommentResDTO.from(comment, memberId, profileUrl);
-                })
-                .toList();
-
-        return CommentResponse.CommentListDTO.from(commentResDTOs, commentPage.hasNext());
+        return commentPage.map(comment -> {
+            String profileUrl = getFullUrl(comment.getMemberUser().getProfileImage());
+            return CommentResponse.CommentResDTO.from(comment, memberId, profileUrl);
+        });
     }
 
     private String getFullUrl(String path) {
