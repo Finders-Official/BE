@@ -103,4 +103,4 @@ volumes:
 
 networks:
   finders-network:
-    driver: bridge
+    external: true

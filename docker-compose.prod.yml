@@ -72,5 +72,5 @@ services:
       - finders-network
 
 networks:
-  default:
-    driver: bridge
+  finders-network:
+    external: true
