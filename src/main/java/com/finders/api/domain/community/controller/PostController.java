@@ -105,9 +105,11 @@ public class PostController {
     @GetMapping("/{postId}/comments")
     public ApiResponse<CommentResponse.CommentListDTO> getComments(
             @PathVariable Long postId,
-            @AuthenticationPrincipal AuthUser authUser
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam(name = "page", defaultValue = "0") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size
     ) {
-        return ApiResponse.success(SuccessCode.OK, commentQueryService.getCommentsByPost(postId, authUser.memberId()));
+        return ApiResponse.success(SuccessCode.OK, commentQueryService.getCommentsByPost(postId, authUser.memberId(), page, size));
     }
 
     @Operation(summary = "게시물 댓글 작성", description = "특정 게시글에 새로운 댓글을 남깁니다.")

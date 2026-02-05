@@ -10,8 +10,10 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -28,20 +30,22 @@ public class CommentQueryServiceImpl implements CommentQueryService {
 
 
     @Override
-    public CommentResponse.CommentListDTO getCommentsByPost(Long postId, Long memberId) {
+    public CommentResponse.CommentListDTO getCommentsByPost(Long postId, Long memberId, Integer page, Integer size) {
         Post post = postRepository.findByIdWithDetails(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        List<Comment> comments = commentRepository.findAllByPostAndStatusOrderByCreatedAtDesc(post, CommunityStatus.ACTIVE);
+        PageRequest pageRequest = PageRequest.of(page, size);
 
-        List<CommentResponse.CommentResDTO> commentResDTO = comments.stream()
+        Page<Comment> commentPage = commentRepository.findAllByPostAndStatusOrderByCreatedAtDesc(post, CommunityStatus.ACTIVE, pageRequest);
+
+        List<CommentResponse.CommentResDTO> commentResDTOs = commentPage.getContent().stream()
                 .map(comment -> {
                     String profileUrl = getFullUrl(comment.getMemberUser().getProfileImage());
                     return CommentResponse.CommentResDTO.from(comment, memberId, profileUrl);
                 })
                 .toList();
 
-        return CommentResponse.CommentListDTO.from(commentResDTO);
+        return CommentResponse.CommentListDTO.from(commentResDTOs, commentPage.hasNext());
     }
 
     private String getFullUrl(String path) {
