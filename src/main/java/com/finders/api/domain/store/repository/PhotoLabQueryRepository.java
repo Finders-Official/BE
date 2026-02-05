@@ -3,6 +3,7 @@ package com.finders.api.domain.store.repository;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.enums.PhotoLabStatus;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -27,6 +28,7 @@ import static com.finders.api.domain.store.entity.QPhotoLabTag.photoLabTag;
 public class PhotoLabQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+    private static final int AUTOCOMPLETE_LIMIT = 4;
 
     public Page<PhotoLab> search(
             String query,
@@ -63,6 +65,25 @@ public class PhotoLabQueryRepository {
         long totalElements = total != null ? total : 0L;
 
         return new PageImpl<>(content, org.springframework.data.domain.PageRequest.of(page, size), totalElements);
+    }
+
+    public List<String> autocompletePhotoLabNames(String keyword) {
+        return queryFactory
+                .select(photoLab.name).distinct()
+                .from(photoLab)
+                .where(
+                        photoLab.status.eq(PhotoLabStatus.ACTIVE),
+                        photoLab.name.startsWith(keyword)
+                )
+                .orderBy(
+                        new CaseBuilder()
+                                .when(photoLab.name.eq(keyword)).then(0)
+                                .otherwise(1).asc(),
+                        photoLab.name.length().asc(),
+                        photoLab.name.asc()
+                )
+                .limit(AUTOCOMPLETE_LIMIT)
+                .fetch();
     }
 
     private BooleanExpression likeQuery(String query) {

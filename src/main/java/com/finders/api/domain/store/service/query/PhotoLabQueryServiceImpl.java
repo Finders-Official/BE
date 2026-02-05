@@ -279,11 +279,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     @Override
     public List<String> autocompletePhotoLabNames(String keyword) {
-        String trimmedKeyword = keyword.trim();
-        if (trimmedKeyword.isEmpty()) {
-            return List.of();
-        }
-        return photoLabRepository.autocompletePhotoLabNames(trimmedKeyword);
+        return photoLabQueryRepository.autocompletePhotoLabNames(keyword.trim());
     }
 
     @Override
