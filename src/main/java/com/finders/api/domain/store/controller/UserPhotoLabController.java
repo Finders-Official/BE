@@ -153,7 +153,8 @@ public class UserPhotoLabController {
     @Operation(
             summary = "현상소 검색어 자동완성",
             description = "PL-011-2\n\n" +
-                    "현상소 검색어 자동완성")
+                    "현상소 검색어 자동완성" +
+                    "입력된 검색어와 정확히 일치하거나 부분적으로 일치하는 검색어를 보여주는 목록 (최대 4개)")
     @GetMapping("/search/autocomplete")
     public ApiResponse<List<String>> autocomplete(
             @RequestParam(name = "keyword") @NotBlank String keyword
