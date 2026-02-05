@@ -34,11 +34,11 @@ public class CommentResponse {
             Integer listSize,
             boolean hasNext
     ) {
-        public static CommentListDTO from(List<CommentResDTO> commentResDTO) {
+        public static CommentListDTO from(List<CommentResDTO> commentResDTO, boolean hasNext) {
             return CommentListDTO.builder()
                     .commentList(commentResDTO)
                     .listSize(commentResDTO.size())
-                    .hasNext(false)
+                    .hasNext(hasNext)
                     .build();
         }
     }
