@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
     // 커뮤니티 현상소 검색 관련 상수
     int COMMUNITY_SEARCH_LIMIT = 8;
+    int AUTOCOMPLETE_LIMIT = 4;
 
     List<PhotoLab> findTop8ByOrderByReservationCountDescIdAsc();
 
@@ -51,6 +52,18 @@ public interface PhotoLabRepository extends JpaRepository<PhotoLab, Long> {
             @Param("lng") Double lng,
             @Param("locationAgreed") boolean locationAgreed
     );
+
+    @Query(value = "SELECT DISTINCT name " +
+            "FROM photo_lab " +
+            "WHERE status = 'ACTIVE' AND name LIKE CONCAT('%', :keyword, '%') " +
+            "ORDER BY " +
+            "CASE WHEN name = :keyword THEN 0 ELSE 1 END ASC, " +
+            "CASE WHEN name LIKE CONCAT(:keyword, '%') THEN 0 ELSE 1 END ASC, " +
+            "CHAR_LENGTH(name) ASC, " +
+            "name ASC " +
+            "LIMIT " + AUTOCOMPLETE_LIMIT,
+            nativeQuery = true)
+    List<String> autocompletePhotoLabNames(@Param("keyword") String keyword);
 
     @Query("select new com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse(" +
             "cast(coalesce(pr.id, r.id) as long), " +
