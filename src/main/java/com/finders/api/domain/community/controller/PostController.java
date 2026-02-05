@@ -14,6 +14,7 @@ import com.finders.api.domain.community.service.query.CommentQueryService;
 import com.finders.api.domain.community.service.query.PostQueryService;
 import com.finders.api.domain.community.service.query.SearchHistoryQueryService;
 import com.finders.api.global.response.ApiResponse;
+import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -103,13 +105,14 @@ public class PostController {
     // 댓글 관련
     @Operation(summary = "게시물 댓글 조회", description = "특정 게시글에 달린 댓글 목록을 조회합니다.")
     @GetMapping("/{postId}/comments")
-    public ApiResponse<CommentResponse.CommentListDTO> getComments(
+    public PagedResponse<CommentResponse.CommentResDTO> getComments(
             @PathVariable Long postId,
             @AuthenticationPrincipal AuthUser authUser,
             @RequestParam(name = "page", defaultValue = "0") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size
     ) {
-        return ApiResponse.success(SuccessCode.OK, commentQueryService.getCommentsByPost(postId, authUser.memberId(), page, size));
+        Page<CommentResponse.CommentResDTO> commentsPage = commentQueryService.getCommentsByPost(postId, authUser.memberId(), page, size);
+        return PagedResponse.of(SuccessCode.OK, commentsPage);
     }
 
     @Operation(summary = "게시물 댓글 작성", description = "특정 게시글에 새로운 댓글을 남깁니다.")
