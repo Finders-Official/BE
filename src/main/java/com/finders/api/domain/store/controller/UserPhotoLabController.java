@@ -17,12 +17,14 @@ import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/photo-labs")
 @RequiredArgsConstructor
+@Validated
 public class UserPhotoLabController {
     private final PhotoLabPopularQueryService photoLabPopularQueryService;
     private final PhotoLabQueryService photoLabQueryService;
@@ -144,6 +147,20 @@ public class UserPhotoLabController {
         return ApiResponse.success(
                 SuccessCode.STORE_LIST_FOUND,
                 photoLabQueryService.searchCommunityPhotoLabs(request)
+        );
+    }
+
+    @Operation(
+            summary = "현상소 검색어 자동완성",
+            description = "PL-011-2\n\n" +
+                    "현상소 검색어 자동완성")
+    @GetMapping("/search/autocomplete")
+    public ApiResponse<List<String>> autocomplete(
+            @RequestParam(name = "keyword") @NotBlank String keyword
+    ) {
+        return ApiResponse.success(
+                SuccessCode.OK,
+                photoLabQueryService.autocompletePhotoLabNames(keyword)
         );
     }
     

@@ -24,6 +24,9 @@ public interface PhotoLabQueryService {
             PhotoLabRequest.PhotoLabCommunitySearchRequest request
     );
 
+    // 현상소 검색어 자동완성
+    List<String> autocompletePhotoLabNames(String keyword);
+
     // 관심 현상소 조회
     PhotoLabFavoriteResponse.SliceResponse getFavoritePhotoLabs(Long memberId, int page, int size, Double lat, Double lng);
   
