@@ -1,5 +1,6 @@
 package com.finders.api.domain.community.service.query;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finders.api.domain.community.dto.response.PostCacheDTO;
 import com.finders.api.domain.community.dto.response.PostResponse;
 import com.finders.api.domain.community.entity.Post;
@@ -7,6 +8,7 @@ import com.finders.api.domain.community.enums.PostSearchFilter;
 import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostQueryRepository;
 import com.finders.api.domain.community.repository.PostRepository;
+import com.finders.api.domain.community.service.PopularPostCacheService;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.global.exception.CustomException;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -39,6 +42,8 @@ public class PostQueryServiceImpl implements PostQueryService {
     private final PostQueryRepository postQueryRepository;
     private final MemberUserRepository memberUserRepository;
     private final StorageService storageService;
+    private final PopularPostCacheService popularPostCacheService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public PostResponse.PostDetailResDTO getPostDetail(Long postId, Long memberId) {
@@ -71,7 +76,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     @Override
     public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
-        List<PostCacheDTO> cachedPosts = postQueryRepository.findTop10PopularPosts();
+        List<PostCacheDTO> cachedPosts = toPostCacheDTOs(popularPostCacheService.getPopularPosts());
 
         Set<Long> likedPostIds;
         if (memberId != null && !cachedPosts.isEmpty()) {
@@ -93,6 +98,14 @@ public class PostQueryServiceImpl implements PostQueryService {
                 })
                 .toList();
         return PostResponse.PostPreviewListDTO.from(previews);
+    }
+
+    private List<PostCacheDTO> toPostCacheDTOs(List<?> raw) {
+        if (raw == null || raw.isEmpty()) return List.of();
+
+        return raw.stream()
+                .map(o -> objectMapper.convertValue(o, PostCacheDTO.class))
+                .toList();
     }
 
     @Override

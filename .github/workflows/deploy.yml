@@ -91,13 +91,15 @@ jobs:
           
               cd /projects/Spring
           
+              # 외부 네트워크가 없을 경우 생성 시도
+              sudo docker network create finders-network || true
+          
               # [변경 D] 환경변수 파일도 sudo 권한으로 생성하기 위해 tee 명령어를 사용합니다.
               echo '${{ secrets.ENV_PROD }}' | sudo tee .env.prod > /dev/null
           
               # 배포 프로세스
-              sudo docker compose -p finders-prod -f docker-compose.prod.yml pull
-              sudo docker compose -p finders-prod -f docker-compose.prod.yml down
-              sudo docker compose -p finders-prod -f docker-compose.prod.yml up -d
+              sudo docker compose --env-file .env.prod -p finders-api -f docker-compose.prod.yml pull
+              sudo docker compose --env-file .env.prod -p finders-api -f docker-compose.prod.yml up -d --remove-orphans
           
               echo '배포 후 Health Check 시작...'
               for i in {1..12}; do

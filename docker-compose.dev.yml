@@ -57,6 +57,17 @@ services:
     networks:
       - finders-network
 
+  tunnel-dev:
+    image: cloudflare/cloudflared:latest
+    container_name: finders-tunnel-dev
+    env_file:
+      - .env.dev
+    command: tunnel run --protocol http2
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN_DEV}
+    networks:
+      - finders-network
+
 networks:
   finders-network:
-    driver: bridge
+    external: true
