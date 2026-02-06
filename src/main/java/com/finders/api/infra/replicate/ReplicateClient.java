@@ -25,7 +25,7 @@ public class ReplicateClient {
     }
 
     public ReplicateResponse.Prediction createInpaintingPrediction(String imageUrl, String maskUrl) {
-        log.info(">>> [REPLICATE] Starting prediction request. BaseUrl: {}", properties.baseUrl());
+        log.info("[ReplicateClient.createInpaintingPrediction] Creating prediction");
         
         ReplicateRequest.CreatePrediction request = ReplicateRequest.CreatePrediction.of(
                 properties.modelVersion(),
@@ -44,12 +44,13 @@ public class ReplicateClient {
                     .block();
 
         } catch (Exception e) {
-            log.error(">>> [REPLICATE] Call failed: {}", e.getMessage());
-            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "Replicate API 실패: " + e.getMessage());
+            log.error("[ReplicateClient.createInpaintingPrediction] Failed: {}", e.getMessage());
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "Replicate API 호출 실패: " + e.getMessage());
         }
     }
 
     public ReplicateResponse.Prediction getPrediction(String predictionId) {
+        log.debug("[ReplicateClient.getPrediction] Getting prediction: id={}", predictionId);
         try {
             return replicateWebClient.get()
                     .uri("/predictions/{id}", predictionId)
@@ -58,7 +59,7 @@ public class ReplicateClient {
                     .bodyToMono(ReplicateResponse.Prediction.class)
                     .block();
         } catch (Exception e) {
-            log.error(">>> [REPLICATE] Get failed: {}", e.getMessage());
+            log.error("[ReplicateClient.getPrediction] Failed: {}", e.getMessage());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "Replicate 조회 실패: " + e.getMessage());
         }
     }
@@ -66,7 +67,7 @@ public class ReplicateClient {
     private Mono<? extends Throwable> handleError(ClientResponse response) {
         return response.bodyToMono(String.class)
                 .flatMap(body -> {
-                    log.error(">>> [REPLICATE] Error response: {} - {}", response.statusCode(), body);
+                    log.error("[ReplicateClient.handleError] Error response: status={}, body={}", response.statusCode(), body);
                     return Mono.error(new CustomException(ErrorCode.EXTERNAL_API_ERROR,
                             "Replicate API error: " + response.statusCode()));
                 });
