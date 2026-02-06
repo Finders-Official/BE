@@ -13,9 +13,6 @@ import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.entity.SocialAccount;
 import com.finders.api.domain.member.repository.*;
-import com.finders.api.domain.terms.entity.MemberAgreement;
-import com.finders.api.domain.terms.repository.MemberAgreementRepository;
-import com.finders.api.domain.terms.repository.TermsRepository;
 import com.finders.api.domain.terms.service.command.MemberAgreementCommandService;
 import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
@@ -47,8 +44,6 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
     private final MemberOwnerRepository memberOwnerRepository;
-    private final MemberAgreementRepository memberAgreementRepository;
-    private final TermsRepository termsRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenHasher refreshTokenHasher;
     private final MessageService messageService;
