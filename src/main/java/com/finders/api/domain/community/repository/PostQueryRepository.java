@@ -33,7 +33,6 @@ public class PostQueryRepository {
                 .fetch();
     }
 
-    @Cacheable(value = "popularPosts", key = "'home_top10'")
     public List<PostCacheDTO> findTop10PopularPosts() {
         List<Long> ids = queryFactory
                 .select(post.id)
