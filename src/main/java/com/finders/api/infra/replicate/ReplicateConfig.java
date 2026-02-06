@@ -15,8 +15,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class ReplicateConfig {
 
     @Bean
-    public WebClient replicateWebClient(ReplicateProperties properties) {
-        return WebClient.builder()
+    public WebClient replicateWebClient(WebClient.Builder builder, ReplicateProperties properties) {
+        return builder
                 .baseUrl(properties.baseUrl())
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.apiKey())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
