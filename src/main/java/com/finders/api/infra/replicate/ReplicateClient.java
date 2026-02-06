@@ -51,7 +51,7 @@ public class ReplicateClient {
             throw e;
         } catch (Exception e) {
             log.error("[ReplicateClient.createInpaintingPrediction] Failed to create prediction: {}", e.getMessage(), e);
-            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, e);
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "Replicate API 호출 실패: " + e.getMessage());
         }
     }
 
@@ -69,7 +69,7 @@ public class ReplicateClient {
             throw e;
         } catch (Exception e) {
             log.error("[ReplicateClient.getPrediction] Failed to get prediction: {}", e.getMessage(), e);
-            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, e);
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "Replicate API 조회 실패: " + e.getMessage());
         }
     }
 
