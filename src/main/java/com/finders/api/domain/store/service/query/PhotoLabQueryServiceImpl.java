@@ -81,6 +81,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 condition.tagIds(),
                 condition.regionId(),
                 condition.date(),
+                condition.time(),
                 pageNumber,
                 pageSize,
                 condition.lat(),
