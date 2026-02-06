@@ -9,6 +9,7 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabPreviewResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionFilterResponse;
@@ -117,6 +118,46 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     }
 
     @Override
+    public PagedResponse<PhotoLabPreviewResponse.Card> getPhotoLabsPreview(PhotoLabSearchCondition condition) {
+        int pageNumber = (condition.page() != null && condition.page() >= 0) ? condition.page() : 0;
+        int pageSize = (condition.size() != null && condition.size() > 0) ? condition.size() : 20;
+
+        List<Long> regionIds = resolveRegionIds(condition.parentRegionId(), condition.regionIds());
+
+        Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
+                condition.query(),
+                condition.tagIds(),
+                regionIds,
+                condition.date(),
+                condition.time(),
+                pageNumber,
+                pageSize,
+                condition.lat(),
+                condition.lng(),
+                false
+        );
+
+        if (photoLabPage.isEmpty()) {
+            return PagedResponse.of(SuccessCode.STORE_LIST_FOUND, List.of(), photoLabPage);
+        }
+
+        List<Long> photoLabIds = photoLabPage.getContent().stream()
+                .map(PhotoLab::getId)
+                .toList();
+
+        Map<Long, List<String>> imageUrlsByLabId = buildImageUrlMap(photoLabIds);
+
+        List<PhotoLabPreviewResponse.Card> cards = photoLabPage.getContent().stream()
+                .map(photoLab -> PhotoLabPreviewResponse.Card.from(
+                        photoLab,
+                        firstOrNull(imageUrlsByLabId.get(photoLab.getId()))
+                ))
+                .toList();
+
+        return PagedResponse.of(SuccessCode.STORE_LIST_FOUND, cards, photoLabPage);
+    }
+
+    @Override
     public PhotoLabDetailResponse.Detail getPhotoLabDetail(Long photoLabId, Long memberId, Double lat, Double lng) {
         PhotoLab photoLab = photoLabRepository.findByIdAndStatus(photoLabId, PhotoLabStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
@@ -215,6 +256,13 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .filter(Objects::nonNull)
                 .map(storageService::getPublicUrl)
                 .toList();
+    }
+
+    private String firstOrNull(List<String> items) {
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        return items.get(0);
     }
 
     private Double distanceKmOrNull(Double lat, Double lng, PhotoLab photoLab) {

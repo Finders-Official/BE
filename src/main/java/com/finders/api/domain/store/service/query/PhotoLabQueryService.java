@@ -5,6 +5,7 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabPreviewResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionFilterResponse;
 import com.finders.api.global.response.PagedResponse;
@@ -14,6 +15,10 @@ import java.util.List;
 public interface PhotoLabQueryService {
 
     PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
+            PhotoLabSearchCondition condition
+    );
+
+    PagedResponse<PhotoLabPreviewResponse.Card> getPhotoLabsPreview(
             PhotoLabSearchCondition condition
     );
 
