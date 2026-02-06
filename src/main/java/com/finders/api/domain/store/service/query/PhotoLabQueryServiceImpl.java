@@ -121,6 +121,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     public PagedResponse<PhotoLabPreviewResponse.Card> getPhotoLabsPreview(PhotoLabSearchCondition condition) {
         int pageNumber = (condition.page() != null && condition.page() >= 0) ? condition.page() : 0;
         int pageSize = (condition.size() != null && condition.size() > 0) ? condition.size() : 20;
+        pageSize = Math.min(pageSize, 10);
 
         List<Long> regionIds = resolveRegionIds(condition.parentRegionId(), condition.regionIds());
 
