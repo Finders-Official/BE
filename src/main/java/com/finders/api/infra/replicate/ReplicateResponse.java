@@ -1,5 +1,6 @@
 package com.finders.api.infra.replicate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
@@ -12,6 +13,7 @@ public class ReplicateResponse {
     /**
      * Prediction 응답 (API 응답 및 Webhook 페이로드 공용)
      */
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Prediction(
             String id,
             String status,
