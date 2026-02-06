@@ -1,5 +1,6 @@
 package com.finders.api.domain.member.service.command;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finders.api.domain.auth.dto.AuthRequest;
 import com.finders.api.domain.auth.dto.SignupTokenPayload;
 import com.finders.api.domain.member.dto.VerifiedPhoneInfo;
@@ -39,6 +40,7 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class MemberCommandServiceImpl implements MemberCommandService {
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
     private final List<OAuthTermsClient> oAuthTermsClients;
     private final SocialAccountRepository socialAccountRepository;
     private final MemberRepository memberRepository;
@@ -77,9 +79,16 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     public MemberPhoneResponse.VerificationResult verifyPhoneCode(MemberPhoneRequest.VerifyCode request, boolean isSignupFlow) {
         String codeKey = PHONE_CODE_KEY + request.requestId();
 
-        VerificationData data = (VerificationData) redisTemplate.opsForValue().get(codeKey);
+        Object raw = redisTemplate.opsForValue().get(codeKey);
 
-        if (data == null || data.isExpired()) {
+        if (raw == null) {
+            throw new CustomException(ErrorCode.AUTH_PHONE_CODE_EXPIRED);
+        }
+
+        VerificationData data = objectMapper.convertValue(raw, VerificationData.class);
+
+        if (data.isExpired()) {
+            redisTemplate.delete(codeKey);
             throw new CustomException(ErrorCode.AUTH_PHONE_CODE_EXPIRED);
         }
 
@@ -219,13 +228,17 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     }
 
     private void validateVPT(String phone, String token) {
-        VerifiedPhoneInfo info = (VerifiedPhoneInfo) redisTemplate.opsForValue().get(VERIFIED_PHONE_KEY + token);
+        Object raw = redisTemplate.opsForValue().get(VERIFIED_PHONE_KEY + token);
 
-        if (info == null || info.isExpired()) {
-            if (info != null) {
-                redisTemplate.delete(VERIFIED_PHONE_KEY + token);
-            }
-            throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_FAILED);
+        if (raw == null) {
+            throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED);
+        }
+
+        VerifiedPhoneInfo info = objectMapper.convertValue(raw, VerifiedPhoneInfo.class);
+
+        if (info.isExpired()) {
+            redisTemplate.delete(VERIFIED_PHONE_KEY + token);
+            throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED);
         }
 
         String cleanStoredPhone = info.getPhone().replaceAll("[^0-9]", "");
