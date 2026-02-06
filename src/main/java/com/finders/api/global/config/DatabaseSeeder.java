@@ -148,8 +148,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     // ===== Constants: Tag Data =====
     private static final String[] TAG_NAMES = {
-            "필름현상", "스캔", "인화", "중형카메라", "대형카메라",
-            "흑백필름", "컬러네거티브", "슬라이드필름", "당일현상", "배송가능"
+            "따뜻한 색감", "청량한", "빈티지한", "영화용 필름", "택배 접수"
     };
 
     // ===== Constants: PhotoLab Data =====

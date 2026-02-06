@@ -5,6 +5,7 @@ import com.finders.api.domain.store.dto.response.PhotoLabRegionItemResponse;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface RegionRepository extends JpaRepository<Region, Long> {
     @Query("select new com.finders.api.domain.store.dto.response.PhotoLabRegionItemResponse(" +
@@ -12,4 +13,7 @@ public interface RegionRepository extends JpaRepository<Region, Long> {
             "from Region r " +
             "where r.parentRegion is not null")
     List<PhotoLabRegionItemResponse> findAllRegionItems();
+
+    @Query("select r.id from Region r where r.parentRegion.id = :parentRegionId")
+    List<Long> findChildRegionIds(@Param("parentRegionId") Long parentRegionId);
 }
