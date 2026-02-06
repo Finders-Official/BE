@@ -23,8 +23,8 @@ public class ReplicateRequest {
             return new CreatePrediction(
                     version,
                     Input.forRestoration(imageUrl, maskUrl),
-                    webhookUrl,
-                    List.of("completed")
+                    null,
+                    null
             );
         }
     }
