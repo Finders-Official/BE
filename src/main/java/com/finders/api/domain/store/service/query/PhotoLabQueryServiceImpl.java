@@ -278,6 +278,11 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     }
 
     @Override
+    public List<String> autocompletePhotoLabNames(String keyword) {
+        return photoLabQueryRepository.autocompletePhotoLabNames(keyword.trim());
+    }
+
+    @Override
     public PhotoLabFavoriteResponse.SliceResponse getFavoritePhotoLabs(Long memberId, int page, int size, Double lat, Double lng) {
         if (page < 0 || size <= 0) {
             throw new CustomException(ErrorCode.INVALID_INPUT);
