@@ -4,6 +4,7 @@ import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ReplicateClient {
 
+    @Qualifier("replicateWebClient")
     private final WebClient replicateWebClient;
     private final ReplicateProperties properties;
 
