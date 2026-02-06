@@ -1,5 +1,6 @@
 package com.finders.api.domain.member.service.command;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finders.api.domain.auth.dto.AuthRequest;
 import com.finders.api.domain.auth.dto.SignupTokenPayload;
 import com.finders.api.domain.member.dto.VerifiedPhoneInfo;
@@ -13,9 +14,6 @@ import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.entity.SocialAccount;
 import com.finders.api.domain.member.repository.*;
-import com.finders.api.domain.terms.entity.MemberAgreement;
-import com.finders.api.domain.terms.repository.MemberAgreementRepository;
-import com.finders.api.domain.terms.repository.TermsRepository;
 import com.finders.api.domain.terms.service.command.MemberAgreementCommandService;
 import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
@@ -42,13 +40,12 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class MemberCommandServiceImpl implements MemberCommandService {
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
     private final List<OAuthTermsClient> oAuthTermsClients;
     private final SocialAccountRepository socialAccountRepository;
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
     private final MemberOwnerRepository memberOwnerRepository;
-    private final MemberAgreementRepository memberAgreementRepository;
-    private final TermsRepository termsRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenHasher refreshTokenHasher;
     private final MessageService messageService;
@@ -82,9 +79,14 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     public MemberPhoneResponse.VerificationResult verifyPhoneCode(MemberPhoneRequest.VerifyCode request, boolean isSignupFlow) {
         String codeKey = PHONE_CODE_KEY + request.requestId();
 
-        VerificationData data = (VerificationData) redisTemplate.opsForValue().get(codeKey);
+        VerificationData data = getRedisValueOrThrow(
+                codeKey,
+                VerificationData.class,
+                ErrorCode.AUTH_PHONE_CODE_EXPIRED
+        );
 
-        if (data == null || data.isExpired()) {
+        if (data.isExpired()) {
+            redisTemplate.delete(codeKey);
             throw new CustomException(ErrorCode.AUTH_PHONE_CODE_EXPIRED);
         }
 
@@ -224,13 +226,15 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     }
 
     private void validateVPT(String phone, String token) {
-        VerifiedPhoneInfo info = (VerifiedPhoneInfo) redisTemplate.opsForValue().get(VERIFIED_PHONE_KEY + token);
+        VerifiedPhoneInfo info = getRedisValueOrThrow(
+                VERIFIED_PHONE_KEY + token,
+                VerifiedPhoneInfo.class,
+                ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED
+        );
 
-        if (info == null || info.isExpired()) {
-            if (info != null) {
-                redisTemplate.delete(VERIFIED_PHONE_KEY + token);
-            }
-            throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_FAILED);
+        if (info.isExpired()) {
+            redisTemplate.delete(VERIFIED_PHONE_KEY + token);
+            throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED);
         }
 
         String cleanStoredPhone = info.getPhone().replaceAll("[^0-9]", "");
@@ -239,5 +243,19 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         if (!cleanStoredPhone.equals(cleanRequestedPhone)) {
             throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_FAILED);
         }
+    }
+
+    private <T> T getRedisValueOrThrow(
+            String key,
+            Class<T> valueType,
+            ErrorCode errorOnNull
+    ) {
+        Object rawValue = redisTemplate.opsForValue().get(key);
+
+        if (rawValue == null) {
+            throw new CustomException(errorOnNull);
+        }
+
+        return objectMapper.convertValue(rawValue, valueType);
     }
 }

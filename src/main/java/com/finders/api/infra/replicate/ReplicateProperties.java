@@ -28,6 +28,9 @@ public record ReplicateProperties(
     }
 
     public String getWebhookUrl() {
+        if (webhookBaseUrl == null || webhookBaseUrl.isBlank()) {
+            return null;
+        }
         return webhookBaseUrl + "/webhooks/replicate";
     }
 }
