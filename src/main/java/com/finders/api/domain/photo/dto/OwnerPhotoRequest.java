@@ -53,7 +53,13 @@ public class OwnerPhotoRequest {
             List<String> taskTypes,
 
             @Schema(example = "2", description = "롤(필름) 개수. 예약이 없는 주문이면 필수")
-            Integer rollCount
+            Integer rollCount,
+
+            @Schema(
+                    example = "2026-02-10T18:00:00",
+                    description = "예상 작업 완료 시각, 현상 주문 완료 시, 완료된 시간으로 변경해서 매핑될 예정임"
+            )
+            LocalDateTime estimatedCompletedAt
     ) { }
 
     @Builder
