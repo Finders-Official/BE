@@ -113,7 +113,8 @@ public class DevelopmentOrder extends BaseTimeEntity {
             int totalPhotos,
             int totalPrice,
             List<String> taskTypes,
-            int rollCount
+            int rollCount,
+            LocalDateTime estimatedCompletedAt
     ) {
         // 예약 기반이면 reservation 값 우선 (정책)
         boolean develop, scan, print;
@@ -156,6 +157,7 @@ public class DevelopmentOrder extends BaseTimeEntity {
                 .isPrint(print)
                 .rollCount(finalRollCount)
                 .status(DevelopmentOrderStatus.RECEIVED)
+                .completedAt(estimatedCompletedAt)
                 .build();
     }
 

@@ -159,7 +159,8 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
                 request.totalPhotos(),
                 request.totalPrice(),
                 request.taskTypes(),
-                request.rollCount() == null ? 0 : request.rollCount()
+                request.rollCount() == null ? 0 : request.rollCount(),
+                request.estimatedCompletedAt()
         );
 
         return developmentOrderRepository.save(order).getId();
