@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class WebClientConfig {
 
     private static final int CONNECT_TIMEOUT_MILLIS = 10000; // 10초
+    private static final int MAX_IN_MEMORY_SIZE = 10 * 1024 * 1024; // 10MB (이미지 다운로드 대응)
 
     /**
      * 기본 WebClient (일반 REST API 호출용)
@@ -34,13 +35,13 @@ public class WebClientConfig {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MILLIS)
                 .responseTimeout(Duration.ofSeconds(30))
-                .noProxy()
                 .doOnConnected(conn -> conn
                         .addHandlerLast(new ReadTimeoutHandler(30, TimeUnit.SECONDS))
                         .addHandlerLast(new WriteTimeoutHandler(30, TimeUnit.SECONDS))
                 );
 
         return builder.clone()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(MAX_IN_MEMORY_SIZE))
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
@@ -57,13 +58,13 @@ public class WebClientConfig {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MILLIS)
                 .responseTimeout(Duration.ofSeconds(120))
-                .noProxy()
                 .doOnConnected(conn -> conn
                         .addHandlerLast(new ReadTimeoutHandler(120, TimeUnit.SECONDS))
                         .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
                 );
 
         return builder.clone()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(MAX_IN_MEMORY_SIZE))
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
