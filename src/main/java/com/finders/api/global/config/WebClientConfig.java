@@ -34,12 +34,13 @@ public class WebClientConfig {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MILLIS)
                 .responseTimeout(Duration.ofSeconds(30))
+                .noProxy()
                 .doOnConnected(conn -> conn
                         .addHandlerLast(new ReadTimeoutHandler(30, TimeUnit.SECONDS))
                         .addHandlerLast(new WriteTimeoutHandler(30, TimeUnit.SECONDS))
                 );
 
-        return builder
+        return builder.clone()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
@@ -56,12 +57,13 @@ public class WebClientConfig {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MILLIS)
                 .responseTimeout(Duration.ofSeconds(120))
+                .noProxy()
                 .doOnConnected(conn -> conn
                         .addHandlerLast(new ReadTimeoutHandler(120, TimeUnit.SECONDS))
                         .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
                 );
 
-        return builder
+        return builder.clone()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
