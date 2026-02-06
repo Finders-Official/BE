@@ -70,7 +70,8 @@ public class UserPhotoLabController {
             @AuthenticationPrincipal AuthUser user,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) List<Long> tagIds,
-            @RequestParam(required = false) Long regionId,
+            @RequestParam(required = false) Long parentRegionId,
+            @RequestParam(required = false) List<Long> regionIds,
             @RequestParam(required = false) LocalDate date,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.TIME) LocalTime time,
             @RequestParam(defaultValue = "0") Integer page,
@@ -83,7 +84,8 @@ public class UserPhotoLabController {
                 .memberId(memberId)
                 .query(q)
                 .tagIds(tagIds)
-                .regionId(regionId)
+                .parentRegionId(parentRegionId)
+                .regionIds(regionIds)
                 .date(date)
                 .time(time)
                 .page(page)
