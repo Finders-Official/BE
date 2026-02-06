@@ -16,7 +16,7 @@ public record ReplicateProperties(
         Integer maxRetries
 ) {
     public ReplicateProperties {
-        if (baseUrl == null) {
+        if (baseUrl == null || baseUrl.isBlank()) {
             baseUrl = "https://api.replicate.com/v1";
         }
         if (timeoutSeconds == null) {
