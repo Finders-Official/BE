@@ -3,6 +3,7 @@ package com.finders.api.infra.discord;
 import com.finders.api.infra.discord.dto.DiscordMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @EnableConfigurationProperties(DiscordProperties.class)
 public class DiscordWebhookService {
 
@@ -29,6 +29,11 @@ public class DiscordWebhookService {
     private final DiscordProperties properties;
 
     private final ConcurrentHashMap<String, Long> recentErrors = new ConcurrentHashMap<>();
+
+    public DiscordWebhookService(@Qualifier("webClient") WebClient webClient, DiscordProperties properties) {
+        this.webClient = webClient;
+        this.properties = properties;
+    }
 
     public void sendErrorNotification(Exception exception, String httpMethod, String requestUri) {
         if (!properties.isEnabled()) {
