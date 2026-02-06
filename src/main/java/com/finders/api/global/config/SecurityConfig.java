@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -64,7 +65,8 @@ public class SecurityConfig {
             // HM-010 인기 현상소 미리보기
             "/photo-labs/popular",
             // 개발용 토큰 발급
-            "/dev/login"
+            "/dev/login",
+            "/replicate/test/**"
     };
 
     @Bean
@@ -91,6 +93,7 @@ public class SecurityConfig {
 
                 // 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         // GUEST, USER 모두 허용
                         .requestMatchers(

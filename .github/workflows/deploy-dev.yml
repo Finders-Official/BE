@@ -89,13 +89,15 @@ jobs:
           
               cd /projects/Spring
           
+              # 외부 네트워크가 없을 경우 생성 시도
+              sudo docker network create finders-network || true
+          
               # [변경 D] 환경변수 파일도 sudo tee로 생성 (권한 이슈 방지)
               echo '${{ secrets.ENV_DEV }}' | sudo tee .env.dev > /dev/null
           
               # 배포 프로세스
-              sudo docker compose -p finders-dev -f docker-compose.dev.yml pull
-              sudo docker compose -p finders-dev -f docker-compose.dev.yml down
-              sudo docker compose -p finders-dev -f docker-compose.dev.yml up -d
+              sudo docker compose --env-file .env.dev -p finders-dev -f docker-compose.dev.yml pull
+              sudo docker compose --env-file .env.dev -p finders-dev -f docker-compose.dev.yml up -d --remove-orphans
           
               echo '배포 후 Health Check 시작...'
               for i in {1..12}; do

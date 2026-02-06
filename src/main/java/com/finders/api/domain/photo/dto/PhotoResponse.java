@@ -33,6 +33,9 @@ public class PhotoResponse {
             @Schema(description = "주문 생성일시", example = "2026-01-16T15:10:00")
             LocalDateTime createdAt,
 
+            @Schema(description = "현상 완료 일시", example = "2026-01-16T15:10:00")
+            LocalDateTime compltedAt,
+
 
             @Schema(description = "인화 진행 정보(인화 없으면 null)")
             PrintProgress print,
@@ -51,6 +54,7 @@ public class PhotoResponse {
                     .photoLabName(order.getPhotoLab().getName())
                     .developmentStatus(order.getStatus())
                     .createdAt(order.getCreatedAt())
+                    .compltedAt(order.getCompletedAt())
                     .print(print)
                     .delivery(delivery)
                     .build();

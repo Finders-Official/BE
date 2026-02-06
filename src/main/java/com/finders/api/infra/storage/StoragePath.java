@@ -75,18 +75,51 @@ public enum StoragePath {
         return String.format(pattern, args);
     }
 
-    // 경로 문자열 분석 -> 해당하는 StoragePath 상수 반환
+    /**
+     * 경로 문자열 분석 → 해당하는 StoragePath 상수 반환
+     * <p>
+     * 패턴의 고정 세그먼트(% 치환자 제외)를 objectPath와 비교하여
+     * 가장 많은 세그먼트가 일치하는 enum 값을 반환합니다.
+     */
     public static StoragePath fromObjectPath(String objectPath) {
-        return Arrays.stream(values())
-                .filter(path -> {
-                    String root = path.getPattern().split("/")[0];
-                    if (root.equals("temp") && objectPath.startsWith("temp/orders")) {
-                        return path == SCANNED_PHOTO;
-                    }
-                    return objectPath.startsWith(root);
-                })
-                .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.STORAGE_INVALID_PATH));
+        if (objectPath == null || objectPath.isBlank()) {
+            throw new CustomException(ErrorCode.STORAGE_INVALID_PATH);
+        }
+
+        String[] objectSegments = objectPath.split("/");
+
+        StoragePath bestMatch = null;
+        int bestScore = -1;
+
+        for (StoragePath path : values()) {
+            String[] patternSegments = path.getPattern().split("/");
+            int score = 0;
+            boolean matched = true;
+
+            for (int i = 0; i < patternSegments.length && i < objectSegments.length; i++) {
+                String seg = patternSegments[i];
+                if (seg.contains("%")) {
+                    continue;
+                }
+                if (seg.equals(objectSegments[i])) {
+                    score++;
+                } else {
+                    matched = false;
+                    break;
+                }
+            }
+
+            if (matched && score > bestScore) {
+                bestScore = score;
+                bestMatch = path;
+            }
+        }
+
+        if (bestMatch == null) {
+            throw new CustomException(ErrorCode.STORAGE_INVALID_PATH);
+        }
+
+        return bestMatch;
     }
 
     public Long extractId(String objectPath) {
