@@ -76,10 +76,12 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         boolean useDistance = shouldUseDistance(condition.memberId(), condition.lat(), condition.lng());
 
+        List<Long> regionIds = resolveRegionIds(condition.parentRegionId(), condition.regionIds());
+
         Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
                 condition.query(),
                 condition.tagIds(),
-                condition.regionId(),
+                regionIds,
                 condition.date(),
                 condition.time(),
                 pageNumber,
@@ -239,6 +241,29 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
             return false;
         }
         return memberAgreementQueryService.hasAgreedToTerms(memberId, TermsType.LOCATION);
+    }
+
+    private List<Long> resolveRegionIds(Long parentRegionId, List<Long> regionIds) {
+        if (parentRegionId == null && (regionIds == null || regionIds.isEmpty())) {
+            return null;
+        }
+
+        if (regionIds != null && !regionIds.isEmpty()) {
+            return List.copyOf(new java.util.LinkedHashSet<>(regionIds));
+        }
+
+        if (parentRegionId == null) {
+            return null;
+        }
+
+        java.util.LinkedHashSet<Long> resolved = new java.util.LinkedHashSet<>();
+        resolved.add(parentRegionId);
+        List<Long> childIds = regionRepository.findChildRegionIds(parentRegionId);
+        if (childIds != null) {
+            resolved.addAll(childIds);
+        }
+
+        return resolved.isEmpty() ? null : List.copyOf(resolved);
     }
 
     // 커뮤니티 현상소 검색

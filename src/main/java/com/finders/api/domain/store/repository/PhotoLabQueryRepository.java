@@ -35,7 +35,7 @@ public class PhotoLabQueryRepository {
     public Page<PhotoLab> search(
             String query,
             List<Long> tagIds,
-            Long regionId,
+            List<Long> regionIds,
             LocalDate date,
             LocalTime time,
             int page,
@@ -46,7 +46,7 @@ public class PhotoLabQueryRepository {
     ) {
         BooleanExpression condition = photoLab.status.eq(PhotoLabStatus.ACTIVE)
                 .and(likeQuery(query))
-                .and(inRegion(regionId))
+                .and(inRegion(regionIds))
                 .and(hasTagIds(tagIds))
                 .and(isOpenAndReservable(date, time));
 
@@ -97,11 +97,11 @@ public class PhotoLabQueryRepository {
                 .or(photoLab.address.containsIgnoreCase(query));
     }
 
-    private BooleanExpression inRegion(Long regionId) {
-        if (regionId == null) {
+    private BooleanExpression inRegion(List<Long> regionIds) {
+        if (regionIds == null || regionIds.isEmpty()) {
             return null;
         }
-        return photoLab.region.id.eq(regionId);
+        return photoLab.region.id.in(regionIds);
     }
 
     private BooleanExpression hasTagIds(List<Long> tagIds) {
