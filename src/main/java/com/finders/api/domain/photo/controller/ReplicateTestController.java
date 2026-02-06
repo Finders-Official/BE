@@ -5,7 +5,6 @@ import com.finders.api.infra.replicate.ReplicateClient;
 import com.finders.api.infra.replicate.ReplicateResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Replicate Test", description = "Replicate API 테스트용 (인증 불필요)")
@@ -27,15 +26,25 @@ public class ReplicateTestController {
     @Operation(summary = "Replicate Prediction 생성 테스트", description = "인증 없이 Replicate API를 통해 예측(Inpainting)을 생성합니다. GCS 경로나 HTTP URL을 모두 지원합니다.")
     @PostMapping("/predictions")
     public ApiResponse<ReplicateResponse.Prediction> createPrediction(
-            @RequestParam String imageUrl,
-            @RequestParam String maskUrl
+            @RequestParam String originalPath,
+            @RequestParam String maskPath
     ) {
-        String finalImageUrl = imageUrl.startsWith("restorations/") 
-                ? storageService.getSignedUrl(imageUrl, 60).url() 
-                : imageUrl;
-        String finalMaskUrl = maskUrl.startsWith("restorations/") 
-                ? storageService.getSignedUrl(maskUrl, 60).url() 
-                : maskUrl;
+        String finalImageUrl = originalPath;
+        String finalMaskUrl = maskPath;
+
+        try {
+            if (originalPath.startsWith("restorations/")) {
+                finalImageUrl = storageService.getSignedUrl(originalPath, 60).url();
+            }
+            if (maskPath.startsWith("restorations/")) {
+                finalMaskUrl = storageService.getSignedUrl(maskPath, 60).url();
+            }
+        } catch (Exception e) {
+            throw new com.finders.api.global.exception.CustomException(
+                com.finders.api.global.response.ErrorCode.INTERNAL_SERVER_ERROR,
+                "GCS Signed URL 생성 실패 (로컬 구글 권한 확인 필요): " + e.getMessage()
+            );
+        }
 
         ReplicateResponse.Prediction response = replicateClient.createInpaintingPrediction(finalImageUrl, finalMaskUrl);
         return ApiResponse.ok(response);
