@@ -24,13 +24,14 @@ public class ReplicateConfig {
 
     @Bean("replicateWebClient")
     public WebClient replicateWebClient(WebClient.Builder builder, ReplicateProperties properties) {
+        int timeoutMillis = properties.timeoutSeconds() * 1000;
+
         HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-                .responseTimeout(Duration.ofSeconds(30))
-                .noProxy()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 15000) // 연결 타임아웃은 15초 유지
+                .responseTimeout(Duration.ofSeconds(properties.timeoutSeconds()))
                 .doOnConnected(conn -> conn
-                        .addHandlerLast(new ReadTimeoutHandler(30, TimeUnit.SECONDS))
-                        .addHandlerLast(new WriteTimeoutHandler(30, TimeUnit.SECONDS))
+                        .addHandlerLast(new ReadTimeoutHandler(properties.timeoutSeconds(), TimeUnit.SECONDS))
+                        .addHandlerLast(new WriteTimeoutHandler(properties.timeoutSeconds(), TimeUnit.SECONDS))
                 );
 
         return builder.clone()

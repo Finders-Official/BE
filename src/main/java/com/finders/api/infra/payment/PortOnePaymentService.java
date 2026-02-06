@@ -11,6 +11,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -35,32 +36,14 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class PortOnePaymentService {
 
-    private static final String BASE_URL = "https://api.portone.io";
-    private static final int CONNECT_TIMEOUT_MS = 5000;
-    private static final int READ_TIMEOUT_SEC = 10;
-    private static final int WRITE_TIMEOUT_SEC = 10;
-
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final WebClient webClient;
     private final PortOneProperties properties;
 
-    public PortOnePaymentService(PortOneProperties properties) {
+    public PortOnePaymentService(@Qualifier("portOneWebClient") WebClient webClient, PortOneProperties properties) {
+        this.webClient = webClient;
         this.properties = properties;
-
-        HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MS)
-                .responseTimeout(Duration.ofSeconds(READ_TIMEOUT_SEC))
-                .doOnConnected(conn -> conn
-                        .addHandlerLast(new ReadTimeoutHandler(READ_TIMEOUT_SEC, TimeUnit.SECONDS))
-                        .addHandlerLast(new WriteTimeoutHandler(WRITE_TIMEOUT_SEC, TimeUnit.SECONDS)));
-
-        this.webClient = WebClient.builder()
-                .baseUrl(BASE_URL)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "PortOne " + properties.getApiSecret())
-                .build();
     }
 
     /**
