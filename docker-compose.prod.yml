@@ -61,16 +61,16 @@ services:
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: finders-tunnel
+    container_name: finders-tunnel-prod
     restart: unless-stopped
     env_file:
       - .env.prod
-    command: tunnel run
+    command: tunnel run --protocol http2
     environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN_PROD}
     networks:
       - finders-network
 
 networks:
-  default:
-    driver: bridge
+  finders-network:
+    external: true

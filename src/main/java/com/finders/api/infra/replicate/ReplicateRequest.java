@@ -1,5 +1,6 @@
 package com.finders.api.infra.replicate;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
@@ -12,6 +13,7 @@ public class ReplicateRequest {
     /**
      * Prediction 생성 요청
      */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record CreatePrediction(
             String version,
             Input input,
@@ -20,11 +22,13 @@ public class ReplicateRequest {
             List<String> webhookEventsFilter
     ) {
         public static CreatePrediction of(String version, String imageUrl, String maskUrl, String webhookUrl) {
+            String finalWebhook = (webhookUrl != null && webhookUrl.startsWith("https://")) ? webhookUrl : null;
+            
             return new CreatePrediction(
                     version,
                     Input.forRestoration(imageUrl, maskUrl),
-                    webhookUrl,
-                    List.of("completed")
+                    finalWebhook,
+                    finalWebhook != null ? List.of("completed") : null
             );
         }
     }
