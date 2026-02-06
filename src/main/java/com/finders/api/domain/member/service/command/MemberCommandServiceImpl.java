@@ -79,13 +79,11 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     public MemberPhoneResponse.VerificationResult verifyPhoneCode(MemberPhoneRequest.VerifyCode request, boolean isSignupFlow) {
         String codeKey = PHONE_CODE_KEY + request.requestId();
 
-        Object raw = redisTemplate.opsForValue().get(codeKey);
-
-        if (raw == null) {
-            throw new CustomException(ErrorCode.AUTH_PHONE_CODE_EXPIRED);
-        }
-
-        VerificationData data = objectMapper.convertValue(raw, VerificationData.class);
+        VerificationData data = getRedisValueOrThrow(
+                codeKey,
+                VerificationData.class,
+                ErrorCode.AUTH_PHONE_CODE_EXPIRED
+        );
 
         if (data.isExpired()) {
             redisTemplate.delete(codeKey);
@@ -228,13 +226,11 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     }
 
     private void validateVPT(String phone, String token) {
-        Object raw = redisTemplate.opsForValue().get(VERIFIED_PHONE_KEY + token);
-
-        if (raw == null) {
-            throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED);
-        }
-
-        VerifiedPhoneInfo info = objectMapper.convertValue(raw, VerifiedPhoneInfo.class);
+        VerifiedPhoneInfo info = getRedisValueOrThrow(
+                VERIFIED_PHONE_KEY + token,
+                VerifiedPhoneInfo.class,
+                ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED
+        );
 
         if (info.isExpired()) {
             redisTemplate.delete(VERIFIED_PHONE_KEY + token);
@@ -247,5 +243,19 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         if (!cleanStoredPhone.equals(cleanRequestedPhone)) {
             throw new CustomException(ErrorCode.MEMBER_PHONE_VERIFY_FAILED);
         }
+    }
+
+    private <T> T getRedisValueOrThrow(
+            String key,
+            Class<T> valueType,
+            ErrorCode errorOnNull
+    ) {
+        Object rawValue = redisTemplate.opsForValue().get(key);
+
+        if (rawValue == null) {
+            throw new CustomException(errorOnNull);
+        }
+
+        return objectMapper.convertValue(rawValue, valueType);
     }
 }
