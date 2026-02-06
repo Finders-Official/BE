@@ -157,16 +157,7 @@ public class PhotoLabQueryRepository {
                             .and(reservationSlot.reservationDate.eq(date))
                             .and(reservationSlot.reservedCount.lt(reservationSlot.maxCapacity)))
                     .exists();
-
-            BooleanExpression noSlotExists = JPAExpressions
-                    .selectOne()
-                    .from(reservationSlot)
-                    .where(reservationSlot.photoLab.eq(photoLab)
-                            .and(reservationSlot.reservationDate.eq(date)))
-                    .exists()
-                    .not();
-
-            reservable = availableSlotExists.or(noSlotExists);
+            reservable = availableSlotExists;
         }
 
         return open.and(reservable);
