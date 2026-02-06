@@ -161,6 +161,9 @@ public class DevelopmentOrder extends BaseTimeEntity {
 
 
     public void updateStatus(DevelopmentOrderStatus status) {
+        if(status == DevelopmentOrderStatus.COMPLETED){
+            completedAt = LocalDateTime.now();
+        }
         this.status = status;
     }
 
