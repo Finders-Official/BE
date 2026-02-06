@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import static org.springframework.format.annotation.DateTimeFormat.ISO;
 
 @Tag(name = "PhotoLab_USER", description = "현상소 API")
 @RestController
@@ -68,6 +72,7 @@ public class UserPhotoLabController {
             @RequestParam(required = false) List<Long> tagIds,
             @RequestParam(required = false) Long regionId,
             @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.TIME) LocalTime time,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Double lat,
@@ -80,6 +85,7 @@ public class UserPhotoLabController {
                 .tagIds(tagIds)
                 .regionId(regionId)
                 .date(date)
+                .time(time)
                 .page(page)
                 .size(size)
                 .lat(lat)

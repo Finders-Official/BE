@@ -16,9 +16,11 @@ import org.springframework.stereotype.Repository;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import static com.finders.api.domain.reservation.entity.QReservationSlot.reservationSlot;
+import static com.finders.api.domain.reservation.policy.ReservationPolicy.TIME_INTERVAL_MINUTES;
 import static com.finders.api.domain.store.entity.QPhotoLab.photoLab;
 import static com.finders.api.domain.store.entity.QPhotoLabBusinessHour.photoLabBusinessHour;
 import static com.finders.api.domain.store.entity.QPhotoLabTag.photoLabTag;
@@ -35,6 +37,7 @@ public class PhotoLabQueryRepository {
             List<Long> tagIds,
             Long regionId,
             LocalDate date,
+            LocalTime time,
             int page,
             int size,
             Double lat,
@@ -45,7 +48,7 @@ public class PhotoLabQueryRepository {
                 .and(likeQuery(query))
                 .and(inRegion(regionId))
                 .and(hasTagIds(tagIds))
-                .and(isOpenAndReservable(date));
+                .and(isOpenAndReservable(date, time));
 
         JPAQuery<PhotoLab> contentQuery = queryFactory
                 .selectFrom(photoLab)
@@ -113,27 +116,58 @@ public class PhotoLabQueryRepository {
                 .exists();
     }
 
-    private BooleanExpression isOpenAndReservable(LocalDate date) {
+    private BooleanExpression isOpenAndReservable(LocalDate date, LocalTime time) {
         if (date == null) {
             return null;
         }
         DayOfWeek dayOfWeek = date.getDayOfWeek();
 
+        BooleanExpression openCondition = photoLabBusinessHour.photoLab.eq(photoLab)
+                .and(photoLabBusinessHour.dayOfWeek.eq(dayOfWeek))
+                .and(photoLabBusinessHour.isClosed.isFalse());
+
+        if (time != null) {
+            openCondition = openCondition
+                    .and(photoLabBusinessHour.openTime.loe(time))
+                    .and(photoLabBusinessHour.closeTime.goe(time.plusMinutes(TIME_INTERVAL_MINUTES)));
+        }
+
         BooleanExpression open = JPAExpressions
                 .selectOne()
                 .from(photoLabBusinessHour)
-                .where(photoLabBusinessHour.photoLab.eq(photoLab)
-                        .and(photoLabBusinessHour.dayOfWeek.eq(dayOfWeek))
-                        .and(photoLabBusinessHour.isClosed.isFalse()))
+                .where(openCondition)
                 .exists();
 
-        BooleanExpression reservable = JPAExpressions
-                .selectOne()
-                .from(reservationSlot)
-                .where(reservationSlot.photoLab.eq(photoLab)
-                        .and(reservationSlot.reservationDate.eq(date))
-                        .and(reservationSlot.reservedCount.lt(reservationSlot.maxCapacity)))
-                .exists();
+        BooleanExpression reservable;
+        if (time != null) {
+            BooleanExpression fullAtTime = JPAExpressions
+                    .selectOne()
+                    .from(reservationSlot)
+                    .where(reservationSlot.photoLab.eq(photoLab)
+                            .and(reservationSlot.reservationDate.eq(date))
+                            .and(reservationSlot.reservationTime.eq(time))
+                            .and(reservationSlot.reservedCount.goe(reservationSlot.maxCapacity)))
+                    .exists();
+            reservable = fullAtTime.not();
+        } else {
+            BooleanExpression availableSlotExists = JPAExpressions
+                    .selectOne()
+                    .from(reservationSlot)
+                    .where(reservationSlot.photoLab.eq(photoLab)
+                            .and(reservationSlot.reservationDate.eq(date))
+                            .and(reservationSlot.reservedCount.lt(reservationSlot.maxCapacity)))
+                    .exists();
+
+            BooleanExpression noSlotExists = JPAExpressions
+                    .selectOne()
+                    .from(reservationSlot)
+                    .where(reservationSlot.photoLab.eq(photoLab)
+                            .and(reservationSlot.reservationDate.eq(date)))
+                    .exists()
+                    .not();
+
+            reservable = availableSlotExists.or(noSlotExists);
+        }
 
         return open.and(reservable);
     }
