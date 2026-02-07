@@ -55,6 +55,7 @@ import org.springframework.data.domain.PageRequest;
 public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     private static final int POST_IMAGE_LIMIT = 10;
+    private static final int PREVIEW_MAX_SIZE = 10;
 
     private final PhotoLabQueryRepository photoLabQueryRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
@@ -121,7 +122,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     public PagedResponse<PhotoLabPreviewResponse.Card> getPhotoLabsPreview(PhotoLabSearchCondition condition) {
         int pageNumber = (condition.page() != null && condition.page() >= 0) ? condition.page() : 0;
         int pageSize = (condition.size() != null && condition.size() > 0) ? condition.size() : 20;
-        pageSize = Math.min(pageSize, 10);
+        pageSize = Math.min(pageSize, PREVIEW_MAX_SIZE);
 
         List<Long> regionIds = resolveRegionIds(condition.parentRegionId(), condition.regionIds());
 
