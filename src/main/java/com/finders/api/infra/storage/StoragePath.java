@@ -60,7 +60,11 @@ public enum StoragePath {
     RESTORATION_MASK("restorations/%d/mask/%s", false),
 
     /** AI 복원 결과: restorations/{memberId}/restored/{uuid}.{ext} */
-    RESTORATION_RESTORED("restorations/%d/restored/%s", false);
+    RESTORATION_RESTORED("restorations/%d/restored/%s", false),
+
+    /** 입금 증빙(캡처): print-orders/{printOrderId}/deposit-receipts/{uuid}.{ext} */
+    DEPOSIT_RECEIPT("print-orders/%d/deposit-receipts/%s", false);
+
 
     private final String pattern;
     private final boolean isPublic;
@@ -136,6 +140,6 @@ public enum StoragePath {
     // 공통 API 사용 가능 여부 확인
     public boolean isCommon() {
         return this == PROFILE || this == POST_IMAGE || this == TEMP_PUBLIC || this == INQUIRY ||
-                this == RESTORATION_ORIGINAL || this == RESTORATION_MASK || this == RESTORATION_RESTORED;
+                this == RESTORATION_ORIGINAL || this == RESTORATION_MASK || this == RESTORATION_RESTORED || this == DEPOSIT_RECEIPT;
     }
 }
