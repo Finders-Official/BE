@@ -43,6 +43,9 @@ public enum StoragePath {
     /** 임시 업로드 (public): temp/{memberId}/{uuid}.{ext} - 30일 후 자동 삭제 */
     TEMP_PUBLIC("temp/%d/%s", true),
 
+    /** 입금 증빙(캡처): print-orders/{printOrderId}/deposit-receipts/{uuid}.{ext} */
+    DEPOSIT_RECEIPT("print-orders/%d/deposit-receipts/%s", false),
+
     // ========================================
     // Private Bucket Paths (Signed URL 필요)
     // ========================================
@@ -60,10 +63,7 @@ public enum StoragePath {
     RESTORATION_MASK("restorations/%d/mask/%s", false),
 
     /** AI 복원 결과: restorations/{memberId}/restored/{uuid}.{ext} */
-    RESTORATION_RESTORED("restorations/%d/restored/%s", false),
-
-    /** 입금 증빙(캡처): print-orders/{printOrderId}/deposit-receipts/{uuid}.{ext} */
-    DEPOSIT_RECEIPT("print-orders/%d/deposit-receipts/%s", false);
+    RESTORATION_RESTORED("restorations/%d/restored/%s", false);
 
 
     private final String pattern;
