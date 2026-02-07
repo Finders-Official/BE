@@ -44,8 +44,8 @@ public class LocalMemberController {
     }
 
     @Operation(
-            summary = "로컬 개발용 SignupTiken 발급",
-            description = "dd"
+            summary = "로컬 개발용 SignupToken 발급",
+            description = "로컬 개발 환경에서 OAuth 인증 없이 테스트용 SignupToken을 발급합니다."
     )
     @GetMapping("/signup-token")
     public ResponseEntity<Map<String, String>> getMockSignupToken(
