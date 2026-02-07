@@ -338,7 +338,7 @@ public class PhotoResponse {
     ) { }
 
     @Builder
-    @Schema(name = "PhotoLabAcount", description = "회원 - 현상소 인화 계좌 정보 조회")
+    @Schema(name = "PhotoLabAccount", description = "회원 - 현상소 인화 계좌 정보 조회")
     public record PhotoLabAccount(
             String bankName,
             String bankAccountNumber,
