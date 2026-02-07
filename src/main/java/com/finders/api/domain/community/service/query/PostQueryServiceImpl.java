@@ -80,7 +80,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
         Set<Long> likedPostIds;
         if (memberId != null && !cachedPosts.isEmpty()) {
-            List<Long> postIds = cachedPosts.stream().map(PostCacheDTO::id).toList();
+            List<Long> postIds = cachedPosts.stream().map(PostCacheDTO::postId).toList();
             likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
         } else {
             likedPostIds = java.util.Collections.emptySet();
@@ -88,7 +88,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
         List<PostResponse.PostPreviewDTO> previews = cachedPosts.stream()
                 .map(dto -> {
-                    boolean isLiked = likedPostIds.contains(dto.id());
+                    boolean isLiked = likedPostIds.contains(dto.postId());
 
                     String fullImageUrl = (dto.objectPath() != null)
                             ? storageService.getPublicUrl(dto.objectPath())

@@ -10,6 +10,7 @@ public class CommentResponse {
     @Builder
     public record CommentResDTO(
             Long commentId,
+            Long postId,
             String nickname,
             String profileImageUrl,
             String content,
@@ -19,6 +20,7 @@ public class CommentResponse {
         public static CommentResDTO from(Comment comment, Long currentMemberId, String profileImageUrl) {
             return CommentResDTO.builder()
                     .commentId(comment.getId())
+                    .postId(comment.getPost().getId())
                     .nickname(comment.getMemberUser().getName())
                     .profileImageUrl(profileImageUrl)
                     .content(comment.getContent())

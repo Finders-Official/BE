@@ -192,12 +192,12 @@ public class PostController {
     }
 
     @Operation(summary = "최근 검색어 개별 삭제", description = "X 버튼을 눌러 특정 검색 기록을 삭제합니다.")
-    @DeleteMapping("/search/history/{historyId}")
+    @DeleteMapping("/search/history/{searchHistoryId}")
     public ApiResponse<Void> deleteHistory(
-            @PathVariable Long historyId,
+            @PathVariable Long searchHistoryId,
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        searchHistoryCommandService.deleteSearchHistory(historyId, authUser.memberId());
+        searchHistoryCommandService.deleteSearchHistory(searchHistoryId, authUser.memberId());
         return ApiResponse.success(SuccessCode.OK, null);
     }
 

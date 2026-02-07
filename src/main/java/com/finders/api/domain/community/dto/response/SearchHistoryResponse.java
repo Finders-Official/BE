@@ -7,7 +7,7 @@ public class SearchHistoryResponse {
 
     @Builder
     public record SearchHistoryResDTO(
-            Long id,
+            Long searchHistoryId,
             String keyword,
             String imageUrl,
             Integer width,
@@ -15,7 +15,7 @@ public class SearchHistoryResponse {
     ) {
         public static SearchHistoryResDTO from(SearchHistory history, String imageUrl) {
             return SearchHistoryResDTO.builder()
-                    .id(history.getId())
+                    .searchHistoryId(history.getId())
                     .keyword(history.getKeyword())
                     .imageUrl(imageUrl)
                     .width(history.getWidth())

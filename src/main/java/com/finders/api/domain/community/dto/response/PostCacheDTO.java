@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 @Builder
 public record PostCacheDTO(
-        Long id,
+        Long postId,
         String title,
         Integer likeCount,
         Integer commentCount,

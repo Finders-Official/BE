@@ -79,12 +79,14 @@ public class PostResponse {
 
     // 현상소 리뷰
     public record LabReviewResDTO(
+            Long postId,
             Long labId,
             String labName,
             String content
     ) {
         public static LabReviewResDTO from(Post post) {
             return new LabReviewResDTO(
+                    post.getId(),
                     post.getPhotoLab().getId(),
                     post.getPhotoLab().getName(),
                     post.getLabReview()
@@ -116,7 +118,7 @@ public class PostResponse {
 
         public static PostPreviewDTO fromCache(PostCacheDTO cache, boolean isLiked, String fullImageUrl) {
             return PostPreviewDTO.builder()
-                    .postId(cache.id())
+                    .postId(cache.postId())
                     .title(cache.title())
                     .likeCount(cache.likeCount())
                     .commentCount(cache.commentCount())
