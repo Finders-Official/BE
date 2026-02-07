@@ -48,7 +48,7 @@ public class LocalMemberController {
             description = "로컬 개발 환경에서 OAuth 인증 없이 테스트용 SignupToken을 발급합니다."
     )
     @GetMapping("/signup-token")
-    public ResponseEntity<Map<String, String>> getMockSignupToken(
+    public ApiResponse<Map<String, String>> getMockSignupToken(
             @RequestParam(defaultValue = "KAKAO") SocialProvider provider,
             @RequestParam(defaultValue = "1") String providerId,
             @RequestParam(defaultValue = "test@kakao.com") String email,
@@ -67,6 +67,6 @@ public class LocalMemberController {
 
         String token = signupTokenProvider.createSignupToken(payload);
 
-        return ResponseEntity.ok(Map.of("signupToken", token));
+        return ApiResponse.success(SuccessCode.OK, Map.of("signupToken", token));
     }
 }
