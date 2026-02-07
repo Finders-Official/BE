@@ -24,10 +24,10 @@ public class OwnerPhotoController {
     private final OwnerPhotoCommandService ownerPhotoCommandService;
 
     @Operation(
-            summary = "오너 - 스캔 업로드 presigned url 벌크 발급(PUT)",
+            summary = "오너 - 스캔 이미지를 업로드 할 presigned url 벌크 발급(PUT)",
             description = "private 버킷에 PUT 업로드 가능한 presigned url을 count 만큼 발급합니다."
     )
-    @PostMapping("/{photoLabId}/scan-uploads/presigned-urls")
+    @PostMapping("/{photoLabId}/scan-photos/presigned-urls")
     @PreAuthorize("hasRole('OWNER')")
     public ApiResponse<OwnerPhotoResponse.PresignedUrls> createScanUploadPresignedUrls(
             @AuthenticationPrincipal AuthUser owner,
