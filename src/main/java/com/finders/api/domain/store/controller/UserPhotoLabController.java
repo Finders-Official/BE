@@ -79,13 +79,17 @@ public class UserPhotoLabController {
             @RequestParam(required = false) Long parentRegionId,
             @RequestParam(required = false) List<Long> regionIds,
             @RequestParam(required = false) LocalDate date,
-            @RequestParam(required = false) @DateTimeFormat(iso = ISO.TIME) LocalTime time,
+            @RequestParam(name = "time", required = false) @DateTimeFormat(iso = ISO.TIME) List<LocalTime> times,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng
     ) {
         Long memberId = user != null ? user.memberId() : null;
+        List<LocalTime> normalizedTimes = (times == null || times.isEmpty())
+                ? null
+                : times.stream().distinct().toList();
+
         PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
                 .memberId(memberId)
                 .query(q)
@@ -93,7 +97,7 @@ public class UserPhotoLabController {
                 .parentRegionId(parentRegionId)
                 .regionIds(regionIds)
                 .date(date)
-                .time(time)
+                .times(normalizedTimes)
                 .page(page)
                 .size(size)
                 .lat(lat)
@@ -115,13 +119,17 @@ public class UserPhotoLabController {
             @RequestParam(required = false) Long parentRegionId,
             @RequestParam(required = false) List<Long> regionIds,
             @RequestParam(required = false) LocalDate date,
-            @RequestParam(required = false) @DateTimeFormat(iso = ISO.TIME) LocalTime time,
+            @RequestParam(name = "time", required = false) @DateTimeFormat(iso = ISO.TIME) List<LocalTime> times,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng
     ) {
         Long memberId = user != null ? user.memberId() : null;
+        List<LocalTime> normalizedTimes = (times == null || times.isEmpty())
+                ? null
+                : times.stream().distinct().toList();
+
         PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
                 .memberId(memberId)
                 .query(q)
@@ -129,7 +137,7 @@ public class UserPhotoLabController {
                 .parentRegionId(parentRegionId)
                 .regionIds(regionIds)
                 .date(date)
-                .time(time)
+                .times(normalizedTimes)
                 .page(page)
                 .size(size)
                 .lat(lat)
