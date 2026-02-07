@@ -55,7 +55,7 @@ public class PostController {
     ) {
         return ApiResponse.success(
                 SuccessCode.POST_FOUND,
-                postQueryService.getMyPosts(authUser.memberId(), pageable.getPageNumber(), pageable.getPageSize())
+                postQueryService.getMyPosts(authUser.memberId(), pageable)
         );
     }
 
