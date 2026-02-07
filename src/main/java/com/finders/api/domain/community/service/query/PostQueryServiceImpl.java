@@ -199,13 +199,22 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
-    public PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Integer page, Integer size) {
-        List<Post> posts = postQueryRepository.findByMemberId(memberId, page, size);
+    public PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Pageable pageable) {
+        List<Post> posts = postQueryRepository.findByMemberId(
+                memberId,
+                pageable.getPageNumber(),
+                pageable.getPageSize()
+        );
 
         Long totalCount = postQueryRepository.countByMemberId(memberId);
-        boolean isLast = (long) (page + 1) * size >= totalCount;
 
-        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId), totalCount, isLast);
+        boolean isLast = (long) (pageable.getOffset() + posts.size()) >= totalCount;
+
+        return PostResponse.PostPreviewListDTO.from(
+                convertToPreviewDTOs(posts, memberId),
+                totalCount,
+                isLast
+        );
     }
 
     @Override
