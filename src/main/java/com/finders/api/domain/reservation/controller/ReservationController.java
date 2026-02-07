@@ -35,7 +35,7 @@ public class ReservationController {
             summary = "현상소 날짜별 예약 가능 시간대 조회",
             description = "특정 날짜에 예약 가능한 시간대 목록을 조회합니다."
     )
-    @GetMapping("/{photoLabId}/reservation/available-times")
+    @GetMapping("/{photoLabId}/reservations/available-times")
     public ApiResponse<ReservationResponse.AvailableTimes> getAvailableTimes(
             @AuthenticationPrincipal AuthUser user,
             @PathVariable Long photoLabId,
