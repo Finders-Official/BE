@@ -96,9 +96,7 @@ public class UserPhotoLabController {
             @RequestParam(required = false) Double lng
     ) {
         Long memberId = user != null ? user.memberId() : null;
-        List<LocalTime> normalizedTimes = (times == null || times.isEmpty())
-                ? null
-                : times.stream().distinct().toList();
+        List<LocalTime> normalizedTimes = normalizeTimes(times);
 
         PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
                 .memberId(memberId)
@@ -142,9 +140,7 @@ public class UserPhotoLabController {
             @RequestParam(required = false) Double lng
     ) {
         Long memberId = user != null ? user.memberId() : null;
-        List<LocalTime> normalizedTimes = (times == null || times.isEmpty())
-                ? null
-                : times.stream().distinct().toList();
+        List<LocalTime> normalizedTimes = normalizeTimes(times);
 
         PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
                 .memberId(memberId)
@@ -275,6 +271,13 @@ public class UserPhotoLabController {
                 lng
         );
         return ApiResponse.success(SuccessCode.STORE_FAVORITE_LIST_FOUND, response);
+    }
+
+    //공동 메서드 정의
+    private List<LocalTime> normalizeTimes(List<LocalTime> times) {
+        return (times == null || times.isEmpty())
+                ? null
+                : times.stream().distinct().toList();
     }
 
 }
