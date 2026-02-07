@@ -6,6 +6,7 @@ public class PostLikeResponse {
 
     @Builder
     public record PostLikeResDTO(
+            Long postId,
             Integer likeCount,
             boolean isLiked
     ) {}
