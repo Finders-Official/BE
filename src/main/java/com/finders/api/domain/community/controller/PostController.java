@@ -68,7 +68,7 @@ public class PostController {
     ) {
         return ApiResponse.success(
                 SuccessCode.POST_FOUND,
-                postQueryService.getPostList(pageable.getPageNumber(), pageable.getPageSize(), authUser.memberId())
+                postQueryService.getPostList(pageable, authUser.memberId())
         );
     }
 
@@ -228,7 +228,7 @@ public class PostController {
     ) {
         return ApiResponse.success(
                 SuccessCode.OK,
-                postQueryService.getPostLikesList(authUser.memberId(), pageable.getPageNumber(), pageable.getPageSize())
+                postQueryService.getPostLikesList(authUser.memberId(), pageable)
         );
     }
 }
