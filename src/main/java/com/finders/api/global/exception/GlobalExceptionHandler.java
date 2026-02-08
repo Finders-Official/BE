@@ -4,6 +4,8 @@ import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.infra.discord.DiscordWebhookService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +53,25 @@ public class GlobalExceptionHandler {
         });
 
         log.warn("[ValidationException] {} - {}", request.getRequestURI(), errors);
+
+        return ResponseEntity
+                .status(ErrorCode.INVALID_INPUT.getStatus())
+                .body(ApiResponse.error(ErrorCode.INVALID_INPUT, errors));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleConstraintViolationException(
+            ConstraintViolationException e,
+            HttpServletRequest request
+    ) {
+        Map<String, String> errors = new HashMap<>();
+        for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
+            String path = violation.getPropertyPath().toString();
+            String field = path.substring(path.lastIndexOf('.') + 1);
+            errors.put(field, violation.getMessage());
+        }
+
+        log.warn("[ConstraintViolation] {} - {}", request.getRequestURI(), errors);
 
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT.getStatus())

@@ -39,6 +39,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
         post.increaseLikeCount();
 
         return PostLikeResponse.PostLikeResDTO.builder()
+                .postId(post.getId())
                 .likeCount(post.getLikeCount())
                 .isLiked(true)
                 .build();
@@ -59,6 +60,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
         post.decreaseLikeCount();
 
         return PostLikeResponse.PostLikeResDTO.builder()
+                .postId(post.getId())
                 .likeCount(post.getLikeCount())
                 .isLiked(false)
                 .build();

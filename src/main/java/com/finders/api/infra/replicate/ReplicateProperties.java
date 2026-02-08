@@ -16,7 +16,7 @@ public record ReplicateProperties(
         Integer maxRetries
 ) {
     public ReplicateProperties {
-        if (baseUrl == null) {
+        if (baseUrl == null || baseUrl.isBlank()) {
             baseUrl = "https://api.replicate.com/v1";
         }
         if (timeoutSeconds == null) {
@@ -28,6 +28,9 @@ public record ReplicateProperties(
     }
 
     public String getWebhookUrl() {
+        if (webhookBaseUrl == null || webhookBaseUrl.isBlank()) {
+            return null;
+        }
         return webhookBaseUrl + "/webhooks/replicate";
     }
 }

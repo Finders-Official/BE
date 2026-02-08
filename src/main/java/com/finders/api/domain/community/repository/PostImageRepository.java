@@ -16,12 +16,12 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long> {
             select pi
             from PostImage pi
             join pi.post p
-            where p.photoLab.id = :photoLabId
+            where p.photoLab.id = :labId
               and p.status = :status
             order by p.createdAt desc, pi.displayOrder asc, pi.id asc
             """)
     List<PostImage> findByPhotoLabIdAndPostStatus(
-            @Param("photoLabId") Long photoLabId,
+            @Param("labId") Long labId,
             @Param("status") CommunityStatus status,
             Pageable pageable
     );

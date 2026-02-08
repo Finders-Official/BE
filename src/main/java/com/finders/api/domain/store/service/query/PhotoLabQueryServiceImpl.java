@@ -9,12 +9,15 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabNoticeResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabPreviewResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionFilterResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionItemResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
+import com.finders.api.domain.store.entity.PhotoLabNotice;
 import com.finders.api.domain.store.entity.PhotoLabTag;
 import com.finders.api.domain.store.enums.PhotoLabStatus;
 import com.finders.api.domain.store.repository.PhotoLabFavoriteRepository;
@@ -54,6 +57,7 @@ import org.springframework.data.domain.PageRequest;
 public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     private static final int POST_IMAGE_LIMIT = 10;
+    private static final int PREVIEW_MAX_SIZE = 10;
 
     private final PhotoLabQueryRepository photoLabQueryRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
@@ -76,11 +80,14 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         boolean useDistance = shouldUseDistance(condition.memberId(), condition.lat(), condition.lng());
 
+        List<Long> regionIds = resolveRegionIds(condition.parentRegionId(), condition.regionIds());
+
         Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
                 condition.query(),
                 condition.tagIds(),
-                condition.regionId(),
+                regionIds,
                 condition.date(),
+                condition.times(),
                 pageNumber,
                 pageSize,
                 condition.lat(),
@@ -107,6 +114,47 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                         tagsByLabId.getOrDefault(photoLab.getId(), List.of()),
                         distanceKmOrNull(condition.lat(), condition.lng(), photoLab),
                         favoriteLabIds.contains(photoLab.getId())
+                ))
+                .toList();
+
+        return PagedResponse.of(SuccessCode.STORE_LIST_FOUND, cards, photoLabPage);
+    }
+
+    @Override
+    public PagedResponse<PhotoLabPreviewResponse.Card> getPhotoLabsPreview(PhotoLabSearchCondition condition) {
+        int pageNumber = (condition.page() != null && condition.page() >= 0) ? condition.page() : 0;
+        int pageSize = (condition.size() != null && condition.size() > 0) ? condition.size() : 20;
+        pageSize = Math.min(pageSize, PREVIEW_MAX_SIZE);
+
+        List<Long> regionIds = resolveRegionIds(condition.parentRegionId(), condition.regionIds());
+
+        Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
+                condition.query(),
+                condition.tagIds(),
+                regionIds,
+                condition.date(),
+                condition.times(),
+                pageNumber,
+                pageSize,
+                condition.lat(),
+                condition.lng(),
+                false
+        );
+
+        if (photoLabPage.isEmpty()) {
+            return PagedResponse.of(SuccessCode.STORE_LIST_FOUND, List.of(), photoLabPage);
+        }
+
+        List<Long> photoLabIds = photoLabPage.getContent().stream()
+                .map(PhotoLab::getId)
+                .toList();
+
+        Map<Long, List<String>> imageUrlsByLabId = buildImageUrlMap(photoLabIds);
+
+        List<PhotoLabPreviewResponse.Card> cards = photoLabPage.getContent().stream()
+                .map(photoLab -> PhotoLabPreviewResponse.Card.from(
+                        photoLab,
+                        firstOrNull(imageUrlsByLabId.get(photoLab.getId()))
                 ))
                 .toList();
 
@@ -214,6 +262,13 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .toList();
     }
 
+    private String firstOrNull(List<String> items) {
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        return items.get(0);
+    }
+
     private Double distanceKmOrNull(Double lat, Double lng, PhotoLab photoLab) {
         if (lat == null || lng == null || photoLab.getLatitude() == null || photoLab.getLongitude() == null) {
             return null;
@@ -238,6 +293,29 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
             return false;
         }
         return memberAgreementQueryService.hasAgreedToTerms(memberId, TermsType.LOCATION);
+    }
+
+    private List<Long> resolveRegionIds(Long parentRegionId, List<Long> regionIds) {
+        if (parentRegionId == null && (regionIds == null || regionIds.isEmpty())) {
+            return null;
+        }
+
+        if (regionIds != null && !regionIds.isEmpty()) {
+            return List.copyOf(new java.util.LinkedHashSet<>(regionIds));
+        }
+
+        if (parentRegionId == null) {
+            return null;
+        }
+
+        java.util.LinkedHashSet<Long> resolved = new java.util.LinkedHashSet<>();
+        resolved.add(parentRegionId);
+        List<Long> childIds = regionRepository.findChildRegionIds(parentRegionId);
+        if (childIds != null) {
+            resolved.addAll(childIds);
+        }
+
+        return resolved.isEmpty() ? null : List.copyOf(resolved);
     }
 
     // 커뮤니티 현상소 검색
@@ -265,7 +343,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                     }
 
                     return PhotoLabResponse.PhotoLabSearchDTO.from(
-                            result.getId(),
+                            result.getLabId(),
                             result.getName(),
                             result.getAddress(),
                             distanceStr,
@@ -275,6 +353,56 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .toList();
 
         return PhotoLabResponse.PhotoLabSearchListDTO.from(dtos);
+    }
+
+    @Override
+    public List<String> autocompletePhotoLabNames(String keyword) {
+        return photoLabQueryRepository.autocompletePhotoLabNames(keyword.trim());
+    }
+
+    @Override
+    public List<PhotoLabNoticeResponse.Rolling> getPhotoLabNotices(Long memberId, int page, int size, Double lat, Double lng) {
+        if (page < 0 || size <= 0) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
+        boolean useDistance = shouldUseDistance(memberId, lat, lng);
+
+        Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
+                null,
+                null,
+                null,
+                null,
+                null,
+                page,
+                size,
+                lat,
+                lng,
+                useDistance
+        );
+
+        if (photoLabPage.isEmpty()) {
+            return List.of();
+        }
+
+        List<PhotoLab> photoLabs = photoLabPage.getContent();
+        Map<Long, String> photoLabNameById = photoLabs.stream()
+                .collect(Collectors.toMap(PhotoLab::getId, PhotoLab::getName));
+        List<Long> photoLabIds = photoLabs.stream()
+                .map(PhotoLab::getId)
+                .toList();
+
+        List<PhotoLabNotice> notices = photoLabNoticeRepository
+                .findByPhotoLab_IdInAndIsActiveTrueOrderByCreatedAtDescIdDesc(photoLabIds);
+
+        return notices.stream()
+                .map(notice -> PhotoLabNoticeResponse.Rolling.builder()
+                        .photoLabId(notice.getPhotoLab().getId())
+                        .photoLabName(photoLabNameById.get(notice.getPhotoLab().getId()))
+                        .noticeTitle(notice.getTitle())
+                        .noticeType(notice.getNoticeType())
+                        .build())
+                .toList();
     }
 
     @Override
