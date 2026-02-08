@@ -77,7 +77,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     @Override
     public PostResponse.PostPreviewListDTO getPopularPosts(Long memberId) {
-        List<PostCacheDTO> cachedPosts = toPostCacheDTOs(popularPostCacheService.getPopularPosts());
+        List<PostCacheDTO> cachedPosts = popularPostCacheService.getPopularPosts();
 
         Set<Long> likedPostIds;
         if (memberId != null && !cachedPosts.isEmpty()) {
@@ -99,14 +99,6 @@ public class PostQueryServiceImpl implements PostQueryService {
                 })
                 .toList();
         return PostResponse.PostPreviewListDTO.from(previews);
-    }
-
-    private List<PostCacheDTO> toPostCacheDTOs(List<?> raw) {
-        if (raw == null || raw.isEmpty()) return List.of();
-
-        return raw.stream()
-                .map(o -> objectMapper.convertValue(o, PostCacheDTO.class))
-                .toList();
     }
 
     @Override
