@@ -94,3 +94,31 @@ Successfully completed full Terraform lifecycle:
 - `.terraform.lock.hcl` was created — should be committed to version control for reproducible builds
 - Plan was stale after partial apply failure (random_id created but bucket failed) — demonstrates importance of state management
 
+## [2026-02-09] Phase 1: GCS + IAM Import Results
+
+### State Management
+- Created `finders-terraform-state` bucket in asia-northeast3 (manually, outside Terraform)
+- Versioning enabled, uniform bucket-level access enabled
+- State migrated from local to GCS with `terraform init -migrate-state`
+- State file path: `gs://finders-terraform-state/terraform/state/default.tfstate`
+- ADC workaround still needed: `GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)`
+
+### GCS Import
+- **finders-public**: Imported successfully. Drift found: `hierarchical_namespace { enabled = true }` was present on actual bucket but missing from initial config. Also had lifecycle rule (delete temp/ after 30 days) and expanded CORS config (POST/PUT/DELETE methods, specific response headers)
+- **finders-private**: Same pattern — also had hierarchical_namespace enabled, lifecycle rule, and CORS config. `public_access_prevention = "enforced"` (different from public bucket's "inherited")
+- **Key observations**: Phase 0 audit was slightly off on CORS config — actual origins are ["*"] with 5 methods (GET/POST/PUT/DELETE/HEAD) and specific response headers (Content-Type/Authorization/Content-Length/Accept), not just "all origins" with GET/HEAD/OPTIONS
+
+### IAM Import
+- Imported 1 admin editor binding (sachi009955@gmail.com: roles/editor, logging.viewer, monitoring.viewer, SA token creator)
+- Imported 8 team member bindings x 5 project roles each = 40 project IAM bindings + 8 SA impersonation bindings
+- Imported 1 photo team storage viewer binding (wldy4627@gmail.com)
+- Imported 1 SA self-impersonation binding
+- Imported 3 GCS bucket IAM bindings (public compute admin, private compute admin, public allUsers viewer)
+- **Total**: 57 resources imported to Terraform state
+
+### Gotchas
+- `sensitive = true` on variables prevents using them in `for_each` — Terraform error "Sensitive values cannot be used as for_each arguments". Removed sensitive from email list variables since they appear as resource instance keys in state anyway
+- GCS import ID format requires `{project_id}/{bucket_name}`, not just `{bucket_name}`
+- After import, plan showed "54 to change" for IAM resources — all changes were just marking `project` attribute as sensitive (no actual infra changes). Required one `terraform apply` to sync state
+- `hierarchical_namespace { enabled = true }` on both buckets forced replacement if missing from config — critical to match exactly
+
