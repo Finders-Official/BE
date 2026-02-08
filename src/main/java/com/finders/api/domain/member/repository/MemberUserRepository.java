@@ -40,7 +40,7 @@ public interface MemberUserRepository extends JpaRepository<MemberUser, Long> {
 
     // 활성 유저 중, 토큰이 5개 미만인 유저만 토큰 1개 추가
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE MemberUser m SET m.tokenBalance = m.tokenBalance + 1" +
+    @Query("UPDATE MemberUser m SET m.tokenBalance = m.tokenBalance + 1 " +
             "WHERE m.tokenBalance < 5 AND m.status = 'ACTIVE'")
     int bulkRechargeTokens();
 }
