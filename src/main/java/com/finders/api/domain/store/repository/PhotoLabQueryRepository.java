@@ -37,7 +37,7 @@ public class PhotoLabQueryRepository {
             List<Long> tagIds,
             List<Long> regionIds,
             LocalDate date,
-            LocalTime time,
+            List<LocalTime> times,
             int page,
             int size,
             Double lat,
@@ -48,7 +48,7 @@ public class PhotoLabQueryRepository {
                 .and(likeQuery(query))
                 .and(inRegion(regionIds))
                 .and(hasTagIds(tagIds))
-                .and(isOpenAndReservable(date, time));
+                .and(isOpenAndReservable(date, times));
 
         JPAQuery<PhotoLab> contentQuery = queryFactory
                 .selectFrom(photoLab)
@@ -116,7 +116,7 @@ public class PhotoLabQueryRepository {
                 .exists();
     }
 
-    private BooleanExpression isOpenAndReservable(LocalDate date, LocalTime time) {
+    private BooleanExpression isOpenAndReservable(LocalDate date, List<LocalTime> times) {
         if (date == null) {
             return null;
         }
@@ -126,10 +126,17 @@ public class PhotoLabQueryRepository {
                 .and(photoLabBusinessHour.dayOfWeek.eq(dayOfWeek))
                 .and(photoLabBusinessHour.isClosed.isFalse());
 
-        if (time != null) {
+        LocalTime minTime = null;
+        LocalTime maxTime = null;
+        if (times != null && !times.isEmpty()) {
+            minTime = times.stream().min(LocalTime::compareTo).orElse(null);
+            maxTime = times.stream().max(LocalTime::compareTo).orElse(null);
+        }
+
+        if (minTime != null && maxTime != null) {
             openCondition = openCondition
-                    .and(photoLabBusinessHour.openTime.loe(time))
-                    .and(photoLabBusinessHour.closeTime.goe(time.plusMinutes(TIME_INTERVAL_MINUTES)));
+                    .and(photoLabBusinessHour.openTime.loe(minTime))
+                    .and(photoLabBusinessHour.closeTime.goe(maxTime.plusMinutes(TIME_INTERVAL_MINUTES)));
         }
 
         BooleanExpression open = JPAExpressions
@@ -139,16 +146,16 @@ public class PhotoLabQueryRepository {
                 .exists();
 
         BooleanExpression reservable;
-        if (time != null) {
-            BooleanExpression fullAtTime = JPAExpressions
-                    .selectOne()
+        if (times != null && !times.isEmpty()) {
+            BooleanExpression allSelectedTimesFull = JPAExpressions
+                    .select(reservationSlot.count())
                     .from(reservationSlot)
                     .where(reservationSlot.photoLab.eq(photoLab)
                             .and(reservationSlot.reservationDate.eq(date))
-                            .and(reservationSlot.reservationTime.eq(time))
+                            .and(reservationSlot.reservationTime.in(times))
                             .and(reservationSlot.reservedCount.goe(reservationSlot.maxCapacity)))
-                    .exists();
-            reservable = fullAtTime.not();
+                    .eq((long) times.size());
+            reservable = allSelectedTimesFull.not();
         } else {
             BooleanExpression availableSlotExists = JPAExpressions
                     .selectOne()
@@ -157,7 +164,13 @@ public class PhotoLabQueryRepository {
                             .and(reservationSlot.reservationDate.eq(date))
                             .and(reservationSlot.reservedCount.lt(reservationSlot.maxCapacity)))
                     .exists();
-            reservable = availableSlotExists;
+            BooleanExpression anySlotExists = JPAExpressions
+                    .selectOne()
+                    .from(reservationSlot)
+                    .where(reservationSlot.photoLab.eq(photoLab)
+                            .and(reservationSlot.reservationDate.eq(date)))
+                    .exists();
+            reservable = availableSlotExists.or(anySlotExists.not());
         }
 
         return open.and(reservable);
