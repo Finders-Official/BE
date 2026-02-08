@@ -306,8 +306,6 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
 
         // 7) 주문 상태 변경: SHIPPED
         order.updateStatusByOwner(PrintOrderStatus.SHIPPED);
-        // 8) 배송 상태 변경: 배송 중으로
-        delivery.updateStatus(DeliveryStatus.DELIVERED);
         return OwnerPhotoResponse.PrintOrderStatusUpdated.of(order.getId(), order.getStatus());
     }
 
