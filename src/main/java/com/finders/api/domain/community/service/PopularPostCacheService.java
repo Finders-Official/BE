@@ -1,6 +1,5 @@
 package com.finders.api.domain.community.service;
 
-import com.finders.api.domain.community.dto.response.PostCacheDTO;
 import com.finders.api.domain.community.repository.PostQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;

@@ -53,8 +53,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      connect-timeout: 500ms # 0.5초
-      timeout: 500ms
+      connect-timeout: 10ms
+      timeout: 20ms
       lettuce:
         pool:
           max-active: 8
