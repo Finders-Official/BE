@@ -75,7 +75,6 @@ public enum ErrorCode implements BaseCode {
     MEMBER_NICKNAME_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_410", "이미 사용 중인 닉네임입니다."),
     MEMBER_EMAIL_DUPLICATED(HttpStatus.CONFLICT, "MEMBER_411", "이미 사용 중인 이메일입니다."),
     MEMBER_INACTIVE(HttpStatus.FORBIDDEN, "MEMBER_402", "비활성화되었거나 이미 탈퇴한 계정입니다."),
-    MEMBER_WITHDRAWAL_LOCKED(HttpStatus.FORBIDDEN, "MEMBER_400", "진행 중인 서비스가 있어 탈퇴가 불가능합니다."),
 
     // 휴대폰 인증 증빙 관련 (VPT 검증)
     MEMBER_PHONE_VERIFY_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER_420", "휴대폰 인증이 필요합니다."),
@@ -83,6 +82,11 @@ public enum ErrorCode implements BaseCode {
 
     // 약관 관련
     MEMBER_MANDATORY_TERMS_NOT_AGREED(HttpStatus.FORBIDDEN, "MEMBER_430", "필수 약관에 동의하지 않았습니다."),
+
+    // 회원 탈퇴
+    WITHDRAWAL_LOCKED_RESERVATION(HttpStatus.FORBIDDEN, "MEMBER_440", "방문 예정인 예약 내역이 있습니다. 예약 취소 후 탈퇴가 가능합니다."),
+    WITHDRAWAL_LOCKED_ORDER(HttpStatus.FORBIDDEN, "MEMBER_441", "진행 중인 현상/인화 작업이 있습니다. 완료 후 시도해 주세요."),
+    WITHDRAWAL_LOCKED_INQUIRY(HttpStatus.FORBIDDEN, "MEMBER_442", "답변 대기 중인 문의가 있습니다. 답변 확인 후 탈퇴가 가능합니다."),
 
     // ========================================
     // Store (현상소)

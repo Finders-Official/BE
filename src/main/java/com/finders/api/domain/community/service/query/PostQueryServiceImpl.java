@@ -65,11 +65,12 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
-    public PostResponse.PostPreviewListDTO getPostList(Integer page, Integer size, Long memberId) {
-        List<Post> posts = postQueryRepository.findAllForFeed(page, size);
+    public PostResponse.PostPreviewListDTO getPostList(Pageable pageable, Long memberId) {
+        List<Post> posts = postQueryRepository.findAllForFeed(pageable.getPageNumber(), pageable.getPageSize());
 
         Long totalCount = postQueryRepository.countAllActivePosts();
-        boolean isLast = (long) (page + 1) * size >= totalCount;
+
+        boolean isLast = (pageable.getOffset() + posts.size()) >= totalCount;
 
         return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId), totalCount, isLast);
     }
@@ -80,7 +81,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
         Set<Long> likedPostIds;
         if (memberId != null && !cachedPosts.isEmpty()) {
-            List<Long> postIds = cachedPosts.stream().map(PostCacheDTO::id).toList();
+            List<Long> postIds = cachedPosts.stream().map(PostCacheDTO::postId).toList();
             likedPostIds = postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
         } else {
             likedPostIds = java.util.Collections.emptySet();
@@ -88,7 +89,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
         List<PostResponse.PostPreviewDTO> previews = cachedPosts.stream()
                 .map(dto -> {
-                    boolean isLiked = likedPostIds.contains(dto.id());
+                    boolean isLiked = likedPostIds.contains(dto.postId());
 
                     String fullImageUrl = (dto.objectPath() != null)
                             ? storageService.getPublicUrl(dto.objectPath())
@@ -118,10 +119,9 @@ public class PostQueryServiceImpl implements PostQueryService {
         );
 
         Long totalCount = postQueryRepository.countSearchPosts(keyword, filter);
-
         List<PostResponse.PostPreviewDTO> previewDTOs = convertToPreviewDTOs(posts, memberId);
 
-        boolean isLast = (long) (pageable.getPageNumber() + 1) * pageable.getPageSize() >= totalCount;
+        boolean isLast = (pageable.getOffset() + posts.size()) >= totalCount;
 
         return PostResponse.PostPreviewListDTO.from(previewDTOs, totalCount, isLast);
     }
@@ -199,32 +199,33 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
-    public PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Integer page, Integer size) {
-        List<Post> posts = postQueryRepository.findByMemberId(memberId, page, size);
+    public PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Pageable pageable) {
+        List<Post> posts = postQueryRepository.findByMemberId(
+                memberId,
+                pageable.getPageNumber(),
+                pageable.getPageSize()
+        );
 
         Long totalCount = postQueryRepository.countByMemberId(memberId);
-        boolean isLast = (long) (page + 1) * size >= totalCount;
 
-        return PostResponse.PostPreviewListDTO.from(convertToPreviewDTOs(posts, memberId), totalCount, isLast);
+        boolean isLast = (long) (pageable.getOffset() + posts.size()) >= totalCount;
+
+        return PostResponse.PostPreviewListDTO.from(
+                convertToPreviewDTOs(posts, memberId),
+                totalCount,
+                isLast
+        );
     }
 
     @Override
-    public PostResponse.PostPreviewListDTO getPostLikesList(Long memberId, Integer page, Integer size) {
-        List<Post> posts = postQueryRepository.findLikedPostsByMemberId(memberId, page, size);
+    public PostResponse.PostPreviewListDTO getPostLikesList(Long memberId, Pageable pageable) {
+        List<Post> posts = postQueryRepository.findLikedPostsByMemberId(memberId, pageable.getPageNumber(), pageable.getPageSize());
 
         Long totalCount = postQueryRepository.countMyLikedPosts(memberId);
-        boolean isLast = (long) (page + 1) * size >= totalCount;
 
-        List<PostResponse.PostPreviewDTO> previewDTOs = posts.stream()
-                .map(post -> {
-                    boolean isLiked = true;
+        boolean isLast = (pageable.getOffset() + posts.size()) >= totalCount;
 
-                    com.finders.api.domain.community.entity.PostImage firstImage =
-                            post.getPostImageList().isEmpty() ? null : post.getPostImageList().get(0);
-
-                    return PostResponse.PostPreviewDTO.from(post, isLiked, toPostImageResDTO(firstImage));
-                })
-                .toList();
+        List<PostResponse.PostPreviewDTO> previewDTOs = convertToPreviewDTOs(posts, memberId);
 
         return PostResponse.PostPreviewListDTO.from(previewDTOs, totalCount, isLast);
     }

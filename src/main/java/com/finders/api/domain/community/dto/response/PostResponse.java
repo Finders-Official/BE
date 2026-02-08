@@ -79,12 +79,14 @@ public class PostResponse {
 
     // 현상소 리뷰
     public record LabReviewResDTO(
+            Long postId,
             Long labId,
             String labName,
             String content
     ) {
         public static LabReviewResDTO from(Post post) {
             return new LabReviewResDTO(
+                    post.getId(),
                     post.getPhotoLab().getId(),
                     post.getPhotoLab().getName(),
                     post.getLabReview()
@@ -101,7 +103,8 @@ public class PostResponse {
             String title,
             Integer likeCount,
             Integer commentCount,
-            boolean isLiked
+            boolean isLiked,
+            LocalDateTime createdAt
     ) {
         public static PostPreviewDTO from(Post post, boolean isLiked, PostImageResDTO imageResDTO) {
             return PostPreviewDTO.builder()
@@ -111,17 +114,19 @@ public class PostResponse {
                     .likeCount(post.getLikeCount())
                     .commentCount(post.getCommentCount())
                     .isLiked(isLiked)
+                    .createdAt(post.getCreatedAt())
                     .build();
         }
 
         public static PostPreviewDTO fromCache(PostCacheDTO cache, boolean isLiked, String fullImageUrl) {
             return PostPreviewDTO.builder()
-                    .postId(cache.id())
+                    .postId(cache.postId())
                     .title(cache.title())
                     .likeCount(cache.likeCount())
                     .commentCount(cache.commentCount())
                     .isLiked(isLiked)
                     .image(new PostImageResDTO(fullImageUrl, null, null))
+                    .createdAt(null)
                     .build();
         }
     }

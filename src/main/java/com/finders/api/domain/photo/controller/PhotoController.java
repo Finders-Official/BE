@@ -30,7 +30,7 @@ public class PhotoController {
             summary = "회원 - 내 진행중 작업 조회",
             description = "진행중인 현상/스캔/인화(배송/수령 포함) 작업이 있으면 진행 상태를 내려줍니다. 없으면 data는 null입니다."
     )
-    @GetMapping("/current-work")
+    @GetMapping("/me/work-in-progress")
     public ApiResponse<PhotoResponse.MyCurrentWork> getMyCurrentWork(
             @AuthenticationPrincipal AuthUser user
     ) {
@@ -91,7 +91,7 @@ public class PhotoController {
             summary = "회원 - 인화 옵션 목록 조회",
             description = "인화 옵션(필름/인화방식/인화지/사이즈/인화유형)과 배송비 정책을 내려줍니다."
     )
-    @GetMapping("/print/options")
+    @GetMapping("/print-orders/options")
     public ApiResponse<PhotoResponse.PrintOptions> getPrintOptions(
             @AuthenticationPrincipal AuthUser user
     ) {
@@ -102,7 +102,7 @@ public class PhotoController {
             summary = "회원 - 인화 옵션에 따른 가격 조회",
             description = "인화 옵션(필름/인화방식/인화지/사이즈/인화유형)과 배송비 정책에 따른 가격을 내려줍니다."
     )
-    @PostMapping("/print/quote")
+    @PostMapping("/print-orders/quote")
     public ApiResponse<PhotoResponse.PrintQuote> quotePrintPrice(
             @AuthenticationPrincipal AuthUser user,
             @RequestBody @Valid PhotoRequest.PrintQuote request
