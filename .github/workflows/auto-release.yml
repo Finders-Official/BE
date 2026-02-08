@@ -1,0 +1,148 @@
+name: Auto Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get next version
+        id: version
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Last tag: $LAST_TAG"
+
+          FIRST_LINE=$(echo "$COMMIT_MSG" | head -1)
+          echo "Commit subject: $FIRST_LINE"
+
+          # [RELEASE] v0.8.0 배포 또는 Merge pull request 제목에서 버전 추출
+          if [[ "$FIRST_LINE" =~ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            VERSION="v${BASH_REMATCH[1]}"
+            echo "Version from commit: $VERSION"
+          else
+            # 버전 없으면 PATCH 자동 증가
+            IFS='.' read -ra PARTS <<< "${LAST_TAG//v/}"
+            MAJOR=${PARTS[0]}
+            MINOR=${PARTS[1]}
+            PATCH=$((PARTS[2] + 1))
+            VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+            echo "Auto-incremented version: $VERSION"
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "last_tag=$LAST_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag exists
+        id: check
+        run: |
+          if git rev-parse "${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.check.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          LAST_TAG: ${{ steps.version.outputs.last_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          CHANGELOG=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges)
+
+          git tag -a "$VERSION" -m "Release ${VERSION}
+
+          Changes since ${LAST_TAG}:
+          ${CHANGELOG}"
+
+          git push origin "$VERSION"
+          echo "Tag $VERSION created and pushed"
+
+      - name: Generate release notes
+        if: steps.check.outputs.exists == 'false'
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          LAST_TAG: ${{ steps.version.outputs.last_tag }}
+        run: |
+          {
+            echo "# Release ${VERSION}"
+            echo ""
+            echo "## Changes since ${LAST_TAG}"
+            echo ""
+
+            FEATS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^feat")
+            if [ -n "$FEATS" ]; then
+              echo "### ✨ Features"
+              echo "$FEATS"
+              echo ""
+            fi
+
+            FIXES=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^fix")
+            if [ -n "$FIXES" ]; then
+              echo "### 🐛 Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+
+            DOCS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^docs")
+            if [ -n "$DOCS" ]; then
+              echo "### 📚 Documentation"
+              echo "$DOCS"
+              echo ""
+            fi
+
+            REFACTORS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^refactor")
+            if [ -n "$REFACTORS" ]; then
+              echo "### ♻️ Refactoring"
+              echo "$REFACTORS"
+              echo ""
+            fi
+
+            TESTS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^test")
+            if [ -n "$TESTS" ]; then
+              echo "### 🧪 Tests"
+              echo "$TESTS"
+              echo ""
+            fi
+
+            echo "---"
+            echo ""
+            echo "### All Commits"
+            git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges
+          } > RELEASE_NOTES.md
+
+          cat RELEASE_NOTES.md
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$VERSION" \
+            --title "Release ${VERSION}" \
+            --notes-file RELEASE_NOTES.md \
+            --latest
+
+          echo "✅ Release ${VERSION} published successfully!"
+          echo "📦 https://github.com/${{ github.repository }}/releases/tag/${VERSION}"
+
+      - name: Skip (tag exists)
+        if: steps.check.outputs.exists == 'true'
+        run: echo "Tag ${{ steps.version.outputs.version }} already exists, skipping"
