@@ -74,15 +74,6 @@ public class PhotoResponse {
             @Schema(description = "수령 방식(PICKUP/DELIVERY)", example = "DELIVERY")
             com.finders.api.domain.photo.enums.ReceiptMethod receiptMethod,
 
-            @Schema(description = "사진관 연락처", example = "010-1234-5678")
-            String photoLabNumber,
-
-            @Schema(description = "사진관 주소", example = "서울특별시 강남구")
-            String photoLabAddress,
-
-            @Schema(description = "사진관 상세 주소", example = "역삼동 123-123")
-            String photoLabAddressDetail,
-
             @Schema(description = "예상 완료 시각", example = "2026-01-17T14:00:00")
             LocalDateTime estimatedAt,
 
@@ -94,9 +85,6 @@ public class PhotoResponse {
                     po.getId(),
                     po.getStatus(),
                     po.getReceiptMethod(),
-                    po.getPhotoLab().getAddress(),
-                    po.getPhotoLab().getAddressDetail(),
-                    po.getPhotoLab().getPhone(),
                     po.getEstimatedAt(),
                     po.getCompletedAt()
             );
@@ -115,6 +103,15 @@ public class PhotoResponse {
 
             @Schema(description = "받는 사람", example = "이승주")
             String recipient,
+
+            @Schema(description = "수령인 연락처", example = "010-1234-5678")
+            String recipientNumber,
+
+            @Schema(description = "수령인 주소", example = "서울특별시 강남구")
+            String recipientAddress,
+
+            @Schema(description = "수령인 상세 주소", example = "역삼동 123-123")
+            String AddressDetail,
 
             @Schema(description = "보낸 사람 이름", example = "예술사진관 사장")
             String sender,
@@ -139,6 +136,9 @@ public class PhotoResponse {
                     d.getStatus(),
                     d.getRecipientName(),
                     d.getPrintOrder().getPhotoLab().getName(),
+                    d.getRecipientName(),
+                    d.getAddress(),
+                    d.getAddressDetail(),
                     d.getCarrier(),
                     d.getTrackingNumber(),
                     d.getShippedAt(),
