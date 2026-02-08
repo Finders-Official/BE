@@ -44,6 +44,7 @@
 | [NETWORK_BASICS.md](infra/NETWORK_BASICS.md) | 네트워크 기초 개념 학습 | 초보자 |
 | [NETWORK_SECURITY.md](infra/NETWORK_SECURITY.md) | 네트워크 및 보안 설정 가이드 | 모든 개발자 |
 | [NETWORK_CHEATSHEET.md](infra/NETWORK_CHEATSHEET.md) | 자주 쓰는 명령어 모음 | 모든 개발자 |
+| [SECURITY_CLEANUP_GUIDE.md](infra/SECURITY_CLEANUP_GUIDE.md) | 보안 감사 결과 및 정리 가이드 | 모든 개발자 |
 | [GCP_LOGGING_GUIDE.md](infra/GCP_LOGGING_GUIDE.md) | GCP 로그 확인 가이드 | DevOps |
 | [IAC_TERRAFORM_INTRO.md](infra/IAC_TERRAFORM_INTRO.md) | IaC/Terraform 개념 학습 | 모든 개발자 |
 

@@ -12,6 +12,7 @@
 | [NETWORK_SECURITY.md](./NETWORK_SECURITY.md) | 네트워크 및 보안 설정 가이드 | 모든 개발자 |
 | [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md) | 자주 쓰는 명령어 모음 | 모든 개발자 |
 | [IAC_TERRAFORM_INTRO.md](./IAC_TERRAFORM_INTRO.md) | IaC/Terraform 개념 학습 | 모든 개발자 |
+| [SECURITY_CLEANUP_GUIDE.md](./SECURITY_CLEANUP_GUIDE.md) | 보안 감사 결과 및 정리 가이드 | 모든 개발자 |
 
 ### 📋 상세 문서
 
@@ -256,6 +257,7 @@ docs/
 │   ├─ NETWORK_BASICS.md (네트워크 기초)
 │   ├─ NETWORK_SECURITY.md (보안 가이드)
 │   ├─ NETWORK_CHEATSHEET.md (명령어 모음)
+│   ├─ SECURITY_CLEANUP_GUIDE.md (보안 정리 가이드)
 │   ├─ GCP_LOGGING_GUIDE.md (로깅)
 │   ├─ IAC_TERRAFORM_INTRO.md (IaC/Terraform 개념)
 │   └─ TERRAFORM_OPERATIONS.md (Terraform 운영)
