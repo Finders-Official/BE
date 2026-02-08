@@ -4,10 +4,7 @@ import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.enums.MemberStatus;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.QueryHints;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
@@ -40,4 +37,10 @@ public interface MemberUserRepository extends JpaRepository<MemberUser, Long> {
 
     // 상태가 WITHDRAWN이고, 삭제된 지 특정 시점이 지난 회원 목록 조회
     List<MemberUser> findAllByStatusAndDeletedAtBefore(MemberStatus status, LocalDateTime threshold);
+
+    // 활성 유저 중, 토큰이 5개 미만인 유저만 토큰 1개 추가
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE MemberUser m SET m.tokenBalance = m.tokenBalance + 1 " +
+            "WHERE m.tokenBalance < 5 AND m.status = 'ACTIVE'")
+    int bulkRechargeTokens();
 }

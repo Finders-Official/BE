@@ -1,7 +1,8 @@
 package com.finders.api.domain.photo.service.command;
 
 import com.finders.api.domain.member.enums.TokenRelatedType;
-import com.finders.api.domain.member.service.TokenService;
+import com.finders.api.domain.member.service.command.TokenCommandService;
+import com.finders.api.domain.member.service.query.TokenQueryService;
 import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
 import com.finders.api.domain.photo.entity.PhotoRestoration;
@@ -35,7 +36,8 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
     private final PhotoRestorationRepository restorationRepository;
     private final StorageService storageService;
-    private final TokenService tokenService;
+    private final TokenQueryService tokenQueryService;
+    private final TokenCommandService tokenCommandService;
     private final ReplicateClient replicateClient;
     private final ImageMetadataService imageMetadataService;
 
@@ -45,7 +47,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
     @Override
     public RestorationResponse.Created createRestoration(Long memberId, RestorationRequest.Create request) {
         // 1. 토큰 잔액 확인 (차감은 복원 완료 시점에)
-        if (!tokenService.hasEnoughTokens(memberId, RESTORATION_TOKEN_COST)) {
+        if (!tokenQueryService.hasEnoughTokens(memberId, RESTORATION_TOKEN_COST)) {
             throw new CustomException(ErrorCode.INSUFFICIENT_TOKEN);
         }
 
@@ -75,7 +77,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         // 5. 상태 업데이트
         restoration.startProcessing(prediction.id());
 
-        int currentBalance = tokenService.getBalance(memberId);
+        int currentBalance = tokenQueryService.getBalance(memberId);
 
         log.info("[PhotoRestorationCommandServiceImpl.createRestoration] Created: id={}, predictionId={}, currentBalance={}",
                 restoration.getId(), prediction.id(), currentBalance);
@@ -123,7 +125,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         RestoredImageResult result = downloadAndStoreResult(restoredImageUrl, restoration.getMemberId());
 
         // 2. 토큰 차감 (복원 성공 시점에 차감)
-        tokenService.useTokens(
+        tokenCommandService.useTokens(
                 restoration.getMemberId(),
                 restoration.getTokenUsed(),
                 TokenRelatedType.PHOTO_RESTORATION,
