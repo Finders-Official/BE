@@ -53,8 +53,11 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      connect-timeout: 10ms
-      timeout: 20ms
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: true
+      connect-timeout: 1s
+      timeout: 2s
       lettuce:
         pool:
           max-active: 8
@@ -182,6 +185,8 @@ logging:
   level:
     root: INFO
     com.finders: DEBUG
+    org.springframework.data.redis: DEBUG
+    io.lettuce.core: DEBUG
 
 # ========================================
 # CORS 설정
