@@ -118,3 +118,8 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+# ========================================
+# Sisyphus (Working Notes - Never Commit)
+# ========================================
+.sisyphus/

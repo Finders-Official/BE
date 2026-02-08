@@ -17,7 +17,8 @@ resource "google_compute_instance" "app_server" {
 
   metadata = {
     enable-oslogin = "TRUE"
-    ssh-keys       = "finders_official_kr:ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBE9hTILabEVfIHV75/2hhcdeFzJh1psht8Zn7hZcKELfXlOb5iLv+iF4XuGroYVG3l/fu8/uYbq80SzwaXbN0zc= google-ssh {\"userName\":\"finders.official.kr@gmail.com\",\"expireOn\":\"2026-01-24T16:40:25+0000\"}"
+    # SSH keys managed via OS Login. Hardcoded keys removed for security.
+    # Use 'gcloud compute ssh' or OS Login for access.
   }
 
   boot_disk {
