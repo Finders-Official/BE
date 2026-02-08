@@ -11,12 +11,12 @@ resource "google_sql_database_instance" "main" {
   database_version = "MYSQL_8_0"
 
   settings {
-    tier              = "db-g1-small"
-    edition           = "ENTERPRISE"
-    availability_type = "ZONAL"
-    disk_type         = "PD_SSD"
-    disk_size         = 10
-    disk_autoresize   = true
+    tier                        = "db-g1-small"
+    edition                     = "ENTERPRISE"
+    availability_type           = "ZONAL"
+    disk_type                   = "PD_SSD"
+    disk_size                   = 10
+    disk_autoresize             = true
     activation_policy           = "ALWAYS"
     pricing_plan                = "PER_USE"
     deletion_protection_enabled = true
@@ -31,15 +31,15 @@ resource "google_sql_database_instance" "main" {
         value = "34.50.19.146/32"
       }
 
-      ssl_mode                         = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
+      ssl_mode                                      = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
       enable_private_path_for_google_cloud_services = false
     }
 
     backup_configuration {
-      enabled            = true
-      start_time         = "21:00"
-      binary_log_enabled = true
-      location           = "asia"
+      enabled                        = true
+      start_time                     = "21:00"
+      binary_log_enabled             = true
+      location                       = "asia"
       transaction_log_retention_days = 7
 
       backup_retention_settings {
@@ -73,7 +73,7 @@ resource "google_sql_database_instance" "main" {
     }
   }
 
-  deletion_protection  = true
+  deletion_protection = true
 
   lifecycle {
     prevent_destroy = true

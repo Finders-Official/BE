@@ -5,8 +5,9 @@ project_id = "your-gcp-project-id"
 region     = "asia-northeast3"
 zone       = "asia-northeast3-a"
 
-# Cloudflare API Token (required for Phase 5)
-cloudflare_api_token = "your-cloudflare-api-token"
+# Cloudflare (required for Phase 5)
+cloudflare_api_token  = "your-cloudflare-api-token"
+cloudflare_account_id = "your-cloudflare-account-id"
 
 # Compute Engine default service account
 compute_sa_email = "PROJECT_NUMBER-compute@developer.gserviceaccount.com"

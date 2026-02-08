@@ -23,6 +23,13 @@ variable "cloudflare_api_token" {
   default     = "" # Empty for Phase 0-4
 }
 
+variable "cloudflare_account_id" {
+  description = "Cloudflare Account ID"
+  type        = string
+  sensitive   = true
+  default     = "" # Empty for Phase 0-4
+}
+
 variable "admin_member_emails" {
   description = "Admin email addresses (roles/editor + logging + monitoring + SA impersonation)"
   type        = list(string)
