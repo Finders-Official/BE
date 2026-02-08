@@ -117,19 +117,19 @@ resource "google_service_account_iam_member" "sa_self_token_creator" {
 # =============================================================================
 
 resource "google_storage_bucket_iam_member" "public_compute_admin" {
-  bucket = google_storage_bucket.public.name
+  bucket = module.storage.public_bucket_name
   role   = "roles/storage.objectAdmin"
   member = local.compute_sa_member
 }
 
 resource "google_storage_bucket_iam_member" "private_compute_admin" {
-  bucket = google_storage_bucket.private.name
+  bucket = module.storage.private_bucket_name
   role   = "roles/storage.objectAdmin"
   member = local.compute_sa_member
 }
 
 resource "google_storage_bucket_iam_member" "public_all_users_viewer" {
-  bucket = google_storage_bucket.public.name
+  bucket = module.storage.public_bucket_name
   role   = "roles/storage.objectViewer"
   member = "allUsers"
 }

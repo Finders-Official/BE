@@ -1,9 +1,9 @@
 # =============================================================================
-# VPC Network - finders-vpc
+# VPC Network
 # =============================================================================
 
 resource "google_compute_network" "main" {
-  name                    = "finders-vpc"
+  name                    = "${var.name_prefix}-vpc"
   project                 = var.project_id
   auto_create_subnetworks = false
   routing_mode            = "REGIONAL"
@@ -66,10 +66,11 @@ resource "google_compute_subnetwork" "private_db" {
 }
 
 # =============================================================================
-# Firewall Rules (6 rules on finders-vpc)
+# Firewall Rules
 # =============================================================================
 
 # Firewall: Allow API traffic (8080 Prod, 8081 Dev)
+# Restricted to internal VPC (Cloudflare Tunnel originates locally)
 resource "google_compute_firewall" "allow_api_traffic" {
   name        = "allow-api-traffic"
   description = "도커로 띄운 8080(Prod)와 8081(Dev) 서버에 접속하기 위한 규칙"
@@ -83,7 +84,7 @@ resource "google_compute_firewall" "allow_api_traffic" {
     ports    = ["8080", "8081"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["10.0.0.0/16"]
   target_tags   = ["api-server"]
 }
 
@@ -139,8 +140,9 @@ resource "google_compute_firewall" "allow_ssh_from_iap" {
 }
 
 # Firewall: Allow HTTP (port 80)
+# Restricted to Cloudflare IP ranges — all external traffic comes via Cloudflare Tunnel
 resource "google_compute_firewall" "allow_http" {
-  name      = "finders-vpc-allow-http"
+  name      = "${var.name_prefix}-vpc-allow-http"
   project   = var.project_id
   network   = google_compute_network.main.name
   direction = "INGRESS"
@@ -151,13 +153,31 @@ resource "google_compute_firewall" "allow_http" {
     ports    = ["80"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["http-server"]
+  # Cloudflare IPv4 ranges: https://www.cloudflare.com/ips/
+  source_ranges = [
+    "173.245.48.0/20",
+    "103.21.244.0/22",
+    "103.22.200.0/22",
+    "103.31.4.0/22",
+    "141.101.64.0/18",
+    "108.162.192.0/18",
+    "190.93.240.0/20",
+    "188.114.96.0/20",
+    "197.234.240.0/22",
+    "198.41.128.0/17",
+    "162.158.0.0/15",
+    "104.16.0.0/13",
+    "104.24.0.0/14",
+    "172.64.0.0/13",
+    "131.0.72.0/22",
+  ]
+  target_tags = ["http-server"]
 }
 
 # Firewall: Allow HTTPS (port 443)
+# Restricted to Cloudflare IP ranges — all external traffic comes via Cloudflare Tunnel
 resource "google_compute_firewall" "allow_https" {
-  name      = "finders-vpc-allow-https"
+  name      = "${var.name_prefix}-vpc-allow-https"
   project   = var.project_id
   network   = google_compute_network.main.name
   direction = "INGRESS"
@@ -168,6 +188,23 @@ resource "google_compute_firewall" "allow_https" {
     ports    = ["443"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["https-server"]
+  # Cloudflare IPv4 ranges: https://www.cloudflare.com/ips/
+  source_ranges = [
+    "173.245.48.0/20",
+    "103.21.244.0/22",
+    "103.22.200.0/22",
+    "103.31.4.0/22",
+    "141.101.64.0/18",
+    "108.162.192.0/18",
+    "190.93.240.0/20",
+    "188.114.96.0/20",
+    "197.234.240.0/22",
+    "198.41.128.0/17",
+    "162.158.0.0/15",
+    "104.16.0.0/13",
+    "104.24.0.0/14",
+    "172.64.0.0/13",
+    "131.0.72.0/22",
+  ]
+  target_tags = ["https-server"]
 }

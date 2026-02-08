@@ -1,3 +1,7 @@
+# =============================================================================
+# GCP Core
+# =============================================================================
+
 variable "project_id" {
   description = "GCP Project ID"
   type        = string
@@ -16,6 +20,10 @@ variable "zone" {
   default     = "asia-northeast3-a"
 }
 
+# =============================================================================
+# Cloudflare
+# =============================================================================
+
 variable "cloudflare_api_token" {
   description = "Cloudflare API Token"
   type        = string
@@ -28,8 +36,23 @@ variable "cloudflare_account_id" {
   sensitive   = true
 }
 
+variable "cloudflare_tunnel_hostname" {
+  description = "Hostname for the Cloudflare tunnel (e.g. finders-api.log8.kr)"
+  type        = string
+}
+
+variable "cloudflare_tunnel_service" {
+  description = "Local service URL for the Cloudflare tunnel"
+  type        = string
+  default     = "http://localhost:8080"
+}
+
+# =============================================================================
+# IAM
+# =============================================================================
+
 variable "admin_member_emails" {
-  description = "Admin email addresses (roles/editor + logging + monitoring + SA impersonation)"
+  description = "Admin email addresses (logging + monitoring + SA impersonation + resource management)"
   type        = list(string)
   default     = []
 }
@@ -46,8 +69,21 @@ variable "photo_team_member_emails" {
   default     = []
 }
 
+# =============================================================================
+# Compute
+# =============================================================================
+
 variable "compute_sa_email" {
   description = "Compute Engine default service account email"
   type        = string
-  default     = ""
+}
+
+# =============================================================================
+# GCS
+# =============================================================================
+
+variable "cors_allowed_origins" {
+  description = "Allowed CORS origins for GCS buckets"
+  type        = list(string)
+  default     = ["*"]
 }

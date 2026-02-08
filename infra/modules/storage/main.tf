@@ -1,7 +1,7 @@
 resource "google_storage_bucket" "public" {
-  name                        = "finders-public"
+  name                        = "${var.name_prefix}-public"
   project                     = var.project_id
-  location                    = "ASIA-NORTHEAST3"
+  location                    = upper(var.region)
   storage_class               = "STANDARD"
   public_access_prevention    = "inherited"
   uniform_bucket_level_access = true
@@ -12,7 +12,7 @@ resource "google_storage_bucket" "public" {
   }
 
   cors {
-    origin          = ["*"]
+    origin          = var.cors_allowed_origins
     method          = ["GET", "POST", "PUT", "DELETE", "HEAD"]
     response_header = ["Content-Type", "Authorization", "Content-Length", "Accept"]
     max_age_seconds = 3600
@@ -38,9 +38,9 @@ resource "google_storage_bucket" "public" {
 }
 
 resource "google_storage_bucket" "private" {
-  name                        = "finders-private"
+  name                        = "${var.name_prefix}-private"
   project                     = var.project_id
-  location                    = "ASIA-NORTHEAST3"
+  location                    = upper(var.region)
   storage_class               = "STANDARD"
   public_access_prevention    = "enforced"
   uniform_bucket_level_access = true
@@ -51,7 +51,7 @@ resource "google_storage_bucket" "private" {
   }
 
   cors {
-    origin          = ["*"]
+    origin          = var.cors_allowed_origins
     method          = ["GET", "POST", "PUT", "DELETE", "HEAD"]
     response_header = ["Content-Type", "Authorization", "Content-Length", "Accept"]
     max_age_seconds = 3600

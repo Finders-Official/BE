@@ -1,11 +1,5 @@
-# =============================================================================
-# Cloud SQL - finders-db (MySQL 8.0)
-# BACKUP CREATED BEFORE IMPORT: 2026-02-08 20:44 UTC (ID: 1770583459363)
-# =============================================================================
-
-
 resource "google_sql_database_instance" "main" {
-  name             = "finders-db"
+  name             = "${var.name_prefix}-db"
   project          = var.project_id
   region           = var.region
   database_version = "MYSQL_8_0"
@@ -24,12 +18,7 @@ resource "google_sql_database_instance" "main" {
 
     ip_configuration {
       ipv4_enabled    = false
-      private_network = google_compute_network.main.id
-
-      authorized_networks {
-        name  = "finders-server"
-        value = "34.50.19.146/32"
-      }
+      private_network = var.network_id
 
       ssl_mode                                      = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
       enable_private_path_for_google_cloud_services = false
@@ -80,46 +69,36 @@ resource "google_sql_database_instance" "main" {
   }
 }
 
-# =============================================================================
-# Databases
-# =============================================================================
-
-# Production database
 resource "google_sql_database" "prod" {
-  name      = "finders"
+  name      = var.name_prefix
   instance  = google_sql_database_instance.main.name
   project   = var.project_id
   charset   = "utf8mb4"
   collation = "utf8mb4_unicode_ci"
 }
 
-# Development database
 resource "google_sql_database" "dev" {
-  name      = "finders_dev"
+  name      = "${var.name_prefix}_dev"
   instance  = google_sql_database_instance.main.name
   project   = var.project_id
   charset   = "utf8mb4"
   collation = "utf8mb4_0900_ai_ci"
 }
 
-# =============================================================================
-# VPC Peering for Cloud SQL Private IP
-# =============================================================================
-
 # Reserved IP range for Cloud SQL private networking
 resource "google_compute_global_address" "private_ip_address" {
-  name          = "finders-vpc-ip-range-1769092915737"
+  name          = "${var.name_prefix}-vpc-ip-range-1769092915737"
   project       = var.project_id
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
   address       = "10.68.240.0"
   prefix_length = 20
-  network       = google_compute_network.main.id
+  network       = var.network_id
 }
 
 # Service networking connection (VPC peering with Google services)
 resource "google_service_networking_connection" "private_vpc_connection" {
-  network                 = google_compute_network.main.id
+  network                 = var.network_id
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }
