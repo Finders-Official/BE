@@ -38,7 +38,7 @@ public class TokenCommandServiceImpl implements TokenCommandService {
         );
         tokenHistoryRepository.save(history);
 
-        log.info("[TokenService.useTokens] Used tokens: memberId={}, amount={}, balanceAfter={}, relatedType={}, relatedId={}",
+        log.info("[TokenCommandServiceImpl.useTokens] Used tokens: memberId={}, amount={}, balanceAfter={}, relatedType={}, relatedId={}",
                 memberId, amount, balanceAfter, relatedType, relatedId);
     }
 
@@ -55,7 +55,7 @@ public class TokenCommandServiceImpl implements TokenCommandService {
         );
         tokenHistoryRepository.save(history);
 
-        log.info("[TokenService.refundTokens] Refunded tokens: memberId={}, amount={}, balanceAfter={}, relatedType={}, relatedId={}",
+        log.info("[TokenCommandServiceImpl.refundTokens] Refunded tokens: memberId={}, amount={}, balanceAfter={}, relatedType={}, relatedId={}",
                 memberId, amount, balanceAfter, relatedType, relatedId);
     }
 
@@ -70,7 +70,7 @@ public class TokenCommandServiceImpl implements TokenCommandService {
         );
         tokenHistoryRepository.save(history);
 
-        log.info("[TokenService.purchaseTokens] Purchased tokens: memberId={}, amount={}, balanceAfter={}, paymentId={}",
+        log.info("[TokenCommandServiceImpl.purchaseTokens] Purchased tokens: memberId={}, amount={}, balanceAfter={}, paymentId={}",
                 member.getId(), amount, balanceAfter, paymentId);
     }
 
@@ -88,14 +88,14 @@ public class TokenCommandServiceImpl implements TokenCommandService {
         );
         tokenHistoryRepository.save(history);
 
-        log.info("[TokenService.revokeTokens] Revoked tokens for cancellation: memberId={}, amount={}, balanceAfter={}, paymentId={}",
+        log.info("[TokenCommandServiceImpl.revokeTokens] Revoked tokens for cancellation: memberId={}, amount={}, balanceAfter={}, paymentId={}",
                 member.getId(), revokeAmount, balanceAfter, paymentId);
     }
 
     public void rechargeDailyTokens() {
-        log.info("[TokenService.rechargeDailyTokens] 자동 충전 프로세스 시작");
+        log.info("[TokenCommandServiceImpl.rechargeDailyTokens] 자동 충전 프로세스 시작");
         int updatedCount = memberUserRepository.bulkRechargeTokens();
-        log.info("[TokenService.rechargeDailyTokens] 자동 충전 완료 - 대상 유저 수: {}", updatedCount);
+        log.info("[TokenCommandServiceImpl.rechargeDailyTokens] 자동 충전 완료 - 대상 유저 수: {}", updatedCount);
     }
 
     private MemberUser getMemberUserWithLock(Long memberId) {
