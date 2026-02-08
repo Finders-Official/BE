@@ -170,4 +170,8 @@ public class Delivery extends BaseEntity {
         this.status = DeliveryStatus.DELIVERED;
     }
 
+    public void updateStatus(DeliveryStatus status){
+        this.status = status;
+    }
+
 }

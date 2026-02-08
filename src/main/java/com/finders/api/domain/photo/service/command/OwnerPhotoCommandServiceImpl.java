@@ -8,6 +8,7 @@ import com.finders.api.domain.photo.entity.Delivery;
 import com.finders.api.domain.photo.entity.DevelopmentOrder;
 import com.finders.api.domain.photo.entity.PrintOrder;
 import com.finders.api.domain.photo.entity.ScannedPhoto;
+import com.finders.api.domain.photo.enums.DeliveryStatus;
 import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;
 import com.finders.api.domain.photo.enums.PrintOrderStatus;
 import com.finders.api.domain.photo.enums.ReceiptMethod;
@@ -26,6 +27,7 @@ import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.usertype.StaticUserTypeSupport;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -304,7 +306,8 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
 
         // 7) 주문 상태 변경: SHIPPED
         order.updateStatusByOwner(PrintOrderStatus.SHIPPED);
-
+        // 8) 배송 상태 변경: 배송 중으로
+        delivery.updateStatus(DeliveryStatus.DELIVERED);
         return OwnerPhotoResponse.PrintOrderStatusUpdated.of(order.getId(), order.getStatus());
     }
 
