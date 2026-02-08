@@ -24,7 +24,7 @@ public class TokenHistory extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    private MemberUser user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -50,7 +50,7 @@ public class TokenHistory extends BaseEntity {
 
     @Builder
     private TokenHistory(
-            Member member,
+            MemberUser user,
             TokenHistoryType type,
             int amount,
             int balanceAfter,
@@ -58,7 +58,7 @@ public class TokenHistory extends BaseEntity {
             Long relatedId,
             String description
     ) {
-        this.member = member;
+        this.user = user;
         this.type = type;
         this.amount = amount;
         this.balanceAfter = balanceAfter;
@@ -72,10 +72,10 @@ public class TokenHistory extends BaseEntity {
     /**
      * 토큰 사용 이력 생성
      */
-    public static TokenHistory createUseHistory(Member member, int amount, int balanceAfter,
+    public static TokenHistory createUseHistory(MemberUser user, int amount, int balanceAfter,
                                                 TokenRelatedType relatedType, Long relatedId, String description) {
         return TokenHistory.builder()
-                .member(member)
+                .user(user)
                 .type(TokenHistoryType.USE)
                 .amount(-amount) // 사용은 음수로 저장
                 .balanceAfter(balanceAfter)
@@ -88,10 +88,10 @@ public class TokenHistory extends BaseEntity {
     /**
      * 토큰 환불 이력 생성
      */
-    public static TokenHistory createRefundHistory(Member member, int amount, int balanceAfter,
+    public static TokenHistory createRefundHistory(MemberUser user, int amount, int balanceAfter,
                                                    TokenRelatedType relatedType, Long relatedId, String description) {
         return TokenHistory.builder()
-                .member(member)
+                .user(user)
                 .type(TokenHistoryType.REFUND)
                 .amount(amount) // 환불은 양수로 저장
                 .balanceAfter(balanceAfter)
@@ -104,10 +104,10 @@ public class TokenHistory extends BaseEntity {
     /**
      * 토큰 구매 이력 생성
      */
-    public static TokenHistory createPurchaseHistory(Member member, int amount, int balanceAfter,
+    public static TokenHistory createPurchaseHistory(MemberUser user, int amount, int balanceAfter,
                                                      TokenRelatedType relatedType, Long relatedId, String description) {
         return TokenHistory.builder()
-                .member(member)
+                .user(user)
                 .type(TokenHistoryType.PURCHASE)
                 .amount(amount) // 구매는 양수로 저장
                 .balanceAfter(balanceAfter)
