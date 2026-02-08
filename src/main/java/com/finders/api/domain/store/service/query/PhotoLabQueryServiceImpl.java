@@ -394,6 +394,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
         return notices.stream()
                 .map(notice -> PhotoLabNoticeResponse.Rolling.builder()
+                        .photoLabId(notice.getPhotoLab().getId())
                         .photoLabName(notice.getPhotoLab().getName())
                         .noticeTitle(notice.getTitle())
                         .noticeType(notice.getNoticeType())
