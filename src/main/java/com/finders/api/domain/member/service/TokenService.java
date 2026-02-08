@@ -124,6 +124,14 @@ public class TokenService {
                 member.getId(), revokeAmount, balanceAfter, paymentId);
     }
 
+    // 매일 자정 자동 충전 (벌크 연산)
+    @Transactional
+    public void rechargeDailyTokens() {
+        log.info("[TokenService.rechargeDailyTokens] 자동 충전 프로세스 시작");
+        int updatedCount = memberUserRepository.bulkRechargeTokens();
+        log.info("[TokenService.rechargeDailyTokens] 자동 충전 완료 - 대상 유저 수: {}", updatedCount);
+    }
+
     private MemberUser getMemberUser(Long memberId) {
         return memberUserRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
