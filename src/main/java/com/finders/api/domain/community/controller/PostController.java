@@ -51,12 +51,11 @@ public class PostController {
     @GetMapping("/me")
     public ApiResponse<PostResponse.PostPreviewListDTO> getMyPosts(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(name = "page", defaultValue = "0") Integer page,
-            @RequestParam(name = "size", defaultValue = "10") Integer size
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ApiResponse.success(
                 SuccessCode.POST_FOUND,
-                postQueryService.getMyPosts(authUser.memberId(), page, size)
+                postQueryService.getMyPosts(authUser.memberId(), pageable)
         );
     }
 
@@ -65,12 +64,11 @@ public class PostController {
     @GetMapping
     public ApiResponse<PostResponse.PostPreviewListDTO> getPosts(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(name = "page", defaultValue = "0") Integer page,
-            @RequestParam(name = "size", defaultValue = "20") Integer size
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ApiResponse.success(
                 SuccessCode.POST_FOUND,
-                postQueryService.getPostList(page, size, authUser.memberId())
+                postQueryService.getPostList(pageable, authUser.memberId())
         );
     }
 
@@ -108,10 +106,11 @@ public class PostController {
     public PagedResponse<CommentResponse.CommentResDTO> getComments(
             @PathVariable Long postId,
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(name = "page", defaultValue = "0") Integer page,
-            @RequestParam(name = "size", defaultValue = "10") Integer size
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        Page<CommentResponse.CommentResDTO> commentsPage = commentQueryService.getCommentsByPost(postId, authUser.memberId(), page, size);
+        Page<CommentResponse.CommentResDTO> commentsPage = commentQueryService.getCommentsByPost(
+                postId, authUser.memberId(), pageable.getPageNumber(), pageable.getPageSize()
+        );
         return PagedResponse.of(SuccessCode.OK, commentsPage);
     }
 
@@ -193,12 +192,12 @@ public class PostController {
     }
 
     @Operation(summary = "최근 검색어 개별 삭제", description = "X 버튼을 눌러 특정 검색 기록을 삭제합니다.")
-    @DeleteMapping("/search/history/{historyId}")
+    @DeleteMapping("/search/history/{searchHistoryId}")
     public ApiResponse<Void> deleteHistory(
-            @PathVariable Long historyId,
+            @PathVariable Long searchHistoryId,
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        searchHistoryCommandService.deleteSearchHistory(historyId, authUser.memberId());
+        searchHistoryCommandService.deleteSearchHistory(searchHistoryId, authUser.memberId());
         return ApiResponse.success(SuccessCode.OK, null);
     }
 
@@ -225,9 +224,11 @@ public class PostController {
     @GetMapping("/likes")
     public ApiResponse<PostResponse.PostPreviewListDTO> likePost(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ApiResponse.success(SuccessCode.OK, postQueryService.getPostLikesList(authUser.memberId(), page, size));
+        return ApiResponse.success(
+                SuccessCode.OK,
+                postQueryService.getPostLikesList(authUser.memberId(), pageable)
+        );
     }
 }
