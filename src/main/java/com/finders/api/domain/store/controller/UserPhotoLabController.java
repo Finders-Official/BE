@@ -258,7 +258,7 @@ public class UserPhotoLabController {
             summary = "지역별 현상소 개수 조회 API",
             description = "PL-010\n\n" +
                     "지역을 조회하고, 시/도 별 현상소 개수를 조회합니다.")
-    @GetMapping("/region")
+    @GetMapping("/regions")
     public ApiResponse<PhotoLabRegionFilterResponse> getPhotoLabCountsByRegion() {
         return ApiResponse.success(
                 SuccessCode.STORE_LIST_FOUND,
