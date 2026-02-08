@@ -23,10 +23,26 @@ variable "cloudflare_api_token" {
   default     = "" # Empty for Phase 0-4
 }
 
-# Team member emails for IAM bindings (Phase 1)
-variable "team_member_emails" {
-  description = "Team member email addresses for IAM bindings"
+variable "admin_member_emails" {
+  description = "Admin email addresses (roles/editor + logging + monitoring + SA impersonation)"
   type        = list(string)
-  sensitive   = true
   default     = []
+}
+
+variable "team_member_emails" {
+  description = "Team member email addresses (logging + monitoring + IAP + compute + SA impersonation)"
+  type        = list(string)
+  default     = []
+}
+
+variable "photo_team_member_emails" {
+  description = "Photo team member emails (additional GCS viewer access)"
+  type        = list(string)
+  default     = []
+}
+
+variable "compute_sa_email" {
+  description = "Compute Engine default service account email"
+  type        = string
+  default     = ""
 }

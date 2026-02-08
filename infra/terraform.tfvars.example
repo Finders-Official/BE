@@ -8,8 +8,21 @@ zone       = "asia-northeast3-a"
 # Cloudflare API Token (required for Phase 5)
 cloudflare_api_token = "your-cloudflare-api-token"
 
-# Team member emails for IAM bindings (Phase 1)
+# Compute Engine default service account
+compute_sa_email = "PROJECT_NUMBER-compute@developer.gserviceaccount.com"
+
+# Admin emails (roles/editor + logging + monitoring + SA impersonation)
+admin_member_emails = [
+  "admin@example.com"
+]
+
+# Team member emails (logging + monitoring + IAP + compute + SA impersonation)
 team_member_emails = [
   "member1@example.com",
   "member2@example.com"
+]
+
+# Photo team members (additional GCS viewer access)
+photo_team_member_emails = [
+  "photo-member@example.com"
 ]
