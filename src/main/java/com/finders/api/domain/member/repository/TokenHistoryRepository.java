@@ -17,10 +17,10 @@ public interface TokenHistoryRepository extends JpaRepository<TokenHistory, Long
     /**
      * 회원의 토큰 이력 조회 (최신순)
      */
-    List<TokenHistory> findByMemberIdOrderByCreatedAtDesc(Long memberId);
+    List<TokenHistory> findByUserIdOrderByCreatedAtDesc(Long memberId);
 
     // 특정 회원 리스트에 포함된 모든 토큰 히스토리 정보 삭제
     @Modifying
-    @Query("delete from TokenHistory t where t.member in :members")
-    void deleteAllByMemberIn(@Param("members") List<MemberUser> members);
+    @Query("delete from TokenHistory t where t.user in :users")
+    void deleteAllByUserIn(@Param("users") List<MemberUser> users);
 }
