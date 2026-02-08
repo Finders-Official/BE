@@ -5,6 +5,7 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabNoticeResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPreviewResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
@@ -113,6 +114,24 @@ public class UserPhotoLabController {
                 .build();
 
         return photoLabQueryService.getPhotoLabs(condition);
+    }
+
+    @Operation(
+            summary = "현상소 공지 조회 API",
+            description = "최초 정렬 기준으로 조회된 현상소의 모든 공지를 최신순으로 조회합니다.")
+    @GetMapping("/notices")
+    public ApiResponse<List<PhotoLabNoticeResponse.Rolling>> getPhotoLabNotices(
+            @AuthenticationPrincipal AuthUser user,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng
+    ) {
+        Long memberId = user != null ? user.memberId() : null;
+        return ApiResponse.success(
+                SuccessCode.STORE_LIST_FOUND,
+                photoLabQueryService.getPhotoLabNotices(memberId, page, size, lat, lng)
+        );
     }
 
     @Operation(
@@ -239,7 +258,7 @@ public class UserPhotoLabController {
             summary = "지역별 현상소 개수 조회 API",
             description = "PL-010\n\n" +
                     "지역을 조회하고, 시/도 별 현상소 개수를 조회합니다.")
-    @GetMapping("/region")
+    @GetMapping("/regions")
     public ApiResponse<PhotoLabRegionFilterResponse> getPhotoLabCountsByRegion() {
         return ApiResponse.success(
                 SuccessCode.STORE_LIST_FOUND,
