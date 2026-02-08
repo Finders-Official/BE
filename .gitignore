@@ -54,6 +54,11 @@ Thumbs.db
 *-key.json
 application-secret.yml
 application-secrets.yml
+credentials.json
+service-account.json
+*.p12
+*.jks
+application-local.properties
 
 # ========================================
 # Logs
