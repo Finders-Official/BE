@@ -7,6 +7,7 @@ public class PhotoLabNoticeResponse {
 
     @Builder
     public record Rolling(
+            Long photoLabId,
             String photoLabName,
             String noticeTitle,
             NoticeType noticeType
