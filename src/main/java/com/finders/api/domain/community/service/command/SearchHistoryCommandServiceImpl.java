@@ -69,8 +69,8 @@ public class SearchHistoryCommandServiceImpl implements SearchHistoryCommandServ
     }
 
     @Override
-    public void deleteSearchHistory(Long historyId, Long memberId) {
-        SearchHistory history = searchHistoryRepository.findById(historyId)
+    public void deleteSearchHistory(Long searchHistoryId, Long memberId) {
+        SearchHistory history = searchHistoryRepository.findById(searchHistoryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         if (!history.getMemberUser().getId().equals(memberId)) {

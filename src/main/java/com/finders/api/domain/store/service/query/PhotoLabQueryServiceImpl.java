@@ -9,6 +9,7 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabNoticeResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPreviewResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse;
@@ -16,6 +17,7 @@ import com.finders.api.domain.store.dto.response.PhotoLabRegionFilterResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionItemResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
+import com.finders.api.domain.store.entity.PhotoLabNotice;
 import com.finders.api.domain.store.entity.PhotoLabTag;
 import com.finders.api.domain.store.enums.PhotoLabStatus;
 import com.finders.api.domain.store.repository.PhotoLabFavoriteRepository;
@@ -55,6 +57,7 @@ import org.springframework.data.domain.PageRequest;
 public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
 
     private static final int POST_IMAGE_LIMIT = 10;
+    private static final int PREVIEW_MAX_SIZE = 10;
 
     private final PhotoLabQueryRepository photoLabQueryRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
@@ -84,7 +87,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 condition.tagIds(),
                 regionIds,
                 condition.date(),
-                condition.time(),
+                condition.times(),
                 pageNumber,
                 pageSize,
                 condition.lat(),
@@ -121,7 +124,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     public PagedResponse<PhotoLabPreviewResponse.Card> getPhotoLabsPreview(PhotoLabSearchCondition condition) {
         int pageNumber = (condition.page() != null && condition.page() >= 0) ? condition.page() : 0;
         int pageSize = (condition.size() != null && condition.size() > 0) ? condition.size() : 20;
-        pageSize = Math.min(pageSize, 10);
+        pageSize = Math.min(pageSize, PREVIEW_MAX_SIZE);
 
         List<Long> regionIds = resolveRegionIds(condition.parentRegionId(), condition.regionIds());
 
@@ -130,7 +133,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 condition.tagIds(),
                 regionIds,
                 condition.date(),
-                condition.time(),
+                condition.times(),
                 pageNumber,
                 pageSize,
                 condition.lat(),
@@ -340,7 +343,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                     }
 
                     return PhotoLabResponse.PhotoLabSearchDTO.from(
-                            result.getId(),
+                            result.getLabId(),
                             result.getName(),
                             result.getAddress(),
                             distanceStr,
@@ -355,6 +358,51 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     @Override
     public List<String> autocompletePhotoLabNames(String keyword) {
         return photoLabQueryRepository.autocompletePhotoLabNames(keyword.trim());
+    }
+
+    @Override
+    public List<PhotoLabNoticeResponse.Rolling> getPhotoLabNotices(Long memberId, int page, int size, Double lat, Double lng) {
+        if (page < 0 || size <= 0) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
+        boolean useDistance = shouldUseDistance(memberId, lat, lng);
+
+        Page<PhotoLab> photoLabPage = photoLabQueryRepository.search(
+                null,
+                null,
+                null,
+                null,
+                null,
+                page,
+                size,
+                lat,
+                lng,
+                useDistance
+        );
+
+        if (photoLabPage.isEmpty()) {
+            return List.of();
+        }
+
+        List<PhotoLab> photoLabs = photoLabPage.getContent();
+        Map<Long, String> photoLabNameById = photoLabs.stream()
+                .collect(Collectors.toMap(PhotoLab::getId, PhotoLab::getName));
+        List<Long> photoLabIds = photoLabs.stream()
+                .map(PhotoLab::getId)
+                .toList();
+
+        List<PhotoLabNotice> notices = photoLabNoticeRepository
+                .findByPhotoLab_IdInAndIsActiveTrueOrderByCreatedAtDescIdDesc(photoLabIds);
+
+        return notices.stream()
+                .map(notice -> PhotoLabNoticeResponse.Rolling.builder()
+                        .photoLabId(notice.getPhotoLab().getId())
+                        .photoLabName(photoLabNameById.get(notice.getPhotoLab().getId()))
+                        .noticeTitle(notice.getTitle())
+                        .noticeType(notice.getNoticeType())
+                        .build())
+                .toList();
     }
 
     @Override

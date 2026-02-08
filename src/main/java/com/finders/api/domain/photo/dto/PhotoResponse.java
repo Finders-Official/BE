@@ -34,7 +34,7 @@ public class PhotoResponse {
             LocalDateTime createdAt,
 
             @Schema(description = "현상 완료 일시", example = "2026-01-16T15:10:00")
-            LocalDateTime compltedAt,
+            LocalDateTime completedAt,
 
 
             @Schema(description = "인화 진행 정보(인화 없으면 null)")
@@ -54,7 +54,7 @@ public class PhotoResponse {
                     .photoLabName(order.getPhotoLab().getName())
                     .developmentStatus(order.getStatus())
                     .createdAt(order.getCreatedAt())
-                    .compltedAt(order.getCompletedAt())
+                    .completedAt(order.getCompletedAt())
                     .print(print)
                     .delivery(delivery)
                     .build();
@@ -338,7 +338,7 @@ public class PhotoResponse {
     ) { }
 
     @Builder
-    @Schema(name = "PhotoLabAcount", description = "회원 - 현상소 인화 계좌 정보 조회")
+    @Schema(name = "PhotoLabAccount", description = "회원 - 현상소 인화 계좌 정보 조회")
     public record PhotoLabAccount(
             String bankName,
             String bankAccountNumber,

@@ -5,6 +5,7 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabNoticeResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPreviewResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
@@ -17,6 +18,10 @@ import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 
@@ -79,13 +84,21 @@ public class UserPhotoLabController {
             @RequestParam(required = false) Long parentRegionId,
             @RequestParam(required = false) List<Long> regionIds,
             @RequestParam(required = false) LocalDate date,
-            @RequestParam(required = false) @DateTimeFormat(iso = ISO.TIME) LocalTime time,
+    @Parameter(
+            name = "time",
+            in = ParameterIn.QUERY,
+            description = "복수 선택 가능. ex) 08:00",
+            array = @ArraySchema(schema = @Schema(type = "string", format = "time"))
+    )
+            @RequestParam(name = "time", required = false) @DateTimeFormat(iso = ISO.TIME) List<LocalTime> times,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng
     ) {
         Long memberId = user != null ? user.memberId() : null;
+        List<LocalTime> normalizedTimes = normalizeTimes(times);
+
         PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
                 .memberId(memberId)
                 .query(q)
@@ -93,7 +106,7 @@ public class UserPhotoLabController {
                 .parentRegionId(parentRegionId)
                 .regionIds(regionIds)
                 .date(date)
-                .time(time)
+                .times(normalizedTimes)
                 .page(page)
                 .size(size)
                 .lat(lat)
@@ -101,6 +114,24 @@ public class UserPhotoLabController {
                 .build();
 
         return photoLabQueryService.getPhotoLabs(condition);
+    }
+
+    @Operation(
+            summary = "현상소 공지 조회 API",
+            description = "최초 정렬 기준으로 조회된 현상소의 모든 공지를 최신순으로 조회합니다.")
+    @GetMapping("/notices")
+    public ApiResponse<List<PhotoLabNoticeResponse.Rolling>> getPhotoLabNotices(
+            @AuthenticationPrincipal AuthUser user,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng
+    ) {
+        Long memberId = user != null ? user.memberId() : null;
+        return ApiResponse.success(
+                SuccessCode.STORE_LIST_FOUND,
+                photoLabQueryService.getPhotoLabNotices(memberId, page, size, lat, lng)
+        );
     }
 
     @Operation(
@@ -115,13 +146,21 @@ public class UserPhotoLabController {
             @RequestParam(required = false) Long parentRegionId,
             @RequestParam(required = false) List<Long> regionIds,
             @RequestParam(required = false) LocalDate date,
-            @RequestParam(required = false) @DateTimeFormat(iso = ISO.TIME) LocalTime time,
+    @Parameter(
+            name = "time",
+            in = ParameterIn.QUERY,
+            description = "복수 선택 가능. ex) 08:00",
+            array = @ArraySchema(schema = @Schema(type = "string", format = "time"))
+    )
+            @RequestParam(name = "time", required = false) @DateTimeFormat(iso = ISO.TIME) List<LocalTime> times,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng
     ) {
         Long memberId = user != null ? user.memberId() : null;
+        List<LocalTime> normalizedTimes = normalizeTimes(times);
+
         PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
                 .memberId(memberId)
                 .query(q)
@@ -129,7 +168,7 @@ public class UserPhotoLabController {
                 .parentRegionId(parentRegionId)
                 .regionIds(regionIds)
                 .date(date)
-                .time(time)
+                .times(normalizedTimes)
                 .page(page)
                 .size(size)
                 .lat(lat)
@@ -219,7 +258,7 @@ public class UserPhotoLabController {
             summary = "지역별 현상소 개수 조회 API",
             description = "PL-010\n\n" +
                     "지역을 조회하고, 시/도 별 현상소 개수를 조회합니다.")
-    @GetMapping("/region")
+    @GetMapping("/regions")
     public ApiResponse<PhotoLabRegionFilterResponse> getPhotoLabCountsByRegion() {
         return ApiResponse.success(
                 SuccessCode.STORE_LIST_FOUND,
@@ -251,6 +290,13 @@ public class UserPhotoLabController {
                 lng
         );
         return ApiResponse.success(SuccessCode.STORE_FAVORITE_LIST_FOUND, response);
+    }
+
+    //공동 메서드 정의
+    private List<LocalTime> normalizeTimes(List<LocalTime> times) {
+        return (times == null || times.isEmpty())
+                ? null
+                : times.stream().distinct().toList();
     }
 
 }

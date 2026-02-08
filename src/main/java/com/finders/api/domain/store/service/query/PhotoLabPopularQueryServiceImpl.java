@@ -8,6 +8,7 @@ import com.finders.api.domain.store.repository.PhotoLabImageRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.global.config.RedisConfig;
+import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
     private final PhotoLabRepository photoLabRepository;
     private final PhotoLabImageRepository photoLabImageRepository;
     private final PhotoLabTagQueryRepository photoLabTagQueryRepository;
+    private final StorageService storageService;
 
     @Override
     @Cacheable(value = RedisConfig.POPULAR_PHOTO_LABS_CACHE, key = "'top8'")
@@ -64,7 +66,7 @@ public class PhotoLabPopularQueryServiceImpl implements PhotoLabPopularQueryServ
             if (result.containsKey(photoLabId)) {
                 continue;
             }
-            result.put(photoLabId, image.getObjectPath());
+            result.put(photoLabId, storageService.getPublicUrl(image.getObjectPath()));
         }
         return result;
     }
