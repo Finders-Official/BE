@@ -2,6 +2,7 @@ package com.finders.api.domain.store.repository;
 
 import com.finders.api.domain.store.entity.PhotoLabNotice;
 import com.finders.api.domain.store.enums.NoticeType;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,4 +13,6 @@ public interface PhotoLabNoticeRepository extends JpaRepository<PhotoLabNotice, 
             Long photoLabId,
             NoticeType noticeType
     );
+
+    List<PhotoLabNotice> findByPhotoLab_IdInAndIsActiveTrueOrderByCreatedAtDescIdDesc(List<Long> photoLabIds);
 }

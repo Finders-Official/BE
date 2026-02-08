@@ -49,7 +49,7 @@ public class OwnerPhotoLabController {
     }
     @Operation(summary = "현상소 이미지 업로드 presigned url 발급")
     @PreAuthorize("hasRole('OWNER')")
-    @PostMapping("/image/presigned-url")
+    @PostMapping("/images/presigned-url")
     public ApiResponse<StorageResponse.PresignedUrl> createPhotoLabImagePresignedUrl(
             @AuthenticationPrincipal AuthUser owner,
             @RequestParam Long photoLabId,
@@ -65,7 +65,7 @@ public class OwnerPhotoLabController {
             summary = "현상소 이미지 등록",
             description = "현상소 이미지를 등록합니다.")
     @PreAuthorize("hasRole('OWNER')")
-    @PostMapping("/image")
+    @PostMapping("/images")
     public ApiResponse<PhotoLabImageResponse.Create> registerPhotoLabImage(
             @AuthenticationPrincipal AuthUser owner,
             @RequestParam Long photoLabId,
