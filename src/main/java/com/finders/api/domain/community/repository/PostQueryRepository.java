@@ -53,7 +53,7 @@ public class PostQueryRepository {
 
         return posts.stream()
                 .map(p -> PostCacheDTO.builder()
-                        .id(p.getId())
+                        .postId(p.getId())
                         .title(p.getTitle())
                         .likeCount(p.getLikeCount())
                         .commentCount(p.getCommentCount())

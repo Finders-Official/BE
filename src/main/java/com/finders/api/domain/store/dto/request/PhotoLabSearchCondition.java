@@ -4,14 +4,17 @@ import lombok.Builder;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.time.LocalTime;
 
 @Builder
 public record PhotoLabSearchCondition(
         Long memberId,
         String query,
         List<Long> tagIds,
-        Long regionId,
+        Long parentRegionId,
+        List<Long> regionIds,
         LocalDate date,
+        List<LocalTime> times,
         Integer page,
         Integer size,
         Double lat,

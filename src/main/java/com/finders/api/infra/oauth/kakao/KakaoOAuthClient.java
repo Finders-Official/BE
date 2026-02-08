@@ -39,18 +39,6 @@ public class KakaoOAuthClient implements OAuthClient {
 
     @Override
     public OAuthUserInfo getUserInfo(String accessToken) {
-        // 로컬 환경이고 특정 토큰일 때만 모킹 작동
-        if (isMockEnabled && ("string".equals(accessToken) || "test_token".equals(accessToken))) {
-            return OAuthUserInfo.builder()
-                    .provider(SocialProvider.KAKAO)
-                    .providerId("999999999") // DB에 없는 새로운 ID로 설정
-                    .name("테스트유저")
-                    .nickname("파인더스")
-                    .profileImage("https://test-image.com")
-                    .email("test@kakao.com")
-                    .build();
-        }
-
         try {
             KakaoUserMeResponse response = kakaoRestClient.get()
                     .uri("/v2/user/me")

@@ -5,7 +5,9 @@ import com.finders.api.domain.store.dto.request.PhotoLabSearchCondition;
 import com.finders.api.domain.store.dto.response.PhotoLabDetailResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabFavoriteResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabNoticeResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPopularResponse;
+import com.finders.api.domain.store.dto.response.PhotoLabPreviewResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionFilterResponse;
 import com.finders.api.domain.store.service.command.PhotoLabFavoriteCommandService;
@@ -16,13 +18,22 @@ import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,11 +42,15 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import static org.springframework.format.annotation.DateTimeFormat.ISO;
 
 @Tag(name = "PhotoLab_USER", description = "현상소 API")
 @RestController
 @RequestMapping("/photo-labs")
 @RequiredArgsConstructor
+@Validated
 public class UserPhotoLabController {
     private final PhotoLabPopularQueryService photoLabPopularQueryService;
     private final PhotoLabQueryService photoLabQueryService;
@@ -56,27 +71,42 @@ public class UserPhotoLabController {
     @Operation(
             summary = "현상소 목록 조회 API",
             description = "PL-010, PL-011-3\n\n" +
-                    "(파라미터 순서대로)검색어, 특징태그, 지역필터, 날짜필터를 기반으로 해당하는 현상소를 조회합니다.\n\n" +
-                    "*위치 기반 알고리즘: 위치 사용 약관 동의 o -> 가까운 위치 + 작업 건수 순으로 정렬, 위치 사용 약관 동의 x -> 작업 건수 순으로 정렬")
+                    "검색어, 태그, 지역, 날짜 필터를 기반으로 현상소를 검색합니다.\n\n" +
+                    "정렬 기준: 위치 약관에 동의한 경우 -> 가까운 순 정렬 후 작업 수 기준 정렬 / 동의하지 않은 경우 -> 작업 수 기준 정렬만 적용됩니다.\n\n" +
+                    "[지역 필터]\n" +
+                    "- parentRegionId만 전달된 경우: 해당 상위 지역에 속한 모든 하위 지역을 포함합니다.\n" +
+                    "- parentRegionId + regionIds가 함께 전달된 경우: regionIds에 포함된 하위 지역만 필터링합니다. (선택된 하위 지역들만 적용)\n")
     @GetMapping
     public PagedResponse<PhotoLabListResponse.Card> getPhotoLabs(
             @AuthenticationPrincipal AuthUser user,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) List<Long> tagIds,
-            @RequestParam(required = false) Long regionId,
+            @RequestParam(required = false) Long parentRegionId,
+            @RequestParam(required = false) List<Long> regionIds,
             @RequestParam(required = false) LocalDate date,
+    @Parameter(
+            name = "time",
+            in = ParameterIn.QUERY,
+            description = "복수 선택 가능. ex) 08:00",
+            array = @ArraySchema(schema = @Schema(type = "string", format = "time"))
+    )
+            @RequestParam(name = "time", required = false) @DateTimeFormat(iso = ISO.TIME) List<LocalTime> times,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng
     ) {
         Long memberId = user != null ? user.memberId() : null;
+        List<LocalTime> normalizedTimes = normalizeTimes(times);
+
         PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
                 .memberId(memberId)
                 .query(q)
                 .tagIds(tagIds)
-                .regionId(regionId)
+                .parentRegionId(parentRegionId)
+                .regionIds(regionIds)
                 .date(date)
+                .times(normalizedTimes)
                 .page(page)
                 .size(size)
                 .lat(lat)
@@ -84,6 +114,68 @@ public class UserPhotoLabController {
                 .build();
 
         return photoLabQueryService.getPhotoLabs(condition);
+    }
+
+    @Operation(
+            summary = "현상소 공지 조회 API",
+            description = "최초 정렬 기준으로 조회된 현상소의 모든 공지를 최신순으로 조회합니다.")
+    @GetMapping("/notices")
+    public ApiResponse<List<PhotoLabNoticeResponse.Rolling>> getPhotoLabNotices(
+            @AuthenticationPrincipal AuthUser user,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng
+    ) {
+        Long memberId = user != null ? user.memberId() : null;
+        return ApiResponse.success(
+                SuccessCode.STORE_LIST_FOUND,
+                photoLabQueryService.getPhotoLabNotices(memberId, page, size, lat, lng)
+        );
+    }
+
+    @Operation(
+            summary = "현상소 목록 조회 preview API",
+            description = "PL-011-2\n\n" +
+                    "검색창 UI를 위한 가벼운 결과 미리보기 검색 API입니다.(현상소 목록 조회와 동일한 로직.)")
+    @GetMapping("/search/preview")
+    public PagedResponse<PhotoLabPreviewResponse.Card> getPhotoLabsPreview(
+            @AuthenticationPrincipal AuthUser user,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) List<Long> tagIds,
+            @RequestParam(required = false) Long parentRegionId,
+            @RequestParam(required = false) List<Long> regionIds,
+            @RequestParam(required = false) LocalDate date,
+    @Parameter(
+            name = "time",
+            in = ParameterIn.QUERY,
+            description = "복수 선택 가능. ex) 08:00",
+            array = @ArraySchema(schema = @Schema(type = "string", format = "time"))
+    )
+            @RequestParam(name = "time", required = false) @DateTimeFormat(iso = ISO.TIME) List<LocalTime> times,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng
+    ) {
+        Long memberId = user != null ? user.memberId() : null;
+        List<LocalTime> normalizedTimes = normalizeTimes(times);
+
+        PhotoLabSearchCondition condition = PhotoLabSearchCondition.builder()
+                .memberId(memberId)
+                .query(q)
+                .tagIds(tagIds)
+                .parentRegionId(parentRegionId)
+                .regionIds(regionIds)
+                .date(date)
+                .times(normalizedTimes)
+                .page(page)
+                .size(size)
+                .lat(lat)
+                .lng(lng)
+                .build();
+
+        return photoLabQueryService.getPhotoLabsPreview(condition);
     }
 
     @Operation(
@@ -106,7 +198,7 @@ public class UserPhotoLabController {
 
     @Operation(
             summary = "현상소 즐겨찾기 추가 API",
-            description="즐겨찾기 별 버튼\n\n" +
+            description = "즐겨찾기 별 버튼\n\n" +
                     "특정 현상소를 관심 현상소로 등록합니다.")
     @PostMapping("/{photoLabId}/favorites")
     public ApiResponse<PhotoLabFavoriteResponse.Status> addFavorite(
@@ -135,7 +227,7 @@ public class UserPhotoLabController {
     }
 
     // 커뮤니티 현상소 검색
-    @Operation(summary = "커뮤니티 현상소 검색",
+    @Operation(summary = "커뮤니티용 현상소 검색",
             description = "게시글 작성 시 연결할 현상소를 검색합니다. 1순위 정확도 순 > 2순위 거리 순 + 예약 수로 정렬됩니다. 위치 정보 미동의 시 예약 수로 정렬되며 주소만 노출됩니다.")
     @GetMapping("/search")
     public ApiResponse<PhotoLabResponse.PhotoLabSearchListDTO> searchLabs(
@@ -146,12 +238,27 @@ public class UserPhotoLabController {
                 photoLabQueryService.searchCommunityPhotoLabs(request)
         );
     }
-    
+
+    @Operation(
+            summary = "현상소 검색어 자동완성 API",
+            description = "PL-011-2\n\n" +
+                    "현상소 검색어 자동완성\n\n" +
+                    "입력된 검색어와 정확히 일치하거나 부분적으로 일치하는 검색어를 보여주는 목록 (최대 4개)")
+    @GetMapping("/search/autocomplete")
+    public ApiResponse<List<String>> autocomplete(
+            @RequestParam(name = "keyword") @NotBlank String keyword
+    ) {
+        return ApiResponse.success(
+                SuccessCode.OK,
+                photoLabQueryService.autocompletePhotoLabNames(keyword)
+        );
+    }
+
     @Operation(
             summary = "지역별 현상소 개수 조회 API",
             description = "PL-010\n\n" +
                     "지역을 조회하고, 시/도 별 현상소 개수를 조회합니다.")
-    @GetMapping("/region")
+    @GetMapping("/regions")
     public ApiResponse<PhotoLabRegionFilterResponse> getPhotoLabCountsByRegion() {
         return ApiResponse.success(
                 SuccessCode.STORE_LIST_FOUND,
@@ -183,6 +290,13 @@ public class UserPhotoLabController {
                 lng
         );
         return ApiResponse.success(SuccessCode.STORE_FAVORITE_LIST_FOUND, response);
+    }
+
+    //공동 메서드 정의
+    private List<LocalTime> normalizeTimes(List<LocalTime> times) {
+        return (times == null || times.isEmpty())
+                ? null
+                : times.stream().distinct().toList();
     }
 
 }

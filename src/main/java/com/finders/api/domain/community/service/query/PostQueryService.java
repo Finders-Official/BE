@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface PostQueryService {
-    PostResponse.PostPreviewListDTO getPostList(Integer page, Integer size, Long memberId);
+    PostResponse.PostPreviewListDTO getPostList(Pageable pageable, Long memberId);
 
     PostResponse.PostDetailResDTO getPostDetail(Long postId, Long memberId);
 
@@ -17,7 +17,7 @@ public interface PostQueryService {
 
     List<String> getAutocompleteSuggestions(String keyword);
 
-    PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Integer page, Integer size);
+    PostResponse.PostPreviewListDTO getMyPosts(Long memberId, Pageable pageable);
 
-    PostResponse.PostPreviewListDTO getPostLikesList(Long memberId, Integer page, Integer size);
+    PostResponse.PostPreviewListDTO getPostLikesList(Long memberId, Pageable pageable);
 }
