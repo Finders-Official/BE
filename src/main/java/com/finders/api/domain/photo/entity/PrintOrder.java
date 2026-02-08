@@ -152,12 +152,6 @@ public class PrintOrder extends BaseTimeEntity {
                     "인화를 시작할 수 없는 상태입니다."
             );
         }
-        if (estimatedAt == null) {
-            throw new CustomException(
-                    ErrorCode.BAD_REQUEST,
-                    "estimatedAt은 필수입니다."
-            );
-        }
 
         this.estimatedAt = estimatedAt;
         this.status = PrintOrderStatus.PRINTING;

@@ -101,6 +101,21 @@ public class PhotoResponse {
             @Schema(description = "배송 상태", example = "SHIPPED")
             com.finders.api.domain.photo.enums.DeliveryStatus status,
 
+            @Schema(description = "받는 사람", example = "이승주")
+            String recipient,
+
+            @Schema(description = "수령인 연락처", example = "010-1234-5678")
+            String recipientNumber,
+
+            @Schema(description = "수령인 주소", example = "서울특별시 강남구")
+            String recipientAddress,
+
+            @Schema(description = "수령인 상세 주소", example = "역삼동 123-123")
+            String AddressDetail,
+
+            @Schema(description = "보낸 사람 이름", example = "예술사진관 사장")
+            String sender,
+
             @Schema(description = "택배사", example = "CJ대한통운")
             String carrier,
 
@@ -119,6 +134,11 @@ public class PhotoResponse {
             return new DeliveryProgress(
                     d.getId(),
                     d.getStatus(),
+                    d.getRecipientName(),
+                    d.getPhone(),
+                    d.getAddress(),
+                    d.getAddressDetail(),
+                    d.getPrintOrder().getPhotoLab().getName(),
                     d.getCarrier(),
                     d.getTrackingNumber(),
                     d.getShippedAt(),
