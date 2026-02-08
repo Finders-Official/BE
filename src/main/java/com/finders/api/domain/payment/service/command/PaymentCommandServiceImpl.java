@@ -3,7 +3,7 @@ package com.finders.api.domain.payment.service.command;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberRepository;
-import com.finders.api.domain.member.service.TokenService;
+import com.finders.api.domain.member.service.command.TokenCommandService;
 import com.finders.api.domain.payment.dto.PaymentRequest;
 import com.finders.api.domain.payment.dto.PaymentResponse;
 import com.finders.api.domain.payment.entity.Payment;
@@ -30,7 +30,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
     private final PaymentRepository paymentRepository;
     private final MemberRepository memberRepository;
     private final PortOnePaymentService portOnePaymentService;
-    private final TokenService tokenService;
+    private final TokenCommandService tokenCommandService;
 
     @Override
     public PaymentResponse.PreRegistered preRegister(Long memberId, PaymentRequest.PreRegister request) {
@@ -279,7 +279,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
     private void chargeTokens(Payment payment) {
         Member member = payment.getMember();
         if (member instanceof MemberUser memberUser) {
-            tokenService.purchaseTokens(memberUser, payment.getTokenAmount(), payment.getId());
+            tokenCommandService.purchaseTokens(memberUser, payment.getTokenAmount(), payment.getId());
             log.info("[PaymentCommandServiceImpl.chargeTokens] 토큰 충전 완료: memberId={}, amount={}",
                     member.getId(), payment.getTokenAmount());
         }
@@ -288,7 +288,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
     private void revokeTokens(Payment payment) {
         Member member = payment.getMember();
         if (member instanceof MemberUser memberUser) {
-            tokenService.revokeTokens(memberUser, payment.getTokenAmount(), payment.getId());
+            tokenCommandService.revokeTokens(memberUser, payment.getTokenAmount(), payment.getId());
             log.info("[PaymentCommandServiceImpl.revokeTokens] 토큰 회수 완료: memberId={}, amount={}",
                     member.getId(), payment.getTokenAmount());
         }

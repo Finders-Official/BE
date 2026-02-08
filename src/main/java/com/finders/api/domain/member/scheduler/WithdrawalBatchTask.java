@@ -48,7 +48,7 @@ public class WithdrawalBatchTask {
                 memberAgreementRepository.deleteAllByMemberIn(membersToAnonymize);
 
                 // 토큰 히스토리 삭제 Hard Delete
-                tokenHistoryRepository.deleteAllByMemberIn(membersToAnonymize);
+                tokenHistoryRepository.deleteAllByUserIn(membersToAnonymize);
 
                 // 회원들의 배송지 정보 일괄 Hard Delete
                 memberAddressRepository.deleteAllByMemberIn(membersToAnonymize);

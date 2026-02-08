@@ -1303,7 +1303,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
             // 초기 토큰 지급
             TokenHistory history = TokenHistory.builder()
-                    .member(user)
+                    .user(user)
                     .type(TokenHistoryType.PURCHASE)
                     .amount(5)
                     .balanceAfter(5)
@@ -1317,7 +1317,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             // 일부 유저는 토큰 사용 이력 추가
             if (i % 3 == 0) {
                 TokenHistory useHistory = TokenHistory.builder()
-                        .member(user)
+                        .user(user)
                         .type(TokenHistoryType.USE)
                         .amount(-1)
                         .balanceAfter(4)
