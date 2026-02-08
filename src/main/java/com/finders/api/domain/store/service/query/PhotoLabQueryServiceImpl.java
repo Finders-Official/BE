@@ -385,7 +385,10 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
             return List.of();
         }
 
-        List<Long> photoLabIds = photoLabPage.getContent().stream()
+        List<PhotoLab> photoLabs = photoLabPage.getContent();
+        Map<Long, String> photoLabNameById = photoLabs.stream()
+                .collect(Collectors.toMap(PhotoLab::getId, PhotoLab::getName));
+        List<Long> photoLabIds = photoLabs.stream()
                 .map(PhotoLab::getId)
                 .toList();
 
@@ -395,7 +398,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         return notices.stream()
                 .map(notice -> PhotoLabNoticeResponse.Rolling.builder()
                         .photoLabId(notice.getPhotoLab().getId())
-                        .photoLabName(notice.getPhotoLab().getName())
+                        .photoLabName(photoLabNameById.get(notice.getPhotoLab().getId()))
                         .noticeTitle(notice.getTitle())
                         .noticeType(notice.getNoticeType())
                         .build())
