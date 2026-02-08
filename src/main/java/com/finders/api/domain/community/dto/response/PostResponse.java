@@ -103,7 +103,8 @@ public class PostResponse {
             String title,
             Integer likeCount,
             Integer commentCount,
-            boolean isLiked
+            boolean isLiked,
+            LocalDateTime createdAt
     ) {
         public static PostPreviewDTO from(Post post, boolean isLiked, PostImageResDTO imageResDTO) {
             return PostPreviewDTO.builder()
@@ -113,6 +114,7 @@ public class PostResponse {
                     .likeCount(post.getLikeCount())
                     .commentCount(post.getCommentCount())
                     .isLiked(isLiked)
+                    .createdAt(post.getCreatedAt())
                     .build();
         }
 
@@ -124,6 +126,7 @@ public class PostResponse {
                     .commentCount(cache.commentCount())
                     .isLiked(isLiked)
                     .image(new PostImageResDTO(fullImageUrl, null, null))
+                    .createdAt(null)
                     .build();
         }
     }
