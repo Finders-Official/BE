@@ -11,6 +11,7 @@
 | [NETWORK_BASICS.md](./NETWORK_BASICS.md) | 네트워크 기초 개념 학습 | 초보자 |
 | [NETWORK_SECURITY.md](./NETWORK_SECURITY.md) | 네트워크 및 보안 설정 가이드 | 모든 개발자 |
 | [NETWORK_CHEATSHEET.md](./NETWORK_CHEATSHEET.md) | 자주 쓰는 명령어 모음 | 모든 개발자 |
+| [IAC_TERRAFORM_INTRO.md](./IAC_TERRAFORM_INTRO.md) | IaC/Terraform 개념 학습 | 모든 개발자 |
 
 ### 📋 상세 문서
 
@@ -65,6 +66,15 @@
 3. 해결 안 되면 팀에 문의
 
 **예상 시간**: 10~30분
+
+---
+
+### "인프라를 코드로 관리하고 싶어요"
+1. [IAC_TERRAFORM_INTRO.md](./IAC_TERRAFORM_INTRO.md) 읽기
+2. [INFRASTRUCTURE.md](../architecture/INFRASTRUCTURE.md)에서 현재 리소스 확인
+3. Terraform 공식 튜토리얼 실습
+
+**예상 시간**: 1주 (기초) ~ 한 달 (실전 적용)
 
 ---
 
@@ -162,6 +172,12 @@
 - [ ] nginx 설정
 - [ ] 모니터링 설정
 
+### 5단계: IaC/자동화 (예정)
+- [ ] [IAC_TERRAFORM_INTRO.md](./IAC_TERRAFORM_INTRO.md) 읽기
+- [ ] Terraform 공식 튜토리얼 실습
+- [ ] 기존 리소스 Import 연습
+- [ ] Terraform 프로젝트 구조 설계
+
 ---
 
 ## 💬 피드백
@@ -175,7 +191,7 @@
 
 ## 마지막 업데이트
 
-- **마지막 업데이트**: 2026-01-30
+- **마지막 업데이트**: 2026-02-09
 - **작성자**: DevOps 팀
 
 ---
@@ -189,7 +205,8 @@ docs/
 │   ├─ NETWORK_BASICS.md (네트워크 기초)
 │   ├─ NETWORK_SECURITY.md (보안 가이드)
 │   ├─ NETWORK_CHEATSHEET.md (명령어 모음)
-│   └─ GCP_LOGGING_GUIDE.md (로깅)
+│   ├─ GCP_LOGGING_GUIDE.md (로깅)
+│   └─ IAC_TERRAFORM_INTRO.md (IaC/Terraform 개념)
 │
 └─ architecture/
     ├─ INFRASTRUCTURE.md (GCP 리소스)
@@ -197,4 +214,4 @@ docs/
     └─ ERD.md (데이터베이스)
 ```
 
-**마지막 업데이트**: 2026-01-30
+**마지막 업데이트**: 2026-02-09
