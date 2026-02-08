@@ -135,7 +135,7 @@ public class PhotoResponse {
                     d.getId(),
                     d.getStatus(),
                     d.getRecipientName(),
-                    d.getPrintOrder().getPhotoLab().getName(),
+                    d.getPhone(),
                     d.getRecipientName(),
                     d.getAddress(),
                     d.getAddressDetail(),
