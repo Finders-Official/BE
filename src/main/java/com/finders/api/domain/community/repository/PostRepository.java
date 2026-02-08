@@ -14,8 +14,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p " +
             "JOIN FETCH p.memberUser " +
             "LEFT JOIN FETCH p.photoLab " +
-            "WHERE p.id = :id AND p.status = 'ACTIVE'")
-    Optional<Post> findByIdWithDetails(@Param("id") Long id);
+            "WHERE p.id = :postId AND p.status = 'ACTIVE'")
+    Optional<Post> findByIdWithDetails(@Param("postId") Long postId);
 
     // 해당 키워드에서 좋아요 많이 받은 사진 검색 (최근 검색어)
     @Query("SELECT p FROM Post p " +

@@ -340,7 +340,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                     }
 
                     return PhotoLabResponse.PhotoLabSearchDTO.from(
-                            result.getId(),
+                            result.getLabId(),
                             result.getName(),
                             result.getAddress(),
                             distanceStr,
