@@ -34,29 +34,45 @@ public class ReplicateRequest {
     }
 
     /**
-     * Inpainting 입력 데이터
+     * SDXL Inpainting 입력 데이터
+     * <p>
+     * 모델: lucataco/sdxl-inpainting (SDXL 기반)
+     * - 원본 이미지 비율을 유지하면서 max 1024px 이내로 스케일링
+     * - SD 2.0 대비 고해상도/고품질 결과물
+     *
+     * @see <a href="https://replicate.com/lucataco/sdxl-inpainting">Replicate 모델 페이지</a>
      */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Input(
             String image,
             String mask,
             String prompt,
-            @JsonProperty("num_outputs")
-            Integer numOutputs,
+            @JsonProperty("negative_prompt")
+            String negativePrompt,
+            String scheduler,
             @JsonProperty("guidance_scale")
             Double guidanceScale,
-            @JsonProperty("num_inference_steps")
-            Integer numInferenceSteps
+            Integer steps,
+            Double strength,
+            @JsonProperty("num_outputs")
+            Integer numOutputs,
+            Integer seed
     ) {
         private static final String DEFAULT_PROMPT = "restore damaged photo, high quality, realistic, natural colors";
+        private static final String DEFAULT_NEGATIVE_PROMPT = "monochrome, lowres, bad anatomy, worst quality, low quality";
 
         public static Input forRestoration(String imageUrl, String maskUrl) {
             return new Input(
                     imageUrl,
                     maskUrl,
                     DEFAULT_PROMPT,
+                    DEFAULT_NEGATIVE_PROMPT,
+                    "K_EULER",
+                    8.0,
+                    20,
+                    0.7,
                     1,
-                    7.5,
-                    50
+                    null
             );
         }
     }
