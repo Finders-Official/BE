@@ -18,6 +18,57 @@
 |------|------|------|
 | [../architecture/INFRASTRUCTURE.md](../architecture/INFRASTRUCTURE.md) | GCP 리소스 정보 | DevOps |
 | [GCP_LOGGING_GUIDE.md](./GCP_LOGGING_GUIDE.md) | 로깅 설정 가이드 | DevOps |
+| [TERRAFORM_OPERATIONS.md](./TERRAFORM_OPERATIONS.md) | Terraform 운영 가이드 | DevOps |
+
+---
+
+## 🛠️ Terraform 운영
+
+### 개요
+Finders 인프라는 Terraform으로 코드화되어 있습니다. 모든 인프라 변경은 Terraform을 통해 관리됩니다.
+
+### 관리 대상 리소스
+- GCS 버킷 (finders-public, finders-private)
+- IAM 바인딩 (팀원 권한, 서비스 계정)
+- VPC 네트워크 (finders-vpc, 3개 서브넷, 6개 방화벽 규칙)
+- Cloud SQL (finders-db, 2개 데이터베이스)
+- GCE 인스턴스 (finders-server-v2)
+- Cloudflare Tunnel (finders-api) — Phase 5 pending
+
+### 주요 문서
+- **[Terraform 운영 가이드](./TERRAFORM_OPERATIONS.md)** — 일상 워크플로우, 안전 수칙, 긴급 대응
+- **[IaC/Terraform 개념](./IAC_TERRAFORM_INTRO.md)** — Terraform 학습 자료
+- **[인프라 아키텍처](../architecture/INFRASTRUCTURE.md)** — 전체 인프라 구조
+
+### 빠른 시작
+```bash
+# 1. Terraform 설치 (1.5.0+)
+brew install terraform
+
+# 2. GCP 인증
+gcloud auth application-default login
+
+# 3. 변수 설정
+cd infra
+cp terraform.tfvars.example terraform.tfvars
+# terraform.tfvars 편집
+
+# 4. 초기화
+terraform init
+
+# 5. Plan 확인
+terraform plan  # No changes 확인
+```
+
+### CI/CD
+- PR 생성 시: 자동으로 `terraform plan` 실행, 결과를 PR 코멘트로 표시
+- develop 머지 시: 자동으로 `terraform apply` 실행
+- Workflow: `.github/workflows/terraform.yml`
+
+### 주의사항
+- ⚠️ 로컬에서 `terraform apply` 금지 (CI/CD만 사용)
+- ⚠️ `prevent_destroy` 제거 금지
+- ⚠️ `terraform.tfvars` 커밋 금지
 
 ---
 
@@ -175,7 +226,7 @@
 
 ## 마지막 업데이트
 
-- **마지막 업데이트**: 2026-01-30
+- **마지막 업데이트**: 2026-02-09
 - **작성자**: DevOps 팀
 
 ---
@@ -189,7 +240,8 @@ docs/
 │   ├─ NETWORK_BASICS.md (네트워크 기초)
 │   ├─ NETWORK_SECURITY.md (보안 가이드)
 │   ├─ NETWORK_CHEATSHEET.md (명령어 모음)
-│   └─ GCP_LOGGING_GUIDE.md (로깅)
+│   ├─ GCP_LOGGING_GUIDE.md (로깅)
+│   └─ TERRAFORM_OPERATIONS.md (Terraform 운영)
 │
 └─ architecture/
     ├─ INFRASTRUCTURE.md (GCP 리소스)
@@ -197,4 +249,4 @@ docs/
     └─ ERD.md (데이터베이스)
 ```
 
-**마지막 업데이트**: 2026-01-30
+**마지막 업데이트**: 2026-02-09
