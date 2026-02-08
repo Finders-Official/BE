@@ -116,8 +116,8 @@ public class PhotoResponse {
             @Schema(description = "받는 사람", example = "이승주")
             String recipient,
 
-            @Schema(description = "사진관 이름", example = "예술사진관 사장")
-            String photoLabOwnerName,
+            @Schema(description = "보낸 사람 이름", example = "예술사진관 사장")
+            String sender,
 
             @Schema(description = "택배사", example = "CJ대한통운")
             String carrier,
