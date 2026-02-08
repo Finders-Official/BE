@@ -2,6 +2,7 @@ package com.finders.api.infra.replicate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 
 import java.util.List;
 
@@ -42,6 +43,7 @@ public class ReplicateRequest {
      *
      * @see <a href="https://replicate.com/lucataco/sdxl-inpainting">Replicate 모델 페이지</a>
      */
+    @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Input(
             String image,
@@ -60,20 +62,24 @@ public class ReplicateRequest {
     ) {
         private static final String DEFAULT_PROMPT = "restore damaged photo, high quality, realistic, natural colors";
         private static final String DEFAULT_NEGATIVE_PROMPT = "monochrome, lowres, bad anatomy, worst quality, low quality";
+        private static final String DEFAULT_SCHEDULER = "K_EULER";
+        private static final Double DEFAULT_GUIDANCE_SCALE = 8.0;
+        private static final Integer DEFAULT_STEPS = 20;
+        private static final Double DEFAULT_STRENGTH = 0.7;
+        private static final Integer DEFAULT_NUM_OUTPUTS = 1;
 
         public static Input forRestoration(String imageUrl, String maskUrl) {
-            return new Input(
-                    imageUrl,
-                    maskUrl,
-                    DEFAULT_PROMPT,
-                    DEFAULT_NEGATIVE_PROMPT,
-                    "K_EULER",
-                    8.0,
-                    20,
-                    0.7,
-                    1,
-                    null
-            );
+            return Input.builder()
+                    .image(imageUrl)
+                    .mask(maskUrl)
+                    .prompt(DEFAULT_PROMPT)
+                    .negativePrompt(DEFAULT_NEGATIVE_PROMPT)
+                    .scheduler(DEFAULT_SCHEDULER)
+                    .guidanceScale(DEFAULT_GUIDANCE_SCALE)
+                    .steps(DEFAULT_STEPS)
+                    .strength(DEFAULT_STRENGTH)
+                    .numOutputs(DEFAULT_NUM_OUTPUTS)
+                    .build();
         }
     }
 }
