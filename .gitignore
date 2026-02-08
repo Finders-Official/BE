@@ -101,3 +101,25 @@ scripts/
 # ========================================
 *.session.sql
 sql/local/
+
+# ========================================
+# Terraform
+# ========================================
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# ========================================
+# Sisyphus (Working Notes - Never Commit)
+# ========================================
+.sisyphus/
