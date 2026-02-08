@@ -1,0 +1,15 @@
+# Copy this file to terraform.tfvars and fill in actual values
+# terraform.tfvars is gitignored - never commit secrets!
+
+project_id = "your-gcp-project-id"
+region     = "asia-northeast3"
+zone       = "asia-northeast3-a"
+
+# Cloudflare API Token (required for Phase 5)
+cloudflare_api_token = "your-cloudflare-api-token"
+
+# Team member emails for IAM bindings (Phase 1)
+team_member_emails = [
+  "member1@example.com",
+  "member2@example.com"
+]
