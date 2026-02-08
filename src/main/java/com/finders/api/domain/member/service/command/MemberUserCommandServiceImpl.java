@@ -71,32 +71,28 @@ public class MemberUserCommandServiceImpl implements MemberUserCommandService {
 
     private void validateWithdrawalEligibility(Long memberId) {
         // 진행 중인 예약이 있는지 확인
-        boolean hasActiveReservation = reservationRepository.existsByUserIdAndStatusIn(
-                memberId, List.of(ReservationStatus.RESERVED)
-        );
+        if (reservationRepository.existsByUserIdAndStatusIn(memberId, List.of(ReservationStatus.RESERVED))) {
+            throw new CustomException(ErrorCode.WITHDRAWAL_LOCKED_RESERVATION);
+        }
 
         // 진행 중인 현상/스캔이 있는지 확인
-        boolean hasActiveDeveloping = developmentOrderRepository.existsByUserIdAndStatusNot(
-                memberId, DevelopmentOrderStatus.COMPLETED
-        );
+        if (developmentOrderRepository.existsByUserIdAndStatusNot(memberId, DevelopmentOrderStatus.COMPLETED)) {
+            throw new CustomException(ErrorCode.WITHDRAWAL_LOCKED_ORDER);
+        }
 
         // 진행 중인 인화가 있는지 확인
-        boolean hasActivePrintOrder = printOrderRepository.existsByUserIdAndStatusNot(
-                memberId, PrintOrderStatus.COMPLETED
-        );
+        if (printOrderRepository.existsByUserIdAndStatusNot(memberId, PrintOrderStatus.COMPLETED)) {
+            throw new CustomException(ErrorCode.WITHDRAWAL_LOCKED_ORDER);
+        }
 
         // 진행 중인 배달이 있는지 확인
-        boolean hasActiveDelivery = deliveryRepository.existsByPrintOrderUserIdAndStatusNot(
-                memberId, DeliveryStatus.DELIVERED
-        );
+        if (deliveryRepository.existsByPrintOrderUserIdAndStatusNot(memberId, DeliveryStatus.DELIVERED)) {
+            throw new CustomException(ErrorCode.WITHDRAWAL_LOCKED_ORDER);
+        }
 
         // 진행 중인 문의가 있는지 확인
-        boolean hasActiveInquiry = inquiryRepository.existsByMemberIdAndStatusIn(
-                memberId, List.of(InquiryStatus.PENDING)
-        );
-
-        if (hasActiveReservation || hasActiveDeveloping || hasActivePrintOrder || hasActiveDelivery || hasActiveInquiry) {
-            throw new CustomException(ErrorCode.MEMBER_WITHDRAWAL_LOCKED);
+        if (inquiryRepository.existsByMemberIdAndStatusIn(memberId, List.of(InquiryStatus.PENDING))) {
+            throw new CustomException(ErrorCode.WITHDRAWAL_LOCKED_INQUIRY);
         }
     }
 
