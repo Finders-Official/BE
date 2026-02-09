@@ -3,6 +3,7 @@ name: Finders CD (Deploy to Dev)
 on:
   push:
     branches: [ "develop" ]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-dev
