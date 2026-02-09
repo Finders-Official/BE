@@ -137,7 +137,6 @@ resource "google_compute_instance" "app_server" {
 
     ignore_changes = [
       metadata["ssh-keys"],
-      metadata_startup_script, # Temporary: ignore startup script changes during directory migration
     ]
   }
 }
