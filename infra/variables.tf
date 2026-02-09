@@ -63,12 +63,6 @@ variable "team_member_emails" {
   default     = []
 }
 
-variable "photo_team_member_emails" {
-  description = "Photo team member emails (additional GCS viewer access)"
-  type        = list(string)
-  default     = []
-}
-
 # =============================================================================
 # Compute
 # =============================================================================

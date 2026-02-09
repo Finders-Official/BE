@@ -3,7 +3,14 @@ locals {
 }
 
 # =============================================================================
-# Admin IAM bindings (roles/editor + logging + monitoring)
+# Admin IAM bindings (팀장급 2명 — 프로젝트 전반 관리 권한)
+#
+# roles/editor를 의도적으로 사용합니다.
+# - 대상: 팀장 2명 (sachi009955, wldy4627)
+# - 사유: Owner 계정(finders.official.kr) 대신 프로젝트 운영을 위임받은 관리자
+# - roles/editor는 logging.viewer, monitoring.viewer, serviceAccountTokenCreator를
+#   포함하지 않으므로 아래에서 별도 부여합니다.
+# - 검토일: 2026-02-09
 # =============================================================================
 
 resource "google_project_iam_member" "admin_editor" {
@@ -36,6 +43,15 @@ resource "google_service_account_iam_member" "admin_sa_token_creator" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${var.compute_sa_email}"
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = "user:${each.value}"
+}
+
+# roles/iam.securityReviewer — IAM 정책 읽기 전용 (terraform plan 실행에 필요)
+resource "google_project_iam_member" "admin_iam_security_reviewer" {
+  for_each = toset(var.admin_member_emails)
+
+  project = var.project_id
+  role    = "roles/iam.securityReviewer"
+  member  = "user:${each.value}"
 }
 
 # =============================================================================
@@ -91,15 +107,20 @@ resource "google_service_account_iam_member" "team_sa_token_creator" {
 }
 
 # =============================================================================
-# Photo team additional access
+# img-resizer Service Account (Cloud Run → private GCS bucket 접근용)
 # =============================================================================
 
-resource "google_project_iam_member" "photo_team_storage_viewer" {
-  for_each = toset(var.photo_team_member_emails)
+resource "google_service_account" "img_resizer" {
+  account_id   = "img-resizer-sa"
+  display_name = "img-resizer-sa"
+  description  = "Cloud Run 이미지 리사이저가 private 버킷에 접근하기 위한 서비스 계정"
+  project      = var.project_id
+}
 
+resource "google_project_iam_member" "img_resizer_storage_viewer" {
   project = var.project_id
   role    = "roles/storage.objectViewer"
-  member  = "user:${each.value}"
+  member  = "serviceAccount:${google_service_account.img_resizer.email}"
 }
 
 # =============================================================================
