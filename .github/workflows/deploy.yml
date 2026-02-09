@@ -15,6 +15,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: true
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -60,57 +63,99 @@ jobs:
         with:
           project_id: '${{ secrets.GCP_PROJECT_ID }}'
 
-      # 8. IAP를 통해 파일 전송 및 배포 실행
-      - name: 'Deploy to GCE via IAP'
+      # 8. Blue-Green 배포 실행
+      - name: 'Deploy to GCE via IAP (Blue-Green)'
         run: |
-          # A. 서버 디렉토리는 sudo로 만들고, 소유권 변경은 생략해도 됩니다.
+          # A. 서버 디렉토리 생성
           gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
             --command="sudo mkdir -p /projects/Spring"
-          
-          # B. 파일을 목적지(/projects/Spring)가 아닌 '홈 디렉토리(~/)로' 전송합니다.
-          # 홈 디렉토리는 로그인한 사용자에게 항상 쓰기 권한이 있어 절대 에러가 나지 않습니다.
+
+          # B-1. docker-compose.yml 전송
+          gcloud compute scp docker-compose.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.yml \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet
+
+          # B-2. docker-compose.prod.yml 전송
           gcloud compute scp docker-compose.prod.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.prod.yml \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet
-          
-          # C. 원격 명령어 실행
+
+          # C. Blue-Green 배포 명령어 실행
           gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
             --command="
-              # [변경 C] 홈에 안전하게 도착한 파일을 sudo 권한으로 목적지에 옮깁니다.
+              # 파일을 목적지로 이동
+              sudo mv ~/docker-compose.yml /projects/Spring/docker-compose.yml
               sudo mv ~/docker-compose.prod.yml /projects/Spring/docker-compose.prod.yml
-          
+
               cd /projects/Spring
-          
-              # 외부 네트워크가 없을 경우 생성 시도
+
+              # 외부 네트워크가 없을 경우 생성
               sudo docker network create finders-network || true
-          
-              # [변경 D] 환경변수 파일도 sudo 권한으로 생성하기 위해 tee 명령어를 사용합니다.
+
+              # 환경변수 파일 생성
               echo '${{ secrets.ENV_PROD }}' | sudo tee .env.prod > /dev/null
-          
-              # 배포 프로세스
-              sudo docker compose --env-file .env.prod -p finders-api -f docker-compose.prod.yml pull
-              sudo docker compose --env-file .env.prod -p finders-api -f docker-compose.prod.yml up -d --remove-orphans
-          
-              echo '배포 후 Health Check 시작...'
-              for i in {1..12}; do
-                RESPONSE=\$(curl -s http://localhost:8080/api/actuator/health || true)
-                if [[ \"\$RESPONSE\" == *\"UP\"* ]]; then
-                  echo '✅ 운영 서버 정상 실행 확인!'
-                  sudo docker image prune -f
-                  exit 0
+
+              # ── 현재 활성 슬롯 감지 ──
+              ACTIVE_SLOT=\$(sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml ps --format json | jq -r '.[].Service' | grep -E 'prod-blue|prod-green' | head -1 || echo \"none\")
+              if [[ \"\$ACTIVE_SLOT\" == \"prod-blue\" ]]; then
+                GREEN_SLOT=\"green\"
+                BLUE_SLOT=\"blue\"
+              else
+                GREEN_SLOT=\"blue\"
+                BLUE_SLOT=\"green\"
+              fi
+              echo \"🔍 Active: \$ACTIVE_SLOT → New: \$GREEN_SLOT, Old: \$BLUE_SLOT\"
+
+              # ── 최초 배포 시 베이스 인프라 시작 ──
+              if [[ \"\$ACTIVE_SLOT\" == \"none\" ]]; then
+                echo \"🚀 최초 배포: 베이스 인프라 시작\"
+                sudo docker compose -f docker-compose.yml up -d
+                sleep 10
+              fi
+
+              # ── 새 이미지 Pull ──
+              sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+
+              # ── Green 슬롯 시작 ──
+              echo \"🟢 Green 슬롯(\$GREEN_SLOT) 시작\"
+              sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT up -d
+
+              # ── Direct Health Check (Traefik 우회) ──
+              echo \"💓 Health Check 시작 (direct container exec)...\"
+              GREEN_CONTAINER=\$(sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml ps --format json | jq -r '.[] | select(.Service | contains(\"prod-'\$GREEN_SLOT'\")) | .Name')
+              for i in {1..20}; do
+                if sudo docker exec \$GREEN_CONTAINER wget --spider -q http://localhost:8080/api/actuator/health; then
+                  echo \"✅ Green slot healthy\"
+                  break
                 fi
-                echo \"대기 중... (\$i/12)\"
+                if [ \$i -eq 20 ]; then
+                  echo \"❌ Green health check failed\"
+                  sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT stop
+                  sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT rm -f
+                  exit 1
+                fi
+                echo \"⏳ 대기 중... (\$i/20)\"
                 sleep 5
               done
-              exit 1
+
+              # ── Blue 슬롯 정리 ──
+              echo \"🔵 Blue 슬롯(\$BLUE_SLOT) 정리\"
+              sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile \$BLUE_SLOT stop
+              sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile \$BLUE_SLOT rm -f
+
+              # ── 미사용 이미지 정리 ──
+              sudo docker image prune -f
+              echo \"✅ Blue-Green 배포 완료!\"
             "

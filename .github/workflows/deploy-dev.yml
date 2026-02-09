@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "develop" ]
 
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-api
   CONTAINER_NAME: finders-dev-api
@@ -59,10 +63,10 @@ jobs:
         with:
           project_id: '${{ secrets.GCP_PROJECT_ID }}'
 
-      # 8. IAP를 통해 파일 전송 및 배포 실행
+      # 8. IAP를 통해 파일 전송 및 Blue-Green 배포 실행
       - name: 'Deploy to GCE via IAP'
         run: |
-          # [변경 A] 서버 디렉토리 생성 (sudo 사용으로 안전하게)
+          # A. 서버 디렉토리 생성
           gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
@@ -70,46 +74,89 @@ jobs:
             --quiet \
             --command="sudo mkdir -p /projects/Spring"
 
-          # [변경 B] 파일을 일단 '홈 디렉토리(~)'로 전송 (권한 에러 원천 봉쇄)
-          gcloud compute scp docker-compose.dev.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.dev.yml \
+          # B. 파일을 홈 디렉토리(~)로 전송 (권한 에러 방지)
+          gcloud compute scp docker-compose.yml docker-compose.dev.yml \
+            ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~ \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet
 
-          # C. 원격 명령어 실행
+          # C. Blue-Green 배포 실행
           gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
             --command="
-              # [변경 C] 홈에 있는 파일을 sudo로 목적지 이동
+              # 홈에 있는 파일을 sudo로 목적지 이동
+              sudo mv ~/docker-compose.yml /projects/Spring/docker-compose.yml
               sudo mv ~/docker-compose.dev.yml /projects/Spring/docker-compose.dev.yml
-          
+
               cd /projects/Spring
-          
-              # 외부 네트워크가 없을 경우 생성 시도
+
+              # Docker 네트워크 생성 (없을 경우)
               sudo docker network create finders-network || true
-          
-              # [변경 D] 환경변수 파일도 sudo tee로 생성 (권한 이슈 방지)
+
+              # 환경변수 파일 생성
               echo '${{ secrets.ENV_DEV }}' | sudo tee .env.dev > /dev/null
-          
-              # 배포 프로세스
-              sudo docker compose --env-file .env.dev -p finders-dev -f docker-compose.dev.yml pull
-              sudo docker compose --env-file .env.dev -p finders-dev -f docker-compose.dev.yml up -d --remove-orphans
-          
-              echo '배포 후 Health Check 시작...'
-              for i in {1..12}; do
-                # 개발 서버 포트 8081 확인
-                RESPONSE=\$(curl -s http://localhost:8081/api/actuator/health || true)
-                if [[ \"\$RESPONSE\" == *\"UP\"* ]]; then
-                  echo '✅ 개발 서버 정상 실행 확인!'
-                  sudo docker image prune -f
-                  exit 0
+
+              # ── Blue-Green 슬롯 감지 ──
+              ACTIVE_SLOT=\$(sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml ps --format json | jq -r '.[].Service' | grep -E 'dev-blue|dev-green' | head -1 || echo 'none')
+
+              if [[ \"\$ACTIVE_SLOT\" == 'dev-blue' ]]; then
+                GREEN_SLOT='green'
+                BLUE_SLOT='blue'
+              else
+                GREEN_SLOT='blue'
+                BLUE_SLOT='green'
+              fi
+
+              echo \"현재 활성 슬롯: \$ACTIVE_SLOT\"
+              echo \"새 슬롯(Green): dev-\$GREEN_SLOT\"
+              echo \"기존 슬롯(Blue): dev-\$BLUE_SLOT\"
+
+              # ── 최초 배포: 베이스 인프라 시작 ──
+              if [[ \"\$ACTIVE_SLOT\" == 'none' ]]; then
+                echo '최초 배포 감지 - 베이스 인프라 시작...'
+                sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d traefik cloudflared redis-dev
+                sleep 10
+              fi
+
+              # ── 이미지 Pull ──
+              sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml pull
+
+              # ── Green 슬롯 시작 ──
+              echo \"Green 슬롯(dev-\$GREEN_SLOT) 시작...\"
+              sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile \$GREEN_SLOT up -d
+
+              # ── Health Check (직접 컨테이너 실행) ──
+              echo 'Health Check 시작...'
+              GREEN_CONTAINER=\$(sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml ps --format json | jq -r '.[] | select(.Service | contains(\"dev-'\$GREEN_SLOT'\")) | .Name')
+
+              for i in {1..20}; do
+                if sudo docker exec \$GREEN_CONTAINER wget --spider -q http://localhost:8080/api/actuator/health; then
+                  echo '✅ Green 슬롯 정상 확인!'
+                  break
                 fi
-                echo \"대기 중... (\$i/12)\"
+                if [ \$i -eq 20 ]; then
+                  echo '❌ Green Health Check 실패 - 롤백 진행'
+                  sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile \$GREEN_SLOT stop
+                  sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile \$GREEN_SLOT rm -f
+                  exit 1
+                fi
+                echo \"대기 중... (\$i/20)\"
                 sleep 5
               done
-              exit 1
+
+              # ── Blue 슬롯 중지 및 제거 ──
+              if [[ \"\$ACTIVE_SLOT\" != 'none' ]]; then
+                echo \"기존 슬롯(dev-\$BLUE_SLOT) 중지...\"
+                sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile \$BLUE_SLOT stop
+                sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile \$BLUE_SLOT rm -f
+              fi
+
+              # ── 정리 ──
+              sudo docker image prune -f
+              echo '✅ Dev Blue-Green 배포 완료!'
             "
