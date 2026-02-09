@@ -1,76 +1,87 @@
 # ========================================
-# Finders API - 배포 환경 (GCP)
+# Finders API - Production Override (Blue-Green)
 # ========================================
+# Override 파일: docker-compose.yml (base)과 함께 사용
+#
 # 사용법:
-#   1. 이미지 최신화:
-#      docker compose -f docker-compose.prod.yml pull
+#   # Blue 슬롯 실행:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue up -d
 #
-#   2. 컨테이너 실행 (재배포):
-#      docker compose -f docker-compose.prod.yml up -d
+#   # Green 슬롯 실행:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile green up -d
 #
-#   3. 로그 확인:
-#      docker compose -f docker-compose.prod.yml logs -f
-#
-#   4. 종료:
-#      docker compose -f docker-compose.prod.yml down
+#   # 슬롯 전환 (blue → green):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile green up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue down
 # ========================================
 
 services:
-  backend:
+  # ── Production Blue Slot ──
+  prod-blue:
     image: findersofficial/finders-api:latest
-
-    container_name: finders-api
     restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
-    ports:
-      - "8080:8080"
     env_file:
       - .env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
       TZ: Asia/Seoul
-      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: finders-redis
       SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
       start_period: 60s
     logging:
       driver: "gcplogs"
       options:
-        labels: "app=finders-api,env=prod"
-    networks:
-      - finders-network # 💡 공용 네트워크에 합류
-  redis:
-    image: redis:latest
-    container_name: finders-redis
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - ./redis/data:/data
+        labels: "app=finders-api,env=prod,slot=blue"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prod.rule=Host(`api.finders.it.kr`)"
+      - "traefik.http.routers.prod.entrypoints=web"
+      - "traefik.http.services.prod.loadbalancer.server.port=8080"
+      - "traefik.http.services.prod.loadbalancer.server.scheme=http"
+    profiles:
+      - blue
     networks:
       - finders-network
 
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    container_name: finders-tunnel-prod
+  # ── Production Green Slot ──
+  prod-green:
+    image: findersofficial/finders-api:latest
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
     env_file:
       - .env.prod
-    command: tunnel run --protocol http2
     environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN_PROD}
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
+      SPRING_DATA_REDIS_HOST: finders-redis
+      SPRING_DATA_REDIS_PORT: 6379
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: "gcplogs"
+      options:
+        labels: "app=finders-api,env=prod,slot=green"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prod.rule=Host(`api.finders.it.kr`)"
+      - "traefik.http.routers.prod.entrypoints=web"
+      - "traefik.http.services.prod.loadbalancer.server.port=8080"
+      - "traefik.http.services.prod.loadbalancer.server.scheme=http"
+    profiles:
+      - green
     networks:
       - finders-network
-
-networks:
-  finders-network:
-    external: true
