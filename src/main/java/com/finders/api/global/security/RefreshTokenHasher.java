@@ -1,20 +1,30 @@
 package com.finders.api.global.security;
 
+import java.time.Duration;
+
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RefreshTokenHasher {
 
     private final MemberRepository memberRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final JwtProperties jwtProperties;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+    private static final String RT_KEY_PREFIX = "rt:";
 
     @Transactional
     public void saveRefreshToken(Long memberId, String rawRefreshToken) {
@@ -27,7 +37,43 @@ public class RefreshTokenHasher {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         member.updateRefreshTokenHash(bcryptHashedToken);
+
+        try {
+            long ttlSeconds = jwtProperties.refreshTokenExpiry() / 1000;
+
+            redisTemplate.opsForValue().set(
+                RT_KEY_PREFIX + memberId,
+                rawRefreshToken,
+                Duration.ofSeconds(ttlSeconds)
+            );
+        } catch (Exception e) {
+            log.error("[RefreshTokenHasher.saveRefreshToken] RefreshToken 캐싱 실패: {}", e.getMessage());
+        }
     }
+
+    public boolean matches(Long memberId, String rawRefreshToken, String encodedHash) {
+        try {
+            String savedToken = (String) redisTemplate.opsForValue().get(RT_KEY_PREFIX + memberId);
+            if (savedToken != null) {
+                return savedToken.equals(rawRefreshToken);
+            }
+        } catch (Exception e) {
+            log.warn("[RefreshTokenHasher.matches] Redis 장애 발생으로 DB 검증으로 전환합니다. memberId: {}", memberId);
+        }
+
+        if (encodedHash == null) return false;
+        String preHashed = hashToken(rawRefreshToken);
+        return encoder.matches(preHashed, encodedHash);
+    }
+
+    public void removeRefreshToken(Long memberId) {
+        try {
+            redisTemplate.delete(RT_KEY_PREFIX + memberId);
+        } catch (Exception e) {
+            log.error("[RefreshTokenHasher.removeRefreshToken] RefreshToken 삭제 실패: {}", e.getMessage());
+        }
+    }
+
 
     private String hashToken(String token) {
         try {
@@ -37,15 +83,5 @@ public class RefreshTokenHasher {
         } catch (java.security.NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다.", e);
         }
-    }
-
-    public boolean matches(String rawRefreshToken, String encodedHash) {
-        if (encodedHash == null) return false;
-
-        // 입력받은 원본 토큰을 SHA-256으로 압축
-        String preHashed = hashToken(rawRefreshToken);
-
-        // 압축된 값을 DB의 BCrypt 해시와 비교
-        return encoder.matches(preHashed, encodedHash);
     }
 }
