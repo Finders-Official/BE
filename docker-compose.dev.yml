@@ -13,11 +13,16 @@ services:
   dev-blue:
     image: findersofficial/finders-api:dev
     restart: unless-stopped
+    depends_on:
+      redis-dev:
+        condition: service_healthy
     env_file:
       - .env.dev
     environment:
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Seoul
+      SPRING_DATA_REDIS_HOST: finders-redis-dev
+      SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
       interval: 30s
@@ -41,11 +46,16 @@ services:
   dev-green:
     image: findersofficial/finders-api:dev
     restart: unless-stopped
+    depends_on:
+      redis-dev:
+        condition: service_healthy
     env_file:
       - .env.dev
     environment:
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Seoul
+      SPRING_DATA_REDIS_HOST: finders-redis-dev
+      SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
       interval: 30s

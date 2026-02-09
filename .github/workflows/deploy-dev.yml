@@ -119,7 +119,7 @@ jobs:
               # ── 최초 배포: 베이스 인프라 시작 ──
               if [[ \"\$ACTIVE_SLOT\" == 'none' ]]; then
                 echo '최초 배포 감지 - 베이스 인프라 시작...'
-                sudo docker compose -f docker-compose.infra.yml -f docker-compose.dev.yml up -d traefik cloudflared
+                sudo docker compose -f docker-compose.infra.yml -f docker-compose.dev.yml up -d traefik cloudflared redis-dev
                 sleep 10
               fi
 
