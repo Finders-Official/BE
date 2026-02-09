@@ -31,7 +31,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Transactional
 public class PhotoRestorationCommandServiceImpl implements PhotoRestorationCommandService {
 
-    private static final int RESTORATION_TOKEN_COST = 1;
+    private static final int RESTORATION_TOKEN_COST = 2;  // FLUX Kontext Pro: 2토큰 (₩1,000)
     private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
 
     private final PhotoRestorationRepository restorationRepository;

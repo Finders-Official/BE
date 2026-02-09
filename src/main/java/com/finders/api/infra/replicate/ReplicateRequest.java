@@ -60,7 +60,7 @@ public class ReplicateRequest {
             Integer numOutputs,
             Integer seed
     ) {
-        private static final String DEFAULT_PROMPT = "restore damaged photo, high quality, realistic, natural colors";
+        private static final String DEFAULT_PROMPT = "restore damaged analog film photo, fix light leak and scratches, preserve film grain texture, maintain natural colors and vintage aesthetic";
         private static final String DEFAULT_NEGATIVE_PROMPT = "monochrome, lowres, bad anatomy, worst quality, low quality";
         private static final String DEFAULT_SCHEDULER = "K_EULER";
         private static final Double DEFAULT_GUIDANCE_SCALE = 8.0;
