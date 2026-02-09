@@ -24,21 +24,30 @@ variable "zone" {
 # Cloudflare
 # =============================================================================
 
+variable "enable_cloudflare" {
+  description = "Enable Cloudflare module (requires valid API token)"
+  type        = bool
+  default     = false
+}
+
 variable "cloudflare_api_token" {
   description = "Cloudflare API Token"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "cloudflare_account_id" {
   description = "Cloudflare Account ID"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "cloudflare_tunnel_hostname" {
   description = "Hostname for the Cloudflare tunnel (e.g. finders-api.log8.kr)"
   type        = string
+  default     = ""
 }
 
 variable "cloudflare_tunnel_service" {

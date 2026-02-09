@@ -9,8 +9,9 @@ region     = "asia-northeast3"
 zone       = "asia-northeast3-a"
 
 # =============================================================================
-# Cloudflare
+# Cloudflare (set enable_cloudflare = true when API token is ready)
 # =============================================================================
+enable_cloudflare          = false
 cloudflare_api_token       = "your-cloudflare-api-token"
 cloudflare_account_id      = "your-cloudflare-account-id"
 cloudflare_tunnel_hostname = "your-api.example.com"

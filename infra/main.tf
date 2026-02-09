@@ -42,6 +42,7 @@ module "storage" {
 
 module "cloudflare" {
   source = "./modules/cloudflare"
+  count  = var.enable_cloudflare ? 1 : 0
 
   cloudflare_account_id = var.cloudflare_account_id
   name_prefix           = local.name_prefix
