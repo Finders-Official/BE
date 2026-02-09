@@ -21,8 +21,9 @@ resource "google_compute_instance" "app_server" {
     mode         = "READ_WRITE"
 
     initialize_params {
-      size = 20
-      type = "pd-balanced"
+      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      size  = 20
+      type  = "pd-balanced"
     }
   }
 
