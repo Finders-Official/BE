@@ -1,5 +1,5 @@
 # ========================================
-# Finders API - 로컬 개발 환경
+# Finders API - 로컬 개발 환경 (기본 파일)
 # ========================================
 # 사용법:
 #   1. MySQL만 실행 (Spring은 IDE에서):
@@ -14,6 +14,9 @@
 #
 #   4. 데이터 초기화:
 #      docker compose down -v
+#
+# Note:
+#   서버 배포용 파일은 docker-compose.infra.yml 을 참고하세요.
 # ========================================
 
 services:
@@ -103,4 +106,3 @@ volumes:
 
 networks:
   finders-network:
-    external: true

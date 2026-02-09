@@ -1,57 +1,76 @@
 # ========================================
-# Finders API - 개발 환경 (GCP)
+# Finders API - Dev Blue-Green Override
 # ========================================
+# docker-compose.infra.yml (base) 위에 덮어쓰는 override 파일
+#
 # 사용법:
-#   1. 이미지 최신화:
-#      docker compose -f docker-compose.dev.yml pull
-#
-#   2. 컨테이너 실행 (재배포):
-#      docker compose -f docker-compose.dev.yml up -d
-#
-#   3. 로그 확인:
-#      docker compose -f docker-compose.dev.yml logs -f
-#
-#   4. 종료:
-#      docker compose -f docker-compose.dev.yml down
+#   docker compose -f docker-compose.infra.yml -f docker-compose.dev.yml --profile blue up -d
+#   docker compose -f docker-compose.infra.yml -f docker-compose.dev.yml --profile green up -d
 # ========================================
 
 services:
-  backend:
+  # ── Dev Blue ──
+  dev-blue:
     image: findersofficial/finders-api:dev
-
-    container_name: finders-dev-api
     restart: unless-stopped
-    ports:
-      - "8081:8080"
+    depends_on:
+      redis-dev:
+        condition: service_healthy
     env_file:
       - .env.dev
     environment:
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Seoul
+      SPRING_DATA_REDIS_HOST: finders-redis-dev
+      SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dev.rule=Host(`dev-api.finders.it.kr`)"
+      - "traefik.http.services.dev.loadbalancer.server.port=8080"
     logging:
       driver: "gcplogs"
       options:
-        labels: "app=finders-dev-api,env=dev"
+        labels: "app=finders-dev-api,env=dev,slot=blue"
+    profiles:
+      - blue
     networks:
       - finders-network
 
-  tunnel-dev:
-    image: cloudflare/cloudflared:latest
-    container_name: finders-tunnel-dev
+  # ── Dev Green ──
+  dev-green:
+    image: findersofficial/finders-api:dev
+    restart: unless-stopped
+    depends_on:
+      redis-dev:
+        condition: service_healthy
     env_file:
       - .env.dev
-    command: tunnel run --protocol http2
     environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN_DEV}
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Seoul
+      SPRING_DATA_REDIS_HOST: finders-redis-dev
+      SPRING_DATA_REDIS_PORT: 6379
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dev.rule=Host(`dev-api.finders.it.kr`)"
+      - "traefik.http.services.dev.loadbalancer.server.port=8080"
+    logging:
+      driver: "gcplogs"
+      options:
+        labels: "app=finders-dev-api,env=dev,slot=green"
+    profiles:
+      - green
     networks:
       - finders-network
-
-networks:
-  finders-network:
-    external: true
