@@ -81,9 +81,9 @@ git filter-repo --path .sisyphus/ --invert-paths --force
 After the cleanup is pushed to the remote:
 1. **Delete local clones**: All team members must delete their local repository.
 2. **Re-clone**: Perform a fresh clone.
-   ```bash
-   git clone https://github.com/Finders-Official/Spring.git
-   ```
+    ```bash
+    git clone https://github.com/Finders-Official/BE.git
+    ```
 3. **Restore `.env`**: Re-create the `.env` file using the new rotated secrets.
 
 ---

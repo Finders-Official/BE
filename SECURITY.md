@@ -11,7 +11,7 @@
 ### 신고 방법
 
 1. **GitHub Security Advisory** (권장)
-   - [Security Advisory 작성](https://github.com/Finders-Official/Spring/security/advisories/new)
+   - [Security Advisory 작성](https://github.com/Finders-Official/BE/security/advisories/new)
 
 2. **비공개 연락**
    - 프로젝트 관리자에게 직접 연락
