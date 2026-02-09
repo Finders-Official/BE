@@ -108,7 +108,7 @@ jobs:
               echo '${{ secrets.ENV_PROD }}' | sudo tee .env.prod > /dev/null
 
               # ── 현재 활성 슬롯 감지 ──
-              ACTIVE_SLOT=\$(sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml ps --format json | jq -r '.[].Service' | grep -E 'prod-blue|prod-green' | head -1 || echo \"none\")
+              ACTIVE_SLOT=\$(sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml ps --format json 2>/dev/null | jq -sr '.[].Service' 2>/dev/null | grep -E 'prod-blue|prod-green' | head -1 || echo \"none\")
               if [[ \"\$ACTIVE_SLOT\" == \"prod-blue\" ]]; then
                 GREEN_SLOT=\"green\"
                 BLUE_SLOT=\"blue\"
@@ -121,20 +121,20 @@ jobs:
               # ── 최초 배포 시 베이스 인프라 시작 ──
               if [[ \"\$ACTIVE_SLOT\" == \"none\" ]]; then
                 echo \"🚀 최초 배포: 베이스 인프라 시작\"
-                sudo docker compose -f docker-compose.infra.yml up -d
+                sudo docker compose --env-file .env.prod -f docker-compose.infra.yml up -d
                 sleep 10
               fi
 
               # ── 새 이미지 Pull ──
-              sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml pull
+              sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml pull
 
               # ── Green 슬롯 시작 ──
               echo \"🟢 Green 슬롯(\$GREEN_SLOT) 시작\"
-              sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT up -d
+              sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT up -d
 
               # ── Direct Health Check (Traefik 우회) ──
               echo \"💓 Health Check 시작 (direct container exec)...\"
-              GREEN_CONTAINER=\$(sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml ps --format json | jq -r '.[] | select(.Service | contains(\"prod-'\$GREEN_SLOT'\")) | .Name')
+              GREEN_CONTAINER=\$(sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml ps --format json 2>/dev/null | jq -sr '.[] | select(.Service | contains(\"prod-'\$GREEN_SLOT'\")) | .Name')
               for i in {1..20}; do
                 if sudo docker exec \$GREEN_CONTAINER wget --spider -q http://localhost:8080/api/actuator/health; then
                   echo \"✅ Green slot healthy\"
@@ -142,8 +142,8 @@ jobs:
                 fi
                 if [ \$i -eq 20 ]; then
                   echo \"❌ Green health check failed\"
-                  sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT stop
-                  sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT rm -f
+                  sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT stop
+                  sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$GREEN_SLOT rm -f
                   exit 1
                 fi
                 echo \"⏳ 대기 중... (\$i/20)\"
@@ -152,8 +152,8 @@ jobs:
 
               # ── Blue 슬롯 정리 ──
               echo \"🔵 Blue 슬롯(\$BLUE_SLOT) 정리\"
-              sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$BLUE_SLOT stop
-              sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$BLUE_SLOT rm -f
+              sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$BLUE_SLOT stop
+              sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml --profile \$BLUE_SLOT rm -f
 
               # ── 미사용 이미지 정리 ──
               sudo docker image prune -f
