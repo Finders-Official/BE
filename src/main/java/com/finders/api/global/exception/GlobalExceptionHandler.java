@@ -8,6 +8,10 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.hibernate.QueryTimeoutException;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -126,6 +130,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.NOT_FOUND.getStatus())
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND));
+    }
+
+    // Redis 연결 장애 및 타임아웃 처리 (Redis가 필수인 로직에서 장애인 경우)
+    @ExceptionHandler({RedisConnectionFailureException.class, QueryTimeoutException.class})
+    public ResponseEntity<ApiResponse<Void>> handleRedisException(
+        Exception e,
+        HttpServletRequest request
+    ) {
+        log.error("[RedisException] {} - {}", request.getRequestURI(), e.getMessage(), e);
+
+        try {
+            discordWebhookService.sendErrorNotification(e, request.getMethod(), request.getRequestURI());
+        } catch (Exception ignored) {
+            log.warn("[DiscordWebhook] Failed to send notification", ignored);
+        }
+
+        return ResponseEntity
+            .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+            .body(ApiResponse.error(ErrorCode.AUTH_SERVER_ERROR));
     }
 
     @ExceptionHandler(Exception.class)
