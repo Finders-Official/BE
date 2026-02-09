@@ -185,8 +185,6 @@ logging:
   level:
     root: INFO
     com.finders: DEBUG
-    org.springframework.data.redis: DEBUG
-    io.lettuce.core: DEBUG
 
 # ========================================
 # CORS 설정

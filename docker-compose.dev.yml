@@ -9,6 +9,20 @@
 # ========================================
 
 services:
+  # ── Redis (dev 전용) ──
+  redis-dev:
+    image: redis:latest
+    container_name: finders-redis-dev
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finders-network
+
   # ── Dev Blue ──
   dev-blue:
     image: findersofficial/finders-api:dev
