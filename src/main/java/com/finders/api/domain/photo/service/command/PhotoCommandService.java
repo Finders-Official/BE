@@ -8,4 +8,6 @@ public interface PhotoCommandService {
     Long confirmDepositReceipt(Long memberId, Long printOrderId, PhotoRequest.DepositReceiptConfirm request);
 
     Long skipPrint(Long memberId, Long developmentOrderId);
+
+    Long confirmReceive(Long memberId, Long developmentOrderId);
 }

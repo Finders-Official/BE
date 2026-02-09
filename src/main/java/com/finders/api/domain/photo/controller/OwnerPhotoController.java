@@ -123,6 +123,10 @@ public class OwnerPhotoController {
         return ApiResponse.success(SuccessCode.OK, response);
     }
 
+    @Operation(
+            summary = "오너 - 인화 주문의 예상 완료 시간 등록",
+            description = "오너가 인화주문을 확인하고 예상 완료 시간을 등록하여 CONFIRMED -> PRINTING으로 상태를 바꿉니다."
+    )
     @PatchMapping("/{photoLabId}/print-orders/{printOrderId}/printing")
     @PreAuthorize("hasRole('OWNER')")
     public ApiResponse<OwnerPhotoResponse.PrintOrderStatusUpdated> startPrinting(
@@ -136,6 +140,10 @@ public class OwnerPhotoController {
         return ApiResponse.success(SuccessCode.OK, result);
     }
 
+    @Operation(
+            summary = "오너 - 배송 주문 상태 변경 및 정보 등록",
+            description = "오너가 배송에 필요한 정보들을 등록하고, 배송 상태를 SHIPPED로 바꿉니다."
+    )
     @PatchMapping("/{photoLabId}/print-orders/{printOrderId}/shipping")
     @PreAuthorize("hasRole('OWNER')")
     public ApiResponse<OwnerPhotoResponse.PrintOrderStatusUpdated> registerShipping(
@@ -149,6 +157,10 @@ public class OwnerPhotoController {
         return ApiResponse.success(SuccessCode.OK, result);
     }
 
+    @Operation(
+            summary = "오너 - 현상 주문 상태 변경",
+            description = "오너가 현상 주문의 상태를 원하는 값으로 변경합니다."
+    )
     @PatchMapping("/{photoLabId}/print-orders/{printOrderId}/status")
     @PreAuthorize("hasRole('OWNER')")
     public ApiResponse<OwnerPhotoResponse.PrintOrderStatusUpdated> updatePrintOrderStatus(

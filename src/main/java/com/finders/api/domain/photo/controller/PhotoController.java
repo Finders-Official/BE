@@ -156,4 +156,17 @@ public class PhotoController {
         );
         return ApiResponse.success(SuccessCode.OK, result);
     }
+
+    @Operation(
+            summary = "회원 - 스캔/현상 결과 수령 확정",
+            description = "developmentOrder가 SCANNING 상태일 때 회원이 수령을 확정하면 COMPLETED로 변경합니다."
+    )
+    @PostMapping("/development-orders/{developmentOrderId}/receipt")
+    public ApiResponse<Long> confirmReceive(
+            @AuthenticationPrincipal AuthUser user,
+            @PathVariable Long developmentOrderId
+    ) {
+        Long result = photoCommandService.confirmReceive(user.memberId(), developmentOrderId);
+        return ApiResponse.success(SuccessCode.OK, result);
+    }
 }
