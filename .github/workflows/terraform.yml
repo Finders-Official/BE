@@ -24,16 +24,6 @@ jobs:
     defaults:
       run:
         working-directory: ./infra
-    env:
-      TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      TF_VAR_cloudflare_tunnel_hostname: ${{ secrets.CLOUDFLARE_TUNNEL_HOSTNAME }}
-      TF_VAR_compute_sa_email: ${{ secrets.COMPUTE_SA_EMAIL }}
-      TF_VAR_owner_member_emails: ${{ secrets.OWNER_MEMBER_EMAILS }}
-      TF_VAR_editor_member_emails: ${{ secrets.EDITOR_MEMBER_EMAILS }}
-      TF_VAR_team_member_emails: ${{ secrets.TEAM_MEMBER_EMAILS }}
-      TF_VAR_cors_allowed_origins: ${{ secrets.CORS_ALLOWED_ORIGINS }}
     
     steps:
       - name: Checkout
@@ -49,6 +39,9 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+      
+      - name: Download Terraform Variables
+        run: gsutil cp gs://finders-terraform-state/terraform.tfvars ./infra/terraform.tfvars
       
       - name: Terraform Format Check
         id: fmt
