@@ -70,17 +70,19 @@ jobs:
             --tunnel-through-iap \
             --quiet \
             --command="
-              : > /projects/Finders/BE/.env.prod
-              gcloud secrets list \
-                --project='${{ secrets.GCP_PROJECT_ID }}' \
-                --filter='labels.env=prod' \
-                --format='value(name)' \
-              | while read -r SECRET_NAME; do
-                  VAR_NAME=\$(echo \"\$SECRET_NAME\" | sed 's/^app-prod-//' | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-                  SECRET_VALUE=\$(gcloud secrets versions access latest --project='${{ secrets.GCP_PROJECT_ID }}' --secret=\"\$SECRET_NAME\" 2>/dev/null) || continue
-                  echo \"\$VAR_NAME=\$SECRET_VALUE\" >> /projects/Finders/BE/.env.prod
-                done
-              chmod 600 /projects/Finders/BE/.env.prod
+              sudo bash -c '
+                : > /projects/Finders/BE/.env.prod
+                gcloud secrets list \
+                  --project='\''${{ secrets.GCP_PROJECT_ID }}'\'' \
+                  --filter='\''labels.env=prod'\'' \
+                  --format='\''value(name)'\'' \
+                | while read -r SECRET_NAME; do
+                    VAR_NAME=\$(echo "\$SECRET_NAME" | sed 's/^app-prod-//' | tr "[:lower:]" "[:upper:]" | tr "-" "_")
+                    SECRET_VALUE=\$(gcloud secrets versions access latest --project='\''${{ secrets.GCP_PROJECT_ID }}'\'' --secret="\$SECRET_NAME" 2>/dev/null) || continue
+                    echo "\$VAR_NAME=\$SECRET_VALUE" >> /projects/Finders/BE/.env.prod
+                  done
+                chmod 600 /projects/Finders/BE/.env.prod
+              '
             "
 
       # 8. Blue-Green 배포 실행 (secrets are fetched from GCP Secret Manager by startup script)
