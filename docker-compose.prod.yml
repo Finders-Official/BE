@@ -24,6 +24,7 @@ services:
       - .env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATA_REDIS_SSL_ENABLED: "true"
       TZ: Asia/Seoul
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
@@ -54,6 +55,7 @@ services:
       - .env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATA_REDIS_SSL_ENABLED: "true"
       TZ: Asia/Seoul
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
