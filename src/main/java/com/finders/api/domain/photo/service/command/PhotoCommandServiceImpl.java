@@ -169,6 +169,28 @@ public class PhotoCommandServiceImpl implements PhotoCommandService {
 
         return printOrder.getId();
     }
+
+    public Long confirmReceive(Long memberId, Long developmentOrderId) {
+
+        DevelopmentOrder devOrder = developmentOrderRepository
+                .findById(developmentOrderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PHOTO_ORDER_NOT_FOUND));
+
+        // 1) 소유자 검증
+        if (!devOrder.getUser().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN, "주문 권한이 없습니다.");
+        }
+
+        // 2) 상태 검증: SCANNING일 때만 수령 확정 가능
+        if (devOrder.getStatus() != DevelopmentOrderStatus.SCANNING) {
+            throw new CustomException(ErrorCode.BAD_REQUEST, "수령 확정은 스캔 진행(SCANNING) 상태에서만 가능합니다.");
+        }
+
+        // 3) 상태 변경
+        devOrder.updateStatus(DevelopmentOrderStatus.COMPLETED);
+
+        return devOrder.getId();
+    }
 }
 
 

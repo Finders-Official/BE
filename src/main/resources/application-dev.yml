@@ -6,9 +6,13 @@
 # ========================================
 
 spring:
+  data:
+    redis:
+      ssl:
+        enabled: false
   jpa:
     hibernate:
-      ddl-auto: update  # 스키마 자동 생성/업데이트
+      ddl-auto: update
     show-sql: false
 
   datasource:
