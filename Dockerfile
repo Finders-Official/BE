@@ -1,20 +1,17 @@
 # ========================================
 # Stage 1: Build
 # ========================================
-FROM eclipse-temurin:21-jdk AS builder
+FROM gradle:8.11.1-jdk21 AS builder
 
-WORKDIR /app
+WORKDIR /home/gradle/project
 
-# Gradle wrapper 및 빌드 파일 복사
-COPY gradlew build.gradle settings.gradle ./
-COPY gradle gradle
-
-# Gradle 실행 권한 부여 및 의존성 캐시
-RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
+# 빌드 파일 복사 및 의존성 캐시
+COPY build.gradle settings.gradle ./
+RUN gradle dependencies --no-daemon
 
 # 소스 코드 복사 및 빌드 (테스트 스킵)
 COPY src src
-RUN ./gradlew build -x test --no-daemon
+RUN gradle build -x test --no-daemon
 
 # ========================================
 # Stage 2: Runtime
@@ -25,7 +22,7 @@ WORKDIR /app
 
 # JAR 파일 복사 (⚠️ plain.jar 제외)
 ARG JAR_FILE=build/libs/*.jar
-COPY --from=builder /app/${JAR_FILE} app.jar
+COPY --from=builder /home/gradle/project/${JAR_FILE} app.jar
 
 # 포트 노출
 EXPOSE 8080
