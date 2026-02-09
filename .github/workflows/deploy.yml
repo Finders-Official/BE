@@ -64,23 +64,34 @@ jobs:
 
       - name: Refresh Environment Variables from Secret Manager
         run: |
+          # NOTE:
+          # - List/access secrets on the GitHub runner (WIF auth)
+          # - Upload the resulting env file to the VM and move it with sudo
+          : > .env.prod
+          gcloud secrets list \
+            --project='${{ secrets.GCP_PROJECT_ID }}' \
+            --filter='labels.env=prod' \
+            --format='value(name)' \
+          | while read -r SECRET_NAME; do
+              VAR_NAME=$(echo "$SECRET_NAME" | sed 's/^app-prod-//' | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+              SECRET_VALUE=$(gcloud secrets versions access latest --project='${{ secrets.GCP_PROJECT_ID }}' --secret="$SECRET_NAME" 2>/dev/null) || continue
+              echo "$VAR_NAME=$SECRET_VALUE" >> .env.prod
+            done
+
+          gcloud compute scp .env.prod ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/.env.prod \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet
+
           gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
             --command="
-              : > /projects/Finders/BE/.env.prod
-              gcloud secrets list \
-                --project='${{ secrets.GCP_PROJECT_ID }}' \
-                --filter='labels.env=prod' \
-                --format='value(name)' \
-              | while read -r SECRET_NAME; do
-                  VAR_NAME=\$(echo \"\$SECRET_NAME\" | sed 's/^app-prod-//' | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-                  SECRET_VALUE=\$(gcloud secrets versions access latest --project='${{ secrets.GCP_PROJECT_ID }}' --secret=\"\$SECRET_NAME\" 2>/dev/null) || continue
-                  echo \"\$VAR_NAME=\$SECRET_VALUE\" >> /projects/Finders/BE/.env.prod
-                done
-              chmod 600 /projects/Finders/BE/.env.prod
+              sudo mv ~/.env.prod /projects/Finders/BE/.env.prod
+              sudo chmod 600 /projects/Finders/BE/.env.prod
             "
 
       # 8. Blue-Green 배포 실행 (secrets are fetched from GCP Secret Manager by startup script)
