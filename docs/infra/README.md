@@ -20,6 +20,8 @@
 |------|------|------|
 | [../architecture/INFRASTRUCTURE.md](../architecture/INFRASTRUCTURE.md) | GCP 리소스 정보 | DevOps |
 | [GCP_LOGGING_GUIDE.md](./GCP_LOGGING_GUIDE.md) | 로깅 설정 가이드 | DevOps |
+| [SECRET_MANAGEMENT.md](./SECRET_MANAGEMENT.md) | 비밀 정보 관리 가이드 (Secret Manager) | 모든 개발자 |
+| [GITHUB_SECRETS_CLEANUP.md](./GITHUB_SECRETS_CLEANUP.md) | GitHub Secrets 정리 체크리스트 | 모든 개발자 |
 | [TERRAFORM_OPERATIONS.md](./TERRAFORM_OPERATIONS.md) | Terraform 운영 가이드 | DevOps |
 
 ---
@@ -259,6 +261,8 @@ docs/
 │   ├─ NETWORK_CHEATSHEET.md (명령어 모음)
 │   ├─ SECURITY_CLEANUP_GUIDE.md (보안 정리 가이드)
 │   ├─ GCP_LOGGING_GUIDE.md (로깅)
+│   ├─ SECRET_MANAGEMENT.md (비밀 정보 관리)
+│   ├─ GITHUB_SECRETS_CLEANUP.md (GitHub Secrets 정리)
 │   ├─ IAC_TERRAFORM_INTRO.md (IaC/Terraform 개념)
 │   └─ TERRAFORM_OPERATIONS.md (Terraform 운영)
 │

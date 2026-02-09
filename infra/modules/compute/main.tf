@@ -96,6 +96,34 @@ resource "google_compute_instance" "app_server" {
     chmod 600 "$ENV_FILE"
 
     # -------------------------------------------------------
+    # 2b. Fetch secrets from Secret Manager → .env.dev
+    # -------------------------------------------------------
+    ENV_FILE_DEV="/projects/Finders/BE/.env.dev"
+
+    # Recreate env file on every boot to pick up secret changes
+    : > "$ENV_FILE_DEV"
+
+    gcloud secrets list \
+      --project="${var.project_id}" \
+      --filter="labels.env=dev" \
+      --format="value(name)" \
+    | while read -r SECRET_NAME; do
+        # app-dev-key-name → KEY_NAME
+        VAR_NAME=$(echo "$SECRET_NAME" \
+          | sed 's/^app-dev-//' \
+          | tr '[:lower:]' '[:upper:]' \
+          | tr '-' '_')
+
+        SECRET_VALUE=$(gcloud secrets versions access latest \
+          --project="${var.project_id}" \
+          --secret="$SECRET_NAME" 2>/dev/null) || continue
+
+        echo "$VAR_NAME=$SECRET_VALUE" >> "$ENV_FILE_DEV"
+      done
+
+    chmod 600 "$ENV_FILE_DEV"
+
+    # -------------------------------------------------------
     # 3. Create systemd service (idempotent)
     # -------------------------------------------------------
     cat > "$SERVICE_FILE" <<'SERVICE_EOF'

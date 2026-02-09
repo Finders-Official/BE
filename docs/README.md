@@ -32,6 +32,7 @@
 |------|------|
 | [GCS_SETUP.md](guides/GCS_SETUP.md) | Google Cloud Storage 설정 가이드 |
 | [LOCAL_DEVELOPMENT.md](guides/LOCAL_DEVELOPMENT.md) | 로컬 개발 환경 설정 (GCS Presigned URL 테스트) |
+| [ENV_VARIABLES.md](guides/ENV_VARIABLES.md) | 환경 변수 관리 가이드 (로컬 설정, Secret Manager 접근) |
 | [REMOTE_DB_ACCESS.md](guides/REMOTE_DB_ACCESS.md) | Cloud SQL 원격 접속 가이드 (IAP 터널) |
 | [AUTHENTICATION_PRINCIPAL.md](guides/AUTHENTICATION_PRINCIPAL.md) | 커스텀 인증 객체 (AuthUser) 사용법 |
 
@@ -45,6 +46,7 @@
 | [NETWORK_SECURITY.md](infra/NETWORK_SECURITY.md) | 네트워크 및 보안 설정 가이드 | 모든 개발자 |
 | [NETWORK_CHEATSHEET.md](infra/NETWORK_CHEATSHEET.md) | 자주 쓰는 명령어 모음 | 모든 개발자 |
 | [SECURITY_CLEANUP_GUIDE.md](infra/SECURITY_CLEANUP_GUIDE.md) | 보안 감사 결과 및 정리 가이드 | 모든 개발자 |
+| [SECRET_MANAGEMENT.md](infra/SECRET_MANAGEMENT.md) | 비밀 정보 관리 가이드 (Secret Manager) | 모든 개발자 |
 | [GCP_LOGGING_GUIDE.md](infra/GCP_LOGGING_GUIDE.md) | GCP 로그 확인 가이드 | DevOps |
 | [IAC_TERRAFORM_INTRO.md](infra/IAC_TERRAFORM_INTRO.md) | IaC/Terraform 개념 학습 | 모든 개발자 |
 
