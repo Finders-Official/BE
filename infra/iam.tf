@@ -215,6 +215,12 @@ resource "google_project_iam_member" "compute_sa_secretmanager_viewer" {
   member  = local.compute_sa_member
 }
 
+resource "google_project_iam_member" "compute_sa_secretmanager_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = local.compute_sa_member
+}
+
 # =============================================================================
 # GCS bucket IAM bindings
 # =============================================================================
