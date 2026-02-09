@@ -1,6 +1,6 @@
 # Finders API
 
-[![CI](https://github.com/Finders-Official/Spring/actions/workflows/ci.yml/badge.svg)](https://github.com/Finders-Official/Spring/actions/workflows/ci.yml)
+[![CI](https://github.com/Finders-Official/BE/actions/workflows/ci.yml/badge.svg)](https://github.com/Finders-Official/BE/actions/workflows/ci.yml)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -32,8 +32,8 @@
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/Finders-Official/Spring.git
-cd Spring
+git clone https://github.com/Finders-Official/BE.git
+cd BE
 
 # 2. Copy environment file
 cp .env.example .env

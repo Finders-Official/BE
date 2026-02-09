@@ -16,8 +16,8 @@ Finders API 프로젝트에 기여해주셔서 감사합니다.
 
 ```bash
 # 1. 저장소 클론
-git clone https://github.com/Finders-Official/Spring.git
-cd Spring
+git clone https://github.com/Finders-Official/BE.git
+cd BE
 
 # 2. 환경 변수 설정
 cp .env.example .env
