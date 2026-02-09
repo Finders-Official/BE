@@ -35,50 +35,44 @@ public class ReplicateRequest {
     }
 
     /**
-     * SDXL Inpainting 입력 데이터
+     * FLUX.1 Kontext Pro 입력 데이터
      * <p>
-     * 모델: lucataco/sdxl-inpainting (SDXL 기반)
-     * - 원본 이미지 비율을 유지하면서 max 1024px 이내로 스케일링
-     * - SD 2.0 대비 고해상도/고품질 결과물
+     * 모델: black-forest-labs/flux-kontext-pro
+     * - 원본 이미지 비율 유지 (aspect_ratio: match_input_image)
+     * - 필름 사진 복원 특화
      *
-     * @see <a href="https://replicate.com/lucataco/sdxl-inpainting">Replicate 모델 페이지</a>
+     * @see <a href="https://replicate.com/black-forest-labs/flux-kontext-pro">Replicate 모델 페이지</a>
      */
     @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Input(
-            String image,
-            String mask,
+            @JsonProperty("input_image")
+            String inputImage,
             String prompt,
-            @JsonProperty("negative_prompt")
-            String negativePrompt,
-            String scheduler,
-            @JsonProperty("guidance_scale")
-            Double guidanceScale,
-            Integer steps,
-            Double strength,
-            @JsonProperty("num_outputs")
-            Integer numOutputs,
+            @JsonProperty("aspect_ratio")
+            String aspectRatio,
+            @JsonProperty("output_format")
+            String outputFormat,
+            @JsonProperty("prompt_upsampling")
+            Boolean promptUpsampling,
+            @JsonProperty("safety_tolerance")
+            Integer safetyTolerance,
             Integer seed
     ) {
         private static final String DEFAULT_PROMPT = "restore damaged analog film photo, fix light leak and scratches, preserve film grain texture, maintain natural colors and vintage aesthetic";
-        private static final String DEFAULT_NEGATIVE_PROMPT = "monochrome, lowres, bad anatomy, worst quality, low quality";
-        private static final String DEFAULT_SCHEDULER = "K_EULER";
-        private static final Double DEFAULT_GUIDANCE_SCALE = 8.0;
-        private static final Integer DEFAULT_STEPS = 20;
-        private static final Double DEFAULT_STRENGTH = 0.7;
-        private static final Integer DEFAULT_NUM_OUTPUTS = 1;
+        private static final String DEFAULT_ASPECT_RATIO = "match_input_image";
+        private static final String DEFAULT_OUTPUT_FORMAT = "png";
+        private static final Boolean DEFAULT_PROMPT_UPSAMPLING = false;
+        private static final Integer DEFAULT_SAFETY_TOLERANCE = 2;
 
         public static Input forRestoration(String imageUrl, String maskUrl) {
             return Input.builder()
-                    .image(imageUrl)
-                    .mask(maskUrl)
+                    .inputImage(imageUrl)
                     .prompt(DEFAULT_PROMPT)
-                    .negativePrompt(DEFAULT_NEGATIVE_PROMPT)
-                    .scheduler(DEFAULT_SCHEDULER)
-                    .guidanceScale(DEFAULT_GUIDANCE_SCALE)
-                    .steps(DEFAULT_STEPS)
-                    .strength(DEFAULT_STRENGTH)
-                    .numOutputs(DEFAULT_NUM_OUTPUTS)
+                    .aspectRatio(DEFAULT_ASPECT_RATIO)
+                    .outputFormat(DEFAULT_OUTPUT_FORMAT)
+                    .promptUpsampling(DEFAULT_PROMPT_UPSAMPLING)
+                    .safetyTolerance(DEFAULT_SAFETY_TOLERANCE)
                     .build();
         }
     }
