@@ -21,13 +21,14 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Seoul
-      SPRING_DATA_REDIS_HOST: finders-redis-dev
-      SPRING_DATA_REDIS_PORT: 6379
+      REDIS_HOST: finders-redis-dev
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 20s
+      timeout: 5s
+      retries: 5
       start_period: 60s
     labels:
       - "traefik.enable=true"
@@ -54,13 +55,14 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       TZ: Asia/Seoul
-      SPRING_DATA_REDIS_HOST: finders-redis-dev
-      SPRING_DATA_REDIS_PORT: 6379
+      REDIS_HOST: finders-redis-dev
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 20s
+      timeout: 5s
+      retries: 5
       start_period: 60s
     labels:
       - "traefik.enable=true"

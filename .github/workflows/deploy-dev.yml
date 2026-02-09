@@ -89,20 +89,18 @@ jobs:
             --tunnel-through-iap \
             --quiet \
             --command="
-              # 홈에 있는 파일을 sudo로 목적지 이동
               sudo mv ~/docker-compose.infra.yml /projects/Spring/docker-compose.infra.yml
               sudo mv ~/docker-compose.dev.yml /projects/Spring/docker-compose.dev.yml
 
               cd /projects/Spring
+              DC='sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml'
 
-              # Docker 네트워크 생성 (없을 경우)
               sudo docker network create finders-network || true
-
-              # 환경변수 파일 생성
               echo '${{ secrets.ENV_DEV }}' | sudo tee .env.dev > /dev/null
 
               # ── Blue-Green 슬롯 감지 ──
-              ACTIVE_SLOT=\$(sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml ps --format json 2>/dev/null | jq -sr '.[].Service' 2>/dev/null | grep -E 'dev-blue|dev-green' | head -1 || echo 'none')
+              ACTIVE_SLOT=\$(\$DC ps --format json 2>/dev/null | jq -sr '.[].Service' 2>/dev/null | grep -E 'dev-blue|dev-green' | head -1)
+              ACTIVE_SLOT=\${ACTIVE_SLOT:-none}
 
               if [[ \"\$ACTIVE_SLOT\" == 'dev-blue' ]]; then
                 GREEN_SLOT='green'
@@ -112,51 +110,59 @@ jobs:
                 BLUE_SLOT='green'
               fi
 
-              echo \"현재 활성 슬롯: \$ACTIVE_SLOT\"
-              echo \"새 슬롯(Green): dev-\$GREEN_SLOT\"
-              echo \"기존 슬롯(Blue): dev-\$BLUE_SLOT\"
+              echo \"현재: \$ACTIVE_SLOT / 새 슬롯: dev-\$GREEN_SLOT / 기존: dev-\$BLUE_SLOT\"
 
               # ── 최초 배포: 베이스 인프라 시작 ──
               if [[ \"\$ACTIVE_SLOT\" == 'none' ]]; then
                 echo '최초 배포 감지 - 베이스 인프라 시작...'
-                sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml up -d traefik cloudflared redis-dev
+                \$DC up -d traefik cloudflared redis-dev
                 sleep 10
               fi
 
-              # ── 이미지 Pull ──
-              sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml pull
-
-              # ── Green 슬롯 시작 ──
+              \$DC pull
               echo \"Green 슬롯(dev-\$GREEN_SLOT) 시작...\"
-              sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml --profile \$GREEN_SLOT up -d
+              \$DC --profile \$GREEN_SLOT up -d
 
-              # ── Health Check (직접 컨테이너 실행) ──
-              echo 'Health Check 시작...'
-              GREEN_CONTAINER=\$(sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml ps --format json 2>/dev/null | jq -sr '.[] | select(.Service | contains(\"dev-'\$GREEN_SLOT'\")) | .Name')
+              # ── Health Check (Docker 네이티브 health status 사용) ──
+              GREEN_CONTAINER=\$(\$DC ps --format json 2>/dev/null | jq -sr \".[] | select(.Service == \\\"dev-\$GREEN_SLOT\\\") | .Name\")
+              echo \"Health Check 시작... (container: \$GREEN_CONTAINER)\"
 
-              for i in {1..20}; do
-                if sudo docker exec \$GREEN_CONTAINER wget --spider -q http://localhost:8080/api/actuator/health; then
-                  echo '✅ Green 슬롯 정상 확인!'
+              for i in {1..36}; do
+                STATUS=\$(sudo docker inspect --format='{{.State.Health.Status}}' \"\$GREEN_CONTAINER\" 2>/dev/null || echo 'not_found')
+
+                if [[ \"\$STATUS\" == 'healthy' ]]; then
+                  echo \"✅ Green 슬롯 정상 확인! (\${i}번째 체크)\"
                   break
                 fi
-                if [ \$i -eq 20 ]; then
-                  echo '❌ Green Health Check 실패 - 롤백 진행'
-                  sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml --profile \$GREEN_SLOT stop
-                  sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml --profile \$GREEN_SLOT rm -f
+
+                if [[ \"\$STATUS\" == 'unhealthy' ]]; then
+                  echo '❌ Container unhealthy - 롤백 진행'
+                  sudo docker inspect --format='{{range .State.Health.Log}}{{.Output}}{{end}}' \"\$GREEN_CONTAINER\" 2>/dev/null || true
+                  sudo docker logs --tail 80 \"\$GREEN_CONTAINER\" 2>/dev/null || true
+                  sudo docker stop \"\$GREEN_CONTAINER\" 2>/dev/null && sudo docker rm -f \"\$GREEN_CONTAINER\" 2>/dev/null
                   exit 1
                 fi
-                echo \"대기 중... (\$i/20)\"
+
+                if [ \$i -eq 36 ]; then
+                  echo '❌ Health Check 타임아웃 (180s) - 롤백 진행'
+                  sudo docker logs --tail 80 \"\$GREEN_CONTAINER\" 2>/dev/null || true
+                  sudo docker stop \"\$GREEN_CONTAINER\" 2>/dev/null && sudo docker rm -f \"\$GREEN_CONTAINER\" 2>/dev/null
+                  exit 1
+                fi
+
+                echo \"대기 중... (\$i/36) status=\$STATUS\"
                 sleep 5
               done
 
-              # ── Blue 슬롯 중지 및 제거 ──
+              # ── Blue 슬롯 중지 (인프라는 유지) ──
               if [[ \"\$ACTIVE_SLOT\" != 'none' ]]; then
-                echo \"기존 슬롯(dev-\$BLUE_SLOT) 중지...\"
-                sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml --profile \$BLUE_SLOT stop
-                sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml --profile \$BLUE_SLOT rm -f
+                OLD_CONTAINER=\$(\$DC ps --format json 2>/dev/null | jq -sr \".[] | select(.Service == \\\"dev-\$BLUE_SLOT\\\") | .Name\")
+                if [[ -n \"\$OLD_CONTAINER\" ]]; then
+                  echo \"기존 슬롯(\$OLD_CONTAINER) 중지...\"
+                  sudo docker stop \"\$OLD_CONTAINER\" 2>/dev/null && sudo docker rm -f \"\$OLD_CONTAINER\" 2>/dev/null
+                fi
               fi
 
-              # ── 정리 ──
               sudo docker image prune -f
               echo '✅ Dev Blue-Green 배포 완료!'
             "
