@@ -194,6 +194,28 @@ resource "google_service_account_iam_member" "sa_self_token_creator" {
 }
 
 # =============================================================================
+# CI/CD service account permissions
+#
+# GitHub Actions deploy workflow uses Workload Identity Federation (WIF) to
+# authenticate as `var.compute_sa_email`.
+# - Artifact Registry push requires `roles/artifactregistry.writer`
+# - Secret Manager env refresh uses `gcloud secrets list`, which requires
+#   `secretmanager.secrets.list` (covered by `roles/secretmanager.viewer`)
+# =============================================================================
+
+resource "google_project_iam_member" "compute_sa_artifactregistry_writer" {
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = local.compute_sa_member
+}
+
+resource "google_project_iam_member" "compute_sa_secretmanager_viewer" {
+  project = var.project_id
+  role    = "roles/secretmanager.viewer"
+  member  = local.compute_sa_member
+}
+
+# =============================================================================
 # GCS bucket IAM bindings
 # =============================================================================
 
