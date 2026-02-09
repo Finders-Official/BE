@@ -64,25 +64,34 @@ jobs:
 
       - name: Refresh Environment Variables from Secret Manager
         run: |
+          # NOTE:
+          # - List/access secrets on the GitHub runner (WIF auth)
+          # - Upload the resulting env file to the VM and move it with sudo
+          : > .env.dev
+          gcloud secrets list \
+            --project='${{ secrets.GCP_PROJECT_ID }}' \
+            --filter='labels.env=dev' \
+            --format='value(name)' \
+          | while read -r SECRET_NAME; do
+              VAR_NAME=$(echo "$SECRET_NAME" | sed 's/^app-dev-//' | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+              SECRET_VALUE=$(gcloud secrets versions access latest --project='${{ secrets.GCP_PROJECT_ID }}' --secret="$SECRET_NAME" 2>/dev/null) || continue
+              echo "$VAR_NAME=$SECRET_VALUE" >> .env.dev
+            done
+
+          gcloud compute scp .env.dev ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/.env.dev \
+            --zone=${{ secrets.GCE_ZONE }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --tunnel-through-iap \
+            --quiet
+
           gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
             --zone=${{ secrets.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
             --command="
-              sudo bash -c '
-                : > /projects/Finders/BE/.env.dev
-                gcloud secrets list \
-                  --project='\''${{ secrets.GCP_PROJECT_ID }}'\'' \
-                  --filter='\''labels.env=dev'\'' \
-                  --format='\''value(name)'\'' \
-                | while read -r SECRET_NAME; do
-                    VAR_NAME=\$(echo "\$SECRET_NAME" | sed 's/^app-dev-//' | tr "[:lower:]" "[:upper:]" | tr "-" "_")
-                    SECRET_VALUE=\$(gcloud secrets versions access latest --project='\''${{ secrets.GCP_PROJECT_ID }}'\'' --secret="\$SECRET_NAME" 2>/dev/null) || continue
-                    echo "\$VAR_NAME=\$SECRET_VALUE" >> /projects/Finders/BE/.env.dev
-                  done
-                chmod 600 /projects/Finders/BE/.env.dev
-              '
+              sudo mv ~/.env.dev /projects/Finders/BE/.env.dev
+              sudo chmod 600 /projects/Finders/BE/.env.dev
             "
 
       # 8. IAP를 통해 파일 전송 및 Blue-Green 배포 실행
