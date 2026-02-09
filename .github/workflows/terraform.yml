@@ -41,7 +41,7 @@ jobs:
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
       
       - name: Download Terraform Variables
-        run: gcloud storage cp gs://finders-terraform-state/terraform.tfvars ./infra/terraform.tfvars
+        run: gcloud storage cp gs://finders-terraform-state/terraform.tfvars terraform.tfvars
       
       - name: Terraform Format Check
         id: fmt
