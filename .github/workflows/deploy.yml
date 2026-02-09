@@ -3,6 +3,7 @@ name: Finders CD (Deploy to Prod)
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-api
@@ -99,7 +100,7 @@ jobs:
               sudo mv ~/docker-compose.prod.yml /projects/Spring/docker-compose.prod.yml
 
               cd /projects/Spring
-              DC='sudo docker compose -p finders-prod --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml'
+              DC='sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml'
 
               sudo docker network create finders-network || true
               echo '${{ secrets.ENV_PROD }}' | sudo tee .env.prod > /dev/null
