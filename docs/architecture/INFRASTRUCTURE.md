@@ -2,11 +2,11 @@
 
 ## 환경 분리 구조
 
-| 환경 | 브랜치 | 도메인 | GCE 포트 | Cloud SQL DB | 용도 |
-|------|--------|--------|----------|--------------|------|
-| **Local** | - | localhost:8080 | - | Docker MySQL | 로컬 개발 |
-| **Dev** | develop | dev-api.finders.it.kr | 8081 | finders_dev | FE 연동 테스트, Mock 데이터 |
-| **Prod** | main | api.finders.it.kr | 8080 | finders | 데모데이, 실제 운영 |
+| 환경 | 브랜치 | 도메인 | 배포 방식 | Cloud SQL DB | 용도 |
+|------|--------|--------|-----------|--------------|------|
+| **Local** | - | localhost:8080 | Docker Compose | Docker MySQL | 로컬 개발 |
+| **Dev** | develop | dev-api.finders.it.kr | Blue-Green (Traefik) | finders_dev | FE 연동 테스트 |
+| **Prod** | main | api.finders.it.kr | Blue-Green (Traefik) | finders | 데모데이, 실제 운영 |
 
 ### 아키텍처 다이어그램
 
@@ -16,17 +16,22 @@
           ┌────────────────┴────────────────┐
           ▼                                 ▼
    api.finders.it.kr              dev-api.finders.it.kr
-          │                                 │
-          ▼                                 ▼
-┌─────────────────────────────────────────────────────┐
-│              GCE (e2-medium, 4GB RAM)               │
-│  ┌─────────────────┐       ┌─────────────────┐     │
-│  │  finders-api    │       │ finders-dev-api │     │
-│  │  (port 8080)    │       │  (port 8081)    │     │
-│  └────────┬────────┘       └────────┬────────┘     │
-└───────────┼─────────────────────────┼───────────────┘
-            │                         │
-            ▼                         ▼
+          └────────────────┬────────────────┘
+                           │
+                Cloudflare Tunnel (1개, 통합)
+                           │
+                      cloudflared
+                           │
+                        Traefik
+                     (Host 라우팅)
+                 ┌─────────┴─────────┐
+                 ▼                   ▼
+          Prod Blue/Green      Dev Blue/Green
+                 │                   │
+                 ▼                   ▼
+            finders-redis      finders-redis-dev
+                 │                   │
+                 ▼                   ▼
 ┌─────────────────────────────────────────────────────┐
 │              Cloud SQL (finders-db)                 │
 │  ┌─────────────────┐       ┌─────────────────┐     │
@@ -42,6 +47,42 @@
 feature/* → develop (PR) → dev 환경 자동 배포
 develop → main (PR) → prod 환경 자동 배포
 ```
+
+## 배포 방식
+
+### Blue-Green 무중단 배포
+
+Traefik 리버스 프록시를 통한 Blue-Green 배포로 **다운타임 0초**를 달성합니다.
+
+**배포 흐름**:
+1. 현재 활성 슬롯(Blue) 감지
+2. 비활성 슬롯(Green)에 새 버전 배포
+3. Green 슬롯 헬스체크 (직접 컨테이너 exec)
+4. 헬스체크 통과 시 Traefik이 자동으로 트래픽을 Green으로 전환
+5. Blue 슬롯 중지 및 제거
+6. 헬스체크 실패 시 Green 제거, Blue 유지 (자동 롤백)
+
+**Docker Compose 구조**:
+- `docker-compose.yml`: 공통 인프라 (Traefik, cloudflared, Redis)
+- `docker-compose.prod.yml`: Prod Blue/Green 서비스
+- `docker-compose.dev.yml`: Dev Blue/Green 서비스
+- `docker-compose.local.yml`: 로컬 개발용
+
+**배포 명령어 예시**:
+```bash
+# Prod Blue 슬롯 배포
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue up -d
+
+# Prod Green 슬롯 배포 (Blue-Green 전환)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile green up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue down
+```
+
+**Traefik 라우팅**:
+- Host 헤더 기반 자동 라우팅
+- `api.finders.it.kr` → Prod Blue 또는 Green
+- `dev-api.finders.it.kr` → Dev Blue 또는 Green
+- Docker label로 설정, 재시작 불필요
 
 ---
 
@@ -195,15 +236,19 @@ gcloud compute ssh finders-server-v2 \
 | 플랜 | Free (50명까지) |
 | 기능 | DDoS 방어, WAF, SSL, Tunnel |
 
-### Cloudflare Tunnel
+### Cloudflare Tunnel (통합)
 
-| 항목 | 값 |
-|------|-----|
-| 터널 이름 | finders-tunnel |
-| 호스트명 | api.finders.it.kr |
-| 타겟 | http://localhost:8080 |
-| 설정 파일 | /etc/cloudflared/config.yml |
-| 서비스 상태 | systemd (자동 시작) |
+**단일 터널 구조**:
+- 터널 이름: `finders-tunnel` (통합)
+- 토큰: `TUNNEL_TOKEN` (prod/dev 공용)
+- Public Hostnames:
+  - `api.finders.it.kr` → `http://traefik:80`
+  - `dev-api.finders.it.kr` → `http://traefik:80`
+
+**장점**:
+- 관리 포인트 단일화 (터널 1개, 토큰 1개)
+- Traefik이 Host 헤더로 prod/dev 자동 라우팅
+- 환경변수 단순화 (`TUNNEL_TOKEN_PROD`, `TUNNEL_TOKEN_DEV` → `TUNNEL_TOKEN`)
 
 **특징**:
 - Public IP 직접 노출 없음
@@ -324,18 +369,38 @@ gcloud compute ssh finders-server-v2 \
 
 ### Docker 컨테이너 관리
 
-> **중요**: `-p` 플래그로 프로젝트 이름을 명시해야 dev/prod가 서로 충돌하지 않습니다.
-
+**Prod 환경**:
 ```bash
-# Prod 컨테이너 관리
-sudo docker compose -p finders-prod -f docker-compose.prod.yml logs -f
-sudo docker compose -p finders-prod -f docker-compose.prod.yml down
-sudo docker compose -p finders-prod -f docker-compose.prod.yml up -d
+# 현재 실행 중인 슬롯 확인
+sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 
-# Dev 컨테이너 관리
-sudo docker compose -p finders-dev -f docker-compose.dev.yml logs -f
-sudo docker compose -p finders-dev -f docker-compose.dev.yml down
-sudo docker compose -p finders-dev -f docker-compose.dev.yml up -d
+# Blue 슬롯 시작
+sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue up -d
+
+# Green 슬롯 시작 (Blue-Green 전환)
+sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile green up -d
+
+# Blue 슬롯 중지
+sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue down
+```
+
+**Dev 환경**:
+```bash
+# Dev Blue 슬롯 시작
+sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile blue up -d
+
+# Dev Green 슬롯 시작
+sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile green up -d
+```
+
+**로그 확인**:
+```bash
+# Prod 활성 슬롯 로그
+sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+
+# Traefik 로그
+sudo docker compose -f docker-compose.yml logs traefik -f
+```
 
 # 컨테이너 상태 확인
 sudo docker ps
