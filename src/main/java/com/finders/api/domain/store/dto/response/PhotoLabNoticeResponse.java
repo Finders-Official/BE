@@ -3,6 +3,8 @@ package com.finders.api.domain.store.dto.response;
 import com.finders.api.domain.store.enums.NoticeType;
 import lombok.Builder;
 
+import java.time.LocalDate;
+
 public class PhotoLabNoticeResponse {
 
     @Builder
@@ -10,7 +12,9 @@ public class PhotoLabNoticeResponse {
             Long photoLabId,
             String photoLabName,
             String noticeTitle,
-            NoticeType noticeType
+            NoticeType noticeType,
+            LocalDate startDate,
+            LocalDate endDate
     ) {
     }
 }

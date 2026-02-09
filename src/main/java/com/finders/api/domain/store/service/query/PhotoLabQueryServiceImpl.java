@@ -68,8 +68,6 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final MemberAgreementQueryService memberAgreementQueryService;
     private final StorageService storageService;
     private final RegionRepository regionRepository;
-
-    // 커뮤니티 현상소 검색 관련
     private final PhotoLabRepository photoLabRepository;
     private static final String DISTANCE_FORMAT_KM = "%.1fkm";
 
@@ -318,7 +316,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         return resolved.isEmpty() ? null : List.copyOf(resolved);
     }
 
-    // 커뮤니티 현상소 검색
+    //커뮤니티 현상소 검색
     @Override
     public PhotoLabResponse.PhotoLabSearchListDTO searchCommunityPhotoLabs(
             PhotoLabRequest.PhotoLabCommunitySearchRequest request
@@ -401,6 +399,8 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                         .photoLabName(photoLabNameById.get(notice.getPhotoLab().getId()))
                         .noticeTitle(notice.getTitle())
                         .noticeType(notice.getNoticeType())
+                        .startDate(notice.getStartDate())
+                        .endDate(notice.getEndDate())
                         .build())
                 .toList();
     }
