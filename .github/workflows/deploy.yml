@@ -3,6 +3,7 @@ name: Finders CD (Deploy to Prod)
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/finders-api
