@@ -60,14 +60,20 @@ variable "cloudflare_tunnel_service" {
 # IAM
 # =============================================================================
 
-variable "admin_member_emails" {
-  description = "Admin email addresses (logging + monitoring + SA impersonation + resource management)"
+variable "owner_member_emails" {
+  description = "프로젝트 소유자 이메일 (roles/editor + 보안 리뷰 + 모니터링)"
+  type        = list(string)
+  default     = []
+}
+
+variable "editor_member_emails" {
+  description = "에디터 이메일 (roles/editor + IAP SSH 접근 + 모니터링)"
   type        = list(string)
   default     = []
 }
 
 variable "team_member_emails" {
-  description = "Team member email addresses (logging + monitoring + IAP + compute + SA impersonation)"
+  description = "팀 멤버 이메일 (로그/모니터링 뷰어 + IAP SSH 접근)"
   type        = list(string)
   default     = []
 }
@@ -86,7 +92,13 @@ variable "compute_sa_email" {
 # =============================================================================
 
 variable "cors_allowed_origins" {
-  description = "Allowed CORS origins for GCS buckets"
+  description = "GCS 버킷 CORS 허용 origin 목록 (브라우저→버킷 직접 접근 시, API CORS와 별도)"
   type        = list(string)
-  default     = ["*"]
+  default = [
+    "https://finders.it.kr",
+    "https://dev-api.finders.it.kr",
+    "https://api.finders.it.kr",
+    "http://localhost:5173",
+    "http://localhost:8080",
+  ]
 }

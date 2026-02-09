@@ -161,11 +161,16 @@ resource "google_compute_instance" "app_server" {
     enable_vtpm                 = true
   }
 
+  # NOTE: ignore_changes prevents instance forced replacement
+  # - metadata_startup_script: Updated for Secret Manager integration, apply manually if needed
+  # - boot_disk: Image/disk attribute drift from original manual creation
+  # - metadata["ssh-keys"]: Managed outside Terraform
   lifecycle {
     prevent_destroy = true
-
     ignore_changes = [
       metadata["ssh-keys"],
+      metadata_startup_script,
+      boot_disk,
     ]
   }
 }
