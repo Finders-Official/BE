@@ -38,6 +38,8 @@ logging:
     com.finders: DEBUG
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
+    org.springframework.data.redis: DEBUG
+    io.lettuce.core: DEBUG
 
 # ========================================
 # Actuator (개발용 노출)
