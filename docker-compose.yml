@@ -1,80 +1,108 @@
 # ========================================
-# Finders API - 공통 인프라 Base
+# Finders API - 로컬 개발 환경 (기본 파일)
 # ========================================
-# Blue-Green 배포 공통 서비스: Traefik (리버스 프록시) + cloudflared (터널) + Redis
-#
 # 사용법:
-#   이 파일은 단독 실행하지 않고, override 파일과 함께 사용합니다.
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#   1. MySQL만 실행 (Spring은 IDE에서):
+#      docker compose up -d
+#      ./gradlew bootRun
+#
+#   2. 전체 실행 (MySQL + Spring):
+#      docker compose --profile full up -d
+#
+#   3. 종료:
+#      docker compose down
+#
+#   4. 데이터 초기화:
+#      docker compose down -v
+#
+# Note:
+#   서버 배포용 파일은 docker-compose.infra.yml 을 참고하세요.
 # ========================================
 
 services:
-  # ── Traefik (리버스 프록시) ──
-  traefik:
-    image: traefik:v3
-    container_name: finders-traefik
+  # ========================================
+  # MySQL Database (로컬 개발용)
+  # ========================================
+  mysql:
+    image: mysql:8.0
+    container_name: finders-mysql
     restart: unless-stopped
-    command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--ping=true"
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: finders
+      MYSQL_USER: finders
+      MYSQL_PASSWORD: finders123
+      TZ: Asia/Seoul
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
-    labels:
-      - "traefik.enable=false"
+      retries: 5
     networks:
       - finders-network
 
-  # ── Cloudflare Tunnel ──
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: finders-tunnel
-    restart: unless-stopped
-    command: tunnel run --protocol http2
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-    depends_on:
-      traefik:
-        condition: service_healthy
-    networks:
-      - finders-network
-
-  # ── Redis (prod) ──
+  # ========================================
+  # Redis (캐싱 및 세션 관리)
+  # ========================================
   redis:
     image: redis:latest
     container_name: finders-redis
     restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --save 60 1 --loglevel warning
+    networks:
+      - finders-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      - ./redis/data:/data
-    networks:
-      - finders-network
 
-  # ── Redis (dev) ──
-  redis-dev:
-    image: redis:latest
-    container_name: finders-redis-dev
+  # ========================================
+  # Spring Boot Backend (로컬 전체 실행용)
+  # ========================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finders-api
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/finders?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      SPRING_DATASOURCE_USERNAME: finders
+      SPRING_DATASOURCE_PASSWORD: finders123
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:-http://localhost:8080/api/auth/kakao/callback}
+      GCS_BUCKET: ${GCS_BUCKET:-}
     networks:
       - finders-network
+    profiles:
+      - full  # docker compose --profile full up 으로 실행
+
+volumes:
+  mysql-data:
 
 networks:
   finders-network:
-    external: true

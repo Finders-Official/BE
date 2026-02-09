@@ -1,0 +1,56 @@
+# ========================================
+# Finders API - 공통 인프라 Base (서버 배포용)
+# ========================================
+# Blue-Green 배포 공통 서비스: Traefik (리버스 프록시) + cloudflared (터널)
+#
+# 사용법:
+#   이 파일은 단독 실행하지 않고, override 파일과 함께 사용합니다.
+#   docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.infra.yml -f docker-compose.dev.yml up -d
+#
+# Note:
+#   로컬 개발용 파일은 docker-compose.yml 을 참고하세요.
+# ========================================
+
+services:
+  # ── Traefik (리버스 프록시) ──
+  traefik:
+    image: traefik:v3
+    container_name: finders-traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--ping=true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=false"
+    networks:
+      - finders-network
+
+  # ── Cloudflare Tunnel ──
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: finders-tunnel
+    restart: unless-stopped
+    command: tunnel run --protocol http2
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      traefik:
+        condition: service_healthy
+    networks:
+      - finders-network
+
+
+networks:
+  finders-network:
+    external: true

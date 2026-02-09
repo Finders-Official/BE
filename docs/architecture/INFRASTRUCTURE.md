@@ -63,19 +63,19 @@ Traefik 리버스 프록시를 통한 Blue-Green 배포로 **다운타임 0초**
 6. 헬스체크 실패 시 Green 제거, Blue 유지 (자동 롤백)
 
 **Docker Compose 구조**:
-- `docker-compose.yml`: 공통 인프라 (Traefik, cloudflared, Redis)
+- `docker-compose.yml`: 로컬 개발용 (MySQL, Redis)
+- `docker-compose.infra.yml`: 공통 인프라 (Traefik, cloudflared, Redis) — 서버 배포용
 - `docker-compose.prod.yml`: Prod Blue/Green 서비스
 - `docker-compose.dev.yml`: Dev Blue/Green 서비스
-- `docker-compose.local.yml`: 로컬 개발용
 
 **배포 명령어 예시**:
 ```bash
 # Prod Blue 슬롯 배포
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue up -d
+docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile blue up -d
 
 # Prod Green 슬롯 배포 (Blue-Green 전환)
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile green up -d
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue down
+docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile green up -d
+docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile blue down
 ```
 
 **Traefik 라우팅**:
@@ -372,34 +372,34 @@ gcloud compute ssh finders-server-v2 \
 **Prod 환경**:
 ```bash
 # 현재 실행 중인 슬롯 확인
-sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml ps
 
 # Blue 슬롯 시작
-sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue up -d
+sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile blue up -d
 
 # Green 슬롯 시작 (Blue-Green 전환)
-sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile green up -d
+sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile green up -d
 
 # Blue 슬롯 중지
-sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue down
+sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile blue down
 ```
 
 **Dev 환경**:
 ```bash
 # Dev Blue 슬롯 시작
-sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile blue up -d
+sudo docker compose -f docker-compose.infra.yml -f docker-compose.dev.yml --profile blue up -d
 
 # Dev Green 슬롯 시작
-sudo docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile green up -d
+sudo docker compose -f docker-compose.infra.yml -f docker-compose.dev.yml --profile green up -d
 ```
 
 **로그 확인**:
 ```bash
 # Prod 활성 슬롯 로그
-sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+sudo docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml logs -f
 
 # Traefik 로그
-sudo docker compose -f docker-compose.yml logs traefik -f
+sudo docker compose -f docker-compose.infra.yml logs traefik -f
 ```
 
 # 컨테이너 상태 확인

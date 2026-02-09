@@ -1,18 +1,18 @@
 # ========================================
 # Finders API - Production Override (Blue-Green)
 # ========================================
-# Override 파일: docker-compose.yml (base)과 함께 사용
+# Override 파일: docker-compose.infra.yml (base)과 함께 사용
 #
 # 사용법:
 #   # Blue 슬롯 실행:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue up -d
+#   docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile blue up -d
 #
 #   # Green 슬롯 실행:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile green up -d
+#   docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile green up -d
 #
 #   # 슬롯 전환 (blue → green):
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile green up -d
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile blue down
+#   docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile green up -d
+#   docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile blue down
 # ========================================
 
 services:
@@ -20,16 +20,11 @@ services:
   prod-blue:
     image: findersofficial/finders-api:latest
     restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
     env_file:
       - .env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
       TZ: Asia/Seoul
-      SPRING_DATA_REDIS_HOST: finders-redis
-      SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
       interval: 20s
@@ -55,16 +50,11 @@ services:
   prod-green:
     image: findersofficial/finders-api:latest
     restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
     env_file:
       - .env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
       TZ: Asia/Seoul
-      SPRING_DATA_REDIS_HOST: finders-redis
-      SPRING_DATA_REDIS_PORT: 6379
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
       interval: 20s
