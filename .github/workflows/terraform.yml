@@ -63,8 +63,18 @@ jobs:
       
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -input=false
-        continue-on-error: true
+        run: |
+          terraform plan -no-color -input=false -detailed-exitcode || EXIT_CODE=$?
+          if [ "${EXIT_CODE:-0}" -eq 1 ]; then
+            echo "Terraform plan failed with error"
+            exit 1
+          elif [ "${EXIT_CODE:-0}" -eq 2 ]; then
+            echo "Terraform plan succeeded with changes"
+            exit 0
+          else
+            echo "Terraform plan succeeded with no changes"
+            exit 0
+          fi
       
       - name: Comment PR with Plan
         if: github.event_name == 'pull_request'
@@ -103,7 +113,9 @@ jobs:
       
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
-        run: exit 1
+        run: |
+          echo "Terraform plan failed"
+          exit 1
       
       - name: Terraform Apply
         if: github.ref == 'refs/heads/develop' && github.event_name == 'push'

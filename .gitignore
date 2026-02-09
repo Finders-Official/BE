@@ -59,6 +59,8 @@ service-account.json
 *.p12
 *.jks
 application-local.properties
+*.tfvars
+!*.tfvars.example
 
 # ========================================
 # Logs
