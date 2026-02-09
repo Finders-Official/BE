@@ -24,6 +24,7 @@ services:
       REDIS_HOST: finders-redis-dev
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
+      SPRING_DATA_REDIS_SSL_ENABLED: "false"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
       interval: 20s
@@ -58,6 +59,7 @@ services:
       REDIS_HOST: finders-redis-dev
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
+      SPRING_DATA_REDIS_SSL_ENABLED: "false"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/actuator/health"]
       interval: 20s
