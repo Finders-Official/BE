@@ -48,25 +48,20 @@ public class PhotoLabRegionCacheService {
 
     @SuppressWarnings("unchecked")
     private PhotoLabRegionFilterResponse convertOrNull(Object cached) {
-        try {
-            if (cached instanceof PhotoLabRegionFilterCacheDTO dto) {
-                return dto.toResponse();
-            }
-
-            if (cached instanceof PhotoLabRegionFilterResponse response) {
-                return response;
-            }
-
-            if (cached instanceof Map<?, ?> map) {
+        if (cached instanceof Map<?, ?> map) {
+            try {
                 PhotoLabRegionFilterCacheDTO dto = objectMapper.convertValue((Map<String, Object>) map, PhotoLabRegionFilterCacheDTO.class);
                 return dto.toResponse();
+            } catch (RuntimeException e) {
+                log.warn("[PhotoLabRegionCacheService.convertOrNull] cache payload conversion failed. fallback to DB.", e);
+                return null;
             }
-        } catch (RuntimeException e) {
-            log.warn("[PhotoLabRegionCacheService.convertOrNull] cache payload conversion failed. fallback to DB.", e);
         }
 
-        log.warn("[PhotoLabRegionCacheService.convertOrNull] unexpected cache payload type: {}. fallback to DB.",
-                cached != null ? cached.getClass().getName() : "null");
+        if (cached != null) {
+            log.warn("[PhotoLabRegionCacheService.convertOrNull] unexpected cache payload type: {}. fallback to DB.",
+                    cached.getClass().getName());
+        }
         return null;
     }
 }
