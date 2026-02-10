@@ -93,35 +93,6 @@ moved {
 }
 
 # ============================================================
-# IAM 3-tier restructure: admin → owner (previous migration)
-# ============================================================
-
-moved {
-  from = google_project_iam_member.admin_editor
-  to   = google_project_iam_member.owner_editor
-}
-
-moved {
-  from = google_project_iam_member.admin_logging_viewer
-  to   = google_project_iam_member.owner_logging_viewer
-}
-
-moved {
-  from = google_project_iam_member.admin_monitoring_viewer
-  to   = google_project_iam_member.owner_monitoring_viewer
-}
-
-moved {
-  from = google_project_iam_member.admin_iam_security_reviewer
-  to   = google_project_iam_member.owner_iam_security_reviewer
-}
-
-moved {
-  from = google_service_account_iam_member.admin_sa_token_creator
-  to   = google_service_account_iam_member.owner_sa_token_creator
-}
-
-# ============================================================
 # IAM tier rename: owner → admin, editor → lead (#396)
 # ============================================================
 
