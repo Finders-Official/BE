@@ -26,7 +26,7 @@ public class CreditCommandServiceImpl implements CreditCommandService {
         MemberUser member = getMemberUserWithLock(memberId);
 
         if (!member.hasEnoughCredits(amount)) {
-            throw new CustomException(ErrorCode.INSUFFICIENT_TOKEN);
+            throw new CustomException(ErrorCode.INSUFFICIENT_CREDIT);
         }
 
         // 크레딧 차감

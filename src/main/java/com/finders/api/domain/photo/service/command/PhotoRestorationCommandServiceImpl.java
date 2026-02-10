@@ -68,7 +68,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         int creditCost = tier.getCreditCost();
 
         if (!creditQueryService.hasEnoughCredits(memberId, creditCost)) {
-            throw new CustomException(ErrorCode.INSUFFICIENT_TOKEN);
+            throw new CustomException(ErrorCode.INSUFFICIENT_CREDIT);
         }
 
         validateRestorationPath(request.originalPath(), StoragePath.RESTORATION_ORIGINAL, memberId);

@@ -43,7 +43,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
         }
 
         // 크레딧 구매 시 검증
-        if (request.orderType() == OrderType.TOKEN_PURCHASE) {
+        if (request.orderType() == OrderType.CREDIT_PURCHASE) {
             if (request.creditAmount() == null || request.creditAmount() < 1) {
                 throw new CustomException(ErrorCode.INVALID_PAYMENT_REQUEST);
             }
@@ -119,7 +119,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                 );
 
                 // 크레딧 구매인 경우 크레딧 충전
-                if (payment.getOrderType() == OrderType.TOKEN_PURCHASE && payment.getCreditAmount() != null) {
+                if (payment.getOrderType() == OrderType.CREDIT_PURCHASE && payment.getCreditAmount() != null) {
                     chargeCredits(payment);
                 }
 
@@ -179,7 +179,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             payment.cancel(request.reason(), cancelAmount);
 
             // 크레딧 구매 취소인 경우 크레딧 회수 (전액 취소만)
-            if (payment.getOrderType() == OrderType.TOKEN_PURCHASE
+            if (payment.getOrderType() == OrderType.CREDIT_PURCHASE
                     && payment.getStatus() == PaymentStatus.CANCELLED
                     && payment.getCreditAmount() != null) {
                 revokeCredits(payment);
@@ -250,7 +250,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                         );
 
                         // 크레딧 충전
-                        if (payment.getOrderType() == OrderType.TOKEN_PURCHASE && payment.getCreditAmount() != null) {
+                        if (payment.getOrderType() == OrderType.CREDIT_PURCHASE && payment.getCreditAmount() != null) {
                             chargeCredits(payment);
                         }
 

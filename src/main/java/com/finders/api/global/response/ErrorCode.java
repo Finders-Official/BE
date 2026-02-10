@@ -132,10 +132,10 @@ public enum ErrorCode implements BaseCode {
 
 
     // ========================================
-    // Token
+    // Credit
     // ========================================
-    INSUFFICIENT_TOKEN(HttpStatus.PAYMENT_REQUIRED, "TOKEN_402", "토큰이 부족합니다."),
-    TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "TOKEN_404", "토큰 정보를 찾을 수 없습니다."),
+    INSUFFICIENT_CREDIT(HttpStatus.PAYMENT_REQUIRED, "CREDIT_402", "크레딧이 부족합니다."),
+    CREDIT_NOT_FOUND(HttpStatus.NOT_FOUND, "CREDIT_404", "크레딧 정보를 찾을 수 없습니다."),
 
     // ========================================
     // Payment (결제)
