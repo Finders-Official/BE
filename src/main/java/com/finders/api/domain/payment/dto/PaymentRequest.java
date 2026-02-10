@@ -24,8 +24,8 @@ public class PaymentRequest {
             @Min(value = 100, message = "최소 결제 금액은 100원입니다")
             Integer amount,
 
-            @Min(value = 1, message = "토큰 수량은 1개 이상이어야 합니다")
-            Integer tokenAmount
+            @Min(value = 1, message = "크레딧 수량은 1개 이상이어야 합니다")
+            Integer creditAmount
     ) {}
 
     public record Complete(

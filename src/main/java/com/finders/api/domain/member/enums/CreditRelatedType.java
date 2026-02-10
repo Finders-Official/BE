@@ -1,6 +1,6 @@
 package com.finders.api.domain.member.enums;
 
-public enum TokenRelatedType {
+public enum CreditRelatedType {
 
     PHOTO_RESTORATION,
     PAYMENT

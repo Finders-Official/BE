@@ -30,11 +30,11 @@ public class MemberUser extends Member {
     @Column(name = "profile_image", length = 500)
     private String profileImage;
 
-    @Column(name = "token_balance", nullable = false)
-    private Integer tokenBalance;
+    @Column(name = "credit_balance", nullable = false)
+    private Integer creditBalance;
 
-    @Column(name = "last_token_refresh_at")
-    private LocalDateTime lastTokenRefreshAt;
+    @Column(name = "last_credit_refresh_at")
+    private LocalDateTime lastCreditRefreshAt;
 
     @Builder
     private MemberUser(
@@ -47,8 +47,8 @@ public class MemberUser extends Member {
         super(name, email, phone, MemberType.USER);
         this.nickname = nickname;
         this.profileImage = profileImage;
-        this.tokenBalance = 3;
-        this.lastTokenRefreshAt = null;
+        this.creditBalance = 3;
+        this.lastCreditRefreshAt = null;
     }
 
     public void updateNickname(String nickname) {
@@ -59,39 +59,39 @@ public class MemberUser extends Member {
         this.profileImage = profileImage;
     }
 
-    // === 토큰 비즈니스 메서드 ===
+    // === 크레딧 비즈니스 메서드 ===
 
     /**
-     * 토큰 잔액이 충분한지 확인
+     * 크레딧 잔액이 충분한지 확인
      */
-    public boolean hasEnoughTokens(int amount) {
-        return this.tokenBalance >= amount;
+    public boolean hasEnoughCredits(int amount) {
+        return this.creditBalance >= amount;
     }
 
     /**
-     * 토큰 차감
+     * 크레딧 차감
      *
-     * @param amount 차감할 토큰 수량
+     * @param amount 차감할 크레딧 수량
      * @return 차감 후 잔액
      * @throws IllegalStateException 잔액 부족 시
      */
-    public int deductTokens(int amount) {
-        if (!hasEnoughTokens(amount)) {
-            throw new IllegalStateException("토큰 잔액이 부족합니다. 현재: " + tokenBalance + ", 필요: " + amount);
+    public int deductCredits(int amount) {
+        if (!hasEnoughCredits(amount)) {
+            throw new IllegalStateException("크레딧 잔액이 부족합니다. 현재: " + creditBalance + ", 필요: " + amount);
         }
-        this.tokenBalance -= amount;
-        return this.tokenBalance;
+        this.creditBalance -= amount;
+        return this.creditBalance;
     }
 
     /**
-     * 토큰 추가 (환불, 충전 등)
+     * 크레딧 추가 (환불, 충전 등)
      *
-     * @param amount 추가할 토큰 수량
+     * @param amount 추가할 크레딧 수량
      * @return 추가 후 잔액
      */
-    public int addTokens(int amount) {
-        this.tokenBalance += amount;
-        return this.tokenBalance;
+    public int addCredits(int amount) {
+        this.creditBalance += amount;
+        return this.creditBalance;
     }
 
     public void withdraw() {
@@ -104,8 +104,8 @@ public class MemberUser extends Member {
     public void anonymize() {
         super.anonymize();
         this.profileImage = null;
-        this.tokenBalance = 0;
-        this.lastTokenRefreshAt = null;
+        this.creditBalance = 0;
+        this.lastCreditRefreshAt = null;
     }
 
     // 상태가 탈퇴인 경우 무조건 "알 수 없음"을 반환
