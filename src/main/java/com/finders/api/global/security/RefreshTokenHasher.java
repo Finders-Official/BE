@@ -1,18 +1,16 @@
 package com.finders.api.global.security;
 
 import java.time.Duration;
-import java.util.Optional;
 
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
-import com.finders.api.infra.redis.RedisCacheClient;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class RefreshTokenHasher {
 
     private final MemberRepository memberRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
     private final JwtProperties jwtProperties;
-    private final RedisCacheClient redisCacheClient;
+    private final StringRedisTemplate stringRedisTemplate;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     private static final String RT_KEY_PREFIX = "rt:";
@@ -45,7 +42,7 @@ public class RefreshTokenHasher {
         try {
             long ttlSeconds = jwtProperties.refreshTokenExpiry() / 1000;
 
-            redisTemplate.opsForValue().set(
+            stringRedisTemplate.opsForValue().set(
                 RT_KEY_PREFIX + memberId,
                 preHashedToken,
                 Duration.ofSeconds(ttlSeconds)
@@ -57,20 +54,25 @@ public class RefreshTokenHasher {
 
     public boolean matches(Long memberId, String rawRefreshToken, String encodedHash) {
         String inputHashed = hashToken(rawRefreshToken);
-        Optional<Object> savedToken = redisCacheClient.get(RT_KEY_PREFIX + memberId);
 
-        if (savedToken.isPresent()) {
-            return savedToken.get().equals(inputHashed);
+        String savedToken = null;
+        try {
+            savedToken = stringRedisTemplate.opsForValue().get(RT_KEY_PREFIX + memberId);
+        } catch (Exception e) {
+            log.warn("[RefreshTokenHasher.matches] Redis 장애로 DB 검증 시도. memberId: {}", memberId);
+        }
+
+        if (savedToken != null) {
+            return savedToken.equals(inputHashed);
         }
 
         if (encodedHash == null) return false;
-        String preHashed = hashToken(rawRefreshToken);
-        return encoder.matches(preHashed, encodedHash);
+        return encoder.matches(inputHashed, encodedHash);
     }
 
     public void removeRefreshToken(Long memberId) {
         try {
-            redisTemplate.delete(RT_KEY_PREFIX + memberId);
+            stringRedisTemplate.delete(RT_KEY_PREFIX + memberId);
         } catch (Exception e) {
             log.error("[RefreshTokenHasher.removeRefreshToken] RefreshToken 삭제 실패: {}", e.getMessage());
         }
