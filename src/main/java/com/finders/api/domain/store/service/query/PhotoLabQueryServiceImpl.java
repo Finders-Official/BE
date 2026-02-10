@@ -396,12 +396,10 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                 .findByPhotoLab_IdInAndIsActiveTrueOrderByCreatedAtDescIdDesc(photoLabIds);
 
         return notices.stream()
-                .map(notice -> PhotoLabNoticeResponse.Rolling.builder()
-                        .photoLabId(notice.getPhotoLab().getId())
-                        .photoLabName(photoLabNameById.get(notice.getPhotoLab().getId()))
-                        .noticeTitle(notice.getTitle())
-                        .noticeType(notice.getNoticeType())
-                        .build())
+                .map(notice -> PhotoLabNoticeResponse.Rolling.from(
+                        notice,
+                        photoLabNameById.get(notice.getPhotoLab().getId())
+                ))
                 .toList();
     }
 
