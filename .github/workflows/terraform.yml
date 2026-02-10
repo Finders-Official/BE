@@ -118,10 +118,5 @@ jobs:
       - name: Export Deploy Config to GCS
         if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         run: |
-          cat > /tmp/deploy-config.json << DEPLOY_EOF
-          {
-            "gce_name": "$(terraform output -raw gce_instance_name)",
-            "gce_zone": "$(terraform output -raw gce_zone)"
-          }
-          DEPLOY_EOF
+          terraform output -raw deploy_config > /tmp/deploy-config.json
           gcloud storage cp /tmp/deploy-config.json gs://finders-terraform-state/deploy-config.json
