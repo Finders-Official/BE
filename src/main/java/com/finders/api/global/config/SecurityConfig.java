@@ -121,7 +121,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(corsProperties.allowedOrigins());
+
+        List<String> origins = corsProperties.allowedOrigins();
+        if (origins.size() == 1 && "*".equals(origins.getFirst())) {
+            // CORS_ALLOWED_ORIGINS=* → 모든 Origin 허용 (dev 환경용)
+            // setAllowedOrigins(["*"])는 allowCredentials(true)와 동시 사용 불가하므로
+            // setAllowedOriginPatterns를 사용
+            configuration.setAllowedOriginPatterns(List.of("*"));
+        } else {
+            configuration.setAllowedOrigins(origins);
+        }
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
