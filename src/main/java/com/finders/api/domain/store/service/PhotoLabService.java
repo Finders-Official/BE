@@ -8,12 +8,12 @@ import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.Region;
 import com.finders.api.domain.store.repository.PhotoLabRepository;
 import com.finders.api.domain.store.repository.RegionRepository;
-import com.finders.api.global.config.RedisConfig;
+import com.finders.api.domain.store.service.query.PhotoLabRegionCacheService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.redis.RedisCacheClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,9 +28,9 @@ public class PhotoLabService {
     private final PhotoLabRepository photoLabRepository;
     private final MemberOwnerRepository memberOwnerRepository;
     private final RegionRepository regionRepository;
+    private final RedisCacheClient redisCacheClient;
 
     @Transactional
-    @CacheEvict(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
     public PhotoLabResponse.Create createPhotoLab(Long ownerId, PhotoLabRequest.Create request) {
         log.info("[PhotoLabService.createPhotoLab] ownerId: {}", ownerId);
 
@@ -56,6 +56,7 @@ public class PhotoLabService {
                 .build();
 
         photoLabRepository.save(photoLab);
+        redisCacheClient.delete(PhotoLabRegionCacheService.KEY);
         return PhotoLabResponse.Create.from(photoLab);
     }
 }
