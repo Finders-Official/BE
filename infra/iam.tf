@@ -151,6 +151,14 @@ resource "google_project_iam_member" "team_compute_os_login" {
   member  = "user:${each.value}"
 }
 
+resource "google_service_account_iam_member" "team_sa_user" {
+  for_each = toset(var.team_member_emails)
+
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.compute_sa_email}"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "user:${each.value}"
+}
+
 # =============================================================================
 # Compute SA — CI/CD + Runtime (최소 권한 원칙)
 #
@@ -223,13 +231,14 @@ locals {
     "roles/storage.admin",                   # GCS 버킷 관리
     "roles/iam.serviceAccountAdmin",         # SA 관리 + getIamPolicy
     "roles/resourcemanager.projectIamAdmin", # 프로젝트 IAM 바인딩 관리
-    "roles/artifactregistry.writer",         # Docker 이미지 push (CD)
+    "roles/artifactregistry.admin",          # Docker 이미지 push + 메타데이터 관리 (CD)
     "roles/iam.serviceAccountUser",          # SA impersonation (CD)
     "roles/iap.tunnelResourceAccessor",      # SSH via IAP (CD)
     "roles/logging.logWriter",               # CI 로깅
-    "roles/secretmanager.secretAccessor",    # 시크릿 값 읽기
+    "roles/secretmanager.admin",             # 시크릿 생성/관리 (CI)
     "roles/secretmanager.viewer",            # 시크릿 목록 조회
     "roles/iam.workloadIdentityPoolAdmin",   # WIF pool/provider 관리
+    "roles/monitoring.editor",               # 모니터링 대시보드 관리 (CI)
     "roles/run.admin",                       # Cloud Run 서비스 관리
   ]
 }
