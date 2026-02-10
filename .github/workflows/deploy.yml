@@ -49,6 +49,12 @@ jobs:
         with:
           project_id: '${{ secrets.GCP_PROJECT_ID }}'
 
+      - name: Load Deploy Config from Terraform
+        run: |
+          gcloud storage cp gs://finders-terraform-state/deploy-config.json /tmp/deploy-config.json
+          echo "GCE_NAME=$(jq -r .gce_name /tmp/deploy-config.json)" >> $GITHUB_ENV
+          echo "GCE_ZONE=$(jq -r .gce_zone /tmp/deploy-config.json)" >> $GITHUB_ENV
+
       # 6. Artifact Registry 인증
       - name: Authenticate to Artifact Registry
         run: |
@@ -78,14 +84,14 @@ jobs:
               echo "$VAR_NAME=$SECRET_VALUE" >> .env.prod
             done
 
-          gcloud compute scp .env.prod ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/.env.prod \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute scp .env.prod ${{ env.GCE_NAME }}:~/.env.prod \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet
 
-          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute ssh ${{ env.GCE_NAME }} \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
@@ -98,30 +104,30 @@ jobs:
       - name: 'Deploy to GCE via IAP (Blue-Green)'
         run: |
           # A. 서버 디렉토리 생성
-          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute ssh ${{ env.GCE_NAME }} \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
             --command="sudo mkdir -p /projects/Finders/BE"
 
           # B-1. docker-compose.infra.yml 전송
-          gcloud compute scp docker-compose.infra.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.infra.yml \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute scp docker-compose.infra.yml ${{ env.GCE_NAME }}:~/docker-compose.infra.yml \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet
 
           # B-2. docker-compose.prod.yml 전송
-          gcloud compute scp docker-compose.prod.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.prod.yml \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute scp docker-compose.prod.yml ${{ env.GCE_NAME }}:~/docker-compose.prod.yml \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet
 
           # C. Blue-Green 배포 명령어 실행
-          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute ssh ${{ env.GCE_NAME }} \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \

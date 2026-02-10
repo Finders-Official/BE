@@ -114,3 +114,14 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false -var-file=terraform.tfvars -lock-timeout=5m
+
+      - name: Export Deploy Config to GCS
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+        run: |
+          cat > /tmp/deploy-config.json << DEPLOY_EOF
+          {
+            "gce_name": "$(terraform output -raw gce_instance_name)",
+            "gce_zone": "$(terraform output -raw gce_zone)"
+          }
+          DEPLOY_EOF
+          gcloud storage cp /tmp/deploy-config.json gs://finders-terraform-state/deploy-config.json
