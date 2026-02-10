@@ -103,7 +103,7 @@ jobs:
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
-            --command="sudo mkdir -p /projects/Spring"
+            --command="sudo mkdir -p /projects/Finders/BE"
 
           # B. 파일을 홈 디렉토리(~)로 전송 (권한 에러 방지)
           gcloud compute scp docker-compose.infra.yml docker-compose.dev.yml \
@@ -120,10 +120,10 @@ jobs:
             --tunnel-through-iap \
             --quiet \
             --command="
-              sudo mv ~/docker-compose.infra.yml /projects/Spring/docker-compose.infra.yml
-              sudo mv ~/docker-compose.dev.yml /projects/Spring/docker-compose.dev.yml
+              sudo mv ~/docker-compose.infra.yml /projects/Finders/BE/docker-compose.infra.yml
+              sudo mv ~/docker-compose.dev.yml /projects/Finders/BE/docker-compose.dev.yml
 
-              cd /projects/Spring
+              cd /projects/Finders/BE
               DC='sudo docker compose --env-file .env.dev -f docker-compose.infra.yml -f docker-compose.dev.yml'
 
               sudo docker network create finders-network || true
