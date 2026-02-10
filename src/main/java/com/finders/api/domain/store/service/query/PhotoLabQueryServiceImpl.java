@@ -112,7 +112,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
                         photoLab,
                         imageUrlsByLabId.getOrDefault(photoLab.getId(), List.of()),
                         tagsByLabId.getOrDefault(photoLab.getId(), List.of()),
-                        distanceKmOrNull(condition.lat(), condition.lng(), photoLab),
+                        useDistance ? distanceKmOrNull(condition.lat(), condition.lng(), photoLab) : null,
                         favoriteLabIds.contains(photoLab.getId())
                 ))
                 .toList();
