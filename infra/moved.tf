@@ -151,11 +151,6 @@ import {
 }
 
 import {
-  to = google_cloud_run_v2_service_iam_member.public_invoker
-  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/asia-northeast3/services/img-resizer roles/run.invoker allUsers"
-}
-
-import {
   to = google_iam_workload_identity_pool.github
   id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/global/workloadIdentityPools/finders-pool"
 }

@@ -59,10 +59,4 @@ resource "google_cloud_run_v2_service" "img_resizer" {
   }
 }
 
-resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
-  project  = google_cloud_run_v2_service.img_resizer.project
-  location = google_cloud_run_v2_service.img_resizer.location
-  name     = google_cloud_run_v2_service.img_resizer.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
+
