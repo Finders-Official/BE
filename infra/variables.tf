@@ -102,3 +102,13 @@ variable "cors_allowed_origins" {
     "http://localhost:8080",
   ]
 }
+
+# =============================================================================
+# GitHub
+# =============================================================================
+
+variable "github_repository" {
+  description = "GitHub repository for WIF (e.g. Finders-Official/BE)"
+  type        = string
+  default     = "Finders-Official/BE"
+}
