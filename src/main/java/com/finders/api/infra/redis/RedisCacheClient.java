@@ -33,4 +33,12 @@ public class RedisCacheClient {
             log.warn("[RedisCacheClient.set] Redis SET command failed for key: {}. This operation is best-effort.", key, e);
         }
     }
+
+    public void delete(String key) {
+        try {
+            redisTemplate.delete(key);
+        } catch (RuntimeException e) {
+            log.warn("[RedisCacheClient.delete] Redis DELETE command failed for key: {}. This operation is best-effort.", key, e);
+        }
+    }
 }
