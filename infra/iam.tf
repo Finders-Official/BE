@@ -159,7 +159,6 @@ resource "google_project_iam_member" "team_compute_os_login" {
 # - Cloud SQL: client only (접속만, admin 아님)
 # - GCS: 버킷 레벨 objectAdmin (아래 별도 정의)
 # - Logging: 쓰기만 (뷰어 불필요)
-# - IAP + OS Login: CI/CD SSH 접근
 # - SA Token Creator (self): GCS presigned URL 생성
 # =============================================================================
 
@@ -199,22 +198,60 @@ resource "google_project_iam_member" "compute_sa_logging_writer" {
   member  = local.compute_sa_member
 }
 
-resource "google_project_iam_member" "compute_sa_service_account_user" {
-  project = var.project_id
-  role    = "roles/iam.serviceAccountUser"
-  member  = local.compute_sa_member
+# =============================================================================
+# Terraform CI/CD Service Account (GitHub Actions 전용)
+#
+# Compute SA와 분리하여 blast radius를 줄이고 audit 추적을 명확히 함.
+# WIF를 통해 GitHub Actions에서 인증하며, Terraform plan/apply + CD 배포에 사용.
+# =============================================================================
+
+resource "google_service_account" "terraform_ci" {
+  account_id   = "terraform-ci"
+  display_name = "Terraform CI/CD"
+  description  = "GitHub Actions에서 Terraform plan/apply 및 CD 배포에 사용하는 전용 서비스 계정"
+  project      = var.project_id
 }
 
-resource "google_project_iam_member" "compute_sa_iap_tunnel" {
-  project = var.project_id
-  role    = "roles/iap.tunnelResourceAccessor"
-  member  = local.compute_sa_member
+locals {
+  terraform_ci_member = "serviceAccount:${google_service_account.terraform_ci.email}"
+
+  # Terraform plan/apply + CD 배포에 필요한 역할
+  terraform_ci_roles = [
+    "roles/compute.networkAdmin",            # VPC, Firewall 관리
+    "roles/compute.instanceAdmin.v1",        # GCE 인스턴스 관리
+    "roles/cloudsql.admin",                  # Cloud SQL 관리
+    "roles/storage.admin",                   # GCS 버킷 관리
+    "roles/iam.serviceAccountAdmin",         # SA 관리 + getIamPolicy
+    "roles/resourcemanager.projectIamAdmin", # 프로젝트 IAM 바인딩 관리
+    "roles/artifactregistry.writer",         # Docker 이미지 push (CD)
+    "roles/iam.serviceAccountUser",          # SA impersonation (CD)
+    "roles/iap.tunnelResourceAccessor",      # SSH via IAP (CD)
+    "roles/logging.logWriter",               # CI 로깅
+    "roles/secretmanager.secretAccessor",    # 시크릿 값 읽기
+    "roles/secretmanager.viewer",            # 시크릿 목록 조회
+  ]
 }
 
-resource "google_project_iam_member" "compute_sa_compute_os_login" {
+resource "google_project_iam_member" "terraform_ci" {
+  for_each = toset(local.terraform_ci_roles)
+
   project = var.project_id
-  role    = "roles/compute.osLogin"
-  member  = local.compute_sa_member
+  role    = each.value
+  member  = local.terraform_ci_member
+}
+
+# Self token creator (GCS presigned URL 생성 등)
+resource "google_service_account_iam_member" "terraform_ci_self_token_creator" {
+  service_account_id = google_service_account.terraform_ci.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = local.terraform_ci_member
+}
+
+# WIF binding (GitHub Actions → terraform-ci SA)
+resource "google_service_account_iam_member" "terraform_ci_wif" {
+  service_account_id = google_service_account.terraform_ci.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/finders-pool/attribute.repository/Finders-Official/BE"
 }
 
 # =============================================================================
