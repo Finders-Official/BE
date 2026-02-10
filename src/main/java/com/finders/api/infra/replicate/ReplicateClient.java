@@ -24,13 +24,12 @@ public class ReplicateClient {
         this.properties = properties;
     }
 
-    public ReplicateResponse.Prediction createInpaintingPrediction(String imageUrl, String maskUrl) {
-        log.info("[ReplicateClient.createInpaintingPrediction] Creating prediction");
-        
+    public ReplicateResponse.Prediction createPrediction(ReplicateModelInput modelInput) {
+        log.info("[ReplicateClient.createPrediction] Creating prediction with model: {}",
+                modelInput.getClass().getSimpleName());
+
         ReplicateRequest.CreatePrediction request = ReplicateRequest.CreatePrediction.of(
-                properties.modelVersion(),
-                imageUrl,
-                maskUrl,
+                modelInput,
                 properties.getWebhookUrl()
         );
 
@@ -44,7 +43,7 @@ public class ReplicateClient {
                     .block();
 
         } catch (Exception e) {
-            log.error("[ReplicateClient.createInpaintingPrediction] Failed: {}", e.getMessage());
+            log.error("[ReplicateClient.createPrediction] Failed: {}", e.getMessage());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "Replicate API 호출 실패: " + e.getMessage());
         }
     }

@@ -10,7 +10,10 @@ import com.finders.api.domain.photo.repository.PhotoRestorationRepository;
 import com.finders.api.domain.photo.service.ImageMetadataService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.domain.photo.enums.RestorationTier;
+import com.finders.api.infra.replicate.FluxFillInput;
 import com.finders.api.infra.replicate.ReplicateClient;
+import com.finders.api.infra.replicate.ReplicateModelInput;
 import com.finders.api.infra.replicate.ReplicateResponse;
 import com.finders.api.infra.storage.StoragePath;
 import com.finders.api.infra.storage.StorageResponse;
@@ -31,7 +34,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Transactional
 public class PhotoRestorationCommandServiceImpl implements PhotoRestorationCommandService {
 
-    private static final int RESTORATION_TOKEN_COST = 1;
     private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
 
     private final PhotoRestorationRepository restorationRepository;
@@ -46,47 +48,43 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
     @Override
     public RestorationResponse.Created createRestoration(Long memberId, RestorationRequest.Create request) {
-        // 1. 토큰 잔액 확인 (차감은 복원 완료 시점에)
-        if (!tokenQueryService.hasEnoughTokens(memberId, RESTORATION_TOKEN_COST)) {
+        RestorationTier tier = RestorationTier.BASIC;
+        int tokenCost = tier.getTokenCost();
+
+        if (!tokenQueryService.hasEnoughTokens(memberId, tokenCost)) {
             throw new CustomException(ErrorCode.INSUFFICIENT_TOKEN);
         }
 
-        // 2. 경로 검증 (프론트에서 전달받은 경로가 유효한지)
         validateRestorationPath(request.originalPath(), StoragePath.RESTORATION_ORIGINAL, memberId);
         validateRestorationPath(request.maskPath(), StoragePath.RESTORATION_MASK, memberId);
 
-        // 3. 복원 요청 저장 (토큰 차감은 완료 시점에)
         PhotoRestoration restoration = PhotoRestoration.builder()
                 .memberId(memberId)
                 .originalPath(request.originalPath())
                 .maskPath(request.maskPath())
-                .tokenUsed(RESTORATION_TOKEN_COST)
+                .tokenUsed(tokenCost)
                 .build();
 
         restoration = restorationRepository.save(restoration);
 
-        // 4. Replicate API 호출을 위한 Signed URL 생성
         String originalSignedUrl = storageService.getSignedUrl(request.originalPath(), SIGNED_URL_EXPIRY_MINUTES).url();
         String maskSignedUrl = storageService.getSignedUrl(request.maskPath(), SIGNED_URL_EXPIRY_MINUTES).url();
 
-        ReplicateResponse.Prediction prediction = replicateClient.createInpaintingPrediction(
-                originalSignedUrl,
-                maskSignedUrl
-        );
+        ReplicateModelInput modelInput = createModelInput(tier, originalSignedUrl, maskSignedUrl);
+        ReplicateResponse.Prediction prediction = replicateClient.createPrediction(modelInput);
 
-        // 5. 상태 업데이트
         restoration.startProcessing(prediction.id());
 
         int currentBalance = tokenQueryService.getBalance(memberId);
 
-        log.info("[PhotoRestorationCommandServiceImpl.createRestoration] Created: id={}, predictionId={}, currentBalance={}",
-                restoration.getId(), prediction.id(), currentBalance);
+        log.info("[PhotoRestorationCommandServiceImpl.createRestoration] Created: id={}, tier={}, predictionId={}, currentBalance={}",
+                restoration.getId(), tier, prediction.id(), currentBalance);
 
         return RestorationResponse.Created.builder()
                 .id(restoration.getId())
                 .status(restoration.getStatus())
-                .tokenUsed(RESTORATION_TOKEN_COST)
-                .remainingBalance(currentBalance)  // 아직 차감 전이므로 현재 잔액
+                .tokenUsed(tokenCost)
+                .remainingBalance(currentBalance)
                 .build();
     }
 
@@ -160,11 +158,12 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
                 restoration.getId(), predictionId, errorMessage);
     }
 
-    /**
-     * 복원 경로 검증
-     * - 경로 형식이 올바른지
-     * - 본인의 memberId로 된 경로인지
-     */
+    private ReplicateModelInput createModelInput(RestorationTier tier, String imageUrl, String maskUrl) {
+        return switch (tier) {
+            case BASIC -> FluxFillInput.forRestoration(imageUrl, maskUrl);
+        };
+    }
+
     private void validateRestorationPath(String objectPath, StoragePath expectedType, Long memberId) {
         if (objectPath == null || objectPath.isBlank()) {
             throw new CustomException(ErrorCode.BAD_REQUEST, "이미지 경로가 비어있습니다.");
@@ -227,9 +226,6 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         }
     }
 
-    /**
-     * 복원된 이미지 결과 (경로 + 메타데이터)
-     */
     private record RestoredImageResult(String objectPath, Integer width, Integer height) {
     }
 }
