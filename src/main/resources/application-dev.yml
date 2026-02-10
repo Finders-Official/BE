@@ -66,3 +66,6 @@ sentry:
 # Sendon
 sendon:
   is-test: false
+
+restoration:
+  active-tier: BASIC

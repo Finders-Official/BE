@@ -3,6 +3,7 @@ package com.finders.api.domain.photo.service.command;
 import com.finders.api.domain.member.enums.TokenRelatedType;
 import com.finders.api.domain.member.service.command.TokenCommandService;
 import com.finders.api.domain.member.service.query.TokenQueryService;
+import com.finders.api.domain.photo.config.RestorationProperties;
 import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
 import com.finders.api.domain.photo.entity.PhotoRestoration;
@@ -11,30 +12,31 @@ import com.finders.api.domain.photo.service.ImageMetadataService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.domain.photo.enums.RestorationTier;
-import com.finders.api.infra.replicate.FluxFillInput;
 import com.finders.api.infra.replicate.ReplicateClient;
 import com.finders.api.infra.replicate.ReplicateModelInput;
 import com.finders.api.infra.replicate.ReplicateResponse;
+import com.finders.api.infra.replicate.RestoreImageInput;
+import com.finders.api.infra.replicate.SupirInput;
 import com.finders.api.infra.storage.StoragePath;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 사진 복원 Command 서비스 구현체
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class PhotoRestorationCommandServiceImpl implements PhotoRestorationCommandService {
 
     private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
+
+    private static final Logger log = LoggerFactory.getLogger(PhotoRestorationCommandServiceImpl.class);
 
     private final PhotoRestorationRepository restorationRepository;
     private final StorageService storageService;
@@ -42,13 +44,33 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
     private final TokenCommandService tokenCommandService;
     private final ReplicateClient replicateClient;
     private final ImageMetadataService imageMetadataService;
+    private final RestorationProperties restorationProperties;
 
-    @Qualifier("longTimeoutWebClient")
     private final WebClient longTimeoutWebClient;
+
+    public PhotoRestorationCommandServiceImpl(
+            PhotoRestorationRepository restorationRepository,
+            StorageService storageService,
+            TokenQueryService tokenQueryService,
+            TokenCommandService tokenCommandService,
+            ReplicateClient replicateClient,
+            ImageMetadataService imageMetadataService,
+            RestorationProperties restorationProperties,
+            @Qualifier("longTimeoutWebClient") WebClient longTimeoutWebClient
+    ) {
+        this.restorationRepository = restorationRepository;
+        this.storageService = storageService;
+        this.tokenQueryService = tokenQueryService;
+        this.tokenCommandService = tokenCommandService;
+        this.replicateClient = replicateClient;
+        this.imageMetadataService = imageMetadataService;
+        this.restorationProperties = restorationProperties;
+        this.longTimeoutWebClient = longTimeoutWebClient;
+    }
 
     @Override
     public RestorationResponse.Created createRestoration(Long memberId, RestorationRequest.Create request) {
-        RestorationTier tier = RestorationTier.BASIC;
+        RestorationTier tier = RestorationTier.valueOf(restorationProperties.activeTier());
         int tokenCost = tier.getTokenCost();
 
         if (!tokenQueryService.hasEnoughTokens(memberId, tokenCost)) {
@@ -56,19 +78,27 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         }
 
         validateRestorationPath(request.originalPath(), StoragePath.RESTORATION_ORIGINAL, memberId);
-        validateRestorationPath(request.maskPath(), StoragePath.RESTORATION_MASK, memberId);
 
-        PhotoRestoration restoration = PhotoRestoration.builder()
-                .memberId(memberId)
-                .originalPath(request.originalPath())
-                .maskPath(request.maskPath())
-                .tokenUsed(tokenCost)
-                .build();
+        // Only validate maskPath if provided
+        if (request.maskPath() != null && !request.maskPath().isBlank()) {
+            validateRestorationPath(request.maskPath(), StoragePath.RESTORATION_MASK, memberId);
+        }
+
+        PhotoRestoration restoration = PhotoRestoration.create(
+                memberId,
+                request.originalPath(),
+                request.maskPath(),
+                tokenCost
+        );
 
         restoration = restorationRepository.save(restoration);
 
         String originalSignedUrl = storageService.getSignedUrl(request.originalPath(), SIGNED_URL_EXPIRY_MINUTES).url();
-        String maskSignedUrl = storageService.getSignedUrl(request.maskPath(), SIGNED_URL_EXPIRY_MINUTES).url();
+
+        String maskSignedUrl = null;
+        if (request.maskPath() != null && !request.maskPath().isBlank()) {
+            maskSignedUrl = storageService.getSignedUrl(request.maskPath(), SIGNED_URL_EXPIRY_MINUTES).url();
+        }
 
         ReplicateModelInput modelInput = createModelInput(tier, originalSignedUrl, maskSignedUrl);
         ReplicateResponse.Prediction prediction = replicateClient.createPrediction(modelInput);
@@ -80,12 +110,12 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         log.info("[PhotoRestorationCommandServiceImpl.createRestoration] Created: id={}, tier={}, predictionId={}, currentBalance={}",
                 restoration.getId(), tier, prediction.id(), currentBalance);
 
-        return RestorationResponse.Created.builder()
-                .id(restoration.getId())
-                .status(restoration.getStatus())
-                .tokenUsed(tokenCost)
-                .remainingBalance(currentBalance)
-                .build();
+        return new RestorationResponse.Created(
+                restoration.getId(),
+                restoration.getStatus(),
+                tokenCost,
+                currentBalance
+        );
     }
 
     @Override
@@ -160,7 +190,9 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
     private ReplicateModelInput createModelInput(RestorationTier tier, String imageUrl, String maskUrl) {
         return switch (tier) {
-            case BASIC -> FluxFillInput.forRestoration(imageUrl, maskUrl);
+            case BASIC -> RestoreImageInput.forRestoration(imageUrl);
+            case STANDARD -> SupirInput.forRestoration(imageUrl);
+            case PREMIUM -> throw new UnsupportedOperationException("PREMIUM 파이프라인은 아직 미구현입니다.");
         };
     }
 

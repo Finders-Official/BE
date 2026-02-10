@@ -72,3 +72,6 @@ sendon:
 discord:
   enabled: true  # 운영 환경에서 활성화
   webhook-url: ${DISCORD_WEBHOOK_URL}
+
+restoration:
+  active-tier: BASIC

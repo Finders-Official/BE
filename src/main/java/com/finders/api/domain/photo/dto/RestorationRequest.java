@@ -20,7 +20,6 @@ public class RestorationRequest {
             @NotBlank(message = "원본 이미지 경로는 필수입니다.")
             String originalPath,
 
-            @NotBlank(message = "마스크 이미지 경로는 필수입니다.")
             String maskPath
     ) {}
 

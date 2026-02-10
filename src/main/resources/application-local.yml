@@ -49,3 +49,6 @@ cors:
 # Sendon (로컬 비활성화)
 sendon:
   is-test: true
+
+restoration:
+  active-tier: BASIC

@@ -156,6 +156,9 @@ replicate:
   timeout-seconds: 120
   max-retries: 60
 
+restoration:
+  active-tier: BASIC
+
 # ========================================
 # Sentry 설정 (에러 모니터링)
 # ========================================
