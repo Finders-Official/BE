@@ -272,6 +272,32 @@ resource "google_storage_bucket_iam_member" "private_compute_admin" {
   member = local.compute_sa_member
 }
 
+# =============================================================================
+# Image Resizer SA — Cloud Run 전용 (최소 권한)
+#
+# img-resizer는 public 버킷의 이미지만 리사이징하므로
+# storage.objectAdmin(public 버킷) + logging.logWriter만 부여.
+# =============================================================================
+
+resource "google_service_account" "img_resizer" {
+  account_id   = "img-resizer"
+  display_name = "Image Resizer Service Account"
+  description  = "Cloud Run img-resizer 전용 서비스 계정 (public 버킷 접근 + 로깅)"
+  project      = var.project_id
+}
+
+resource "google_storage_bucket_iam_member" "public_img_resizer_admin" {
+  bucket = module.storage.public_bucket_name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.img_resizer.email}"
+}
+
+resource "google_project_iam_member" "img_resizer_logging_writer" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.img_resizer.email}"
+}
+
 resource "google_storage_bucket_iam_member" "public_all_users_viewer" {
   bucket = module.storage.public_bucket_name
   role   = "roles/storage.objectViewer"

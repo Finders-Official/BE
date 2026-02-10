@@ -37,7 +37,7 @@ resource "google_cloud_run_v2_service" "img_resizer" {
 
     max_instance_request_concurrency = 80
     timeout                          = "300s"
-    service_account                  = var.compute_sa_email
+    service_account                  = google_service_account.img_resizer.email
 
     annotations = {
       "run.googleapis.com/startup-cpu-boost" = "true"
