@@ -1,11 +1,14 @@
 package com.finders.api.global.security;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.redis.RedisCacheClient;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,6 +25,7 @@ public class RefreshTokenHasher {
     private final MemberRepository memberRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final JwtProperties jwtProperties;
+    private final RedisCacheClient redisCacheClient;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     private static final String RT_KEY_PREFIX = "rt:";
@@ -43,7 +47,7 @@ public class RefreshTokenHasher {
 
             redisTemplate.opsForValue().set(
                 RT_KEY_PREFIX + memberId,
-                rawRefreshToken,
+                preHashedToken,
                 Duration.ofSeconds(ttlSeconds)
             );
         } catch (Exception e) {
@@ -52,13 +56,11 @@ public class RefreshTokenHasher {
     }
 
     public boolean matches(Long memberId, String rawRefreshToken, String encodedHash) {
-        try {
-            String savedToken = (String) redisTemplate.opsForValue().get(RT_KEY_PREFIX + memberId);
-            if (savedToken != null) {
-                return savedToken.equals(rawRefreshToken);
-            }
-        } catch (Exception e) {
-            log.warn("[RefreshTokenHasher.matches] Redis 장애 발생으로 DB 검증으로 전환합니다. memberId: {}", memberId);
+        String inputHashed = hashToken(rawRefreshToken);
+        Optional<Object> savedToken = redisCacheClient.get(RT_KEY_PREFIX + memberId);
+
+        if (savedToken.isPresent()) {
+            return savedToken.get().equals(inputHashed);
         }
 
         if (encodedHash == null) return false;
@@ -73,7 +75,6 @@ public class RefreshTokenHasher {
             log.error("[RefreshTokenHasher.removeRefreshToken] RefreshToken 삭제 실패: {}", e.getMessage());
         }
     }
-
 
     private String hashToken(String token) {
         try {
