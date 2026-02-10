@@ -246,6 +246,157 @@ public class MemberResponse {
 
 ---
 
+### Entity → DTO 변환 패턴 (Converter)
+
+#### 개요
+
+프로젝트에서는 **별도의 Converter 클래스를 만들지 않고**, DTO 내부에 `from()` 정적 팩토리 메서드를 사용하여 Entity를 DTO로 변환합니다.
+
+#### 패턴 설명
+
+```java
+public class PaymentResponse {
+
+    @Builder
+    public record Detail(
+        Long id,
+        String paymentId,
+        String orderName,
+        Integer amount,
+        PaymentStatus status
+        // ... 기타 필드
+    ) {
+        // ✅ 이것이 컨버터 역할을 합니다
+        public static Detail from(Payment payment) {
+            return Detail.builder()
+                    .id(payment.getId())
+                    .paymentId(payment.getPaymentId())
+                    .orderName(payment.getOrderName())
+                    .amount(payment.getAmount())
+                    .status(payment.getStatus())
+                    .build();
+        }
+    }
+
+    public record Summary(
+        Long id,
+        String paymentId,
+        String orderName
+    ) {
+        // 필드가 적으면 Builder 없이 생성자 사용
+        public static Summary from(Payment payment) {
+            return new Summary(
+                payment.getId(),
+                payment.getPaymentId(),
+                payment.getOrderName()
+            );
+        }
+    }
+}
+```
+
+#### 사용 예시
+
+```java
+// Service에서 사용
+@Override
+public PaymentResponse.Detail getPayment(Long memberId, String paymentId) {
+    Payment payment = paymentRepository.findByPaymentId(paymentId)
+            .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
+
+    // ✅ 간결한 변환
+    return PaymentResponse.Detail.from(payment);
+}
+
+// 리스트 변환
+@Override
+public List<PaymentResponse.Summary> getMyPayments(Long memberId) {
+    return paymentRepository.findByMemberIdOrderByCreatedAtDesc(memberId)
+            .stream()
+            .map(PaymentResponse.Summary::from)  // ✅ 메서드 레퍼런스 사용
+            .toList();
+}
+```
+
+#### 이 패턴의 장점
+
+| 장점 | 설명 |
+|------|------|
+| **캡슐화** | 변환 로직이 DTO 내부에 응집됨 |
+| **타입 안전성** | 컴파일 타임에 타입 체크 |
+| **간결성** | Service 코드가 깔끔해짐 |
+| **일관성** | 프로젝트 전체에서 동일한 패턴 사용 |
+| **테스트 용이성** | DTO 단위로 변환 로직 테스트 가능 |
+
+#### 별도 Converter 클래스를 만들지 않는 이유
+
+```java
+// ❌ 이런 클래스를 만들지 않습니다
+@Component
+public class PaymentConverter {
+    public PaymentResponse.Detail toDetail(Payment payment) {
+        return PaymentResponse.Detail.builder()
+                .id(payment.getId())
+                // ...
+                .build();
+    }
+}
+```
+
+**이유:**
+1. **불필요한 추상화**: DTO 변환은 단순한 매핑 작업
+2. **파일 증가**: 도메인당 Converter 클래스 추가 시 파일 수 2배 증가
+3. **의존성 주입 불필요**: 정적 메서드로 충분
+4. **응집도 저하**: 변환 로직이 DTO에서 분리되면 관리 포인트 증가
+
+#### 프로젝트 적용 현황
+
+현재 **18개 도메인, 42개의 `from()` 메서드**가 이 패턴을 따르고 있습니다:
+
+- ✅ payment (Detail, Summary)
+- ✅ community (PostResponse, CommentResponse)
+- ✅ photo (PhotoResponse, RestorationResponse)
+- ✅ store (PhotoLabResponse)
+- ✅ inquiry (InquiryResponse)
+- ✅ member (MemberResponse)
+- ✅ auth (AuthResponse)
+- ✅ reservation (ReservationResponse)
+
+#### 복잡한 변환이 필요한 경우
+
+외부 데이터나 추가 로직이 필요한 경우, 파라미터를 추가합니다:
+
+```java
+public record PostDetailResDTO(
+    Long id,
+    String content,
+    boolean isLiked,
+    boolean isMine,
+    String profileImageUrl,
+    List<PostImageResDTO> images
+) {
+    // ✅ 추가 정보를 파라미터로 받음
+    public static PostDetailResDTO from(
+        Post post,
+        boolean isLiked,
+        boolean isMine,
+        String profileImageUrl,
+        List<PostImageResDTO> images
+    ) {
+        return new PostDetailResDTO(
+            post.getId(),
+            post.getContent(),
+            isLiked,
+            isMine,
+            profileImageUrl,
+            images
+        );
+    }
+}
+```
+
+---
+
 ### Controller
 
 > Controller는 Query/Command Service를 모두 주입받아 사용합니다.
@@ -319,6 +470,47 @@ service/
     ├── {Domain}QueryService.java        (interface)
     └── {Domain}QueryServiceImpl.java    (구현체)
 ```
+
+#### Interface + Implementation 패턴을 사용하는 이유
+
+**장점:**
+
+| 측면 | 설명 |
+|------|------|
+| **테스트 용이성** | Interface를 Mock으로 주입하여 단위 테스트 격리 |
+| **확장성** | 캐싱, 비동기 등 다른 구현체 추가 가능 |
+| **명확한 계약** | Interface로 서비스 책임 명시 |
+| **일관성** | 프로젝트 전체 35개 Service가 동일 패턴 |
+
+**단점:**
+- 파일 수 증가 (Service당 2개 파일)
+- 구현체가 1개뿐이면 과도한 추상화로 느껴질 수 있음
+
+**결론:**
+- 프로젝트 전체가 이미 이 패턴을 따르고 있음
+- Command/Query 분리와 잘 맞음
+- 테스트 작성 시 실질적인 이점 존재
+- **현재 구조 유지 권장**
+
+#### 단일 Service 클래스로 변경하지 않는 이유
+
+```java
+// ❌ 이렇게 변경하지 않습니다
+service/
+├── command/
+│   └── PaymentCommandService.java  (interface 없이 단일 클래스)
+└── query/
+    └── PaymentQueryService.java    (interface 없이 단일 클래스)
+```
+
+**이유:**
+1. **일관성 우선**: 35개 Service를 모두 변경하는 비용이 큼
+2. **테스트 복잡도**: Mockito로 구체 클래스 Mock 생성 필요
+3. **확장 가능성**: 향후 다른 구현체 추가 시 리팩토링 비용 발생
+
+**참고:**
+- 소규모 프로젝트에서는 단일 클래스가 더 실용적일 수 있음
+- 하지만 현재 프로젝트 규모와 팀 컨벤션을 고려하여 현재 구조 유지
 
 #### Query Service (조회 전용)
 
