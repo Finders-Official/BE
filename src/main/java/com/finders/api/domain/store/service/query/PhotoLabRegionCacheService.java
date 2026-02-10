@@ -22,7 +22,8 @@ import java.util.Map;
 public class PhotoLabRegionCacheService {
 
     public static final String KEY = "photoLabRegionCounts::all";
-    private static final Duration TTL = Duration.ofMinutes(60);
+    private static final long REGION_COUNTS_CACHE_TTL_MINUTES = 60L;
+    private static final Duration TTL = Duration.ofMinutes(REGION_COUNTS_CACHE_TTL_MINUTES);
 
     private final PhotoLabRepository photoLabRepository;
     private final RegionRepository regionRepository;
