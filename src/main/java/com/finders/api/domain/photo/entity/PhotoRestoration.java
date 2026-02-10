@@ -58,8 +58,8 @@ public class PhotoRestoration extends BaseTimeEntity {
     @Column(name = "provider_name", length = 30)
     private String providerName;
 
-    @Column(name = "token_used", nullable = false)
-    private int tokenUsed = 1;
+    @Column(name = "credit_used", nullable = false)
+    private int creditUsed = 1;
 
     @Column(name = "error_message", length = 500)
     private String errorMessage;
@@ -72,16 +72,16 @@ public class PhotoRestoration extends BaseTimeEntity {
     private String feedbackComment;
 
     @Builder
-    private PhotoRestoration(Long memberId, String originalPath, String maskPath, int tokenUsed) {
+    private PhotoRestoration(Long memberId, String originalPath, String maskPath, int creditUsed) {
         this.memberId = memberId;
         this.originalPath = originalPath;
         this.maskPath = maskPath;
-        this.tokenUsed = tokenUsed;
+        this.creditUsed = creditUsed;
         this.status = RestorationStatus.PENDING;
     }
 
-    public static PhotoRestoration create(Long memberId, String originalPath, String maskPath, int tokenUsed) {
-        return new PhotoRestoration(memberId, originalPath, maskPath, tokenUsed);
+    public static PhotoRestoration create(Long memberId, String originalPath, String maskPath, int creditUsed) {
+        return new PhotoRestoration(memberId, originalPath, maskPath, creditUsed);
     }
 
     public void startProcessing(String predictionId) {

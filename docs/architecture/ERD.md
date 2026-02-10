@@ -1,7 +1,7 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v3.0.3 | 2026-01-25
+> v3.1.0 | 2026-02-10
 
 ---
 
@@ -10,7 +10,7 @@
 | 도메인             | 테이블                       | 설명                           |
 |-----------------|---------------------------|------------------------------|
 | **member**      | `member`                  | 회원 Base (Joined Table 상속)    |
-|                 | `member_user`             | User 전용 (소셜 로그인 사용자, 토큰 관련)  |
+|                 | `member_user`             | User 전용 (소셜 로그인 사용자, 크레딧 관련)  |
 |                 | `member_owner`            | Owner 전용 (현상소 사장님, 정산 계좌)    |
 |                 | `member_admin`            | Admin 전용 (관리자, 추후 확장)        |
 |                 | `social_account`          | 소셜 로그인 연동 - User 전용 (카카오/애플) |
@@ -18,7 +18,7 @@
 |                 | `member_device`           | FCM 디바이스 토큰 (푸시 알림용)         |
 |                 | `member_agreement`        | 약관 동의 이력                     |
 |                 | `terms`                   | 약관 버전 관리                     |
-|                 | `token_history`           | AI 토큰 충전/사용 내역 - User 전용     |
+|                 | `credit_history`          | AI 크레딧 충전/사용 내역 - User 전용     |
 |                 | `favorite_photo_lab`      | 관심 현상소                       |
 | **store**       | `photo_lab`               | 현상소 정보                       |
 |                 | `photo_lab_image`         | 현상소 이미지                      |
@@ -58,7 +58,7 @@ member (Base: Joined Table 상속)
    │
    ├── 1:1 ─ member_user ─┬─ 1:N ─ social_account (소셜 로그인)
    │                      ├─ 1:N ─ member_address (배송지)
-   │                      └─ 1:N ─ token_history (토큰 내역)
+   │                      └─ 1:N ─ credit_history (크레딧 내역)
    │
    ├── 1:1 ─ member_owner ─── 1:N ─ photo_lab (현상소 운영)
    │
@@ -71,7 +71,7 @@ member ─┬─ 1:N ─ member_device (FCM 토큰, 공통)
         │                                                                              └─ 0..1:1 ─ delivery
         ├─ 1:N ─ development_order (현장 주문, 예약 없이)
         ├─ 1:N ─ print_order (현장 주문, 현상 없이)
-        ├─ 1:N ─ photo_restoration (AI 복원, 토큰 사용)
+        ├─ 1:N ─ photo_restoration (AI 복원, 크레딧 사용)
         ├─ 1:N ─ post ─┬─ 1:N ─ post_image
         │              ├─ 1:N ─ comments
         │              └─ 1:N ─ post_like
@@ -79,7 +79,7 @@ member ─┬─ 1:N ─ member_device (FCM 토큰, 공통)
         ├─ 1:N ─ inquiry ─┬─ 1:N ─ inquiry_image
         │                 └─ 1:N ─ inquiry_reply
         ├─ 1:N ─ notification
-        └─ 1:N ─ payment (결제, 토큰 구매)
+        └─ 1:N ─ payment (결제, 크레딧 구매)
 
 photo_lab ─┬─ 1:N ─ photo_lab_image
            ├─ 1:1 ─ photo_lab_tag ─── 1:N ─ tag (현상소 태그)
@@ -134,7 +134,7 @@ DocumentType:BUSINESS_LICENSE,BUSINESS_PERMIT
 RestorationStatus:PENDING,PROCESSING,COMPLETED,FAILED
 FeedbackRating:GOOD,BAD
 
-// 결제/토큰 (v2.4.0 포트원 V2 전환)
+// 결제/크레딧 (v2.4.0 포트원 V2 전환)
 PaymentStatus:          // 포트원 V2 표준
 READY                 // 결제 대기
         PENDING               // 결제 진행 중
@@ -152,8 +152,8 @@ PgProvider:             // PG사/간편결제 제공자 (현재: KCP + 간편결
   KAKAOPAY, NAVERPAY, TOSSPAY  // 간편결제
   // 확장 가능: TOSSPAYMENTS, INICIS, NICE 등
 
-OrderType:TOKEN_PURCHASE,DEVELOPMENT_ORDER,PRINT_ORDER
-TokenHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
+OrderType:CREDIT_PURCHASE,DEVELOPMENT_ORDER,PRINT_ORDER
+CreditHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
 ```
 
 ---
@@ -252,12 +252,12 @@ CREATE TABLE member_user
     member_id             BIGINT      NOT NULL,               -- PK & FK → member.id
     nickname              VARCHAR(20) NOT NULL,               -- 카카오 비즈앱 통해서 가져오거나 입력 (닉네임)
     profile_image         VARCHAR(500) NULL,                  -- 카카오 비즈앱 통해서 가져옴
-    token_balance         INT UNSIGNED    NOT NULL DEFAULT 3, -- 보유 토큰 (회원가입 시 3개 지급)
-    last_token_refresh_at DATETIME NULL,                      -- 마지막 무료 토큰 리프레시 일시
+    credit_balance         INT UNSIGNED    NOT NULL DEFAULT 3, -- 보유 크레딧 (회원가입 시 3개 지급)
+    last_credit_refresh_at DATETIME NULL,                      -- 마지막 무료 크레딧 리프레시 일시
     PRIMARY KEY (member_id),
     UNIQUE KEY uk_member_user_nickname (nickname),
     CONSTRAINT fk_member_user FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
-) ENGINE=InnoDB COMMENT='User 전용 (소셜 로그인, 토큰)';
+) ENGINE=InnoDB COMMENT='User 전용 (소셜 로그인, 크레딧)';
 
 CREATE TABLE member_owner
 (                                              -- Owner 전용 테이블 (현상소 사장님)
@@ -365,8 +365,8 @@ CREATE TABLE member_device
     CONSTRAINT chk_device_type CHECK (device_type IN ('IOS', 'ANDROID', 'WEB'))
 ) ENGINE=InnoDB COMMENT='FCM 디바이스 토큰';
 
-CREATE TABLE token_history
-(                                           -- AI 토큰 충전/사용 내역
+CREATE TABLE credit_history
+(                                           -- AI 크레딧 충전/사용 내역
     id            BIGINT      NOT NULL AUTO_INCREMENT,
     member_id     BIGINT      NOT NULL,
     type          VARCHAR(20) NOT NULL,     -- SIGNUP_BONUS, REFRESH, PURCHASE, USE, REFUND
@@ -377,11 +377,11 @@ CREATE TABLE token_history
     description   VARCHAR(200) NULL,        -- 설명 (예: "회원가입 보너스", "AI 복원 사용")
     created_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    INDEX         idx_token_history_member (member_id, created_at DESC),
-    INDEX         idx_token_history_type (type),
-    CONSTRAINT fk_token_history_member FOREIGN KEY (member_id) REFERENCES member (id),
-    CONSTRAINT chk_token_type CHECK (type IN ('SIGNUP_BONUS', 'REFRESH', 'PURCHASE', 'USE', 'REFUND'))
-) ENGINE=InnoDB COMMENT='토큰 내역';
+    INDEX         idx_credit_history_member (member_id, created_at DESC),
+    INDEX         idx_credit_history_type (type),
+    CONSTRAINT fk_credit_history_member FOREIGN KEY (member_id) REFERENCES member (id),
+    CONSTRAINT chk_credit_type CHECK (type IN ('SIGNUP_BONUS', 'REFRESH', 'PURCHASE', 'USE', 'REFUND'))
+) ENGINE=InnoDB COMMENT='크레딧 내역';
 
 CREATE TABLE favorite_photo_lab
 ( -- 별 표시
@@ -740,8 +740,8 @@ CREATE TABLE photo_restoration
     restored_height         INT NULL,                                -- 복원된 이미지 높이 (픽셀)
     status                  VARCHAR(20)  NOT NULL DEFAULT 'PENDING', -- PENDING, PROCESSING, COMPLETED, FAILED
     replicate_prediction_id VARCHAR(100) NULL,                       -- Replicate API prediction ID (webhook 매칭용)
-    -- 토큰 관련
-    token_used              INT UNSIGNED    NOT NULL DEFAULT 1,      -- 사용된 토큰 수 (복원 완료 시 차감)
+    -- 크레딧 관련
+    credit_used             INT UNSIGNED    NOT NULL DEFAULT 1,      -- 사용된 크레딧 수 (복원 완료 시 차감)
     -- 에러 정보
     error_message           VARCHAR(500) NULL,                       -- 실패 시 에러 메시지
     -- 피드백 (AI 품질 개선용)
@@ -958,13 +958,13 @@ CREATE TABLE payment
     id                 BIGINT       NOT NULL AUTO_INCREMENT,
     member_id          BIGINT       NOT NULL,
     -- 주문 정보
-    order_type         VARCHAR(20)  NOT NULL,    -- TOKEN_PURCHASE, DEVELOPMENT_ORDER, PRINT_ORDER
-    related_order_id   BIGINT NULL,              -- development_order.id 또는 print_order.id (토큰 구매 시 NULL)
+    order_type         VARCHAR(20)  NOT NULL,    -- CREDIT_PURCHASE, DEVELOPMENT_ORDER, PRINT_ORDER
+    related_order_id   BIGINT NULL,              -- development_order.id 또는 print_order.id (크레딧 구매 시 NULL)
     payment_id         VARCHAR(64)  NOT NULL,    -- 결제 건 ID (우리가 생성, 포트원에 전달)
-    order_name         VARCHAR(100) NOT NULL,    -- 주문명 (예: "AI 복원 토큰 10개")
+    order_name         VARCHAR(100) NOT NULL,    -- 주문명 (예: "AI 복원 크레딧 10개")
     -- 금액 정보
     amount             INT UNSIGNED    NOT NULL, -- 결제 요청 금액
-    token_amount       INT UNSIGNED    NULL,     -- 구매한 토큰 수 (TOKEN_PURCHASE 시)
+    credit_amount      INT UNSIGNED    NULL,     -- 구매한 크레딧 수 (CREDIT_PURCHASE 시)
     -- 포트원 V2 (승인 후 저장)
     transaction_id     VARCHAR(100) NULL,        -- 포트원 채번 ID (V1의 imp_uid에 해당)
     pg_tx_id           VARCHAR(100) NULL,        -- PG사 거래 ID
@@ -1001,13 +1001,13 @@ CREATE TABLE payment
                                                     'READY', 'PENDING', 'VIRTUAL_ACCOUNT_ISSUED', 'PAID',
                                                     'FAILED', 'PARTIAL_CANCELLED', 'CANCELLED'
         )),
-    CONSTRAINT chk_order_type CHECK (order_type IN ('TOKEN_PURCHASE', 'DEVELOPMENT_ORDER', 'PRINT_ORDER')),
+    CONSTRAINT chk_order_type CHECK (order_type IN ('CREDIT_PURCHASE', 'DEVELOPMENT_ORDER', 'PRINT_ORDER')),
     CONSTRAINT chk_payment_method CHECK (method IS NULL OR method IN (
         'CARD', 'TRANSFER', 'VIRTUAL_ACCOUNT', 'EASY_PAY'
     )),
     CONSTRAINT chk_payment_data CHECK (
-        (order_type = 'TOKEN_PURCHASE' AND token_amount IS NOT NULL AND related_order_id IS NULL) OR
-        (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER') AND related_order_id IS NOT NULL AND token_amount IS NULL)
+        (order_type = 'CREDIT_PURCHASE' AND credit_amount IS NOT NULL AND related_order_id IS NULL) OR
+        (order_type IN ('DEVELOPMENT_ORDER', 'PRINT_ORDER') AND related_order_id IS NOT NULL AND credit_amount IS NULL)
         )
 ) ENGINE=InnoDB COMMENT='결제 (포트원 V2)';
 ```
@@ -1020,7 +1020,7 @@ CREATE TABLE payment
 |----------------------|------------------------------------------------------------------------------------|
 | CM-020~022 로그인/가입    | member, member_user, social_account, member_agreement                              |
 | HM-010 메인 홈          | photo_lab, promotion                                                               |
-| HM-021~025 사진 복원     | photo_restoration, token_history, member_user (token_balance)                      |
+| HM-021~025 사진 복원     | photo_restoration, credit_history, member_user (credit_balance)                    |
 | PL-010~011 현상소 탐색    | photo_lab, photo_lab_tag, tag, region                                              |
 | PL-020~021 현상소 상세/예약 | photo_lab_*, reservation, payment                                                  |
 | CO-020~030 사진수다      | post (자가현상 여부), post_image, comment, post_like                                     |
@@ -1042,6 +1042,7 @@ CREATE TABLE payment
 | **3.0.1** | **2026-01-19** | 인화 도메인 스키마 반영: `development_order`에 작업 선택 컬럼(`is_develop/is_scan/is_print/roll_count`) 추가, `print_order`에 입금 캡처/입금자/은행/제출시각 컬럼 추가, `print_order_item` 구조를 옵션 단위로 변경(`film_type/paper_type/print_method/size/frame_type`), 인화 대상 사진 매핑 테이블 `print_order_photo` 추가 |
 | **3.0.2** | **2026-01-23** | photo_lab 테이블 내 review_count 추가, search_history 테이블 신규 생성                                                                                                                                                                                                        |
 | **3.0.3** | **2026-01-25** | region 테이블 칼럼명 변경 sido -> parentRegion, sigungu -> regionName                                                                                                                                                                                                    |
+| **3.1.0** | **2026-02-10** | Token → Credit 용어 리팩토링: `token_history` → `credit_history`, `token_balance` → `credit_balance`, `token_amount` → `credit_amount`, `token_used` → `credit_used`, `TOKEN_PURCHASE` → `CREDIT_PURCHASE` |
 
 ---
 

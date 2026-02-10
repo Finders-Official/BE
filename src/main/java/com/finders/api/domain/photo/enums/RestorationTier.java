@@ -16,6 +16,6 @@ public enum RestorationTier {
     // PRO("프로 복원", 3, "old-photos-pipeline");
 
     private final String description;
-    private final int tokenCost;
+    private final int creditCost;
     private final String modelIdentifier;
 }

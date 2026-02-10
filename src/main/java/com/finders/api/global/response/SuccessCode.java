@@ -70,10 +70,10 @@ public enum SuccessCode implements BaseCode {
     RESTORATION_FOUND(HttpStatus.OK, "RESTORATION_200", "복원 결과 조회에 성공했습니다."),
 
     // ========================================
-    // Token
+    // Credit
     // ========================================
-    TOKEN_BALANCE_FOUND(HttpStatus.OK, "TOKEN_200", "토큰 잔액 조회에 성공했습니다."),
-    TOKEN_HISTORY_FOUND(HttpStatus.OK, "TOKEN_200", "토큰 이력 조회에 성공했습니다."),
+    CREDIT_BALANCE_FOUND(HttpStatus.OK, "CREDIT_200", "크레딧 잔액 조회에 성공했습니다."),
+    CREDIT_HISTORY_FOUND(HttpStatus.OK, "CREDIT_200", "크레딧 이력 조회에 성공했습니다."),
 
     // ========================================
     // Community
