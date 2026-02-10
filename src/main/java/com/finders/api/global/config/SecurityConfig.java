@@ -64,6 +64,8 @@ public class SecurityConfig {
             "/posts/preview",
             // HM-010 인기 현상소 미리보기
             "/photo-labs/popular",
+            // HM-010 현상소 공지 미리보기
+            "/photo-labs/notices",
             // 개발용 토큰 발급
             "/dev/login",
             "/dev/signup-token"
