@@ -73,6 +73,28 @@ public interface StorageService {
     String getPublicUrl(String objectPath);
 
     /**
+     * 저장된 값을 클라이언트에 전달 가능한 URL로 변환
+     * <p>
+     * - 이미 완전한 URL(http/https)이면 그대로 반환
+     * - GCS object path이면 Public URL로 변환
+     * - null/blank이면 null 반환
+     * <p>
+     * OAuth 프로필 이미지(외부 URL)와 GCS object path가 혼재하는 컬럼에서 안전하게 사용합니다.
+     *
+     * @param value 외부 URL 또는 GCS object path
+     * @return 접근 가능한 전체 URL, 또는 null
+     */
+    default String resolveUrl(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            return value;
+        }
+        return getPublicUrl(value);
+    }
+
+    /**
      * 파일 삭제
      *
      * @param objectPath 삭제할 파일 경로

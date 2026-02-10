@@ -1,53 +1,55 @@
 # Finders ERD
 
 > 필름 현상소 예약 서비스 데이터베이스 설계서
-> v3.1.0 | 2026-02-10
+> v3.2.0 | 2026-02-11
 
 ---
 
-## 테이블 목록 (36개)
+## 테이블 목록 (38개)
 
-| 도메인             | 테이블                       | 설명                           |
-|-----------------|---------------------------|------------------------------|
-| **member**      | `member`                  | 회원 Base (Joined Table 상속)    |
-|                 | `member_user`             | User 전용 (소셜 로그인 사용자, 크레딧 관련)  |
-|                 | `member_owner`            | Owner 전용 (현상소 사장님, 정산 계좌)    |
-|                 | `member_admin`            | Admin 전용 (관리자, 추후 확장)        |
-|                 | `social_account`          | 소셜 로그인 연동 - User 전용 (카카오/애플) |
-|                 | `member_address`          | 배송지 주소 - User 전용             |
-|                 | `member_device`           | FCM 디바이스 토큰 (푸시 알림용)         |
-|                 | `member_agreement`        | 약관 동의 이력                     |
-|                 | `terms`                   | 약관 버전 관리                     |
-|                 | `credit_history`          | AI 크레딧 충전/사용 내역 - User 전용     |
-|                 | `favorite_photo_lab`      | 관심 현상소                       |
-| **store**       | `photo_lab`               | 현상소 정보                       |
-|                 | `photo_lab_image`         | 현상소 이미지                      |
-|                 | `photo_lab_tag`           | 현상소-태그 조인 테이블                |
-|                 | `tag`                     | 현상소 태그                       |
-|                 | `photo_lab_notice`        | 현상소 공지사항                     |
-|                 | `photo_lab_business_hour` | 영업시간                         |
-|                 | `photo_lab_document`      | 사업자 증빙 서류                    |
-|                 | `region`                  | 지역 (시/도, 시/군/구)              |
-| **reservation** | `reservation`             | 예약 정보                        |
-| **photo**       | `development_order`       | 현상 주문                        |
-|                 | `scanned_photo`           | 스캔된 사진                       |
-|                 | `print_order`             | 인화 주문                        |
-|                 | `print_order_item`        | 인화 주문 상세                     |
-|                 | `print_order_photo`       | 인화 대상 사진 + 수량 (주문-스캔사진 매핑)   |
-|                 | `delivery`                | 배송 정보                        |
-|                 | `photo_restoration`       | AI 사진 복원 요청                  |
-| **community**   | `post`                    | 게시글/리뷰 (자가현상 여부 포함)          |
-|                 | `post_image`              | 게시글 이미지                      |
-|                 | `search_history`          | 최근 검색어 이력                    |
-|                 | `comments`                | 댓글                           |
-|                 | `post_like`               | 좋아요                          |
-| **inquiry**     | `inquiry`                 | 1:1 문의                       |
-|                 | `inquiry_image`           | 문의 첨부 이미지                    |
-|                 | `inquiry_reply`           | 문의 답변                        |
-| **common**      | `notice`                  | 공지사항                         |
-|                 | `promotion`               | 프로모션/배너                      |
-|                 | `notification`            | 알림                           |
-|                 | `payment`                 | 결제 정보 (포트원 V2)               |
+| 도메인             | 테이블                       | 설명                                |
+|-----------------|---------------------------|-----------------------------------|
+| **member**      | `member`                  | 회원 Base (Joined Table 상속)         |
+|                 | `member_user`             | User 전용 (소셜 로그인 사용자, 크레딧 관련)       |
+|                 | `member_owner`            | Owner 전용 (현상소 사장님, 정산 계좌)         |
+|                 | `member_admin`            | Admin 전용 (관리자, 추후 확장)             |
+|                 | `social_account`          | 소셜 로그인 연동 - User 전용 (카카오/애플)      |
+|                 | `member_address`          | 배송지 주소 - User 전용                  |
+|                 | `member_device`           | FCM 디바이스 토큰 ⛔ 데모데이 전 미구현         |
+|                 | `member_agreement`        | 약관 동의 이력                          |
+|                 | `terms`                   | 약관 버전 관리                          |
+|                 | `terms_social_mapping`    | 약관-소셜 태그 매핑 (카카오 동의 항목 연동)        |
+|                 | `credit_history`          | AI 크레딧 충전/사용 내역 - User 전용          |
+|                 | `favorite_photo_lab`      | 관심 현상소                            |
+| **store**       | `photo_lab`               | 현상소 정보                            |
+|                 | `photo_lab_image`         | 현상소 이미지                           |
+|                 | `photo_lab_tag`           | 현상소-태그 조인 테이블                     |
+|                 | `tag`                     | 현상소 태그                            |
+|                 | `photo_lab_notice`        | 현상소 공지사항                          |
+|                 | `photo_lab_business_hour` | 영업시간                              |
+|                 | `photo_lab_document`      | 사업자 증빙 서류                         |
+|                 | `region`                  | 지역 (시/도, 시/군/구)                   |
+| **reservation** | `reservation`             | 예약 정보                             |
+|                 | `reservation_slot`        | 예약 슬롯 (정원 관리)                     |
+| **photo**       | `development_order`       | 현상 주문                             |
+|                 | `scanned_photo`           | 스캔된 사진                            |
+|                 | `print_order`             | 인화 주문                             |
+|                 | `print_order_item`        | 인화 주문 상세                          |
+|                 | `print_order_photo`       | 인화 대상 사진 + 수량 (주문-스캔사진 매핑)        |
+|                 | `delivery`                | 배송 정보                             |
+|                 | `photo_restoration`       | AI 사진 복원 요청                       |
+| **community**   | `post`                    | 게시글/리뷰 (자가현상 여부 포함)               |
+|                 | `post_image`              | 게시글 이미지                           |
+|                 | `search_history`          | 최근 검색어 이력                         |
+|                 | `comments`                | 댓글                                |
+|                 | `post_like`               | 좋아요                               |
+| **inquiry**     | `inquiry`                 | 1:1 문의                            |
+|                 | `inquiry_image`           | 문의 첨부 이미지                         |
+|                 | `inquiry_reply`           | 문의 답변                             |
+| **common**      | `notice`                  | 공지사항 ⛔ 데모데이 전 미구현                 |
+|                 | `promotion`               | 프로모션/배너 ⛔ 데모데이 전 미구현              |
+|                 | `notification`            | 알림 ⛔ 데모데이 전 미구현                   |
+|                 | `payment`                 | 결제 정보 (포트원 V2)                    |
 
 ---
 
@@ -64,11 +66,12 @@ member (Base: Joined Table 상속)
    │
    └── 1:1 ─ member_admin (추후 확장)
 
-member ─┬─ 1:N ─ member_device (FCM 토큰, 공통)
-        ├─ 1:N ─ member_agreement ─── N:1 ─ terms (약관 버전, 공통)
-        ├─ 1:N ─ reservation ──── 0..1:1 ─ development_order ─┬─ 1:N ─ scanned_photo
-        │                                                     └─ 0..1:N ─ print_order ─┬─ 1:N ─ print_order_item
-        │                                                                              └─ 0..1:1 ─ delivery
+member ─┬─ 1:N ─ member_device (FCM 토큰, 공통) ⛔ 미구현
+        ├─ 1:N ─ member_agreement ─── N:1 ─ terms ─── 1:N ─ terms_social_mapping (소셜 태그 매핑)
+        ├─ 1:N ─ reservation ─── N:1 ─ reservation_slot (슬롯 정원 관리)
+        │    └── 0..1:1 ─ development_order ─┬─ 1:N ─ scanned_photo
+        │                                    └─ 0..1:N ─ print_order ─┬─ 1:N ─ print_order_item
+        │                                                             └─ 0..1:1 ─ delivery
         ├─ 1:N ─ development_order (현장 주문, 예약 없이)
         ├─ 1:N ─ print_order (현장 주문, 현상 없이)
         ├─ 1:N ─ photo_restoration (AI 복원, 크레딧 사용)
@@ -78,14 +81,15 @@ member ─┬─ 1:N ─ member_device (FCM 토큰, 공통)
         ├─ 1:N ─ favorite_photo_lab
         ├─ 1:N ─ inquiry ─┬─ 1:N ─ inquiry_image
         │                 └─ 1:N ─ inquiry_reply
-        ├─ 1:N ─ notification
+        ├─ 1:N ─ notification ⛔ 미구현
         └─ 1:N ─ payment (결제, 크레딧 구매)
 
 photo_lab ─┬─ 1:N ─ photo_lab_image
-           ├─ 1:1 ─ photo_lab_tag ─── 1:N ─ tag (현상소 태그)
+           ├─ N:N ─ tag (via photo_lab_tag 조인 테이블)
            ├─ 1:N ─ photo_lab_notice
            ├─ 1:N ─ photo_lab_business_hour
            ├─ 1:N ─ photo_lab_document (증빙서류)
+           ├─ 1:N ─ reservation_slot (시간대별 슬롯)
            ├─ 1:N ─ reservation
            ├─ 1:N ─ development_order (현장 주문)
            └─ 1:N ─ print_order (현장 주문)
@@ -97,63 +101,69 @@ photo_lab ─┬─ 1:N ─ photo_lab_image
 
 ```java
 // 회원 (Joined Table 상속)
-MemberType:USER,OWNER,ADMIN  // role 컬럼 (discriminator)
+MemberType:USER,OWNER,ADMIN           // role 컬럼 (discriminator)
 MemberStatus:ACTIVE,SUSPENDED,WITHDRAWN
-SocialProvider:KAKAO,APPLE    // User 전용
-DeviceType:IOS,ANDROID,WEB
+SocialProvider:KAKAO,APPLE             // User 전용
+DeviceType:IOS,ANDROID,WEB            // ⛔ 미구현
 
 // 현상소
 PhotoLabStatus:PENDING,ACTIVE,SUSPENDED,CLOSED
+NoticeType:GENERAL,EVENT,POLICY        // photo_lab_notice.notice_type
+DocumentType:BUSINESS_LICENSE,BUSINESS_PERMIT
 
 // 예약/주문
-ReservationStatus:RESERVED,COMPLETED,CANCELLED
+ReservationStatus:RESERVED,COMPLETED,CANCELED   // ⚠️ CANCELED (D 1개)
 DevelopmentOrderStatus:RECEIVED,DEVELOPING,SCANNING,COMPLETED
 PrintOrderStatus:PENDING,CONFIRMED,PRINTING,READY,SHIPPED,COMPLETED
 ReceiptMethod:PICKUP,DELIVERY
 DeliveryStatus:PENDING,PREPARING,SHIPPED,IN_TRANSIT,DELIVERED
 
+// 인화 옵션 (photo.enums.print 패키지)
+FilmType:SLIDE,COLOR_NEG,BLACK_WHITE              // extra(basePrice) 메서드 포함
+PaperType:ECO_GLOSSY_260,ECO_LUSTER_255,EPSON_SEMIGLOSSY_250  // extraPrice 포함
+PrintMethod:INKJET,CPRINT                          // extraPrice 포함
+PrintSize:SIZE_5x7,SIZE_6x8,SIZE_8x10,SIZE_8x12,A4,SIZE_10x15,SIZE_11x14  // basePrice 포함
+FrameType:WHITE_FRAME,NO_FRAME                     // extraPrice 포함
+
 // 커뮤니티
-PostStatus:ACTIVE,HIDDEN,DELETED
+CommunityStatus:ACTIVE,HIDDEN,DELETED  // Post, Comment 공용 (코드: CommunityStatus)
 
 // 문의
 InquiryStatus:PENDING,ANSWERED,CLOSED
 
-// 공지/알림
-NoticeType:GENERAL,EVENT,POLICY
+// 공지/알림 ⛔ 미구현
 NotificationType:ORDER,RESERVATION,COMMUNITY,MARKETING,NOTICE
 PromotionType:BANNER,POPUP,EVENT
 
-// 인화 옵션
-PaperType:GLOSSY,MATTE,SILK,LUSTER
-PrintMethod:INKJET,LASER,SILVER_HALIDE
-PrintProcess:NORMAL,BORDER,BORDERLESS
+// 약관
+TermsType:SERVICE,PRIVACY,LOCATION,SERVICE_INFO,MARKETING  // ⚠️ 코드 기준 (SERVICE_INFO 포함)
 
-// 약관/결제/복원 (v1.2.0 추가)
-AgreementType:TERMS,PRIVACY,MARKETING,LOCATION
-DocumentType:BUSINESS_LICENSE,BUSINESS_PERMIT
+// AI 복원
 RestorationStatus:PENDING,PROCESSING,COMPLETED,FAILED
 FeedbackRating:GOOD,BAD
+RestorationTier:PREMIUM                // 다중 모델 지원 (creditCost, modelIdentifier 포함)
 
 // 결제/크레딧 (v2.4.0 포트원 V2 전환)
-PaymentStatus:          // 포트원 V2 표준
-READY                 // 결제 대기
-        PENDING               // 결제 진행 중
-VIRTUAL_ACCOUNT_ISSUED // 가상계좌 발급됨
-        PAID                  // 결제 완료
-FAILED                // 결제 실패
-        PARTIAL_CANCELLED     // 부분 취소
-CANCELLED             // 전액 취소
+PaymentStatus:                         // 포트원 V2 표준
+  READY,                               // 결제 대기
+  PENDING,                             // 결제 진행 중
+  VIRTUAL_ACCOUNT_ISSUED,              // 가상계좌 발급됨
+  PAID,                                // 결제 완료
+  FAILED,                              // 결제 실패
+  PARTIAL_CANCELLED,                   // 부분 취소
+  CANCELLED                            // 전액 취소
 
-PaymentMethod:          // 포트원 V2 결제수단 (사용: 카드, 계좌이체, 가상계좌, 간편결제)
+PaymentMethod:                         // 포트원 V2 결제수단
   CARD, TRANSFER, VIRTUAL_ACCOUNT, EASY_PAY
 
-PgProvider:             // PG사/간편결제 제공자 (현재: KCP + 간편결제 3종)
-  KCP,                  // 메인 PG사 (카드, 계좌이체, 가상계좌)
-  KAKAOPAY, NAVERPAY, TOSSPAY  // 간편결제
+PgProvider:                            // PG사/간편결제 제공자 (현재: KCP + 간편결제 3종)
+  KCP,                                 // 메인 PG사 (카드, 계좌이체, 가상계좌)
+  KAKAOPAY, NAVERPAY, TOSSPAY         // 간편결제
   // 확장 가능: TOSSPAYMENTS, INICIS, NICE 등
 
 OrderType:CREDIT_PURCHASE,DEVELOPMENT_ORDER,PRINT_ORDER
 CreditHistoryType:SIGNUP_BONUS,REFRESH,PURCHASE,USE,REFUND
+CreditRelatedType:PHOTO_RESTORATION,PAYMENT  // credit_history.related_type
 ```
 
 ---
@@ -298,10 +308,8 @@ CREATE TABLE social_account
 CREATE TABLE member_address
 (
     id             BIGINT       NOT NULL AUTO_INCREMENT,
-    member_id      BIGINT       NOT NULL,               -- FK
+    member_id      BIGINT       NOT NULL,               -- FK → member_user
     address_name   VARCHAR(50)  NOT NULL,               -- 배송지 이름
-    recipient_name VARCHAR(50) NULL,                    -- 배송자 이름
-    phone          VARCHAR(20) NULL,
     zipcode        VARCHAR(10)  NOT NULL,               -- 우편번호
     address        VARCHAR(200) NOT NULL,               -- 'ex) 서울 서초구 고무래로 89
     address_detail VARCHAR(100) NULL,                   -- 'ex) 3003동 303호
@@ -329,7 +337,7 @@ CREATE TABLE terms
     PRIMARY KEY (id),
     UNIQUE KEY uk_terms_version (type, version),
     INDEX          idx_terms_active (type, is_active),
-    CONSTRAINT chk_terms_type CHECK (type IN ('SERVICE', 'PRIVACY', 'LOCATION', 'NOTIFICATION'))
+    CONSTRAINT chk_terms_type CHECK (type IN ('SERVICE', 'PRIVACY', 'LOCATION', 'SERVICE_INFO', 'MARKETING'))
 ) ENGINE=InnoDB COMMENT='약관 버전';
 
 CREATE TABLE member_agreement
@@ -346,6 +354,18 @@ CREATE TABLE member_agreement
     CONSTRAINT fk_agreement_member FOREIGN KEY (member_id) REFERENCES member (id),
     CONSTRAINT fk_agreement_terms FOREIGN KEY (terms_id) REFERENCES terms (id)
 ) ENGINE=InnoDB COMMENT='약관 동의 이력';
+
+CREATE TABLE terms_social_mapping
+(                                        -- 약관과 소셜 로그인 태그 매핑 (카카오 동의 항목 연동)
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    terms_id   BIGINT       NOT NULL,    -- FK → terms
+    provider   VARCHAR(20)  NOT NULL,    -- KAKAO, APPLE (SocialProvider)
+    social_tag VARCHAR(100) NOT NULL,    -- 소셜 측 태그 (예: "service_policy", "privacy_policy")
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_tsm_terms FOREIGN KEY (terms_id) REFERENCES terms (id)
+) ENGINE=InnoDB COMMENT='약관-소셜 태그 매핑';
 
 CREATE TABLE member_device
 (                                       -- FCM(Firebase) 디바이스 토큰 -- 데모데이 전까지 절대 개발 금지
@@ -420,6 +440,8 @@ CREATE TABLE photo_lab
     status                    VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
     is_delivery_available     BOOLEAN      NOT NULL DEFAULT FALSE, -- TRUE: 배송가능, FALSE: 배송 불가능
     max_reservations_per_hour INT UNSIGNED NOT NULL DEFAULT 3,     -- 시간당 최대 예약 가능 수 (Owner 조정 가능)
+    load_base_roll            INT UNSIGNED NOT NULL DEFAULT 1,     -- 부하 계산 기준 롤 수
+    load_add_minutes          INT UNSIGNED NOT NULL DEFAULT 120,   -- 추가 롤당 분 (예약 대기 시간 계산)
     qr_code_url               VARCHAR(500) NULL,                   -- QR 코드 이미지 URL (현장 주문용)
     created_at                DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -546,11 +568,10 @@ CREATE TABLE region
 CREATE TABLE reservation
 (
     id               BIGINT      NOT NULL AUTO_INCREMENT,
-    member_id        BIGINT      NOT NULL,               -- FK
-    photo_lab_id     BIGINT      NOT NULL,               -- FK
-    reservation_date DATE        NOT NULL,               -- 사용자가 선택한 날짜
-    reservation_time TIME        NOT NULL,               -- 사용자가 선택한 시간
-    status           VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    member_id        BIGINT      NOT NULL,               -- FK → member_user
+    slot_id          BIGINT      NOT NULL,               -- FK → reservation_slot (날짜/시간은 슬롯을 통해 참조)
+    photo_lab_id     BIGINT      NOT NULL,               -- FK → photo_lab
+    status           VARCHAR(20) NOT NULL DEFAULT 'RESERVED',
     -- 작업 내용 선택 (다중 선택 가능)
     is_develop       BOOLEAN     NOT NULL DEFAULT FALSE, -- 현상
     is_scan          BOOLEAN     NOT NULL DEFAULT FALSE, -- 스캔
@@ -561,11 +582,11 @@ CREATE TABLE reservation
     updated_at       DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at       DATETIME NULL,
     PRIMARY KEY (id),
-    INDEX            idx_reservation_member (member_id, status),
-    INDEX            idx_reservation_lab (photo_lab_id, reservation_date),
+    INDEX            idx_reservation_lab_status (photo_lab_id, status),
     CONSTRAINT fk_reservation_member FOREIGN KEY (member_id) REFERENCES member (id),
+    CONSTRAINT fk_reservation_slot FOREIGN KEY (slot_id) REFERENCES reservation_slot (id),
     CONSTRAINT fk_reservation_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab (id),
-    CONSTRAINT chk_reservation_status CHECK (status IN ('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'))
+    CONSTRAINT chk_reservation_status CHECK (status IN ('RESERVED', 'COMPLETED', 'CANCELED'))
 ) ENGINE=InnoDB COMMENT='예약';
 
 CREATE TABLE reservation_slot
@@ -734,12 +755,14 @@ CREATE TABLE photo_restoration
     id                      BIGINT       NOT NULL AUTO_INCREMENT,
     member_id               BIGINT       NOT NULL,
     original_path           VARCHAR(500) NOT NULL,                   -- 원본 이미지 GCS 경로
-    mask_path               VARCHAR(500) NOT NULL,                   -- 마스크 이미지 GCS 경로 (프론트에서 전송)
+    mask_path               VARCHAR(500) NULL,                       -- 마스크 이미지 GCS 경로 (모델에 따라 불필요)
     restored_path           VARCHAR(500) NULL,                       -- 복원된 이미지 GCS 경로
     restored_width          INT NULL,                                -- 복원된 이미지 너비 (픽셀)
     restored_height         INT NULL,                                -- 복원된 이미지 높이 (픽셀)
     status                  VARCHAR(20)  NOT NULL DEFAULT 'PENDING', -- PENDING, PROCESSING, COMPLETED, FAILED
-    replicate_prediction_id VARCHAR(100) NULL,                       -- Replicate API prediction ID (webhook 매칭용)
+    replicate_prediction_id VARCHAR(100) NULL,                       -- Replicate API prediction ID (하위호환)
+    provider_job_id         VARCHAR(100) NULL,                       -- AI 제공자 작업 ID (범용)
+    provider_name           VARCHAR(30)  NULL,                       -- AI 제공자 이름 (REPLICATE 등)
     -- 크레딧 관련
     credit_used             INT UNSIGNED    NOT NULL DEFAULT 1,      -- 사용된 크레딧 수 (복원 완료 시 차감)
     -- 에러 정보
@@ -767,9 +790,9 @@ CREATE TABLE post
     member_id         BIGINT      NOT NULL,               -- FK
     photo_lab_id      BIGINT NULL,                        -- FK (현상소 이용 시)
     is_self_developed BOOLEAN     NOT NULL DEFAULT FALSE, -- TRUE: 자가현상, FALSE: 현상소 이용
-    title             VARCHAR(200) NULL,
+    title             VARCHAR(30) NOT NULL,               -- 게시글 제목
     content           TEXT        NOT NULL,
-    lab_review        VARCHAR(500) NULL,                  -- 현상소 리뷰 (현상소 이용 시)
+    lab_review        VARCHAR(300) NULL,                  -- 현상소 리뷰 (현상소 이용 시)
     like_count        INT UNSIGNED    NOT NULL DEFAULT 0,
     comment_count     INT UNSIGNED    NOT NULL DEFAULT 0,
     status            VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
@@ -783,7 +806,7 @@ CREATE TABLE post
     FULLTEXT          INDEX ft_post_content (title, content),
     CONSTRAINT fk_post_member FOREIGN KEY (member_id) REFERENCES member (id),
     CONSTRAINT fk_post_lab FOREIGN KEY (photo_lab_id) REFERENCES photo_lab (id),
-    CONSTRAINT chk_post_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED')),
+    CONSTRAINT chk_post_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED')), -- CommunityStatus enum
     CONSTRAINT chk_post_lab_required CHECK (
         (is_self_developed = TRUE AND photo_lab_id IS NULL) OR
         (is_self_developed = FALSE AND photo_lab_id IS NOT NULL)
@@ -818,7 +841,7 @@ CREATE TABLE comments
     INDEX      idx_comments_post (post_id, created_at),
     CONSTRAINT fk_comments_post FOREIGN KEY (post_id) REFERENCES post (id),
     CONSTRAINT fk_comments_member FOREIGN KEY (member_id) REFERENCES member (id),
-    CONSTRAINT chk_comments_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED'))
+    CONSTRAINT chk_comments_status CHECK (status IN ('ACTIVE', 'HIDDEN', 'DELETED')) -- CommunityStatus enum
 ) ENGINE=InnoDB COMMENT='댓글';
 
 CREATE TABLE post_like
@@ -900,7 +923,7 @@ CREATE TABLE inquiry_reply
 -- ============================================
 
 CREATE TABLE notice
-(                                                    -- 전체 회원 공지사항 게시판 
+(                                                    -- 전체 회원 공지사항 게시판 -- ⛔ 데모데이 전 미구현
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     title       VARCHAR(200) NOT NULL,
     content     TEXT         NOT NULL,
@@ -1043,6 +1066,7 @@ CREATE TABLE payment
 | **3.0.2** | **2026-01-23** | photo_lab 테이블 내 review_count 추가, search_history 테이블 신규 생성                                                                                                                                                                                                        |
 | **3.0.3** | **2026-01-25** | region 테이블 칼럼명 변경 sido -> parentRegion, sigungu -> regionName                                                                                                                                                                                                    |
 | **3.1.0** | **2026-02-10** | Token → Credit 용어 리팩토링: `token_history` → `credit_history`, `token_balance` → `credit_balance`, `token_amount` → `credit_amount`, `token_used` → `credit_used`, `TOKEN_PURCHASE` → `CREDIT_PURCHASE` |
+| **3.2.0** | **2026-02-11** | ERD-코드 전면 동기화: `reservation` 구조 변경 (slot_id FK, status: RESERVED/COMPLETED/CANCELED), `reservation_slot` 테이블 목록 추가, `terms_social_mapping` 테이블 신규 추가, `TermsType` CHECK 수정 (SERVICE_INFO/MARKETING), `photo_lab`에 `load_base_roll`/`load_add_minutes` 추가, `photo_restoration`에 `provider_job_id`/`provider_name` 추가 및 `mask_path` nullable 변경, `post.title` VARCHAR(30), `post.lab_review` VARCHAR(300), `member_address`에서 `recipient_name`/`phone` 제거, Enum 정의 코드 기준 전면 정비 (CommunityStatus, CreditRelatedType, FilmType, PrintSize, FrameType, RestorationTier 등), `notice`/`promotion`/`notification`/`member_device` 데모데이 전 미구현 표기 |
 
 ---
 

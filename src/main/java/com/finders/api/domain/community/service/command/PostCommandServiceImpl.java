@@ -86,21 +86,10 @@ public class PostCommandServiceImpl implements PostCommandService {
             }
         }
 
-        String profileUrl = resolveImageUrl(memberUser.getProfileImage());
+        String profileUrl = storageService.resolveUrl(memberUser.getProfileImage());
 
         return PostResponse.PostDetailResDTO.fromNewPost(post, profileUrl, imageResDTOs);
     }
-
-    private String resolveImageUrl(String value) {
-        if (value == null || value.isBlank()) return null;
-
-        if (value.startsWith("http://") || value.startsWith("https://")) {
-            return value;
-        }
-
-        return storageService.getPublicUrl(value);
-    }
-
 
     @Override
     public void deletePost(Long postId, Long memberId) {
