@@ -229,6 +229,8 @@ locals {
     "roles/logging.logWriter",               # CI 로깅
     "roles/secretmanager.secretAccessor",    # 시크릿 값 읽기
     "roles/secretmanager.viewer",            # 시크릿 목록 조회
+    "roles/iam.workloadIdentityPoolAdmin",   # WIF pool/provider 관리
+    "roles/run.admin",                       # Cloud Run 서비스 관리
   ]
 }
 
@@ -274,21 +276,4 @@ resource "google_storage_bucket_iam_member" "public_all_users_viewer" {
   bucket = module.storage.public_bucket_name
   role   = "roles/storage.objectViewer"
   member = "allUsers"
-}
-
-# =============================================================================
-# img-resizer Service Account (Cloud Run → private GCS bucket 접근용)
-# =============================================================================
-
-resource "google_service_account" "img_resizer" {
-  account_id   = "img-resizer-sa"
-  display_name = "img-resizer-sa"
-  description  = "Cloud Run 이미지 리사이저가 private 버킷에 접근하기 위한 서비스 계정"
-  project      = var.project_id
-}
-
-resource "google_project_iam_member" "img_resizer_storage_viewer" {
-  project = var.project_id
-  role    = "roles/storage.objectViewer"
-  member  = "serviceAccount:${google_service_account.img_resizer.email}"
 }
