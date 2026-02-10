@@ -123,7 +123,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         List<String> origins = corsProperties.allowedOrigins();
-        if (origins.size() == 1 && "*".equals(origins.getFirst())) {
+        if (List.of("*").equals(origins)) {
             // CORS_ALLOWED_ORIGINS=* → 모든 Origin 허용 (dev 환경용)
             // setAllowedOrigins(["*"])는 allowCredentials(true)와 동시 사용 불가하므로
             // setAllowedOriginPatterns를 사용
