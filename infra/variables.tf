@@ -60,20 +60,20 @@ variable "cloudflare_tunnel_service" {
 # IAM
 # =============================================================================
 
-variable "owner_member_emails" {
-  description = "프로젝트 소유자 이메일 (roles/editor + 보안 리뷰 + 모니터링)"
+variable "admin_member_emails" {
+  description = "Admin: roles/editor + projectIamAdmin + securityReviewer + SSH (near-owner level)"
   type        = list(string)
   default     = []
 }
 
-variable "editor_member_emails" {
-  description = "에디터 이메일 (roles/editor + IAP SSH 접근 + 모니터링)"
+variable "lead_member_emails" {
+  description = "Lead: roles/editor + projectIamAdmin + SSH (team lead level)"
   type        = list(string)
   default     = []
 }
 
 variable "team_member_emails" {
-  description = "팀 멤버 이메일 (로그/모니터링 뷰어 + IAP SSH 접근)"
+  description = "Member: logging/monitoring viewer + SSH (read-only access)"
   type        = list(string)
   default     = []
 }
@@ -101,4 +101,14 @@ variable "cors_allowed_origins" {
     "http://localhost:5173",
     "http://localhost:8080",
   ]
+}
+
+# =============================================================================
+# GitHub
+# =============================================================================
+
+variable "github_repository" {
+  description = "GitHub repository for WIF (e.g. Finders-Official/BE)"
+  type        = string
+  default     = "Finders-Official/BE"
 }

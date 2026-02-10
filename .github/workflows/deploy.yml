@@ -49,6 +49,12 @@ jobs:
         with:
           project_id: '${{ secrets.GCP_PROJECT_ID }}'
 
+      - name: Load Deploy Config from Terraform
+        run: |
+          gcloud storage cp gs://finders-terraform-state/deploy-config.json /tmp/deploy-config.json
+          echo "GCE_NAME=$(jq -r .gce_name /tmp/deploy-config.json)" >> $GITHUB_ENV
+          echo "GCE_ZONE=$(jq -r .gce_zone /tmp/deploy-config.json)" >> $GITHUB_ENV
+
       # 6. Artifact Registry 인증
       - name: Authenticate to Artifact Registry
         run: |
@@ -64,28 +70,20 @@ jobs:
 
       - name: Refresh Environment Variables from Secret Manager
         run: |
-          # NOTE:
-          # - List/access secrets on the GitHub runner (WIF auth)
-          # - Upload the resulting env file to the VM and move it with sudo
-          : > .env.prod
-          gcloud secrets list \
+          gcloud secrets versions access latest \
             --project='${{ secrets.GCP_PROJECT_ID }}' \
-            --filter='labels.env=prod' \
-            --format='value(name)' \
-          | while read -r SECRET_NAME; do
-              VAR_NAME=$(echo "$SECRET_NAME" | sed 's/^app-prod-//' | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-              SECRET_VALUE=$(gcloud secrets versions access latest --project='${{ secrets.GCP_PROJECT_ID }}' --secret="$SECRET_NAME" 2>/dev/null) || continue
-              echo "$VAR_NAME=$SECRET_VALUE" >> .env.prod
-            done
+            --secret='finders-prod-config' \
+          | jq -r 'to_entries[] | "\(.key | ascii_upcase)=\(.value)"' \
+          > .env.prod
 
-          gcloud compute scp .env.prod ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/.env.prod \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute scp .env.prod ${{ env.GCE_NAME }}:~/.env.prod \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet
 
-          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute ssh ${{ env.GCE_NAME }} \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
@@ -98,38 +96,38 @@ jobs:
       - name: 'Deploy to GCE via IAP (Blue-Green)'
         run: |
           # A. 서버 디렉토리 생성
-          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute ssh ${{ env.GCE_NAME }} \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
-            --command="sudo mkdir -p /projects/Spring"
+            --command="sudo mkdir -p /projects/Finders/BE"
 
           # B-1. docker-compose.infra.yml 전송
-          gcloud compute scp docker-compose.infra.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.infra.yml \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute scp docker-compose.infra.yml ${{ env.GCE_NAME }}:~/docker-compose.infra.yml \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet
 
           # B-2. docker-compose.prod.yml 전송
-          gcloud compute scp docker-compose.prod.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.prod.yml \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute scp docker-compose.prod.yml ${{ env.GCE_NAME }}:~/docker-compose.prod.yml \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet
 
           # C. Blue-Green 배포 명령어 실행
-          gcloud compute ssh ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }} \
-            --zone=${{ secrets.GCE_ZONE }} \
+          gcloud compute ssh ${{ env.GCE_NAME }} \
+            --zone=${{ env.GCE_ZONE }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
             --command="
-              sudo mv ~/docker-compose.infra.yml /projects/Spring/docker-compose.infra.yml
-              sudo mv ~/docker-compose.prod.yml /projects/Spring/docker-compose.prod.yml
+              sudo mv ~/docker-compose.infra.yml /projects/Finders/BE/docker-compose.infra.yml
+              sudo mv ~/docker-compose.prod.yml /projects/Finders/BE/docker-compose.prod.yml
 
-              cd /projects/Spring
+              cd /projects/Finders/BE
               DC='sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml'
 
               sudo docker network create finders-network || true

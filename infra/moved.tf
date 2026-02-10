@@ -93,30 +93,69 @@ moved {
 }
 
 # ============================================================
-# IAM 3-tier restructure: admin → owner
+# IAM tier rename: owner → admin, editor → lead (#396)
 # ============================================================
 
 moved {
-  from = google_project_iam_member.admin_editor
-  to   = google_project_iam_member.owner_editor
+  from = google_project_iam_member.owner_editor
+  to   = google_project_iam_member.admin_editor
 }
 
 moved {
-  from = google_project_iam_member.admin_logging_viewer
-  to   = google_project_iam_member.owner_logging_viewer
+  from = google_project_iam_member.owner_iam_security_reviewer
+  to   = google_project_iam_member.admin_security_reviewer
 }
 
 moved {
-  from = google_project_iam_member.admin_monitoring_viewer
-  to   = google_project_iam_member.owner_monitoring_viewer
+  from = google_service_account_iam_member.owner_sa_token_creator
+  to   = google_service_account_iam_member.admin_sa_token_creator
 }
 
 moved {
-  from = google_project_iam_member.admin_iam_security_reviewer
-  to   = google_project_iam_member.owner_iam_security_reviewer
+  from = google_project_iam_member.editor_editor
+  to   = google_project_iam_member.lead_editor
 }
 
 moved {
-  from = google_service_account_iam_member.admin_sa_token_creator
-  to   = google_service_account_iam_member.owner_sa_token_creator
+  from = google_project_iam_member.editor_iap_tunnel
+  to   = google_project_iam_member.lead_iap_tunnel
+}
+
+moved {
+  from = google_project_iam_member.editor_compute_os_login
+  to   = google_project_iam_member.lead_compute_os_login
+}
+
+moved {
+  from = google_service_account_iam_member.editor_sa_token_creator
+  to   = google_service_account_iam_member.lead_sa_token_creator
+}
+
+# ============================================================
+# Terraform import blocks (#400)
+# ============================================================
+
+import {
+  to = google_artifact_registry_repository.api_docker
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/asia-northeast3/repositories/finders-docker"
+}
+
+import {
+  to = google_artifact_registry_repository.image_docker
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/asia-northeast3/repositories/finders-image"
+}
+
+import {
+  to = google_cloud_run_v2_service.img_resizer
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/asia-northeast3/services/img-resizer"
+}
+
+import {
+  to = google_iam_workload_identity_pool.github
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/global/workloadIdentityPools/finders-pool"
+}
+
+import {
+  to = google_iam_workload_identity_pool_provider.github
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/global/workloadIdentityPools/finders-pool/providers/github-provider"
 }
