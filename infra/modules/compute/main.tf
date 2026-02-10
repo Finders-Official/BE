@@ -70,29 +70,15 @@ resource "google_compute_instance" "app_server" {
 
     # -------------------------------------------------------
     # 2. Fetch secrets from Secret Manager → .env.prod
+    #    Single JSON secret instead of N individual secrets
     # -------------------------------------------------------
     mkdir -p /projects/Finders/BE
 
-    # Recreate env file on every boot to pick up secret changes
-    : > "$ENV_FILE"
-
-    gcloud secrets list \
+    gcloud secrets versions access latest \
       --project="${var.project_id}" \
-      --filter="labels.env=prod" \
-      --format="value(name)" \
-    | while read -r SECRET_NAME; do
-        # app-prod-key-name → KEY_NAME
-        VAR_NAME=$(echo "$SECRET_NAME" \
-          | sed 's/^app-prod-//' \
-          | tr '[:lower:]' '[:upper:]' \
-          | tr '-' '_')
-
-        SECRET_VALUE=$(gcloud secrets versions access latest \
-          --project="${var.project_id}" \
-          --secret="$SECRET_NAME" 2>/dev/null) || continue
-
-        echo "$VAR_NAME=$SECRET_VALUE" >> "$ENV_FILE"
-      done
+      --secret="finders-prod-config" \
+    | jq -r 'to_entries[] | "\(.key | ascii_upcase)=\(.value)"' \
+    > "$ENV_FILE"
 
     chmod 600 "$ENV_FILE"
 
@@ -101,26 +87,11 @@ resource "google_compute_instance" "app_server" {
     # -------------------------------------------------------
     ENV_FILE_DEV="/projects/Finders/BE/.env.dev"
 
-    # Recreate env file on every boot to pick up secret changes
-    : > "$ENV_FILE_DEV"
-
-    gcloud secrets list \
+    gcloud secrets versions access latest \
       --project="${var.project_id}" \
-      --filter="labels.env=dev" \
-      --format="value(name)" \
-    | while read -r SECRET_NAME; do
-        # app-dev-key-name → KEY_NAME
-        VAR_NAME=$(echo "$SECRET_NAME" \
-          | sed 's/^app-dev-//' \
-          | tr '[:lower:]' '[:upper:]' \
-          | tr '-' '_')
-
-        SECRET_VALUE=$(gcloud secrets versions access latest \
-          --project="${var.project_id}" \
-          --secret="$SECRET_NAME" 2>/dev/null) || continue
-
-        echo "$VAR_NAME=$SECRET_VALUE" >> "$ENV_FILE_DEV"
-      done
+      --secret="finders-dev-config" \
+    | jq -r 'to_entries[] | "\(.key | ascii_upcase)=\(.value)"' \
+    > "$ENV_FILE_DEV"
 
     chmod 600 "$ENV_FILE_DEV"
 

@@ -70,19 +70,11 @@ jobs:
 
       - name: Refresh Environment Variables from Secret Manager
         run: |
-          # NOTE:
-          # - List/access secrets on the GitHub runner (WIF auth)
-          # - Upload the resulting env file to the VM and move it with sudo
-          : > .env.dev
-          gcloud secrets list \
+          gcloud secrets versions access latest \
             --project='${{ secrets.GCP_PROJECT_ID }}' \
-            --filter='labels.env=dev' \
-            --format='value(name)' \
-          | while read -r SECRET_NAME; do
-              VAR_NAME=$(echo "$SECRET_NAME" | sed 's/^app-dev-//' | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-              SECRET_VALUE=$(gcloud secrets versions access latest --project='${{ secrets.GCP_PROJECT_ID }}' --secret="$SECRET_NAME" 2>/dev/null) || continue
-              echo "$VAR_NAME=$SECRET_VALUE" >> .env.dev
-            done
+            --secret='finders-dev-config' \
+          | jq -r 'to_entries[] | "\(.key | ascii_upcase)=\(.value)"' \
+          > .env.dev
 
           gcloud compute scp .env.dev ${{ env.GCE_NAME }}:~/.env.dev \
             --zone=${{ env.GCE_ZONE }} \
