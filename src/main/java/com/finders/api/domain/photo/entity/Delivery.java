@@ -165,13 +165,10 @@ public class Delivery extends BaseEntity {
     /**
      * 배송 완료 처리
      */
-    public void markDelivered(LocalDateTime deliveredAt) {
-        this.deliveredAt = (deliveredAt != null) ? deliveredAt : LocalDateTime.now();
+    public void markDelivered() {
+        this.deliveredAt =  LocalDateTime.now();
         this.status = DeliveryStatus.DELIVERED;
     }
 
-    public void updateStatus(DeliveryStatus status){
-        this.status = status;
-    }
 
 }

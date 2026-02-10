@@ -158,8 +158,8 @@ public class OwnerPhotoController {
     }
 
     @Operation(
-            summary = "오너 - 현상 주문 상태 변경",
-            description = "오너가 현상 주문의 상태를 원하는 값으로 변경합니다."
+            summary = "오너 - 현상 주문 완료",
+            description = "오너가 현상 주문의 상태를 완료로 변경합니다."
     )
     @PatchMapping("/{photoLabId}/print-orders/{printOrderId}/status")
     @PreAuthorize("hasRole('OWNER')")
