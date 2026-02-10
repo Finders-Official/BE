@@ -3,111 +3,55 @@ locals {
 }
 
 # =============================================================================
-# Owner IAM bindings (프로젝트 소유자 — 전체 관리 권한)
+# Admin tier (near-owner level)
 #
-# roles/editor를 의도적으로 사용합니다.
-# - 대상: 프로젝트 소유자
-# - 사유: 프로젝트 전반 관리 및 보안 리뷰 권한 필요
-# - roles/editor는 logging.viewer, monitoring.viewer, serviceAccountTokenCreator를
-#   포함하지 않으므로 아래에서 별도 부여합니다.
+# roles/editor + IAM 정책 관리 + 보안 리뷰 + SSH 접근
+# roles/editor는 logging.viewer, monitoring.viewer, compute.viewer,
+# secretmanager 접근 등을 이미 포함하므로 별도 부여 불필요.
 # =============================================================================
 
-resource "google_project_iam_member" "owner_editor" {
-  for_each = toset(var.owner_member_emails)
+resource "google_project_iam_member" "admin_editor" {
+  for_each = toset(var.admin_member_emails)
 
   project = var.project_id
   role    = "roles/editor"
   member  = "user:${each.value}"
 }
 
-resource "google_project_iam_member" "owner_logging_viewer" {
-  for_each = toset(var.owner_member_emails)
+resource "google_project_iam_member" "admin_project_iam_admin" {
+  for_each = toset(var.admin_member_emails)
 
   project = var.project_id
-  role    = "roles/logging.viewer"
+  role    = "roles/resourcemanager.projectIamAdmin"
   member  = "user:${each.value}"
 }
 
-resource "google_project_iam_member" "owner_monitoring_viewer" {
-  for_each = toset(var.owner_member_emails)
-
-  project = var.project_id
-  role    = "roles/monitoring.viewer"
-  member  = "user:${each.value}"
-}
-
-resource "google_service_account_iam_member" "owner_sa_token_creator" {
-  for_each = toset(var.owner_member_emails)
-
-  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.compute_sa_email}"
-  role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "user:${each.value}"
-}
-
-resource "google_project_iam_member" "owner_iam_security_reviewer" {
-  for_each = toset(var.owner_member_emails)
+resource "google_project_iam_member" "admin_security_reviewer" {
+  for_each = toset(var.admin_member_emails)
 
   project = var.project_id
   role    = "roles/iam.securityReviewer"
   member  = "user:${each.value}"
 }
 
-# =============================================================================
-# Editor IAM bindings (에디터 — 운영 권한)
-#
-# roles/editor + IAP SSH 접근 + 모니터링 권한
-# =============================================================================
-
-resource "google_project_iam_member" "editor_editor" {
-  for_each = toset(var.editor_member_emails)
-
-  project = var.project_id
-  role    = "roles/editor"
-  member  = "user:${each.value}"
-}
-
-resource "google_project_iam_member" "editor_logging_viewer" {
-  for_each = toset(var.editor_member_emails)
-
-  project = var.project_id
-  role    = "roles/logging.viewer"
-  member  = "user:${each.value}"
-}
-
-resource "google_project_iam_member" "editor_monitoring_viewer" {
-  for_each = toset(var.editor_member_emails)
-
-  project = var.project_id
-  role    = "roles/monitoring.viewer"
-  member  = "user:${each.value}"
-}
-
-resource "google_project_iam_member" "editor_iap_tunnel" {
-  for_each = toset(var.editor_member_emails)
+resource "google_project_iam_member" "admin_iap_tunnel" {
+  for_each = toset(var.admin_member_emails)
 
   project = var.project_id
   role    = "roles/iap.tunnelResourceAccessor"
   member  = "user:${each.value}"
 }
 
-resource "google_project_iam_member" "editor_compute_viewer" {
-  for_each = toset(var.editor_member_emails)
-
-  project = var.project_id
-  role    = "roles/compute.viewer"
-  member  = "user:${each.value}"
-}
-
-resource "google_project_iam_member" "editor_compute_os_login" {
-  for_each = toset(var.editor_member_emails)
+resource "google_project_iam_member" "admin_compute_os_login" {
+  for_each = toset(var.admin_member_emails)
 
   project = var.project_id
   role    = "roles/compute.osLogin"
   member  = "user:${each.value}"
 }
 
-resource "google_service_account_iam_member" "editor_sa_token_creator" {
-  for_each = toset(var.editor_member_emails)
+resource "google_service_account_iam_member" "admin_sa_token_creator" {
+  for_each = toset(var.admin_member_emails)
 
   service_account_id = "projects/${var.project_id}/serviceAccounts/${var.compute_sa_email}"
   role               = "roles/iam.serviceAccountTokenCreator"
@@ -115,7 +59,56 @@ resource "google_service_account_iam_member" "editor_sa_token_creator" {
 }
 
 # =============================================================================
-# Team member IAM bindings (logging + monitoring + IAP + compute + SA impersonation)
+# Lead tier (team lead level)
+#
+# roles/editor + IAM 정책 관리 + SSH 접근
+# =============================================================================
+
+resource "google_project_iam_member" "lead_editor" {
+  for_each = toset(var.lead_member_emails)
+
+  project = var.project_id
+  role    = "roles/editor"
+  member  = "user:${each.value}"
+}
+
+resource "google_project_iam_member" "lead_project_iam_admin" {
+  for_each = toset(var.lead_member_emails)
+
+  project = var.project_id
+  role    = "roles/resourcemanager.projectIamAdmin"
+  member  = "user:${each.value}"
+}
+
+resource "google_project_iam_member" "lead_iap_tunnel" {
+  for_each = toset(var.lead_member_emails)
+
+  project = var.project_id
+  role    = "roles/iap.tunnelResourceAccessor"
+  member  = "user:${each.value}"
+}
+
+resource "google_project_iam_member" "lead_compute_os_login" {
+  for_each = toset(var.lead_member_emails)
+
+  project = var.project_id
+  role    = "roles/compute.osLogin"
+  member  = "user:${each.value}"
+}
+
+resource "google_service_account_iam_member" "lead_sa_token_creator" {
+  for_each = toset(var.lead_member_emails)
+
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.compute_sa_email}"
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "user:${each.value}"
+}
+
+# =============================================================================
+# Team tier (read-only + SSH access)
+#
+# 로그/모니터링 뷰어 + IAP SSH 접근만 부여.
+# serviceAccountTokenCreator는 의도적으로 미부여 (권한 상승 방지).
 # =============================================================================
 
 resource "google_project_iam_member" "team_logging_viewer" {
@@ -158,33 +151,15 @@ resource "google_project_iam_member" "team_compute_os_login" {
   member  = "user:${each.value}"
 }
 
-resource "google_service_account_iam_member" "team_sa_token_creator" {
-  for_each = toset(var.team_member_emails)
-
-  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.compute_sa_email}"
-  role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "user:${each.value}"
-}
-
 # =============================================================================
-# img-resizer Service Account (Cloud Run → private GCS bucket 접근용)
-# =============================================================================
-
-resource "google_service_account" "img_resizer" {
-  account_id   = "img-resizer-sa"
-  display_name = "img-resizer-sa"
-  description  = "Cloud Run 이미지 리사이저가 private 버킷에 접근하기 위한 서비스 계정"
-  project      = var.project_id
-}
-
-resource "google_project_iam_member" "img_resizer_storage_viewer" {
-  project = var.project_id
-  role    = "roles/storage.objectViewer"
-  member  = "serviceAccount:${google_service_account.img_resizer.email}"
-}
-
-# =============================================================================
-# Service account self-impersonation (GCE VM Presigned URL generation)
+# Compute SA — CI/CD + Runtime (최소 권한 원칙)
+#
+# - Artifact Registry: Docker push (CI/CD)
+# - Secret Manager: 시크릿 목록 + 값 읽기 (CI/CD + startup script)
+# - Cloud SQL: client only (접속만, admin 아님)
+# - GCS: 버킷 레벨 objectAdmin (아래 별도 정의)
+# - Logging: 쓰기만 (뷰어 불필요)
+# - SA Token Creator (self): GCS presigned URL 생성
 # =============================================================================
 
 resource "google_service_account_iam_member" "sa_self_token_creator" {
@@ -192,16 +167,6 @@ resource "google_service_account_iam_member" "sa_self_token_creator" {
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = local.compute_sa_member
 }
-
-# =============================================================================
-# CI/CD service account permissions
-#
-# GitHub Actions deploy workflow uses Workload Identity Federation (WIF) to
-# authenticate as `var.compute_sa_email`.
-# - Artifact Registry push requires `roles/artifactregistry.writer`
-# - Secret Manager env refresh uses `gcloud secrets list`, which requires
-#   `secretmanager.secrets.list` (covered by `roles/secretmanager.viewer`)
-# =============================================================================
 
 resource "google_project_iam_member" "compute_sa_artifactregistry_writer" {
   project = var.project_id
@@ -219,6 +184,74 @@ resource "google_project_iam_member" "compute_sa_secretmanager_secret_accessor" 
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
   member  = local.compute_sa_member
+}
+
+resource "google_project_iam_member" "compute_sa_cloudsql_client" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = local.compute_sa_member
+}
+
+resource "google_project_iam_member" "compute_sa_logging_writer" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = local.compute_sa_member
+}
+
+# =============================================================================
+# Terraform CI/CD Service Account (GitHub Actions 전용)
+#
+# Compute SA와 분리하여 blast radius를 줄이고 audit 추적을 명확히 함.
+# WIF를 통해 GitHub Actions에서 인증하며, Terraform plan/apply + CD 배포에 사용.
+# =============================================================================
+
+resource "google_service_account" "terraform_ci" {
+  account_id   = "terraform-ci"
+  display_name = "Terraform CI/CD"
+  description  = "GitHub Actions에서 Terraform plan/apply 및 CD 배포에 사용하는 전용 서비스 계정"
+  project      = var.project_id
+}
+
+locals {
+  terraform_ci_member = "serviceAccount:${google_service_account.terraform_ci.email}"
+
+  # Terraform plan/apply + CD 배포에 필요한 역할
+  terraform_ci_roles = [
+    "roles/compute.networkAdmin",            # VPC, Firewall 관리
+    "roles/compute.instanceAdmin.v1",        # GCE 인스턴스 관리
+    "roles/cloudsql.admin",                  # Cloud SQL 관리
+    "roles/storage.admin",                   # GCS 버킷 관리
+    "roles/iam.serviceAccountAdmin",         # SA 관리 + getIamPolicy
+    "roles/resourcemanager.projectIamAdmin", # 프로젝트 IAM 바인딩 관리
+    "roles/artifactregistry.writer",         # Docker 이미지 push (CD)
+    "roles/iam.serviceAccountUser",          # SA impersonation (CD)
+    "roles/iap.tunnelResourceAccessor",      # SSH via IAP (CD)
+    "roles/logging.logWriter",               # CI 로깅
+    "roles/secretmanager.secretAccessor",    # 시크릿 값 읽기
+    "roles/secretmanager.viewer",            # 시크릿 목록 조회
+  ]
+}
+
+resource "google_project_iam_member" "terraform_ci" {
+  for_each = toset(local.terraform_ci_roles)
+
+  project = var.project_id
+  role    = each.value
+  member  = local.terraform_ci_member
+}
+
+# Self token creator (GCS presigned URL 생성 등)
+resource "google_service_account_iam_member" "terraform_ci_self_token_creator" {
+  service_account_id = google_service_account.terraform_ci.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = local.terraform_ci_member
+}
+
+# WIF binding (GitHub Actions → terraform-ci SA)
+resource "google_service_account_iam_member" "terraform_ci_wif" {
+  service_account_id = google_service_account.terraform_ci.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/finders-pool/attribute.repository/Finders-Official/BE"
 }
 
 # =============================================================================
@@ -241,4 +274,21 @@ resource "google_storage_bucket_iam_member" "public_all_users_viewer" {
   bucket = module.storage.public_bucket_name
   role   = "roles/storage.objectViewer"
   member = "allUsers"
+}
+
+# =============================================================================
+# img-resizer Service Account (Cloud Run → private GCS bucket 접근용)
+# =============================================================================
+
+resource "google_service_account" "img_resizer" {
+  account_id   = "img-resizer-sa"
+  display_name = "img-resizer-sa"
+  description  = "Cloud Run 이미지 리사이저가 private 버킷에 접근하기 위한 서비스 계정"
+  project      = var.project_id
+}
+
+resource "google_project_iam_member" "img_resizer_storage_viewer" {
+  project = var.project_id
+  role    = "roles/storage.objectViewer"
+  member  = "serviceAccount:${google_service_account.img_resizer.email}"
 }
