@@ -8,6 +8,10 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.dao.QueryTimeoutException;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -126,6 +130,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.NOT_FOUND.getStatus())
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND));
+    }
+
+    @ExceptionHandler({RedisConnectionFailureException.class, QueryTimeoutException.class})
+    public ResponseEntity<ApiResponse<Void>> handleRedisException(Exception e) {
+        return ResponseEntity
+            .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+            .body(ApiResponse.error(ErrorCode.EXTERNAL_API_ERROR));
     }
 
     @ExceptionHandler(Exception.class)

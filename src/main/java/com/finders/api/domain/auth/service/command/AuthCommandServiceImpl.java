@@ -25,10 +25,13 @@ import com.finders.api.infra.oauth.OAuthClient;
 import com.finders.api.infra.oauth.OAuthClientFactory;
 import com.finders.api.infra.oauth.model.OAuthUserInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -146,7 +149,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             MemberUser user = memberUserRepository.findById(memberId)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-            if(!refreshTokenHasher.matches(refreshToken, user.getRefreshTokenHash())) {
+            if (!refreshTokenHasher.matches(memberId, refreshToken, user.getRefreshTokenHash())) {
                 throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
             }
 
@@ -154,16 +157,14 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             String newAccessToken = jwtTokenProvider.createAccessToken(memberId, user.getRole().name());
             String newRefreshToken = jwtTokenProvider.createRefreshToken(memberId);
 
-            refreshTokenHasher.saveRefreshToken(memberId, newRefreshToken);
+            refreshTokenHasher.saveRefreshToken(user.getId(), newRefreshToken);
 
             long expiresIn = jwtTokenProvider.getAccessTokenExpiryMs() / 1000;
-
             return new AuthResponse.TokenInfo(
                     newAccessToken,
-                    newRefreshToken, // 이 필드가 추가되어야 합니다.
+                    newRefreshToken,
                     expiresIn
             );
-
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             throw new CustomException(ErrorCode.AUTH_EXPIRED_TOKEN);
         } catch (Exception e) {
@@ -179,7 +180,8 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             MemberUser user = memberUserRepository.findById(memberId)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-            if (refreshTokenHasher.matches(refreshToken, user.getRefreshTokenHash())) {
+            if (refreshTokenHasher.matches(memberId, refreshToken, user.getRefreshTokenHash())) {
+                refreshTokenHasher.removeRefreshToken(memberId);
                 user.updateRefreshTokenHash(null);
             }
         } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
