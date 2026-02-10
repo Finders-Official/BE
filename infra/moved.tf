@@ -130,3 +130,32 @@ moved {
   from = google_service_account_iam_member.editor_sa_token_creator
   to   = google_service_account_iam_member.lead_sa_token_creator
 }
+
+# ============================================================
+# Terraform import blocks (#400)
+# ============================================================
+
+import {
+  to = google_artifact_registry_repository.api_docker
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/asia-northeast3/repositories/finders-docker"
+}
+
+import {
+  to = google_artifact_registry_repository.image_docker
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/asia-northeast3/repositories/finders-image"
+}
+
+import {
+  to = google_cloud_run_v2_service.img_resizer
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/asia-northeast3/services/img-resizer"
+}
+
+import {
+  to = google_iam_workload_identity_pool.github
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/global/workloadIdentityPools/finders-pool"
+}
+
+import {
+  to = google_iam_workload_identity_pool_provider.github
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/global/workloadIdentityPools/finders-pool/providers/github-provider"
+}
