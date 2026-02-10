@@ -103,7 +103,7 @@ jobs:
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --tunnel-through-iap \
             --quiet \
-            --command="sudo mkdir -p /projects/Spring"
+            --command="sudo mkdir -p /projects/Finders/BE"
 
           # B-1. docker-compose.infra.yml 전송
           gcloud compute scp docker-compose.infra.yml ${{ secrets.GCE_USER }}@${{ secrets.GCE_NAME }}:~/docker-compose.infra.yml \
@@ -126,10 +126,10 @@ jobs:
             --tunnel-through-iap \
             --quiet \
             --command="
-              sudo mv ~/docker-compose.infra.yml /projects/Spring/docker-compose.infra.yml
-              sudo mv ~/docker-compose.prod.yml /projects/Spring/docker-compose.prod.yml
+              sudo mv ~/docker-compose.infra.yml /projects/Finders/BE/docker-compose.infra.yml
+              sudo mv ~/docker-compose.prod.yml /projects/Finders/BE/docker-compose.prod.yml
 
-              cd /projects/Spring
+              cd /projects/Finders/BE
               DC='sudo docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml'
 
               sudo docker network create finders-network || true
