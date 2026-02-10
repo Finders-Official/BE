@@ -1,8 +1,8 @@
 package com.finders.api.domain.photo.service.command;
 
-import com.finders.api.domain.member.enums.TokenRelatedType;
-import com.finders.api.domain.member.service.command.TokenCommandService;
-import com.finders.api.domain.member.service.query.TokenQueryService;
+import com.finders.api.domain.member.enums.CreditRelatedType;
+import com.finders.api.domain.member.service.command.CreditCommandService;
+import com.finders.api.domain.member.service.query.CreditQueryService;
 import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
 import com.finders.api.domain.photo.entity.PhotoRestoration;
@@ -37,8 +37,8 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
     private final PhotoRestorationRepository restorationRepository;
     private final StorageService storageService;
-    private final TokenQueryService tokenQueryService;
-    private final TokenCommandService tokenCommandService;
+    private final CreditQueryService creditQueryService;
+    private final CreditCommandService creditCommandService;
     private final ReplicateClient replicateClient;
     private final ImageMetadataService imageMetadataService;
 
@@ -47,16 +47,16 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
     public PhotoRestorationCommandServiceImpl(
             PhotoRestorationRepository restorationRepository,
             StorageService storageService,
-            TokenQueryService tokenQueryService,
-            TokenCommandService tokenCommandService,
+            CreditQueryService creditQueryService,
+            CreditCommandService creditCommandService,
             ReplicateClient replicateClient,
             ImageMetadataService imageMetadataService,
             @Qualifier("longTimeoutWebClient") WebClient longTimeoutWebClient
     ) {
         this.restorationRepository = restorationRepository;
         this.storageService = storageService;
-        this.tokenQueryService = tokenQueryService;
-        this.tokenCommandService = tokenCommandService;
+        this.creditQueryService = creditQueryService;
+        this.creditCommandService = creditCommandService;
         this.replicateClient = replicateClient;
         this.imageMetadataService = imageMetadataService;
         this.longTimeoutWebClient = longTimeoutWebClient;
@@ -65,9 +65,9 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
     @Override
     public RestorationResponse.Created createRestoration(Long memberId, RestorationRequest.Create request) {
         RestorationTier tier = RestorationTier.PREMIUM;
-        int tokenCost = tier.getTokenCost();
+        int creditCost = tier.getCreditCost();
 
-        if (!tokenQueryService.hasEnoughTokens(memberId, tokenCost)) {
+        if (!creditQueryService.hasEnoughCredits(memberId, creditCost)) {
             throw new CustomException(ErrorCode.INSUFFICIENT_TOKEN);
         }
 
@@ -81,7 +81,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
                 memberId,
                 request.originalPath(),
                 request.maskPath(),
-                tokenCost
+                creditCost
         );
 
         restoration = restorationRepository.save(restoration);
@@ -93,7 +93,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
         restoration.startProcessing(prediction.id());
 
-        int currentBalance = tokenQueryService.getBalance(memberId);
+        int currentBalance = creditQueryService.getBalance(memberId);
 
         log.info("[PhotoRestorationCommandServiceImpl.createRestoration] Created: id={}, tier={}, predictionId={}, currentBalance={}",
                 restoration.getId(), tier, prediction.id(), currentBalance);
@@ -101,7 +101,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         return RestorationResponse.Created.builder()
                 .id(restoration.getId())
                 .status(restoration.getStatus())
-                .tokenUsed(tokenCost)
+                .creditUsed(creditCost)
                 .remainingBalance(currentBalance)
                 .build();
     }
@@ -140,11 +140,11 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         // 1. Replicate 결과 이미지 다운로드 및 GCS 업로드 (메타데이터 포함)
         RestoredImageResult result = downloadAndStoreResult(restoredImageUrl, restoration.getMemberId());
 
-        // 2. 토큰 차감 (복원 성공 시점에 차감)
-        tokenCommandService.useTokens(
+        // 2. 크레딧 차감 (복원 성공 시점에 차감)
+        creditCommandService.useCredits(
                 restoration.getMemberId(),
-                restoration.getTokenUsed(),
-                TokenRelatedType.PHOTO_RESTORATION,
+                restoration.getCreditUsed(),
+                CreditRelatedType.PHOTO_RESTORATION,
                 restoration.getId(),
                 "AI 사진 복원 완료"
         );
@@ -171,7 +171,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
         restoration.fail(errorMessage);
 
-        // 토큰은 복원 완료 시점에 차감하므로, 실패 시 환불 불필요
+        // 크레딧은 복원 완료 시점에 차감하므로, 실패 시 환불 불필요
         log.info("[PhotoRestorationCommandServiceImpl.failRestoration] Failed: id={}, predictionId={}, error={}",
                 restoration.getId(), predictionId, errorMessage);
     }

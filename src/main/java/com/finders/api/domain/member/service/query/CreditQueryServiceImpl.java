@@ -13,18 +13,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class TokenQueryServiceImpl implements TokenQueryService {
+public class CreditQueryServiceImpl implements CreditQueryService {
 
     private final MemberUserRepository memberUserRepository;
 
     public int getBalance(Long memberId) {
         MemberUser member = getMemberUser(memberId);
-        return member.getTokenBalance();
+        return member.getCreditBalance();
     }
 
-    public boolean hasEnoughTokens(Long memberId, int amount) {
+    public boolean hasEnoughCredits(Long memberId, int amount) {
         MemberUser member = getMemberUser(memberId);
-        return member.hasEnoughTokens(amount);
+        return member.hasEnoughCredits(amount);
     }
 
     private MemberUser getMemberUser(Long memberId) {

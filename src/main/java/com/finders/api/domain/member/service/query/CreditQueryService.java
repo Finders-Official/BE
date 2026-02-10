@@ -1,8 +1,8 @@
 package com.finders.api.domain.member.service.query;
 
-public interface TokenQueryService {
+public interface CreditQueryService {
 
     int getBalance(Long memberId);
 
-    boolean hasEnoughTokens(Long memberId, int amount);
+    boolean hasEnoughCredits(Long memberId, int amount);
 }

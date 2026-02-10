@@ -54,7 +54,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             userDetail = new MemberResponse.UserDetail(
                     memberUser.getNickname(),
                     memberUser.getProfileImage(),
-                    memberUser.getTokenBalance(),
+                    memberUser.getCreditBalance(),
                     socialAccounts
             );
         }

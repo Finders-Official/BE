@@ -3,7 +3,7 @@ package com.finders.api.domain.payment.service.command;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberRepository;
-import com.finders.api.domain.member.service.command.TokenCommandService;
+import com.finders.api.domain.member.service.command.CreditCommandService;
 import com.finders.api.domain.payment.dto.PaymentRequest;
 import com.finders.api.domain.payment.dto.PaymentResponse;
 import com.finders.api.domain.payment.entity.Payment;
@@ -30,7 +30,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
     private final PaymentRepository paymentRepository;
     private final MemberRepository memberRepository;
     private final PortOnePaymentService portOnePaymentService;
-    private final TokenCommandService tokenCommandService;
+    private final CreditCommandService creditCommandService;
 
     @Override
     public PaymentResponse.PreRegistered preRegister(Long memberId, PaymentRequest.PreRegister request) {
@@ -42,9 +42,9 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             throw new CustomException(ErrorCode.PAYMENT_ALREADY_EXISTS);
         }
 
-        // 토큰 구매 시 검증
+        // 크레딧 구매 시 검증
         if (request.orderType() == OrderType.TOKEN_PURCHASE) {
-            if (request.tokenAmount() == null || request.tokenAmount() < 1) {
+            if (request.creditAmount() == null || request.creditAmount() < 1) {
                 throw new CustomException(ErrorCode.INVALID_PAYMENT_REQUEST);
             }
         } else {
@@ -61,7 +61,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                 .paymentId(request.paymentId())
                 .orderName(request.orderName())
                 .amount(request.amount())
-                .tokenAmount(request.tokenAmount())
+                .creditAmount(request.creditAmount())
                 .build();
 
         Payment savedPayment = paymentRepository.save(payment);
@@ -118,9 +118,9 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                         portOneInfo.getReceiptUrl()
                 );
 
-                // 토큰 구매인 경우 토큰 충전
-                if (payment.getOrderType() == OrderType.TOKEN_PURCHASE && payment.getTokenAmount() != null) {
-                    chargeTokens(payment);
+                // 크레딧 구매인 경우 크레딧 충전
+                if (payment.getOrderType() == OrderType.TOKEN_PURCHASE && payment.getCreditAmount() != null) {
+                    chargeCredits(payment);
                 }
 
                 log.info("[PaymentCommandServiceImpl.complete] 결제 완료: paymentId={}, transactionId={}",
@@ -178,11 +178,11 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
 
             payment.cancel(request.reason(), cancelAmount);
 
-            // 토큰 구매 취소인 경우 토큰 회수 (전액 취소만)
+            // 크레딧 구매 취소인 경우 크레딧 회수 (전액 취소만)
             if (payment.getOrderType() == OrderType.TOKEN_PURCHASE
                     && payment.getStatus() == PaymentStatus.CANCELLED
-                    && payment.getTokenAmount() != null) {
-                revokeTokens(payment);
+                    && payment.getCreditAmount() != null) {
+                revokeCredits(payment);
             }
 
             log.info("[PaymentCommandServiceImpl.cancel] 결제 취소 완료: paymentId={}, cancelAmount={}",
@@ -249,9 +249,9 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                                 portOneInfo.getReceiptUrl()
                         );
 
-                        // 토큰 충전
-                        if (payment.getOrderType() == OrderType.TOKEN_PURCHASE && payment.getTokenAmount() != null) {
-                            chargeTokens(payment);
+                        // 크레딧 충전
+                        if (payment.getOrderType() == OrderType.TOKEN_PURCHASE && payment.getCreditAmount() != null) {
+                            chargeCredits(payment);
                         }
 
                         log.info("[PaymentCommandServiceImpl.handleWebhook] 웹훅으로 결제 완료 처리: paymentId={}", payment.getPaymentId());
@@ -276,21 +276,21 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
         }
     }
 
-    private void chargeTokens(Payment payment) {
+    private void chargeCredits(Payment payment) {
         Member member = payment.getMember();
         if (member instanceof MemberUser memberUser) {
-            tokenCommandService.purchaseTokens(memberUser, payment.getTokenAmount(), payment.getId());
-            log.info("[PaymentCommandServiceImpl.chargeTokens] 토큰 충전 완료: memberId={}, amount={}",
-                    member.getId(), payment.getTokenAmount());
+            creditCommandService.purchaseCredits(memberUser, payment.getCreditAmount(), payment.getId());
+            log.info("[PaymentCommandServiceImpl.chargeCredits] 크레딧 충전 완료: memberId={}, amount={}",
+                    member.getId(), payment.getCreditAmount());
         }
     }
 
-    private void revokeTokens(Payment payment) {
+    private void revokeCredits(Payment payment) {
         Member member = payment.getMember();
         if (member instanceof MemberUser memberUser) {
-            tokenCommandService.revokeTokens(memberUser, payment.getTokenAmount(), payment.getId());
-            log.info("[PaymentCommandServiceImpl.revokeTokens] 토큰 회수 완료: memberId={}, amount={}",
-                    member.getId(), payment.getTokenAmount());
+            creditCommandService.revokeCredits(memberUser, payment.getCreditAmount(), payment.getId());
+            log.info("[PaymentCommandServiceImpl.revokeCredits] 크레딧 회수 완료: memberId={}, amount={}",
+                    member.getId(), payment.getCreditAmount());
         }
     }
 }
