@@ -1,5 +1,7 @@
 package com.finders.api.global.security;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 
 import com.finders.api.domain.member.entity.Member;
@@ -63,7 +65,10 @@ public class RefreshTokenHasher {
         }
 
         if (savedToken != null) {
-            return savedToken.equals(inputHashed);
+            return MessageDigest.isEqual(
+                savedToken.getBytes(StandardCharsets.UTF_8),
+                inputHashed.getBytes(StandardCharsets.UTF_8)
+            );
         }
 
         if (encodedHash == null) return false;
