@@ -9,8 +9,8 @@ import com.finders.api.domain.inquiry.entity.InquiryImage;
 import com.finders.api.domain.inquiry.entity.InquiryReply;
 import com.finders.api.domain.member.entity.*;
 import com.finders.api.domain.member.enums.SocialProvider;
-import com.finders.api.domain.member.enums.TokenHistoryType;
-import com.finders.api.domain.member.enums.TokenRelatedType;
+import com.finders.api.domain.member.enums.CreditHistoryType;
+import com.finders.api.domain.member.enums.CreditRelatedType;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.payment.entity.Payment;
 import com.finders.api.domain.payment.enums.OrderType;
@@ -397,9 +397,9 @@ public class DatabaseSeeder implements CommandLineRunner {
             createPayments();
             log.info("{} Created payments", LOG_PREFIX);
 
-            // 22. TokenHistory (토큰 이력)
-            createTokenHistory();
-            log.info("{} Created token history", LOG_PREFIX);
+            // 22. CreditHistory (크레딧 이력)
+            createCreditHistory();
+            log.info("{} Created credit history", LOG_PREFIX);
 
             // 23. SearchHistory (검색 기록)
             createSearchHistory();
@@ -1245,7 +1245,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .memberId(user.getId())
                     .originalPath("restorations/" + user.getId() + "/original/" + UUID.randomUUID() + ".jpg")
                     .maskPath("restorations/" + user.getId() + "/mask/" + UUID.randomUUID() + ".png")
-                    .tokenUsed(1)
+                    .creditUsed(1)
                     .build();
 
             // 일부는 완료 상태로
@@ -1276,12 +1276,12 @@ public class DatabaseSeeder implements CommandLineRunner {
 
             Payment payment = Payment.builder()
                     .member(user)
-                    .orderType(OrderType.TOKEN_PURCHASE)
+                    .orderType(OrderType.CREDIT_PURCHASE)
                     .relatedOrderId(null)
                     .paymentId("payment_" + UUID.randomUUID().toString().substring(0, 8))
-                    .orderName("토큰 10개 구매")
+                    .orderName("크레딧 10개 구매")
                     .amount(10000)
-                    .tokenAmount(10)
+                    .creditAmount(10)
                     .build();
 
             paymentsToSave.add(payment);
@@ -1294,34 +1294,34 @@ public class DatabaseSeeder implements CommandLineRunner {
         entityManager.flush();
     }
 
-    // ===== TokenHistory =====
-    private void createTokenHistory() {
-        List<TokenHistory> historiesToSave = new ArrayList<>();
+    // ===== CreditHistory =====
+    private void createCreditHistory() {
+        List<CreditHistory> historiesToSave = new ArrayList<>();
 
         for (int i = 0; i < users.size(); i++) {
             MemberUser user = users.get(i);
 
-            // 초기 토큰 지급
-            TokenHistory history = TokenHistory.builder()
+            // 초기 크레딧 지급
+            CreditHistory history = CreditHistory.builder()
                     .user(user)
-                    .type(TokenHistoryType.PURCHASE)
+                    .type(CreditHistoryType.PURCHASE)
                     .amount(5)
                     .balanceAfter(5)
-                    .relatedType(TokenRelatedType.PAYMENT)
+                    .relatedType(CreditRelatedType.PAYMENT)
                     .relatedId(null)
-                    .description("회원가입 보너스 토큰")
+                    .description("회원가입 보너스 크레딧")
                     .build();
 
             historiesToSave.add(history);
 
-            // 일부 유저는 토큰 사용 이력 추가
+            // 일부 유저는 크레딧 사용 이력 추가
             if (i % 3 == 0) {
-                TokenHistory useHistory = TokenHistory.builder()
+                CreditHistory useHistory = CreditHistory.builder()
                         .user(user)
-                        .type(TokenHistoryType.USE)
+                        .type(CreditHistoryType.USE)
                         .amount(-1)
                         .balanceAfter(4)
-                        .relatedType(TokenRelatedType.PHOTO_RESTORATION)
+                        .relatedType(CreditRelatedType.PHOTO_RESTORATION)
                         .relatedId(null)
                         .description("AI 복원 서비스 이용")
                         .build();
@@ -1329,7 +1329,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         }
 
-        for (TokenHistory history : historiesToSave) {
+        for (CreditHistory history : historiesToSave) {
             entityManager.persist(history);
         }
         entityManager.flush();
