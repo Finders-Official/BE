@@ -36,19 +36,9 @@ public class CommentQueryServiceImpl implements CommentQueryService {
         Page<Comment> commentPage = commentRepository.findAllByPostAndStatusOrderByCreatedAtDesc(post, CommunityStatus.ACTIVE, pageRequest);
 
         return commentPage.map(comment -> {
-            String profileUrl = resolveImageUrl(comment.getMemberUser().getProfileImage());
+            String profileUrl = storageService.resolveUrl(comment.getMemberUser().getProfileImage());
             return CommentResponse.CommentResDTO.from(comment, memberId, profileUrl);
         });
-    }
-
-    private String resolveImageUrl(String value) {
-        if (value == null || value.isBlank()) return null;
-
-        if (value.startsWith("http://") || value.startsWith("https://")) {
-            return value;
-        }
-
-        return storageService.getPublicUrl(value);
     }
 
 }

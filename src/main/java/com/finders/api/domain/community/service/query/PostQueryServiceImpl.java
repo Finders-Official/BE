@@ -53,7 +53,7 @@ public class PostQueryServiceImpl implements PostQueryService {
         boolean isLiked = (memberUser != null) && postLikeRepository.existsByPostAndMemberUser(post, memberUser);
         boolean isMine = (memberId != null) && post.getMemberUser().getId().equals(memberId);
 
-        String profileImageUrl = resolveImageUrl(post.getMemberUser().getProfileImage());
+        String profileImageUrl = storageService.resolveUrl(post.getMemberUser().getProfileImage());
 
         List<PostResponse.PostImageResDTO> images = post.getPostImageList().stream()
                 .map(this::toPostImageResDTO)
@@ -118,7 +118,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     private PostResponse.PostImageResDTO toPostImageResDTO(com.finders.api.domain.community.entity.PostImage image) {
         if (image == null) return null;
-        return PostResponse.PostImageResDTO.from(image, resolveImageUrl(image.getObjectPath()));
+        return PostResponse.PostImageResDTO.from(image, storageService.resolveUrl(image.getObjectPath()));
     }
 
     private List<PostResponse.PostPreviewDTO> convertToPreviewDTOs(List<Post> posts, Long memberId) {
@@ -142,17 +142,6 @@ public class PostQueryServiceImpl implements PostQueryService {
         List<Long> postIds = posts.stream().map(Post::getId).toList();
         return postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
     }
-
-    private String resolveImageUrl(String value) {
-        if (value == null || value.isBlank()) return null;
-
-        if (value.startsWith("http://") || value.startsWith("https://")) {
-            return value;
-        }
-
-        return storageService.getPublicUrl(value);
-    }
-
 
     @Override
     public List<String> getAutocompleteSuggestions(String keyword) {
