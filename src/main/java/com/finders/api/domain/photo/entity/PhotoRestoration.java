@@ -21,6 +21,8 @@ import lombok.NoArgsConstructor;
 )
 public class PhotoRestoration extends BaseTimeEntity {
 
+    private static final String PROVIDER_REPLICATE = "REPLICATE";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -86,7 +88,7 @@ public class PhotoRestoration extends BaseTimeEntity {
         this.status = RestorationStatus.PROCESSING;
         this.replicatePredictionId = predictionId;
         this.providerJobId = predictionId;
-        this.providerName = "REPLICATE";
+        this.providerName = PROVIDER_REPLICATE;
     }
 
     public void complete(String restoredPath, Integer width, Integer height) {

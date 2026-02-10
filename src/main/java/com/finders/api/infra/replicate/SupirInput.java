@@ -37,18 +37,16 @@ public record SupirInput(
     private static final String DEFAULT_COLOR_FIX = "AdaIn";
 
     public static SupirInput forRestoration(String imageUrl) {
-        return new SupirInput(
-                imageUrl,
-                DEFAULT_UPSCALE,
-                null,
-                null,
-                DEFAULT_A_PROMPT,
-                DEFAULT_N_PROMPT,
-                DEFAULT_S_STAGE1,
-                DEFAULT_S_STAGE2,
-                DEFAULT_EDM_STEPS,
-                DEFAULT_COLOR_FIX
-        );
+        return SupirInput.builder()
+                .image(imageUrl)
+                .upscale(DEFAULT_UPSCALE)
+                .aPrompt(DEFAULT_A_PROMPT)
+                .nPrompt(DEFAULT_N_PROMPT)
+                .sStage1(DEFAULT_S_STAGE1)
+                .sStage2(DEFAULT_S_STAGE2)
+                .edmSteps(DEFAULT_EDM_STEPS)
+                .colorFixType(DEFAULT_COLOR_FIX)
+                .build();
     }
 
     @Override

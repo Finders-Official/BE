@@ -9,7 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record ReplicateProperties(
         String apiKey,
         String baseUrl,
-        String modelVersion,
         String webhookBaseUrl,
         String webhookSecret,
         Integer timeoutSeconds,

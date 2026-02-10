@@ -110,12 +110,12 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         log.info("[PhotoRestorationCommandServiceImpl.createRestoration] Created: id={}, tier={}, predictionId={}, currentBalance={}",
                 restoration.getId(), tier, prediction.id(), currentBalance);
 
-        return new RestorationResponse.Created(
-                restoration.getId(),
-                restoration.getStatus(),
-                tokenCost,
-                currentBalance
-        );
+        return RestorationResponse.Created.builder()
+                .id(restoration.getId())
+                .status(restoration.getStatus())
+                .tokenUsed(tokenCost)
+                .remainingBalance(currentBalance)
+                .build();
     }
 
     @Override
