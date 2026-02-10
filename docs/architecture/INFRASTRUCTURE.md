@@ -20,11 +20,12 @@
                            │
                 Cloudflare Tunnel (1개, 통합)
                            │
-                      cloudflared
-                           │
-                        Traefik
-                     (Host 라우팅)
-                 ┌─────────┴─────────┐
+                       cloudflared
+                            │
+                         Traefik
+                  (Host 라우팅, CORS)
+                  ┌─────────┴─────────┐
+
                  ▼                   ▼
           Prod Blue/Green      Dev Blue/Green
                  │                   │
@@ -95,6 +96,40 @@ docker compose -f docker-compose.infra.yml -f docker-compose.prod.yml --profile 
 | 리전 | asia-northeast3 (서울) |
 
 ---
+
+## Terraform Infrastructure
+
+인프라를 코드로 관리(IaC)하기 위해 Terraform을 사용하며, 모듈화된 구조를 통해 재사용성과 관리 효율성을 높였습니다.
+
+### 모듈 구조
+
+```
+infra/
+├── main.tf              # 모듈 오케스트레이션
+├── variables.tf         # 전역 변수
+├── iam.tf               # 3-tier IAM + 서비스 계정
+├── cloudrun.tf          # Cloud Run img-resizer
+└── modules/
+    ├── networking/      # VPC, 서브넷, 방화벽
+    ├── compute/         # GCE 인스턴스
+    ├── database/        # Cloud SQL
+    ├── storage/         # GCS 버킷
+    └── cloudflare/      # Cloudflare Tunnel
+
+---
+
+## IAM & Service Accounts
+
+인프라 구성 및 서비스 운영에 사용되는 주요 서비스 계정(Service Account) 현황입니다.
+
+| SA | Purpose | Key Permissions |
+|---|---|---|
+| **compute-sa** | GCE 메인 애플리케이션 서버 | Cloud SQL, Secret Manager, Storage, Artifact Registry |
+| **img-resizer** | Cloud Run 이미지 리사이저 | Storage (public bucket), Logging |
+| **terraform-ci** | CI/CD Terraform 실행용 (WIF) | Full Infrastructure Management |
+
+---
+
 
 ## Cloud SQL (MySQL)
 
@@ -175,15 +210,6 @@ Password: [.env.dev 참조]
 | `finders-public` | `allUsers:objectViewer` | `temp/` 30일 후 삭제 |
 | `finders-private` | 비공개 | `temp/` 30일 후 삭제 |
 
-### 서비스 계정
-
-| 항목 | 값 |
-|------|-----|
-| 이름 | Compute Engine default service account |
-| 이메일 | `517500643080-compute@developer.gserviceaccount.com` |
-| 역할 | Storage Object Admin |
-| 용도 | Spring 서버에서 GCS 접근용 |
-
 ### 경로 규칙
 
 | 테이블 | 버킷 | 경로 패턴 |
@@ -263,18 +289,19 @@ gcloud compute ssh finders-server-v2 \
 ### 현재 구성 (Cloudflare Tunnel 사용)
 
 ```
-[클라이언트]
+[브라우저]
     ↓ HTTPS
-[Cloudflare Edge Network] (전 세계 데이터센터)
+[Cloudflare Edge Network]
     ↓ 암호화된 터널
 [cloudflared 데몬] (Compute Engine 내부)
     ↓
+[Traefik (CORS Middleware)]
+    ↓
 [Spring Boot :8080]
-    ↓ MySQL 3306 (VPC 내부 Private IP)
-[Cloud SQL: 10.68.240.3]
-
-[Compute Engine] → [Cloud Storage: finders-public]   (공개 이미지)
-                 → [Cloud Storage: finders-private]  (비공개 파일, Signed URL)
+    ↓
+┌───────────────┴───────────────┐
+▼                               ▼
+[Cloud SQL (MySQL)]      [Cloud Storage (GCS)]
 ```
 
 ### 방화벽 규칙

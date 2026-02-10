@@ -151,6 +151,14 @@ resource "google_project_iam_member" "team_compute_os_login" {
   member  = "user:${each.value}"
 }
 
+resource "google_service_account_iam_member" "team_sa_user" {
+  for_each = toset(var.team_member_emails)
+
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.compute_sa_email}"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "user:${each.value}"
+}
+
 # =============================================================================
 # Compute SA — CI/CD + Runtime (최소 권한 원칙)
 #
@@ -223,13 +231,14 @@ locals {
     "roles/storage.admin",                   # GCS 버킷 관리
     "roles/iam.serviceAccountAdmin",         # SA 관리 + getIamPolicy
     "roles/resourcemanager.projectIamAdmin", # 프로젝트 IAM 바인딩 관리
-    "roles/artifactregistry.writer",         # Docker 이미지 push (CD)
+    "roles/artifactregistry.admin",          # Docker 이미지 push + 메타데이터 관리 (CD)
     "roles/iam.serviceAccountUser",          # SA impersonation (CD)
     "roles/iap.tunnelResourceAccessor",      # SSH via IAP (CD)
     "roles/logging.logWriter",               # CI 로깅
-    "roles/secretmanager.secretAccessor",    # 시크릿 값 읽기
+    "roles/secretmanager.admin",             # 시크릿 생성/관리 (CI)
     "roles/secretmanager.viewer",            # 시크릿 목록 조회
     "roles/iam.workloadIdentityPoolAdmin",   # WIF pool/provider 관리
+    "roles/monitoring.editor",               # 모니터링 대시보드 관리 (CI)
     "roles/run.admin",                       # Cloud Run 서비스 관리
   ]
 }
@@ -270,6 +279,32 @@ resource "google_storage_bucket_iam_member" "private_compute_admin" {
   bucket = module.storage.private_bucket_name
   role   = "roles/storage.objectAdmin"
   member = local.compute_sa_member
+}
+
+# =============================================================================
+# Image Resizer SA — Cloud Run 전용 (최소 권한)
+#
+# img-resizer는 public 버킷의 이미지만 리사이징하므로
+# storage.objectAdmin(public 버킷) + logging.logWriter만 부여.
+# =============================================================================
+
+resource "google_service_account" "img_resizer" {
+  account_id   = "img-resizer"
+  display_name = "Image Resizer Service Account"
+  description  = "Cloud Run img-resizer 전용 서비스 계정 (public 버킷 접근 + 로깅)"
+  project      = var.project_id
+}
+
+resource "google_storage_bucket_iam_member" "public_img_resizer_admin" {
+  bucket = module.storage.public_bucket_name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.img_resizer.email}"
+}
+
+resource "google_project_iam_member" "img_resizer_logging_writer" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.img_resizer.email}"
 }
 
 resource "google_storage_bucket_iam_member" "public_all_users_viewer" {
