@@ -4,21 +4,24 @@ region     = "asia-northeast3"
 zone       = "asia-northeast3-a"
 
 # === Cloudflare 설정 (현재 비활성화 — Docker 터널 사용 중) ===
-# enable_cloudflare = true  # Docker→Terraform 마이그레이션 후 활성화
+enable_cloudflare          = false
 cloudflare_api_token       = "your-cloudflare-api-token"
 cloudflare_account_id      = "your-cloudflare-account-id"
-cloudflare_tunnel_hostname = "finders-api.log8.kr"
+cloudflare_tunnel_hostname = "api.finders.it.kr"
 cloudflare_tunnel_service  = "http://localhost:8080"
 
 # === Compute Engine ===
 compute_sa_email = "PROJECT_NUMBER-compute@developer.gserviceaccount.com"
 
-# === IAM 역할 (3-tier) ===
-# Owner: roles/editor + 보안 리뷰 + 모니터링
-owner_member_emails = ["owner@example.com"]
+# === GitHub ===
+github_repository = "Finders-Official/BE"
 
-# Editor: roles/editor + IAP SSH 접근 + 모니터링
-editor_member_emails = ["editor@example.com"]
+# === IAM 역할 (3-tier) ===
+# Admin: roles/editor + projectIamAdmin + securityReviewer + SSH (near-owner level)
+admin_member_emails = ["admin@example.com"]
+
+# Lead: roles/editor + projectIamAdmin + SSH (team lead level)
+lead_member_emails = ["lead@example.com"]
 
 # Team: 로그/모니터링 뷰어 + IAP SSH 접근
 team_member_emails = [
