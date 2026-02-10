@@ -132,23 +132,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND));
     }
 
-    // Redis 연결 장애 및 타임아웃 처리 (Redis가 필수인 로직에서 장애인 경우)
     @ExceptionHandler({RedisConnectionFailureException.class, QueryTimeoutException.class})
-    public ResponseEntity<ApiResponse<Void>> handleRedisException(
-        Exception e,
-        HttpServletRequest request
-    ) {
-        log.error("[RedisException] {} - {}", request.getRequestURI(), e.getMessage(), e);
-
-        try {
-            discordWebhookService.sendErrorNotification(e, request.getMethod(), request.getRequestURI());
-        } catch (Exception ignored) {
-            log.warn("[DiscordWebhook] Failed to send notification", ignored);
-        }
-
+    public ResponseEntity<ApiResponse<Void>> handleRedisException(Exception e) {
         return ResponseEntity
             .status(HttpStatus.SERVICE_UNAVAILABLE.value())
-            .body(ApiResponse.error(ErrorCode.AUTH_SERVER_ERROR));
+            .body(ApiResponse.error(ErrorCode.EXTERNAL_API_ERROR));
     }
 
     @ExceptionHandler(Exception.class)

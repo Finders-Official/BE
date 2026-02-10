@@ -66,7 +66,12 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         // 유효 시간 3분 설정
         VerificationData data = new VerificationData(request.phone(), code, LocalDateTime.now().plusMinutes(RedisConfig.AUTH_CODE_TTL_MINUTES));
 
-        redisTemplate.opsForValue().set(PHONE_CODE_KEY + requestId, data, Duration.ofMinutes(RedisConfig.AUTH_CODE_TTL_MINUTES));
+        try {
+            redisTemplate.opsForValue().set(PHONE_CODE_KEY + requestId, data, Duration.ofMinutes(RedisConfig.AUTH_CODE_TTL_MINUTES));
+        } catch (Exception e) {
+            log.error("[MemberCommandServiceImpl.sendPhoneVerificationCode] 인증번호 저장 실패: {}", e.getMessage());
+            throw new CustomException(ErrorCode.AUTH_SERVER_ERROR);
+        }
 
         // 알림톡 발송 요청 (Console or Sendon)
         messageService.sendVerificationCode(request.phone(), code);
@@ -163,7 +168,11 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         refreshTokenHasher.saveRefreshToken(savedUser.getId(), refreshToken);
 
-        redisTemplate.delete(VERIFIED_PHONE_KEY + request.verifiedPhoneToken());
+        try {
+            redisTemplate.delete(VERIFIED_PHONE_KEY + request.verifiedPhoneToken());
+        } catch (Exception e) {
+            log.warn("[MemberCommandServiceImpl.signupSocialComplete] 사용 완료된 VPT 삭제 실패: {}", e.getMessage());
+        }
 
         return new MemberResponse.SignupResult(
                 accessToken,
@@ -250,12 +259,19 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             Class<T> valueType,
             ErrorCode errorOnNull
     ) {
-        Object rawValue = redisTemplate.opsForValue().get(key);
+        try {
+            Object rawValue = redisTemplate.opsForValue().get(key);
 
-        if (rawValue == null) {
-            throw new CustomException(errorOnNull);
+            if (rawValue == null) {
+                throw new CustomException(errorOnNull);
+            }
+
+            return objectMapper.convertValue(rawValue, valueType);
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("[MemberCommandServiceImpl.getRedisValueOrThrow] Redis 조회 실패: {}", e.getMessage());
+            throw new CustomException(ErrorCode.AUTH_SERVER_ERROR);
         }
-
-        return objectMapper.convertValue(rawValue, valueType);
     }
 }
