@@ -93,7 +93,7 @@ moved {
 }
 
 # ============================================================
-# IAM 3-tier restructure: admin → owner
+# IAM 3-tier restructure: admin → owner (previous migration)
 # ============================================================
 
 moved {
@@ -119,4 +119,43 @@ moved {
 moved {
   from = google_service_account_iam_member.admin_sa_token_creator
   to   = google_service_account_iam_member.owner_sa_token_creator
+}
+
+# ============================================================
+# IAM tier rename: owner → admin, editor → lead (#396)
+# ============================================================
+
+moved {
+  from = google_project_iam_member.owner_editor
+  to   = google_project_iam_member.admin_editor
+}
+
+moved {
+  from = google_project_iam_member.owner_iam_security_reviewer
+  to   = google_project_iam_member.admin_security_reviewer
+}
+
+moved {
+  from = google_service_account_iam_member.owner_sa_token_creator
+  to   = google_service_account_iam_member.admin_sa_token_creator
+}
+
+moved {
+  from = google_project_iam_member.editor_editor
+  to   = google_project_iam_member.lead_editor
+}
+
+moved {
+  from = google_project_iam_member.editor_iap_tunnel
+  to   = google_project_iam_member.lead_iap_tunnel
+}
+
+moved {
+  from = google_project_iam_member.editor_compute_os_login
+  to   = google_project_iam_member.lead_compute_os_login
+}
+
+moved {
+  from = google_service_account_iam_member.editor_sa_token_creator
+  to   = google_service_account_iam_member.lead_sa_token_creator
 }
