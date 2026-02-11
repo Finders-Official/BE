@@ -1,7 +1,7 @@
 package com.finders.api.domain.photo.service.command;
 
-import com.finders.api.domain.photo.dto.OwnerPhotoRequest;
-import com.finders.api.domain.photo.dto.OwnerPhotoResponse;
+import com.finders.api.domain.photo.dto.request.OwnerPhotoRequest;
+import com.finders.api.domain.photo.dto.response.OwnerPhotoResponse;
 
 public interface OwnerPhotoCommandService {
 

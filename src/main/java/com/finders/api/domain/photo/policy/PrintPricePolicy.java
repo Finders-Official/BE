@@ -1,6 +1,6 @@
 package com.finders.api.domain.photo.policy;
 
-import com.finders.api.domain.photo.dto.PhotoRequest;
+import com.finders.api.domain.photo.dto.request.PhotoRequest;
 import com.finders.api.domain.photo.enums.ReceiptMethod;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;

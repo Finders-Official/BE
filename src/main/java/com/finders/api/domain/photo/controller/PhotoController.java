@@ -1,8 +1,8 @@
 package com.finders.api.domain.photo.controller;
 
-import com.finders.api.domain.photo.dto.PhotoRequest;
-import com.finders.api.domain.photo.dto.PhotoResponse;
-import com.finders.api.domain.photo.dto.PhotoResponse.ScanResult;
+import com.finders.api.domain.photo.dto.request.PhotoRequest;
+import com.finders.api.domain.photo.dto.response.PhotoResponse;
+import com.finders.api.domain.photo.dto.response.PhotoResponse.ScanResult;
 import com.finders.api.domain.photo.service.command.PhotoCommandService;
 import com.finders.api.domain.photo.service.query.PhotoQueryService;
 import com.finders.api.global.response.ApiResponse;

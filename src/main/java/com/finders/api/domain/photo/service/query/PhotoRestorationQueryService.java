@@ -1,6 +1,6 @@
 package com.finders.api.domain.photo.service.query;
 
-import com.finders.api.domain.photo.dto.RestorationResponse;
+import com.finders.api.domain.photo.dto.response.RestorationResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
