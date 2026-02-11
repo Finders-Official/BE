@@ -1,4 +1,4 @@
-<!-- ============================================================
+﻿<!-- ============================================================
      Finders - GitHub Organization Profile
      Brand Color: #E94E16 | Dark BG: #131313
      ============================================================ -->
@@ -34,7 +34,8 @@
 <p align="center">
   <a href="https://finders.it.kr"><img src="https://img.shields.io/badge/Website-E94E16?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Website"/></a>&nbsp;
   <a href="https://blog.finders.it.kr"><img src="https://img.shields.io/badge/Tech_Blog-E94E16?style=for-the-badge&logo=tistory&logoColor=white" alt="Tech Blog"/></a>&nbsp;
-  <a href="mailto:finders.official.kr@gmail.com"><img src="https://img.shields.io/badge/Contact-E94E16?style=for-the-badge&logo=gmail&logoColor=white" alt="Contact"/></a>
+  <a href="mailto:finders.official.kr@gmail.com"><img src="https://img.shields.io/badge/Contact-E94E16?style=for-the-badge&logo=gmail&logoColor=white" alt="Contact"/></a>&nbsp;
+  <a href="https://dev-api.finders.it.kr/api/swagger-ui.html"><img src="https://img.shields.io/badge/Dev_Swagger-E94E16?style=for-the-badge&logo=swagger&logoColor=white" alt="Dev Swagger"/></a>
 </p>
 
 <br/>
@@ -70,7 +71,6 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 
 ## 👥 Team
 
-### Backend
 
 <table>
   <tr>
@@ -114,54 +114,73 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 
 | 이름 | 담당 역할 |
 |---|---|
-| 김덕환 |  |
-| 이승주 |  |
-| 이지영 |  |
-| 주보경 |  |
-| 장지요 |  |
+| 김덕환 | 인프라 구축 / AI 사진 복원 / 1:1 문의 API 담당 |
+| 이승주 | 현상소 예약 API / 현상소 로직 담당 |
+| 이지영 | 커뮤니티 API 담당 |
+| 주보경 | 현상소 등록 / 현상소 조회 API 담당 |
+| 장지요 | 로그인 / 회원가입 / 인프라 구축 담당 |
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend
-<img src="https://img.shields.io/badge/Java_21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
-<img src="https://img.shields.io/badge/Spring_Boot_3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
-<img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" alt="Spring Security" />
-<img src="https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Data JPA" />
-<img src="https://img.shields.io/badge/QueryDSL-0769AD?style=for-the-badge" alt="QueryDSL" />
-
-### Database / Cache
-<img src="https://img.shields.io/badge/MySQL_8-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
-<img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
-<img src="https://img.shields.io/badge/H2-09476B?style=for-the-badge" alt="H2" />
-
-### Infra / DevOps
-<img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Google Cloud" />
-<img src="https://img.shields.io/badge/Cloud_Run-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Cloud Run" />
-<img src="https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" alt="Terraform" />
-<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-<img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions" />
-<img src="https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare" />
-<img src="https://img.shields.io/badge/Traefik-24A1C1?style=for-the-badge&logo=traefikproxy&logoColor=white" alt="Traefik" />
-
-### External Services
-<img src="https://img.shields.io/badge/Kakao_OAuth-FFCD00?style=for-the-badge&logo=kakaotalk&logoColor=000000" alt="Kakao OAuth" />
-<img src="https://img.shields.io/badge/Apple_OAuth-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Apple OAuth" />
-<img src="https://img.shields.io/badge/PortOne-3D5AFE?style=for-the-badge" alt="PortOne" />
-<img src="https://img.shields.io/badge/Replicate-000000?style=for-the-badge" alt="Replicate" />
-<img src="https://img.shields.io/badge/Sentry-362D59?style=for-the-badge&logo=sentry&logoColor=white" alt="Sentry" />
-
-### API Docs
-<img src="https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger" />
+<table>
+  <tr>
+    <th width="180">Category</th>
+    <th>Stack</th>
+  </tr>
+  <tr>
+    <td><b>Backend</b></td>
+    <td>
+      <img src="https://img.shields.io/badge/Java_21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
+      <img src="https://img.shields.io/badge/Spring_Boot_3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
+      <img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" alt="Spring Security" />
+      <img src="https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Data JPA" />
+      <img src="https://img.shields.io/badge/QueryDSL-0769AD?style=for-the-badge" alt="QueryDSL" />
+    </td>
+  </tr>
+  <tr>
+    <td><b>Database / Cache</b></td>
+    <td>
+      <img src="https://img.shields.io/badge/MySQL_8-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+      <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
+      <img src="https://img.shields.io/badge/H2-09476B?style=for-the-badge" alt="H2" />
+    </td>
+  </tr>
+  <tr>
+    <td><b>Infra / DevOps</b></td>
+    <td>
+      <img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Google Cloud" />
+      <img src="https://img.shields.io/badge/Cloud_Run-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Cloud Run" />
+      <img src="https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" alt="Terraform" />
+      <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+      <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+      <img src="https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare" />
+      <img src="https://img.shields.io/badge/Traefik-24A1C1?style=for-the-badge&logo=traefikproxy&logoColor=white" alt="Traefik" />
+    </td>
+  </tr>
+  <tr>
+    <td><b>External Services</b></td>
+    <td>
+      <img src="https://img.shields.io/badge/Kakao_OAuth-FFCD00?style=for-the-badge&logo=kakaotalk&logoColor=000000" alt="Kakao OAuth" />
+      <img src="https://img.shields.io/badge/Apple_OAuth-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Apple OAuth" />
+      <img src="https://img.shields.io/badge/PortOne-3D5AFE?style=for-the-badge" alt="PortOne" />
+      <img src="https://img.shields.io/badge/Replicate-000000?style=for-the-badge" alt="Replicate" />
+      <img src="https://img.shields.io/badge/Sentry-362D59?style=for-the-badge&logo=sentry&logoColor=white" alt="Sentry" />
+    </td>
+  </tr>
+  <tr>
+    <td><b>API Docs</b></td>
+    <td>
+      <img src="https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger" />
+    </td>
+  </tr>
+</table>
 
 ---
 
 ## 🏗️ 시스템 아키텍처
 
-- `domain`: 도메인 중심 비즈니스 로직
-- `infra`: 외부 서비스 연동 (OAuth, 결제, AI, 스토리지)
-- `global`: 보안, 예외, 응답 포맷, 공통 설정
 
 <!-- 시스템 아키텍처 다이어그램을 준비한 뒤 아래 주석을 해제해서 사용하세요.
 <p align="center">
@@ -173,6 +192,9 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 
 ## 🧱 프로젝트 구조
 
+- `domain`: 도메인 중심 비즈니스 로직
+- `infra`: 외부 서비스 연동 (OAuth, 결제, AI, 스토리지)
+- `global`: 보안, 예외, 응답 포맷, 공통 설정
 ```text
 src/main/java/com/finders/api
 ├─ domain
@@ -201,14 +223,11 @@ src/main/java/com/finders/api
 ---
 
 ## 🗂️ ERD
-
-<!-- ERD 이미지 파일을 준비한 뒤 아래 주석을 해제해서 사용하세요.
-<p align="center">
-  <img src="docs/images/erd.png" alt="Finders ERD" width="100%" />
-</p>
--->
-
 - 상세 스키마 문서: [docs/architecture/ERD.md](docs/architecture/ERD.md)
+
+<p align="center">
+  <img src="docs/images/ERD.png" alt="Finders ERD" width="100%" />
+</p>
 
 ---
 
