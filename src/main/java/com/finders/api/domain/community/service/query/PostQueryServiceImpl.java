@@ -1,6 +1,5 @@
 package com.finders.api.domain.community.service.query;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finders.api.domain.community.dto.response.PostCacheDTO;
 import com.finders.api.domain.community.dto.response.PostResponse;
 import com.finders.api.domain.community.entity.Post;

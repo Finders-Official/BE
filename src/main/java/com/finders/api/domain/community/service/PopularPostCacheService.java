@@ -47,4 +47,8 @@ public class PopularPostCacheService {
                 .toList();
     }
 
+    public void evictPopularPosts() {
+        redisCacheClient.delete(KEY);
+    }
+
 }
