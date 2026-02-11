@@ -174,6 +174,43 @@ resource "google_compute_firewall" "allow_http" {
   target_tags = ["http-server"]
 }
 
+# =============================================================================
+# Cloud NAT (외부 IP 없는 GCE → 인터넷 아웃바운드)
+# =============================================================================
+
+resource "google_compute_address" "nat_ip" {
+  name         = "${var.name_prefix}-nat-ip"
+  project      = var.project_id
+  region       = var.region
+  address_type = "EXTERNAL"
+  network_tier = "PREMIUM"
+}
+
+resource "google_compute_router" "main" {
+  name    = "${var.name_prefix}-router"
+  project = var.project_id
+  region  = var.region
+  network = google_compute_network.main.id
+}
+
+resource "google_compute_router_nat" "main" {
+  name                                = "${var.name_prefix}-nat"
+  project                             = var.project_id
+  region                              = var.region
+  router                              = google_compute_router.main.name
+  nat_ip_allocate_option              = "MANUAL_ONLY"
+  nat_ips                             = [google_compute_address.nat_ip.self_link]
+  source_subnetwork_ip_ranges_to_nat  = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+  enable_dynamic_port_allocation      = false
+  enable_endpoint_independent_mapping = false
+  endpoint_types                      = ["ENDPOINT_TYPE_VM"]
+
+  log_config {
+    enable = false
+    filter = "ALL"
+  }
+}
+
 # Firewall: Allow HTTPS (port 443)
 # Restricted to Cloudflare IP ranges — all external traffic comes via Cloudflare Tunnel
 resource "google_compute_firewall" "allow_https" {
