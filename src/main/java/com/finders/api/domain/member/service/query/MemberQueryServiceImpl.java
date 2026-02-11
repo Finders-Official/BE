@@ -9,6 +9,7 @@ import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.domain.member.repository.SocialAccountRepository;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
+import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     private final MemberRepository memberRepository;
     private final MemberUserRepository memberUserRepository;
     private final SocialAccountRepository socialAccountRepository;
+    private final StorageService storageService;
 
     @Override
     public boolean isNicknameAvailable(String nickname) {
@@ -53,8 +55,8 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
             userDetail = new MemberResponse.UserDetail(
                     memberUser.getNickname(),
-                    memberUser.getProfileImage(),
-                    memberUser.getTokenBalance(),
+                    storageService.resolveUrl(memberUser.getProfileImage()),
+                    memberUser.getCreditBalance(),
                     socialAccounts
             );
         }

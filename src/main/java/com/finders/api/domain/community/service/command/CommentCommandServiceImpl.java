@@ -39,9 +39,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
 
         Comment savedComment = commentRepository.save(comment);
 
-        String profileUrl = memberUser.getProfileImage() != null
-                ? storageService.getPublicUrl(memberUser.getProfileImage())
-                : null;
+        String profileUrl = storageService.resolveUrl(memberUser.getProfileImage());
 
         return CommentResponse.CommentResDTO.from(savedComment, memberId, profileUrl);
     }

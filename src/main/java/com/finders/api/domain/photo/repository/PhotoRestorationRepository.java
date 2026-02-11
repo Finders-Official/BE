@@ -23,4 +23,6 @@ public interface PhotoRestorationRepository extends JpaRepository<PhotoRestorati
      * Replicate Prediction ID로 복원 조회
      */
     Optional<PhotoRestoration> findByReplicatePredictionId(String predictionId);
+
+    Optional<PhotoRestoration> findByProviderJobId(String providerJobId);
 }

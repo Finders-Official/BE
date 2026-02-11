@@ -1,8 +1,8 @@
 package com.finders.api.domain.photo.service.command;
 
-import com.finders.api.domain.member.enums.TokenRelatedType;
-import com.finders.api.domain.member.service.command.TokenCommandService;
-import com.finders.api.domain.member.service.query.TokenQueryService;
+import com.finders.api.domain.member.enums.CreditRelatedType;
+import com.finders.api.domain.member.service.command.CreditCommandService;
+import com.finders.api.domain.member.service.query.CreditQueryService;
 import com.finders.api.domain.photo.dto.RestorationRequest;
 import com.finders.api.domain.photo.dto.RestorationResponse;
 import com.finders.api.domain.photo.entity.PhotoRestoration;
@@ -11,71 +11,89 @@ import com.finders.api.domain.photo.service.ImageMetadataService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.domain.photo.enums.RestorationTier;
-import com.finders.api.infra.replicate.FluxFillInput;
 import com.finders.api.infra.replicate.ReplicateClient;
-import com.finders.api.infra.replicate.ReplicateModelInput;
 import com.finders.api.infra.replicate.ReplicateResponse;
+import com.finders.api.infra.replicate.SupirInput;
 import com.finders.api.infra.storage.StoragePath;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 사진 복원 Command 서비스 구현체
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class PhotoRestorationCommandServiceImpl implements PhotoRestorationCommandService {
 
     private static final int SIGNED_URL_EXPIRY_MINUTES = 60;
 
+    private static final Logger log = LoggerFactory.getLogger(PhotoRestorationCommandServiceImpl.class);
+
     private final PhotoRestorationRepository restorationRepository;
     private final StorageService storageService;
-    private final TokenQueryService tokenQueryService;
-    private final TokenCommandService tokenCommandService;
+    private final CreditQueryService creditQueryService;
+    private final CreditCommandService creditCommandService;
     private final ReplicateClient replicateClient;
     private final ImageMetadataService imageMetadataService;
 
-    @Qualifier("longTimeoutWebClient")
     private final WebClient longTimeoutWebClient;
+
+    public PhotoRestorationCommandServiceImpl(
+            PhotoRestorationRepository restorationRepository,
+            StorageService storageService,
+            CreditQueryService creditQueryService,
+            CreditCommandService creditCommandService,
+            ReplicateClient replicateClient,
+            ImageMetadataService imageMetadataService,
+            @Qualifier("longTimeoutWebClient") WebClient longTimeoutWebClient
+    ) {
+        this.restorationRepository = restorationRepository;
+        this.storageService = storageService;
+        this.creditQueryService = creditQueryService;
+        this.creditCommandService = creditCommandService;
+        this.replicateClient = replicateClient;
+        this.imageMetadataService = imageMetadataService;
+        this.longTimeoutWebClient = longTimeoutWebClient;
+    }
 
     @Override
     public RestorationResponse.Created createRestoration(Long memberId, RestorationRequest.Create request) {
-        RestorationTier tier = RestorationTier.BASIC;
-        int tokenCost = tier.getTokenCost();
+        RestorationTier tier = RestorationTier.PREMIUM;
+        int creditCost = tier.getCreditCost();
 
-        if (!tokenQueryService.hasEnoughTokens(memberId, tokenCost)) {
-            throw new CustomException(ErrorCode.INSUFFICIENT_TOKEN);
+        if (!creditQueryService.hasEnoughCredits(memberId, creditCost)) {
+            throw new CustomException(ErrorCode.INSUFFICIENT_CREDIT);
         }
 
         validateRestorationPath(request.originalPath(), StoragePath.RESTORATION_ORIGINAL, memberId);
-        validateRestorationPath(request.maskPath(), StoragePath.RESTORATION_MASK, memberId);
 
-        PhotoRestoration restoration = PhotoRestoration.builder()
-                .memberId(memberId)
-                .originalPath(request.originalPath())
-                .maskPath(request.maskPath())
-                .tokenUsed(tokenCost)
-                .build();
+        if (request.maskPath() != null && !request.maskPath().isBlank()) {
+            validateRestorationPath(request.maskPath(), StoragePath.RESTORATION_MASK, memberId);
+        }
+
+        PhotoRestoration restoration = PhotoRestoration.create(
+                memberId,
+                request.originalPath(),
+                request.maskPath(),
+                creditCost
+        );
 
         restoration = restorationRepository.save(restoration);
 
         String originalSignedUrl = storageService.getSignedUrl(request.originalPath(), SIGNED_URL_EXPIRY_MINUTES).url();
-        String maskSignedUrl = storageService.getSignedUrl(request.maskPath(), SIGNED_URL_EXPIRY_MINUTES).url();
 
-        ReplicateModelInput modelInput = createModelInput(tier, originalSignedUrl, maskSignedUrl);
+        SupirInput modelInput = SupirInput.forRestoration(originalSignedUrl);
         ReplicateResponse.Prediction prediction = replicateClient.createPrediction(modelInput);
 
         restoration.startProcessing(prediction.id());
 
-        int currentBalance = tokenQueryService.getBalance(memberId);
+        int currentBalance = creditQueryService.getBalance(memberId);
 
         log.info("[PhotoRestorationCommandServiceImpl.createRestoration] Created: id={}, tier={}, predictionId={}, currentBalance={}",
                 restoration.getId(), tier, prediction.id(), currentBalance);
@@ -83,7 +101,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         return RestorationResponse.Created.builder()
                 .id(restoration.getId())
                 .status(restoration.getStatus())
-                .tokenUsed(tokenCost)
+                .creditUsed(creditCost)
                 .remainingBalance(currentBalance)
                 .build();
     }
@@ -122,11 +140,11 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         // 1. Replicate 결과 이미지 다운로드 및 GCS 업로드 (메타데이터 포함)
         RestoredImageResult result = downloadAndStoreResult(restoredImageUrl, restoration.getMemberId());
 
-        // 2. 토큰 차감 (복원 성공 시점에 차감)
-        tokenCommandService.useTokens(
+        // 2. 크레딧 차감 (복원 성공 시점에 차감)
+        creditCommandService.useCredits(
                 restoration.getMemberId(),
-                restoration.getTokenUsed(),
-                TokenRelatedType.PHOTO_RESTORATION,
+                restoration.getCreditUsed(),
+                CreditRelatedType.PHOTO_RESTORATION,
                 restoration.getId(),
                 "AI 사진 복원 완료"
         );
@@ -153,15 +171,9 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
         restoration.fail(errorMessage);
 
-        // 토큰은 복원 완료 시점에 차감하므로, 실패 시 환불 불필요
+        // 크레딧은 복원 완료 시점에 차감하므로, 실패 시 환불 불필요
         log.info("[PhotoRestorationCommandServiceImpl.failRestoration] Failed: id={}, predictionId={}, error={}",
                 restoration.getId(), predictionId, errorMessage);
-    }
-
-    private ReplicateModelInput createModelInput(RestorationTier tier, String imageUrl, String maskUrl) {
-        return switch (tier) {
-            case BASIC -> FluxFillInput.forRestoration(imageUrl, maskUrl);
-        };
     }
 
     private void validateRestorationPath(String objectPath, StoragePath expectedType, Long memberId) {

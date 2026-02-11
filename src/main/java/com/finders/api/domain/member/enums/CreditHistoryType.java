@@ -1,6 +1,6 @@
 package com.finders.api.domain.member.enums;
 
-public enum TokenHistoryType {
+public enum CreditHistoryType {
 
     SIGNUP_BONUS,
     REFRESH,

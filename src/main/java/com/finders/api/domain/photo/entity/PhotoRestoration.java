@@ -12,14 +12,16 @@ import lombok.NoArgsConstructor;
 /**
  * AI 사진 복원 요청
  */
-@Entity
 @Getter
+@Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "photo_restoration",
         indexes = @Index(name = "idx_restoration_member", columnList = "member_id, status")
 )
 public class PhotoRestoration extends BaseTimeEntity {
+
+    private static final String PROVIDER_REPLICATE = "REPLICATE";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +33,7 @@ public class PhotoRestoration extends BaseTimeEntity {
     @Column(name = "original_path", length = 500, nullable = false)
     private String originalPath;
 
-    @Column(name = "mask_path", length = 500, nullable = false)
+    @Column(name = "mask_path", length = 500)
     private String maskPath;
 
     @Column(name = "restored_path", length = 500)
@@ -50,8 +52,14 @@ public class PhotoRestoration extends BaseTimeEntity {
     @Column(name = "replicate_prediction_id", length = 100)
     private String replicatePredictionId;
 
-    @Column(name = "token_used", nullable = false)
-    private int tokenUsed = 1;
+    @Column(name = "provider_job_id", length = 100)
+    private String providerJobId;
+
+    @Column(name = "provider_name", length = 30)
+    private String providerName;
+
+    @Column(name = "credit_used", nullable = false)
+    private int creditUsed = 1;
 
     @Column(name = "error_message", length = 500)
     private String errorMessage;
@@ -64,17 +72,23 @@ public class PhotoRestoration extends BaseTimeEntity {
     private String feedbackComment;
 
     @Builder
-    private PhotoRestoration(Long memberId, String originalPath, String maskPath, int tokenUsed) {
+    private PhotoRestoration(Long memberId, String originalPath, String maskPath, int creditUsed) {
         this.memberId = memberId;
         this.originalPath = originalPath;
         this.maskPath = maskPath;
-        this.tokenUsed = tokenUsed;
+        this.creditUsed = creditUsed;
         this.status = RestorationStatus.PENDING;
+    }
+
+    public static PhotoRestoration create(Long memberId, String originalPath, String maskPath, int creditUsed) {
+        return new PhotoRestoration(memberId, originalPath, maskPath, creditUsed);
     }
 
     public void startProcessing(String predictionId) {
         this.status = RestorationStatus.PROCESSING;
         this.replicatePredictionId = predictionId;
+        this.providerJobId = predictionId;
+        this.providerName = PROVIDER_REPLICATE;
     }
 
     public void complete(String restoredPath, Integer width, Integer height) {

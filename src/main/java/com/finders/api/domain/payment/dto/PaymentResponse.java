@@ -29,7 +29,7 @@ public class PaymentResponse {
             Long relatedOrderId,
             String orderName,
             Integer amount,
-            Integer tokenAmount,
+            Integer creditAmount,
             PaymentStatus status,
             PaymentMethod method,
             PgProvider pgProvider,
@@ -56,7 +56,7 @@ public class PaymentResponse {
                     .relatedOrderId(payment.getRelatedOrderId())
                     .orderName(payment.getOrderName())
                     .amount(payment.getAmount())
-                    .tokenAmount(payment.getTokenAmount())
+                    .creditAmount(payment.getCreditAmount())
                     .status(payment.getStatus())
                     .method(payment.getMethod())
                     .pgProvider(payment.getPgProvider())

@@ -48,18 +48,39 @@ Finders 프로젝트는 보안 강화와 중앙 집중식 관리를 위해 기�
 
 ---
 
-## 비밀 정보 명명 규칙
+## 시크릿 구조
 
-일관된 관리를 위해 다음과 같은 명명 규칙을 준수합니다.
+환경별로 **JSON 통합 시크릿**을 사용합니다. 개별 시크릿이 아니라, 환경별 설정값을 하나의 JSON으로 묶어 관리합니다.
 
-```text
-app-{environment}-{variable-name}
+### Secret Manager 시크릿 목록
+
+| 시크릿 이름 | 형식 | 용도 |
+|-------------|------|------|
+| `finders-prod-config` | JSON | Prod 환경 전체 설정 (DB, JWT, OAuth, Redis 등) |
+| `finders-dev-config` | JSON | Dev 환경 전체 설정 |
+
+### JSON 구조 예시
+
+```json
+{
+  "SPRING_DATASOURCE_URL": "jdbc:mysql://10.68.240.3:3306/finders",
+  "SPRING_DATASOURCE_USERNAME": "finders",
+  "SPRING_DATASOURCE_PASSWORD": "...",
+  "JWT_SECRET": "...",
+  "OAUTH2_KAKAO_CLIENT_ID": "...",
+  "REDIS_HOST": "...",
+  "REDIS_PASSWORD": "...",
+  "GCS_BUCKET_PUBLIC": "finders-public",
+  "GCS_BUCKET_PRIVATE": "finders-private"
+}
 ```
 
-### 예시
-- `app-prod-spring-datasource-password`: 운영 환경 DB 비밀번호
-- `app-dev-jwt-secret`: 개발 환경 JWT 서명 키
-- `app-prod-oauth2-kakao-client-id`: 운영 환경 카카오 OAuth 클라이언트 ID
+### 배포 시 사용 흐름
+
+1. GitHub Actions가 WIF로 GCP 인증
+2. `gcloud secrets versions access latest --secret="finders-{env}-config"` 로 JSON 가져옴
+3. JSON의 각 키-값을 Docker 환경변수로 주입
+4. Spring Boot가 환경변수에서 설정값 읽음
 
 ---
 
@@ -67,48 +88,64 @@ app-{environment}-{variable-name}
 
 `gcloud` CLI를 사용한 일반적인 작업 방법입니다.
 
-### 1. 비밀 정보 목록 조회
+### 1. 시크릿 목록 조회
 ```bash
-# 특정 환경(label)의 비밀 정보 목록 확인
-gcloud secrets list --filter="labels.env=prod"
+gcloud secrets list
 ```
 
-### 2. 비밀 정보 값 확인
+### 2. 현재 설정값 확인
 ```bash
-# 최신 버전의 값 확인
-gcloud secrets versions access latest --secret="app-prod-spring-datasource-password"
+# Prod 설정 전체 확인
+gcloud secrets versions access latest --secret="finders-prod-config"
+
+# Dev 설정 전체 확인
+gcloud secrets versions access latest --secret="finders-dev-config"
+
+# JSON에서 특정 키만 추출
+gcloud secrets versions access latest --secret="finders-prod-config" | jq '.JWT_SECRET'
 ```
 
-### 3. 새로운 비밀 정보 생성
+### 3. 설정값 업데이트
 ```bash
-echo -n "my-secret-value" | gcloud secrets create app-prod-new-secret \
-  --replication-policy="automatic" \
-  --data-file=- \
-  --labels="env=prod,managed-by=team"
+# 1. 현재 값을 파일로 내려받기
+gcloud secrets versions access latest --secret="finders-prod-config" > /tmp/config.json
+
+# 2. 파일 수정 (JSON 편집)
+vim /tmp/config.json
+
+# 3. 새 버전으로 업로드
+gcloud secrets versions add finders-prod-config --data-file=/tmp/config.json
+
+# 4. 임시 파일 삭제
+rm /tmp/config.json
 ```
 
-### 4. 기존 비밀 정보 업데이트 (새 버전 추가)
-```bash
-echo -n "new-value" | gcloud secrets versions add app-prod-existing-secret --data-file=-
-```
-
-### 5. 비밀 정보 순환 (Rotation)
-1. 새로운 버전의 값을 추가합니다 (위의 업데이트 명령어 사용).
-2. 서버를 재시작하여 새로운 값을 적용합니다.
-   ```bash
-   gcloud compute instances reset finders-server-v2 --zone=asia-northeast3-a
-   ```
+### 4. 설정 변경 후 적용
+시크릿 변경 후 서버 재배포가 필요합니다. CD 파이프라인이 자동으로 최신 시크릿을 가져오므로, **해당 브랜치에 빈 커밋을 push하거나 GitHub Actions에서 수동 실행**하면 됩니다.
 
 ---
 
 ## CI/CD 통합
 
-Finders의 CI/CD 파이프라인은 다음과 같이 Secret Manager와 통합되어 있습니다.
+### GitHub Secrets (최소한의 3개만)
 
-1. **인증**: GitHub Actions는 Workload Identity Federation(WIF)을 통해 GCP에 인증합니다.
-2. **이미지 관리**: Docker Hub 대신 GCP Artifact Registry를 사용합니다.
-3. **배포**: 서버 시작 스크립트(`startup.sh`)가 실행될 때 Secret Manager에서 필요한 값을 가져와 환경 변수로 설정합니다.
-4. **보안**: GitHub Actions 로그에 실제 비밀 정보가 노출되지 않습니다.
+| Secret | 용도 |
+|--------|------|
+| `WIF_PROVIDER` | WIF Provider 리소스 경로 |
+| `WIF_SERVICE_ACCOUNT` | `terraform-ci` SA 이메일 |
+| `GCP_PROJECT_ID` | GCP 프로젝트 ID |
+
+이 3개로 GCP에 인증한 후, 앱 설정값은 전부 Secret Manager에서 가져옵니다.
+
+### 인증 흐름
+
+```
+GitHub Actions → WIF (finders-pool/github-provider) → terraform-ci SA → Secret Manager
+```
+
+- Docker Hub 대신 GCP Artifact Registry 사용 (WIF로 인증)
+- 앱 설정값은 배포 스크립트가 Secret Manager에서 가져와 Docker 환경변수로 주입
+- GitHub Actions 로그에 비밀 정보가 노출되지 않음
 
 ---
 
@@ -171,4 +208,4 @@ Finders의 CI/CD 파이프라인은 다음과 같이 Secret Manager와 통합되
 
 ---
 
-**마지막 업데이트**: 2026-02-09
+**마지막 업데이트**: 2026-02-11

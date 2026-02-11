@@ -12,9 +12,7 @@ import com.finders.api.domain.store.dto.response.PhotoLabListResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabNoticeResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabPreviewResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabResponse;
-import com.finders.api.domain.store.dto.response.PhotoLabParentRegionCountResponse;
 import com.finders.api.domain.store.dto.response.PhotoLabRegionFilterResponse;
-import com.finders.api.domain.store.dto.response.PhotoLabRegionItemResponse;
 import com.finders.api.domain.store.entity.PhotoLab;
 import com.finders.api.domain.store.entity.PhotoLabImage;
 import com.finders.api.domain.store.entity.PhotoLabNotice;
@@ -29,14 +27,12 @@ import com.finders.api.domain.store.repository.RegionRepository;
 import com.finders.api.domain.store.repository.PhotoLabTagQueryRepository;
 import com.finders.api.domain.terms.enums.TermsType;
 import com.finders.api.domain.terms.service.query.MemberAgreementQueryService;
-import com.finders.api.global.config.RedisConfig;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.infra.storage.StorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -68,6 +64,7 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
     private final MemberAgreementQueryService memberAgreementQueryService;
     private final StorageService storageService;
     private final RegionRepository regionRepository;
+    private final PhotoLabRegionCacheService photoLabRegionCacheService;
 
     // 커뮤니티 현상소 검색 관련
     private final PhotoLabRepository photoLabRepository;
@@ -447,11 +444,9 @@ public class PhotoLabQueryServiceImpl implements PhotoLabQueryService {
         return PhotoLabFavoriteResponse.SliceResponse.from(cards);
     }
       
-    @Cacheable(value = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE, key = RedisConfig.PHOTO_LAB_REGION_COUNTS_CACHE_KEY)
+    @Override
     public PhotoLabRegionFilterResponse getPhotoLabCountsByRegion() {
-        List<PhotoLabParentRegionCountResponse> parents = photoLabRepository.countPhotoLabsByTopRegion();
-        List<PhotoLabRegionItemResponse> regions = regionRepository.findAllRegionItems();
-        return new PhotoLabRegionFilterResponse(parents, regions);
+        return photoLabRegionCacheService.getPhotoLabCountsByRegion();
     }
 
 }

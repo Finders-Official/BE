@@ -54,12 +54,18 @@ services:
   # Redis (캐싱 및 세션 관리)
   # ========================================
   redis:
-    image: redis:latest
+    image: redis:8.0-alpine
     container_name: finders-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
-    command: redis-server --save 60 1 --loglevel warning
+    command: redis-server --save 60 1 --loglevel warning --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256m
     networks:
       - finders-network
     healthcheck:
@@ -103,6 +109,7 @@ services:
 
 volumes:
   mysql-data:
+  redis-data:
 
 networks:
   finders-network:

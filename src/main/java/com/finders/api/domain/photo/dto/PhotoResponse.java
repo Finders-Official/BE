@@ -111,7 +111,7 @@ public class PhotoResponse {
             String recipientAddress,
 
             @Schema(description = "수령인 상세 주소", example = "역삼동 123-123")
-            String AddressDetail,
+            String recipientAddressDetail,
 
             @Schema(description = "보낸 사람 이름", example = "예술사진관 사장")
             String sender,

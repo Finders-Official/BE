@@ -9,8 +9,8 @@ import com.finders.api.domain.inquiry.entity.InquiryImage;
 import com.finders.api.domain.inquiry.entity.InquiryReply;
 import com.finders.api.domain.member.entity.*;
 import com.finders.api.domain.member.enums.SocialProvider;
-import com.finders.api.domain.member.enums.TokenHistoryType;
-import com.finders.api.domain.member.enums.TokenRelatedType;
+import com.finders.api.domain.member.enums.CreditHistoryType;
+import com.finders.api.domain.member.enums.CreditRelatedType;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.payment.entity.Payment;
 import com.finders.api.domain.payment.enums.OrderType;
@@ -91,9 +91,9 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     // ===== Constants: User Data =====
     private static final String[] USER_NAMES = {
-            "김민수", "이영희", "박지훈", "최서연", "정우성",
-            "강미나", "윤도현", "한소희", "조현우", "신예은",
-            "권태호", "송지안", "황민지", "전승현", "백서윤",
+            "윤현제", "박희선", "송승일", "김고은", "신현우",
+            "함예진", "김재진", "김민지", "우성민", "이주영",
+            "임수빈", "최미나", "이성훈", "이하은", "조이건",
             "남궁현", "류지원", "문예진", "장하늘", "심유나"
     };
     private static final String[] USER_PHONES = {
@@ -103,9 +103,9 @@ public class DatabaseSeeder implements CommandLineRunner {
             "010-2222-0016", "010-2222-0017", "010-2222-0018", "010-2222-0019", "010-2222-0020"
     };
     private static final String[] USER_NICKNAMES = {
-            "민수_film", "영희_photo", "지훈_cam", "서연_snap", "우성_lens",
-            "미나_shot", "도현_roll", "소희_dev", "현우_print", "예은_scan",
-            "태호_analog", "지안_35mm", "민지_color", "승현_bw", "서윤_kodak",
+            "현제_film", "희선_photo", "승일_cam", "고은_snap", "현우_lens",
+            "예진_shot", "재진_roll", "민지_dev", "성민_print", "주영_scan",
+            "수빈_analog", "미나_35mm", "성훈_color", "하은_bw", "이건_kodak",
             "현_fuji", "지원_ilford", "예진_portra", "하늘_ektachrome", "유나_cinestill"
     };
 
@@ -128,6 +128,12 @@ public class DatabaseSeeder implements CommandLineRunner {
     private static final int PRINT_ORDER_PICKUP_PRICE = 5000;
     private static final int PRINT_ORDER_DELIVERY_PRICE = 8000;
     private static final int DELIVERY_FEE = 3000;
+
+    // ===== Constants: Image File Names =====
+    private static final int LAB_IMAGE_COUNT = 37;
+    private static final int COMMUNITY_IMAGE_COUNT = 37;
+    private static final String PROFILE_MALE = "profiles/default/profile_default_male.png";
+    private static final String PROFILE_FEMALE = "profiles/default/profile_default_female.png";
 
     // ===== Constants: Region Data =====
     private static final String[] SIDO_NAMES = {"서울", "경기", "부산", "인천", "대구"};
@@ -397,9 +403,9 @@ public class DatabaseSeeder implements CommandLineRunner {
             createPayments();
             log.info("{} Created payments", LOG_PREFIX);
 
-            // 22. TokenHistory (토큰 이력)
-            createTokenHistory();
-            log.info("{} Created token history", LOG_PREFIX);
+            // 22. CreditHistory (크레딧 이력)
+            createCreditHistory();
+            log.info("{} Created credit history", LOG_PREFIX);
 
             // 23. SearchHistory (검색 기록)
             createSearchHistory();
@@ -653,7 +659,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .email("user" + (i + 1) + "@test.com")
                     .phone(USER_PHONES[i])
                     .nickname(USER_NICKNAMES[i])
-                    .profileImage(null)
+                    .profileImage(i % 2 == 0 ? PROFILE_MALE : PROFILE_FEMALE)
                     .build();
             usersToSave.add(user);
         }
@@ -820,6 +826,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .isDeliveryAvailable(i % 2 == 0)
                     .maxReservationsPerHour(3)
                     .avgWorkTime(LAB_AVG_WORK_TIMES[i % LAB_AVG_WORK_TIMES.length])
+                    .loadBaseRoll(1)
+                    .loadAddMinutes(120)
                     .build();
 
             photoLabsResult.add(photoLabRepository.save(lab));
@@ -853,9 +861,12 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void createLabImages(PhotoLab lab) {
         for (int i = 0; i < 3; i++) {
+            int imageIndex = ((lab.getId().intValue() - 1) * 3 + i) % LAB_IMAGE_COUNT + 1;
+            String fileName = String.format("lab_interior_%02d.png", imageIndex);
+
             PhotoLabImage image = PhotoLabImage.builder()
                     .photoLab(lab)
-                    .objectPath("labs/" + lab.getId() + "/sample_" + (i + 1) + ".jpg")
+                    .objectPath("photo-labs/" + lab.getId() + "/images/" + fileName)
                     .displayOrder(i)
                     .isMain(i == 0)
                     .build();
@@ -889,11 +900,11 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void createLabDocuments(PhotoLab lab) {
-        // 사업자등록증
+        String docFileName = UUID.randomUUID().toString().substring(0, 8) + ".pdf";
         PhotoLabDocument doc1 = PhotoLabDocument.builder()
                 .photoLab(lab)
                 .documentType(DocumentType.BUSINESS_LICENSE)
-                .objectPath("labs/" + lab.getId() + "/documents/business_license.pdf")
+                .objectPath("photo-labs/" + lab.getId() + "/documents/BUSINESS_LICENSE/" + docFileName)
                 .fileName("사업자등록증.pdf")
                 .verifiedAt(LocalDateTime.now().minusDays(30))
                 .build();
@@ -1029,7 +1040,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 for (int i = 0; i < photoCount; i++) {
                     ScannedPhoto photo = ScannedPhoto.create(
                             order,
-                            "orders/" + order.getId() + "/scans/" + UUID.randomUUID() + ".jpg",
+                            "temp/orders/" + order.getId() + "/scans/" + UUID.randomUUID() + ".jpg",
                             "scan_" + (i + 1) + ".jpg",
                             i
                     );
@@ -1126,12 +1137,14 @@ public class DatabaseSeeder implements CommandLineRunner {
             posts.add(post);
             entityManager.flush();
 
-            // 이미지 추가 (배치)
             List<PostImage> imagesToSave = new ArrayList<>();
             for (int j = 0; j < 3; j++) {
+                int imageIndex = (i * 3 + j) % COMMUNITY_IMAGE_COUNT + 1;
+                String fileName = String.format("film_photo_%02d.png", imageIndex);
+
                 PostImage image = PostImage.builder()
                         .post(post)
-                        .objectPath("posts/" + post.getId() + "/image_" + (j + 1) + ".jpg")
+                        .objectPath("posts/" + user.getId() + "/" + fileName)
                         .displayOrder(j)
                         .width(1920)
                         .height(1280)
@@ -1214,7 +1227,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             if (i % 2 == 0) {
                 InquiryImage image = InquiryImage.builder()
                         .inquiry(inquiry)
-                        .objectPath("inquiries/" + inquiry.getId() + "/image_1.jpg")
+                        .objectPath("inquiries/" + user.getId() + "/" + UUID.randomUUID().toString().substring(0, 8) + ".png")
                         .displayOrder(0)
                         .build();
                 entityManager.persist(image);
@@ -1245,7 +1258,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .memberId(user.getId())
                     .originalPath("restorations/" + user.getId() + "/original/" + UUID.randomUUID() + ".jpg")
                     .maskPath("restorations/" + user.getId() + "/mask/" + UUID.randomUUID() + ".png")
-                    .tokenUsed(1)
+                    .creditUsed(1)
                     .build();
 
             // 일부는 완료 상태로
@@ -1276,12 +1289,12 @@ public class DatabaseSeeder implements CommandLineRunner {
 
             Payment payment = Payment.builder()
                     .member(user)
-                    .orderType(OrderType.TOKEN_PURCHASE)
+                    .orderType(OrderType.CREDIT_PURCHASE)
                     .relatedOrderId(null)
                     .paymentId("payment_" + UUID.randomUUID().toString().substring(0, 8))
-                    .orderName("토큰 10개 구매")
+                    .orderName("크레딧 10개 구매")
                     .amount(10000)
-                    .tokenAmount(10)
+                    .creditAmount(10)
                     .build();
 
             paymentsToSave.add(payment);
@@ -1294,34 +1307,34 @@ public class DatabaseSeeder implements CommandLineRunner {
         entityManager.flush();
     }
 
-    // ===== TokenHistory =====
-    private void createTokenHistory() {
-        List<TokenHistory> historiesToSave = new ArrayList<>();
+    // ===== CreditHistory =====
+    private void createCreditHistory() {
+        List<CreditHistory> historiesToSave = new ArrayList<>();
 
         for (int i = 0; i < users.size(); i++) {
             MemberUser user = users.get(i);
 
-            // 초기 토큰 지급
-            TokenHistory history = TokenHistory.builder()
+            // 초기 크레딧 지급
+            CreditHistory history = CreditHistory.builder()
                     .user(user)
-                    .type(TokenHistoryType.PURCHASE)
+                    .type(CreditHistoryType.SIGNUP_BONUS)
                     .amount(5)
                     .balanceAfter(5)
-                    .relatedType(TokenRelatedType.PAYMENT)
+                    .relatedType(null)
                     .relatedId(null)
-                    .description("회원가입 보너스 토큰")
+                    .description("회원가입 보너스 크레딧")
                     .build();
 
             historiesToSave.add(history);
 
-            // 일부 유저는 토큰 사용 이력 추가
+            // 일부 유저는 크레딧 사용 이력 추가
             if (i % 3 == 0) {
-                TokenHistory useHistory = TokenHistory.builder()
+                CreditHistory useHistory = CreditHistory.builder()
                         .user(user)
-                        .type(TokenHistoryType.USE)
+                        .type(CreditHistoryType.USE)
                         .amount(-1)
                         .balanceAfter(4)
-                        .relatedType(TokenRelatedType.PHOTO_RESTORATION)
+                        .relatedType(CreditRelatedType.PHOTO_RESTORATION)
                         .relatedId(null)
                         .description("AI 복원 서비스 이용")
                         .build();
@@ -1329,7 +1342,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         }
 
-        for (TokenHistory history : historiesToSave) {
+        for (CreditHistory history : historiesToSave) {
             entityManager.persist(history);
         }
         entityManager.flush();

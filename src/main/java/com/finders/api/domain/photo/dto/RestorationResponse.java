@@ -19,7 +19,7 @@ public class RestorationResponse {
     public record Created(
             Long id,
             RestorationStatus status,
-            int tokenUsed,
+            int creditUsed,
             int remainingBalance
     ) {}
 
@@ -34,7 +34,7 @@ public class RestorationResponse {
             Integer restoredWidth,
             Integer restoredHeight,
             RestorationStatus status,
-            int tokenUsed,
+            int creditUsed,
             FeedbackRating feedbackRating,
             String feedbackComment,
             String errorMessage,
@@ -48,7 +48,7 @@ public class RestorationResponse {
                     .restoredWidth(restoration.getRestoredWidth())
                     .restoredHeight(restoration.getRestoredHeight())
                     .status(restoration.getStatus())
-                    .tokenUsed(restoration.getTokenUsed())
+                    .creditUsed(restoration.getCreditUsed())
                     .feedbackRating(restoration.getFeedbackRating())
                     .feedbackComment(restoration.getFeedbackComment())
                     .errorMessage(restoration.getErrorMessage())

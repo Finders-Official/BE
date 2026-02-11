@@ -63,6 +63,7 @@ public enum ErrorCode implements BaseCode {
     AUTH_PHONE_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH_421", "인증번호가 만료되었거나 존재하지 않습니다."),
     AUTH_PHONE_MAX_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AUTH_422", "인증 시도 횟수를 초과했습니다."),
     AUTH_PHONE_ALREADY_VERIFIED(HttpStatus.CONFLICT, "AUTH_423", "이미 인증이 완료된 요청입니다."),
+    AUTH_SERVER_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "AUTH_503", "현재 인증 서비스 이용이 원활하지 않습니다. 잠시 후 다시 시도해주세요."),
 
     // 로그인 실패
     AUTH_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH_401", "이메일 또는 비밀번호가 일치하지 않습니다."),
@@ -131,10 +132,10 @@ public enum ErrorCode implements BaseCode {
 
 
     // ========================================
-    // Token
+    // Credit
     // ========================================
-    INSUFFICIENT_TOKEN(HttpStatus.PAYMENT_REQUIRED, "TOKEN_402", "토큰이 부족합니다."),
-    TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "TOKEN_404", "토큰 정보를 찾을 수 없습니다."),
+    INSUFFICIENT_CREDIT(HttpStatus.PAYMENT_REQUIRED, "CREDIT_402", "크레딧이 부족합니다."),
+    CREDIT_NOT_FOUND(HttpStatus.NOT_FOUND, "CREDIT_404", "크레딧 정보를 찾을 수 없습니다."),
 
     // ========================================
     // Payment (결제)
