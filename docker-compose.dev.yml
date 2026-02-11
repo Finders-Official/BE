@@ -31,7 +31,7 @@ services:
 
   # ── Dev Blue ──
   dev-blue:
-    image: findersofficial/finders-api:dev
+    image: ${DOCKER_IMAGE:-findersofficial/finders-api}:dev
     restart: unless-stopped
     depends_on:
       redis-dev:
@@ -66,7 +66,7 @@ services:
 
   # ── Dev Green ──
   dev-green:
-    image: findersofficial/finders-api:dev
+    image: ${DOCKER_IMAGE:-findersofficial/finders-api}:dev
     restart: unless-stopped
     depends_on:
       redis-dev:

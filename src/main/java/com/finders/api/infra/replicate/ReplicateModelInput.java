@@ -1,7 +1,7 @@
 package com.finders.api.infra.replicate;
 
 public sealed interface ReplicateModelInput
-        permits RestoreImageInput, SupirInput {
+        permits SupirInput {
 
     String modelVersion();
 }
