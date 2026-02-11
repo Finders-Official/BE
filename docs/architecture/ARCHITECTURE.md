@@ -43,7 +43,7 @@ com.finders.api/
 │   ├── storage/            # 파일 저장소 (GCS)
 │   ├── oauth/              # OAuth 클라이언트 (Kakao, Apple)
 │   ├── payment/            # 결제 (토스 페이먼츠)
-│   └── replicate/          # AI 이미지 복원 (Stable Diffusion)
+│   └── replicate/          # AI 이미지 복원 (Replicate SUPIR)
 │
 └── global/                 # 글로벌 레이어 (공통 모듈)
     ├── config/             # 설정 클래스
@@ -72,7 +72,7 @@ com.finders.api/
 
 ### 5. Photo (사진)
 - 스캔된 사진 관리
-- AI 복원 기능 (Replicate - Stable Diffusion Inpainting)
+- AI 복원 기능 (Replicate - SUPIR 초해상도 복원)
 - 인화 주문
 
 ### 6. Community (커뮤니티)
@@ -133,7 +133,7 @@ public void handleReservationCreated(ReservationCreatedEvent event) { ... }
 | Kakao OAuth | 소셜 로그인 | `infra.oauth.kakao` |
 | Apple OAuth | 소셜 로그인 | `infra.oauth.apple` |
 | 토스 페이먼츠 | 결제 | `infra.payment` |
-| Replicate (Stable Diffusion) | AI 이미지 복원 | `infra.replicate` |
+| Replicate (SUPIR) | AI 이미지 복원 | `infra.replicate` |
 
 ## Database Design
 
