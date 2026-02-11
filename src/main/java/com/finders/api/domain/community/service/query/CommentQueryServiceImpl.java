@@ -15,8 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,13 +36,9 @@ public class CommentQueryServiceImpl implements CommentQueryService {
         Page<Comment> commentPage = commentRepository.findAllByPostAndStatusOrderByCreatedAtDesc(post, CommunityStatus.ACTIVE, pageRequest);
 
         return commentPage.map(comment -> {
-            String profileUrl = getFullUrl(comment.getMemberUser().getProfileImage());
+            String profileUrl = storageService.resolveUrl(comment.getMemberUser().getProfileImage());
             return CommentResponse.CommentResDTO.from(comment, memberId, profileUrl);
         });
     }
 
-    private String getFullUrl(String path) {
-        if (path == null || path.isBlank()) return null;
-        return storageService.getPublicUrl(path);
-    }
 }

@@ -11,10 +11,16 @@
 services:
   # ── Redis (dev 전용) ──
   redis-dev:
-    image: redis:latest
+    image: redis:8.0-alpine
     container_name: finders-redis-dev
     restart: unless-stopped
-    command: redis-server --save 60 1 --loglevel warning
+    command: redis-server --save 60 1 --loglevel warning --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-dev-data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256m
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -25,7 +31,7 @@ services:
 
   # ── Dev Blue ──
   dev-blue:
-    image: findersofficial/finders-api:dev
+    image: ${DOCKER_IMAGE:-findersofficial/finders-api}:dev
     restart: unless-stopped
     depends_on:
       redis-dev:
@@ -60,7 +66,7 @@ services:
 
   # ── Dev Green ──
   dev-green:
-    image: findersofficial/finders-api:dev
+    image: ${DOCKER_IMAGE:-findersofficial/finders-api}:dev
     restart: unless-stopped
     depends_on:
       redis-dev:
@@ -92,3 +98,6 @@ services:
       - green
     networks:
       - finders-network
+
+volumes:
+  redis-dev-data:

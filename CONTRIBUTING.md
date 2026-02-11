@@ -136,9 +136,32 @@ PR 제출 전 아래 항목을 확인하세요.
 
 ---
 
+## 인프라 기여 (Terraform)
+
+인프라 변경은 `infra/` 디렉토리의 Terraform 코드를 수정합니다.
+
+```bash
+cd infra
+terraform init
+terraform validate    # 문법 검증
+terraform plan        # 변경 사항 미리 확인
+```
+
+### 주의사항
+
+- ⚠️ 로컬에서 `terraform apply` 절대 금지 (CI/CD만 사용)
+- PR 생성 시 자동으로 `terraform plan` 실행 → PR 코멘트로 결과 표시
+- develop 머지 시 자동으로 `terraform apply` 실행
+- `terraform.tfvars` 파일은 커밋 금지 (`.gitignore` 처리됨)
+- 상세 운영 가이드: [docs/infra/TERRAFORM_OPERATIONS.md](docs/infra/TERRAFORM_OPERATIONS.md)
+
+---
+
 ## 참고 문서
 
 - [Code Style Guide](docs/development/CODE_STYLE.md)
 - [Conventions](docs/development/CONVENTIONS.md)
 - [Architecture](docs/architecture/ARCHITECTURE.md)
+- [Infrastructure](docs/architecture/INFRASTRUCTURE.md)
 - [API Specification](docs/development/API.md)
+- [Terraform Operations](docs/infra/TERRAFORM_OPERATIONS.md)

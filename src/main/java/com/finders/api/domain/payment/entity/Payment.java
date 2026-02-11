@@ -50,8 +50,8 @@ public class Payment extends BaseTimeEntity {
     @Column(name = "amount", nullable = false)
     private Integer amount;
 
-    @Column(name = "token_amount")
-    private Integer tokenAmount;
+    @Column(name = "credit_amount")
+    private Integer creditAmount;
 
     // 포트원 V2 정보 (승인 후 저장)
     @Column(name = "transaction_id", unique = true, length = 100)
@@ -114,14 +114,14 @@ public class Payment extends BaseTimeEntity {
 
     @Builder
     private Payment(Member member, OrderType orderType, Long relatedOrderId,
-                    String paymentId, String orderName, Integer amount, Integer tokenAmount) {
+                    String paymentId, String orderName, Integer amount, Integer creditAmount) {
         this.member = member;
         this.orderType = orderType;
         this.relatedOrderId = relatedOrderId;
         this.paymentId = paymentId;
         this.orderName = orderName;
         this.amount = amount;
-        this.tokenAmount = tokenAmount;
+        this.creditAmount = creditAmount;
         this.status = PaymentStatus.READY;
         this.requestedAt = LocalDateTime.now();
     }

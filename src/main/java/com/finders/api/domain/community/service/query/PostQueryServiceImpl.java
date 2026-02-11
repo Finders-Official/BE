@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -43,7 +42,6 @@ public class PostQueryServiceImpl implements PostQueryService {
     private final MemberUserRepository memberUserRepository;
     private final StorageService storageService;
     private final PopularPostCacheService popularPostCacheService;
-    private final ObjectMapper objectMapper;
 
     @Override
     public PostResponse.PostDetailResDTO getPostDetail(Long postId, Long memberId) {
@@ -55,7 +53,7 @@ public class PostQueryServiceImpl implements PostQueryService {
         boolean isLiked = (memberUser != null) && postLikeRepository.existsByPostAndMemberUser(post, memberUser);
         boolean isMine = (memberId != null) && post.getMemberUser().getId().equals(memberId);
 
-        String profileImageUrl = getFullUrl(post.getMemberUser().getProfileImage());
+        String profileImageUrl = storageService.resolveUrl(post.getMemberUser().getProfileImage());
 
         List<PostResponse.PostImageResDTO> images = post.getPostImageList().stream()
                 .map(this::toPostImageResDTO)
@@ -120,7 +118,7 @@ public class PostQueryServiceImpl implements PostQueryService {
 
     private PostResponse.PostImageResDTO toPostImageResDTO(com.finders.api.domain.community.entity.PostImage image) {
         if (image == null) return null;
-        return PostResponse.PostImageResDTO.from(image, getFullUrl(image.getObjectPath()));
+        return PostResponse.PostImageResDTO.from(image, storageService.resolveUrl(image.getObjectPath()));
     }
 
     private List<PostResponse.PostPreviewDTO> convertToPreviewDTOs(List<Post> posts, Long memberId) {
@@ -143,13 +141,6 @@ public class PostQueryServiceImpl implements PostQueryService {
         }
         List<Long> postIds = posts.stream().map(Post::getId).toList();
         return postLikeRepository.findLikedPostIdsByMemberAndPostIds(memberId, postIds);
-    }
-
-    private String getFullUrl(String objectPath) {
-        if (objectPath == null || objectPath.isBlank()) {
-            return null;
-        }
-        return storageService.getPublicUrl(objectPath);
     }
 
     @Override

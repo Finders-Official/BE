@@ -159,3 +159,18 @@ import {
   to = google_iam_workload_identity_pool_provider.github
   id = "projects/project-37afc2aa-d3d3-4a1a-8cd/locations/global/workloadIdentityPools/finders-pool/providers/github-provider"
 }
+
+import {
+  to = module.networking.google_compute_address.nat_ip
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/regions/asia-northeast3/addresses/finders-nat-ip"
+}
+
+import {
+  to = module.networking.google_compute_router.main
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/regions/asia-northeast3/routers/finders-router"
+}
+
+import {
+  to = module.networking.google_compute_router_nat.main
+  id = "projects/project-37afc2aa-d3d3-4a1a-8cd/regions/asia-northeast3/routers/finders-router/finders-nat"
+}

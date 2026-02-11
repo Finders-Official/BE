@@ -1,7 +1,7 @@
 package com.finders.api.domain.member.entity;
 
-import com.finders.api.domain.member.enums.TokenHistoryType;
-import com.finders.api.domain.member.enums.TokenRelatedType;
+import com.finders.api.domain.member.enums.CreditHistoryType;
+import com.finders.api.domain.member.enums.CreditRelatedType;
 import com.finders.api.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,13 +10,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "token_history", indexes = {
-        @Index(name = "idx_token_history_member", columnList = "member_id, created_at DESC"),
-        @Index(name = "idx_token_history_type", columnList = "type")
+@Table(name = "credit_history", indexes = {
+        @Index(name = "idx_credit_history_member", columnList = "member_id, created_at DESC"),
+        @Index(name = "idx_credit_history_type", columnList = "type")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TokenHistory extends BaseEntity {
+public class CreditHistory extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +28,7 @@ public class TokenHistory extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private TokenHistoryType type;
+    private CreditHistoryType type;
 
     // 변동량: +3, -1 등 (사용은 음수로 저장)
     @Column(nullable = false)
@@ -40,7 +40,7 @@ public class TokenHistory extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "related_type", length = 50)
-    private TokenRelatedType relatedType;
+    private CreditRelatedType relatedType;
 
     @Column(name = "related_id")
     private Long relatedId;
@@ -49,12 +49,12 @@ public class TokenHistory extends BaseEntity {
     private String description;
 
     @Builder
-    private TokenHistory(
+    private CreditHistory(
             MemberUser user,
-            TokenHistoryType type,
+            CreditHistoryType type,
             int amount,
             int balanceAfter,
-            TokenRelatedType relatedType,
+            CreditRelatedType relatedType,
             Long relatedId,
             String description
     ) {
@@ -70,13 +70,13 @@ public class TokenHistory extends BaseEntity {
     // === 팩토리 메서드 ===
 
     /**
-     * 토큰 사용 이력 생성
+     * 크레딧 사용 이력 생성
      */
-    public static TokenHistory createUseHistory(MemberUser user, int amount, int balanceAfter,
-                                                TokenRelatedType relatedType, Long relatedId, String description) {
-        return TokenHistory.builder()
+    public static CreditHistory createUseHistory(MemberUser user, int amount, int balanceAfter,
+                                                 CreditRelatedType relatedType, Long relatedId, String description) {
+        return CreditHistory.builder()
                 .user(user)
-                .type(TokenHistoryType.USE)
+                .type(CreditHistoryType.USE)
                 .amount(-amount) // 사용은 음수로 저장
                 .balanceAfter(balanceAfter)
                 .relatedType(relatedType)
@@ -86,13 +86,13 @@ public class TokenHistory extends BaseEntity {
     }
 
     /**
-     * 토큰 환불 이력 생성
+     * 크레딧 환불 이력 생성
      */
-    public static TokenHistory createRefundHistory(MemberUser user, int amount, int balanceAfter,
-                                                   TokenRelatedType relatedType, Long relatedId, String description) {
-        return TokenHistory.builder()
+    public static CreditHistory createRefundHistory(MemberUser user, int amount, int balanceAfter,
+                                                    CreditRelatedType relatedType, Long relatedId, String description) {
+        return CreditHistory.builder()
                 .user(user)
-                .type(TokenHistoryType.REFUND)
+                .type(CreditHistoryType.REFUND)
                 .amount(amount) // 환불은 양수로 저장
                 .balanceAfter(balanceAfter)
                 .relatedType(relatedType)
@@ -102,13 +102,13 @@ public class TokenHistory extends BaseEntity {
     }
 
     /**
-     * 토큰 구매 이력 생성
+     * 크레딧 구매 이력 생성
      */
-    public static TokenHistory createPurchaseHistory(MemberUser user, int amount, int balanceAfter,
-                                                     TokenRelatedType relatedType, Long relatedId, String description) {
-        return TokenHistory.builder()
+    public static CreditHistory createPurchaseHistory(MemberUser user, int amount, int balanceAfter,
+                                                      CreditRelatedType relatedType, Long relatedId, String description) {
+        return CreditHistory.builder()
                 .user(user)
-                .type(TokenHistoryType.PURCHASE)
+                .type(CreditHistoryType.PURCHASE)
                 .amount(amount) // 구매는 양수로 저장
                 .balanceAfter(balanceAfter)
                 .relatedType(relatedType)
