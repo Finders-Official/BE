@@ -14,8 +14,8 @@ public class ReplicateResponse {
      * Prediction 응답 (API 응답 및 Webhook 페이로드 공용)
      * <p>
      * output 필드는 모델에 따라 형식이 다릅니다:
-     * - List&lt;String&gt;: flux-kontext-apps 등 (예: ["url1", "url2"])
-     * - String: cjwbw/supir-v0q 등 (예: "https://...")
+     * - List&lt;String&gt;: 일부 모델 응답 (예: ["url1", "url2"])
+     * - String: FLUX Kontext Pro 등 (예: "https://...")
      * <p>
      * Object로 받아 getFirstOutput()에서 타입에 따라 분기 처리합니다.
      */

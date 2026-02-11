@@ -28,12 +28,27 @@ public class ReplicateClient {
         log.info("[ReplicateClient.createPrediction] Creating prediction with model: {}",
                 modelInput.getClass().getSimpleName());
 
-        ReplicateRequest.CreatePrediction request = ReplicateRequest.CreatePrediction.of(
-                modelInput,
-                properties.getWebhookUrl()
-        );
-
         try {
+            if (modelInput.isOfficialModel()) {
+                ReplicateRequest.CreateOfficialPrediction request = ReplicateRequest.CreateOfficialPrediction.of(
+                        modelInput,
+                        properties.getWebhookUrl()
+                );
+
+                return replicateWebClient.post()
+                        .uri("/models/" + modelInput.modelVersion() + "/predictions")
+                        .bodyValue(request)
+                        .retrieve()
+                        .onStatus(HttpStatusCode::isError, this::handleError)
+                        .bodyToMono(ReplicateResponse.Prediction.class)
+                        .block();
+            }
+
+            ReplicateRequest.CreatePrediction request = ReplicateRequest.CreatePrediction.of(
+                    modelInput,
+                    properties.getWebhookUrl()
+            );
+
             return replicateWebClient.post()
                     .uri("/predictions")
                     .bodyValue(request)
