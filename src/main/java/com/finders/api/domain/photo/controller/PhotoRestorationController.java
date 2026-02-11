@@ -7,12 +7,14 @@ import com.finders.api.domain.photo.service.command.PhotoRestorationCommandServi
 import com.finders.api.domain.photo.service.command.PhotoRestorationShareService;
 import com.finders.api.domain.photo.service.query.PhotoRestorationQueryService;
 import com.finders.api.global.response.ApiResponse;
+import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -108,12 +110,12 @@ public class PhotoRestorationController {
                 """
     )
     @GetMapping
-    public ApiResponse<Page<RestorationResponse.Summary>> getRestorationHistory(
+    public PagedResponse<RestorationResponse.Summary> getRestorationHistory(
             @AuthenticationPrincipal AuthUser user,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<RestorationResponse.Summary> response = queryService.getRestorationHistory(user.memberId(), pageable);
-        return ApiResponse.ok(response);
+        return PagedResponse.of(SuccessCode.OK, response);
     }
 
     @Operation(summary = "복원 결과 피드백", description = "복원 결과에 대한 피드백(좋음/나쁨)을 남깁니다.")
