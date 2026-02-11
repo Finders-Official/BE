@@ -1,8 +1,8 @@
 package com.finders.api.domain.photo.service.query;
 
 import com.finders.api.domain.member.entity.MemberOwner;
-import com.finders.api.domain.photo.dto.PhotoRequest;
-import com.finders.api.domain.photo.dto.PhotoResponse;
+import com.finders.api.domain.photo.dto.request.PhotoRequest;
+import com.finders.api.domain.photo.dto.response.PhotoResponse;
 import com.finders.api.domain.photo.entity.Delivery;
 import com.finders.api.domain.photo.entity.DevelopmentOrder;
 import com.finders.api.domain.photo.entity.PrintOrder;

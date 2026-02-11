@@ -2,13 +2,12 @@ package com.finders.api.domain.photo.service.command;
 
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberUserRepository;
-import com.finders.api.domain.photo.dto.OwnerPhotoRequest;
-import com.finders.api.domain.photo.dto.OwnerPhotoResponse;
+import com.finders.api.domain.photo.dto.request.OwnerPhotoRequest;
+import com.finders.api.domain.photo.dto.response.OwnerPhotoResponse;
 import com.finders.api.domain.photo.entity.Delivery;
 import com.finders.api.domain.photo.entity.DevelopmentOrder;
 import com.finders.api.domain.photo.entity.PrintOrder;
 import com.finders.api.domain.photo.entity.ScannedPhoto;
-import com.finders.api.domain.photo.enums.DeliveryStatus;
 import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;
 import com.finders.api.domain.photo.enums.PrintOrderStatus;
 import com.finders.api.domain.photo.enums.ReceiptMethod;
@@ -27,7 +26,6 @@ import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.usertype.StaticUserTypeSupport;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,7 +1,7 @@
 package com.finders.api.domain.photo.controller;
 
-import com.finders.api.domain.photo.dto.OwnerPhotoRequest;
-import com.finders.api.domain.photo.dto.OwnerPhotoResponse;
+import com.finders.api.domain.photo.dto.request.OwnerPhotoRequest;
+import com.finders.api.domain.photo.dto.response.OwnerPhotoResponse;
 import com.finders.api.domain.photo.service.command.OwnerPhotoCommandService;
 import com.finders.api.global.response.ApiResponse;
 import com.finders.api.global.response.SuccessCode;

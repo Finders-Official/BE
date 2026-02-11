@@ -1,6 +1,6 @@
 package com.finders.api.domain.photo.service.query;
 
-import com.finders.api.domain.photo.dto.RestorationResponse;
+import com.finders.api.domain.photo.dto.response.RestorationResponse;
 import com.finders.api.domain.photo.entity.PhotoRestoration;
 import com.finders.api.domain.photo.repository.PhotoRestorationRepository;
 import com.finders.api.global.exception.CustomException;
