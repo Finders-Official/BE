@@ -26,4 +26,21 @@ public class ReplicateRequest {
             );
         }
     }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record CreateOfficialPrediction(
+            Object input,
+            String webhook,
+            @JsonProperty("webhook_events_filter")
+            List<String> webhookEventsFilter
+    ) {
+        public static CreateOfficialPrediction of(ReplicateModelInput modelInput, String webhookUrl) {
+            String finalWebhook = (webhookUrl != null && webhookUrl.startsWith("https://")) ? webhookUrl : null;
+            return new CreateOfficialPrediction(
+                    modelInput,
+                    finalWebhook,
+                    finalWebhook != null ? List.of("completed") : null
+            );
+        }
+    }
 }

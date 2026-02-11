@@ -68,6 +68,7 @@ public enum SuccessCode implements BaseCode {
     // ========================================
     RESTORATION_CREATED(HttpStatus.ACCEPTED, "RESTORATION_201", "복원 요청이 생성되었습니다."),
     RESTORATION_FOUND(HttpStatus.OK, "RESTORATION_200", "복원 결과 조회에 성공했습니다."),
+    RESTORATION_HISTORY_FOUND(HttpStatus.OK, "RESTORATION_200", "복원 이력 조회에 성공했습니다."),
 
     // ========================================
     // Credit

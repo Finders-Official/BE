@@ -11,9 +11,9 @@ import com.finders.api.domain.photo.service.ImageMetadataService;
 import com.finders.api.global.exception.CustomException;
 import com.finders.api.global.response.ErrorCode;
 import com.finders.api.domain.photo.enums.RestorationTier;
+import com.finders.api.infra.replicate.KontextProInput;
 import com.finders.api.infra.replicate.ReplicateClient;
 import com.finders.api.infra.replicate.ReplicateResponse;
-import com.finders.api.infra.replicate.SupirInput;
 import com.finders.api.infra.storage.StoragePath;
 import com.finders.api.infra.storage.StorageResponse;
 import com.finders.api.infra.storage.StorageService;
@@ -64,7 +64,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
     @Override
     public RestorationResponse.Created createRestoration(Long memberId, RestorationRequest.Create request) {
-        RestorationTier tier = RestorationTier.PREMIUM;
+        RestorationTier tier = RestorationTier.BASIC;
         int creditCost = tier.getCreditCost();
 
         if (!creditQueryService.hasEnoughCredits(memberId, creditCost)) {
@@ -88,7 +88,7 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
 
         String originalSignedUrl = storageService.getSignedUrl(request.originalPath(), SIGNED_URL_EXPIRY_MINUTES).url();
 
-        SupirInput modelInput = SupirInput.forRestoration(originalSignedUrl);
+        KontextProInput modelInput = KontextProInput.forRestoration(originalSignedUrl);
         ReplicateResponse.Prediction prediction = replicateClient.createPrediction(modelInput);
 
         restoration.startProcessing(prediction.id());
@@ -98,12 +98,12 @@ public class PhotoRestorationCommandServiceImpl implements PhotoRestorationComma
         log.info("[PhotoRestorationCommandServiceImpl.createRestoration] Created: id={}, tier={}, predictionId={}, currentBalance={}",
                 restoration.getId(), tier, prediction.id(), currentBalance);
 
-        return RestorationResponse.Created.builder()
-                .id(restoration.getId())
-                .status(restoration.getStatus())
-                .creditUsed(creditCost)
-                .remainingBalance(currentBalance)
-                .build();
+        return new RestorationResponse.Created(
+                restoration.getId(),
+                restoration.getStatus(),
+                creditCost,
+                currentBalance
+        );
     }
 
     @Override

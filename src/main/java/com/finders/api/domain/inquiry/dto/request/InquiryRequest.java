@@ -27,7 +27,7 @@ public class InquiryRequest {
                     example = "[\"temp/123/abc.png\", \"inquiries/456/def.jpg\"]"
             )
             @Size(max = 5, message = "이미지는 최대 5개까지 첨부할 수 있습니다.")
-            List<String> imageUrls  // objectPath를 전달받음
+            List<String> objectPaths
     ) {}
 
     /**

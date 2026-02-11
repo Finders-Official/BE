@@ -40,8 +40,8 @@ public class InquiryCommandServiceImpl implements InquiryCommandService {
 
         Inquiry inquiry = Inquiry.create(member, photoLab, request.title(), request.content());
 
-        if (request.imageUrls() != null && !request.imageUrls().isEmpty()) {
-            inquiry.addImages(request.imageUrls());
+        if (request.objectPaths() != null && !request.objectPaths().isEmpty()) {
+            inquiry.addImages(request.objectPaths());
         }
 
         inquiryRepository.save(inquiry);

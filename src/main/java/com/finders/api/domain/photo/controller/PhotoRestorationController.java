@@ -7,24 +7,23 @@ import com.finders.api.domain.photo.service.command.PhotoRestorationCommandServi
 import com.finders.api.domain.photo.service.command.PhotoRestorationShareService;
 import com.finders.api.domain.photo.service.query.PhotoRestorationQueryService;
 import com.finders.api.global.response.ApiResponse;
+import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Arrays;
 
 /**
  * 사진 복원 API 컨트롤러
@@ -99,7 +98,7 @@ public class PhotoRestorationController {
                 ### 파라미터
                 - page: 페이지 번호 (0부터 시작, 기본값: 0)
                 - size: 페이지 크기 (기본값: 10)
-                - sort: 정렬 기준 (기본값: createdAt,desc)
+                - 정렬: 최신순 고정 (createdAt DESC)
 
                 ### 응답
                 - content: 복원 이력 목록
@@ -110,33 +109,14 @@ public class PhotoRestorationController {
                 """
     )
     @GetMapping
-    public ApiResponse<Page<RestorationResponse.Summary>> getRestorationHistory(
+    public PagedResponse<RestorationResponse.Summary> getRestorationHistory(
             @AuthenticationPrincipal AuthUser user,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String[] sort
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(parseSortOrders(sort)));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<RestorationResponse.Summary> response = queryService.getRestorationHistory(user.memberId(), pageable);
-        return ApiResponse.ok(response);
-    }
-
-    /**
-     * 정렬 파라미터 파싱
-     * <p>
-     * "createdAt,desc" 형식의 문자열을 Sort.Order로 변환
-     */
-    private Sort.Order[] parseSortOrders(String[] sortParams) {
-        return Arrays.stream(sortParams)
-                .map(param -> {
-                    String[] parts = param.split(",");
-                    String property = parts[0];
-                    Sort.Direction direction = parts.length > 1 && "asc".equalsIgnoreCase(parts[1])
-                            ? Sort.Direction.ASC
-                            : Sort.Direction.DESC;
-                    return new Sort.Order(direction, property);
-                })
-                .toArray(Sort.Order[]::new);
+        return PagedResponse.of(SuccessCode.RESTORATION_HISTORY_FOUND, response);
     }
 
     @Operation(summary = "복원 결과 피드백", description = "복원 결과에 대한 피드백(좋음/나쁨)을 남깁니다.")
