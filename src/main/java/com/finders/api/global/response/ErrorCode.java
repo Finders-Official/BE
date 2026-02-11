@@ -179,7 +179,7 @@ public enum ErrorCode implements BaseCode {
     STORAGE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "STORAGE_402", "파일 크기가 제한을 초과했습니다."),
     STORAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_502", "Signed URL 생성에 실패했습니다."),
     STORAGE_INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "STORAGE_403", "해당 API에서 지원하지 않는 업로드 카테고리입니다."),
-    STORAGE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "STORAGE_403", "해당 경로에 대한 접근 권한이 없습니다."),
+    STORAGE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "STORAGE_405", "해당 경로에 대한 접근 권한이 없습니다."),
 
     // ========================================
     // Inquiry (문의)
