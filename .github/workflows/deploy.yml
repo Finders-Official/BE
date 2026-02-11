@@ -129,7 +129,7 @@ jobs:
 
               cd /projects/Finders/BE
               export DOCKER_IMAGE='${{ env.DOCKER_IMAGE }}'
-              sudo gcloud auth configure-docker asia-northeast3-docker.pkg.dev --quiet
+              gcloud auth print-access-token | sudo docker login -u oauth2accesstoken --password-stdin https://asia-northeast3-docker.pkg.dev
               DC='sudo -E docker compose --env-file .env.prod -f docker-compose.infra.yml -f docker-compose.prod.yml'
 
               sudo docker network create finders-network || true
