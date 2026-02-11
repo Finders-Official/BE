@@ -339,7 +339,7 @@ public class OwnerPhotoCommandServiceImpl implements OwnerPhotoCommandService {
         // 6) 상태 변경 (완료면 completedAt도 찍힘)
         order.updateStatusByOwner(target);
 
-        if (order.getStatus() == PrintOrderStatus.COMPLETED) {
+        if (order.getReceiptMethod() == ReceiptMethod.DELIVERY) {
             Delivery delivery = deliveryRepository.findByPrintOrderId(order.getId())
                     .orElseThrow(() -> new CustomException(ErrorCode.PHOTO_DELIVERY_NOT_FOUND));
             delivery.markDelivered();
