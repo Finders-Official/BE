@@ -18,7 +18,7 @@ public record SupirInput(
         @JsonProperty("n_prompt")
         String nPrompt,
         @JsonProperty("s_stage1")
-        Double sStage1,
+        Integer sStage1,
         @JsonProperty("s_stage2")
         Double sStage2,
         @JsonProperty("edm_steps")
@@ -31,7 +31,7 @@ public record SupirInput(
     private static final Integer DEFAULT_UPSCALE = 2;
     private static final String DEFAULT_A_PROMPT = "high quality, detailed, restored analog film photograph, sharp focus, natural colors";
     private static final String DEFAULT_N_PROMPT = "blur, noise, artifacts, distortion, oversaturated, overprocessed";
-    private static final Double DEFAULT_S_STAGE1 = 0.9;
+    private static final Integer DEFAULT_S_STAGE1 = -1;
     private static final Double DEFAULT_S_STAGE2 = 0.2;
     private static final Integer DEFAULT_EDM_STEPS = 50;
     private static final String DEFAULT_COLOR_FIX = "AdaIn";

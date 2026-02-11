@@ -14,17 +14,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Arrays;
 
 /**
  * 사진 복원 API 컨트롤러
@@ -112,31 +110,10 @@ public class PhotoRestorationController {
     @GetMapping
     public ApiResponse<Page<RestorationResponse.Summary>> getRestorationHistory(
             @AuthenticationPrincipal AuthUser user,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String[] sort
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(parseSortOrders(sort)));
         Page<RestorationResponse.Summary> response = queryService.getRestorationHistory(user.memberId(), pageable);
         return ApiResponse.ok(response);
-    }
-
-    /**
-     * 정렬 파라미터 파싱
-     * <p>
-     * "createdAt,desc" 형식의 문자열을 Sort.Order로 변환
-     */
-    private Sort.Order[] parseSortOrders(String[] sortParams) {
-        return Arrays.stream(sortParams)
-                .map(param -> {
-                    String[] parts = param.split(",");
-                    String property = parts[0];
-                    Sort.Direction direction = parts.length > 1 && "asc".equalsIgnoreCase(parts[1])
-                            ? Sort.Direction.ASC
-                            : Sort.Direction.DESC;
-                    return new Sort.Order(direction, property);
-                })
-                .toArray(Sort.Order[]::new);
     }
 
     @Operation(summary = "복원 결과 피드백", description = "복원 결과에 대한 피드백(좋음/나쁨)을 남깁니다.")
