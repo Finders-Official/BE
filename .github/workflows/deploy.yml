@@ -155,7 +155,7 @@ jobs:
                 sleep 10
               fi
 
-              \$DC pull
+              \$DC --profile blue --profile green pull
               echo \"Green 슬롯(prod-\$GREEN_SLOT) 시작\"
               \$DC --profile \$GREEN_SLOT up -d
 
