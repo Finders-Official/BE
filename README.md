@@ -14,11 +14,14 @@
 | Language | Java 21 |
 | Framework | Spring Boot 3.4.11 |
 | Build Tool | Gradle 8.11 |
-| Database | MySQL 8.x |
+| Database | MySQL 8.x, Redis |
 | ORM | Spring Data JPA, QueryDSL 5.1 |
 | Security | Spring Security, JWT |
 | API Docs | SpringDoc OpenAPI (Swagger) |
-| Cloud | GCP (Compute Engine, Cloud SQL, Cloud Storage) |
+| Cloud | GCP (Compute Engine, Cloud SQL, Cloud Storage, Cloud Run, Artifact Registry) |
+| IaC | Terraform |
+| CI/CD | GitHub Actions (Blue-Green Deploy) |
+| Reverse Proxy | Traefik, Cloudflare Tunnel |
 
 ## Getting Started
 
@@ -48,10 +51,11 @@ cp .env.example .env
 
 ### Profiles
 
-| Profile | Description | Database |
-|---------|-------------|----------|
-| `local` | 로컬 개발 환경 | MySQL (Docker) |
-| `prod` | 운영 서버 | GCP Cloud SQL |
+| Profile | Description | Database | Redis |
+|---------|-------------|----------|-------|
+| `local` | 로컬 개발 환경 | MySQL (Docker) | Docker Redis |
+| `dev` | 개발 서버 | GCP Cloud SQL (`finders_dev`) | Docker Redis (GCE 내) |
+| `prod` | 운영 서버 | GCP Cloud SQL (`finders`) | Upstash Redis |
 
 ### 로컬 개발 (권장)
 
@@ -162,6 +166,7 @@ src/main/java/com/finders/api/
 
 ### Infrastructure
 - [Infrastructure Docs](docs/infra/README.md) - 인프라 문서 인덱스
+- [Terraform Operations](docs/infra/TERRAFORM_OPERATIONS.md) - Terraform 운영 가이드
 
 ## Contributing
 

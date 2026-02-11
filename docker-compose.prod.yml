@@ -18,7 +18,7 @@
 services:
   # ── Production Blue Slot ──
   prod-blue:
-    image: findersofficial/finders-api:latest
+    image: ${DOCKER_IMAGE:-findersofficial/finders-api}:latest
     restart: unless-stopped
     env_file:
       - .env.prod
@@ -49,7 +49,7 @@ services:
 
   # ── Production Green Slot ──
   prod-green:
-    image: findersofficial/finders-api:latest
+    image: ${DOCKER_IMAGE:-findersofficial/finders-api}:latest
     restart: unless-stopped
     env_file:
       - .env.prod
