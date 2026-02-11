@@ -1,8 +1,8 @@
 package com.finders.api.domain.photo.controller;
 
-import com.finders.api.domain.photo.dto.RestorationRequest;
-import com.finders.api.domain.photo.dto.RestorationResponse;
-import com.finders.api.domain.photo.dto.ShareResponse;
+import com.finders.api.domain.photo.dto.request.RestorationRequest;
+import com.finders.api.domain.photo.dto.response.RestorationResponse;
+import com.finders.api.domain.photo.dto.response.ShareResponse;
 import com.finders.api.domain.photo.service.command.PhotoRestorationCommandService;
 import com.finders.api.domain.photo.service.command.PhotoRestorationShareService;
 import com.finders.api.domain.photo.service.query.PhotoRestorationQueryService;

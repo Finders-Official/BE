@@ -1,47 +1,73 @@
 # Security Policy
 
-## 지원 범위
+<br>
+
+## Supported Versions
 
 현재 최신 릴리스 버전에 대해서만 보안 패치를 지원합니다.
 
-## 보안 취약점 신고
+| Version | Supported |
+|---------|-----------|
+| Latest release | Yes |
+| Previous releases | No |
 
-보안 취약점을 발견한 경우, 공개 이슈로 등록하지 마시고 아래 방법을 이용해주세요.
+<br>
 
-### 신고 방법
+## Reporting a Vulnerability
 
-1. **GitHub Security Advisory** (권장)
-   - [Security Advisory 작성](https://github.com/Finders-Official/BE/security/advisories/new)
+보안 취약점을 발견한 경우, **공개 이슈로 등록하지 마세요.** 아래 방법을 이용해주세요.
 
-2. **비공개 연락**
-   - 프로젝트 관리자에게 직접 연락
+### Preferred: GitHub Security Advisory
 
-### 포함해야 할 정보
+[Security Advisory 작성](https://github.com/Finders-Official/BE/security/advisories/new)
 
-- 취약점 유형 및 설명
-- 재현 절차
-- 영향 범위
-- 가능하다면 수정 방안
+### Alternative: Direct Contact
 
-## 대응 프로세스
+프로젝트 관리자에게 비공개로 연락합니다.
 
-1. **확인** - 신고 접수 후 영업일 기준 3일 이내 확인
-2. **평가** - 심각도 및 영향 범위 평가
-3. **수정** - 패치 개발 및 테스트
-4. **공개** - 수정 배포 후 취약점 정보 공개
+### Required Information
 
-## 주의사항
+| Item | Description |
+|------|-------------|
+| **Type** | 취약점 유형 (XSS, SQLi, Auth bypass 등) |
+| **Description** | 상세 설명 |
+| **Steps to Reproduce** | 재현 절차 |
+| **Impact** | 영향 범위 및 심각도 |
+| **Fix Suggestion** | 수정 방안 (optional) |
 
-저장소에 다음 정보를 포함하지 마세요:
+<br>
 
-- API 키, 시크릿 키
-- 데이터베이스 비밀번호
-- JWT 토큰, 리프레시 토큰
-- 서비스 계정 인증 정보
-- `.env` 파일 내용
+## Response Process
 
-민감 정보는 **GCP Secret Manager**를 통해 중앙 관리합니다.
+| Phase | Timeline | Description |
+|-------|----------|-------------|
+| **Acknowledgment** | 3 business days | 신고 접수 확인 |
+| **Assessment** | 1 week | 심각도 및 영향 범위 평가 |
+| **Patch** | Depends on severity | 패치 개발 및 테스트 |
+| **Disclosure** | After fix deployed | 수정 배포 후 취약점 정보 공개 |
 
-- Prod/Dev 설정: `finders-prod-config`, `finders-dev-config` (JSON 통합 시크릿)
-- GitHub Secrets: WIF 인증용 3개만 (`WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`)
-- 상세 가이드: [docs/infra/SECRET_MANAGEMENT.md](docs/infra/SECRET_MANAGEMENT.md)
+<br>
+
+## Secret Management
+
+저장소에 다음 정보를 절대 포함하지 마세요.
+
+| Prohibited | Example |
+|-----------|---------|
+| API Keys | `REPLICATE_API_TOKEN`, `PORTONE_API_SECRET` |
+| Database Credentials | DB password, connection strings |
+| Authentication Tokens | JWT secret, refresh tokens |
+| Service Account Keys | GCP service account JSON |
+| Environment Files | `.env` contents |
+
+### How We Manage Secrets
+
+모든 민감 정보는 **GCP Secret Manager**를 통해 중앙 관리합니다.
+
+| Resource | Purpose |
+|----------|---------|
+| `finders-prod-config` | Production configuration (JSON) |
+| `finders-dev-config` | Development configuration (JSON) |
+| GitHub Secrets (3 only) | `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`, `GCP_PROJECT_ID` |
+
+상세 가이드: [SECRET_MANAGEMENT.md](docs/infra/SECRET_MANAGEMENT.md)

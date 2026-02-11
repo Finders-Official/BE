@@ -5,6 +5,7 @@ import com.finders.api.domain.community.entity.Post;
 import com.finders.api.domain.community.entity.PostLike;
 import com.finders.api.domain.community.repository.PostLikeRepository;
 import com.finders.api.domain.community.repository.PostRepository;
+import com.finders.api.domain.community.service.PopularPostCacheService;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.repository.MemberUserRepository;
 import com.finders.api.global.exception.CustomException;
@@ -21,6 +22,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final MemberUserRepository memberUserRepository;
+    private final PopularPostCacheService popularPostCacheService;
 
     @Override
     public PostLikeResponse.PostLikeResDTO createPostLike(Long postId, Long memberId) {
@@ -37,6 +39,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
         postLikeRepository.save(PostLike.create(post, memberUser));
 
         post.increaseLikeCount();
+        popularPostCacheService.evictPopularPosts();
 
         return PostLikeResponse.PostLikeResDTO.builder()
                 .postId(post.getId())
@@ -58,6 +61,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
 
         postLikeRepository.delete(postLike);
         post.decreaseLikeCount();
+        popularPostCacheService.evictPopularPosts();
 
         return PostLikeResponse.PostLikeResDTO.builder()
                 .postId(post.getId())

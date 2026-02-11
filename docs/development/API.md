@@ -78,8 +78,8 @@ Authorization: Bearer {access_token}
 | POST | `/auth/social/login/code` | 소셜 로그인(웹 브라우저) | None | `provider`, `code` | 🔘 |
 | POST | `/auth/owner/login` | 사장님 로그인 | None | `email`, `password` | ⚠️ |
 | POST | `/auth/owner/signup` | 사장님 회원가입 | None | `email`, `password`, `name` | ⚠️ |
-| POST | `/auth/reissue` | 토큰 재발급 | None | `refreshToken` | ⚠️ |
-| POST | `/auth/logout` | 로그아웃 | USER/OWNER | `refreshToken` | ⚠️ |
+| POST | `/auth/reissue` | 토큰 재발급 | None | `refreshToken` (Cookie) | ❌ |
+| POST | `/auth/logout` | 로그아웃 | USER/OWNER | `refreshToken` (Cookie) | ❌ |
 
 ### Dev Tools (개발용 도구)
 | Method | Path | Summary | Auth | Key Parameters | Status |
@@ -95,7 +95,7 @@ Authorization: Bearer {access_token}
 | POST | `/members/phone/verify/request` | 휴대폰 인증번호 요청 | None | `phone` | ⚠️ |
 | POST | `/members/phone/verify/confirm` | 휴대폰 인증번호 확인 | None | `phone`, `code` | ⚠️ |
 | GET | `/users/nickname/check` | 닉네임 중복 확인 | None | `nickname` | ✅ |
-| DELETE | `/users/me` | 회원 탈퇴 | USER | - | ⚠️ |
+| DELETE | `/users/me` | 회원 탈퇴 | USER | - | 🔘 |
 
 ### User Address (회원 주소)
 | Method | Path | Summary | Auth | Key Parameters | Status |
@@ -143,11 +143,11 @@ Authorization: Bearer {access_token}
 ### Photo Restoration (AI 사진 복원)
 | Method | Path | Summary | Auth | Key Parameters | Status |
 |--------|------|---------|------|----------------|--------|
-| GET | `/restorations` | 복원 이력 조회 | USER | `page`, `size` | ❌ |
-| POST | `/restorations` | 사진 복원 요청 | USER | `image`, `type` | ❌ |
+| GET | `/restorations` | 복원 이력 조회 | USER | `page`, `size` | ✅ |
+| POST | `/restorations` | 사진 복원 요청 (SUPIR) | USER | `originalPath`, `plan` | ✅ |
 | GET | `/restorations/{restorationId}` | 복원 결과 조회 | USER | - | ✅ |
 | POST | `/restorations/{restorationId}/feedback` | 복원 피드백 | USER | `rating`, `comment` | ✅ |
-| POST | `/restorations/{restorationId}/share` | 복원 이미지 공유 | USER | - | ❌ |
+| POST | `/restorations/{restorationId}/share` | 복원 이미지 공유 | USER | - | ✅ |
 
 ### Community (사진 수다)
 | Method | Path | Summary | Auth | Key Parameters | Status |
@@ -182,7 +182,7 @@ Authorization: Bearer {access_token}
 ### File (파일)
 | Method | Path | Summary | Auth | Key Parameters | Status |
 |--------|------|---------|------|----------------|--------|
-| POST | `/files/presigned-url` | 업로드용 Presigned URL 발급 | USER/OWNER | `fileName`, `contentType` | ⚠️ |
+| POST | `/files/presigned-url` | 업로드용 Presigned URL 발급 | USER/OWNER | `category`, `fileName`, `memberId` | ✅ |
 | GET | `/files/signed-url` | Private 파일 조회 URL 발급 | USER/OWNER | `filePath` | ✅ |
 
 ### Inquiry USER (1:1 문의)
@@ -204,23 +204,23 @@ Authorization: Bearer {access_token}
 |--------|------|---------|------|----------------|--------|
 | GET | `/admin/inquiries` | 서비스 문의 목록 | ADMIN | - | ✅ |
 | GET | `/admin/inquiries/{inquiryId}` | 문의 상세 | ADMIN | - | ✅ |
-| POST | `/admin/inquiries/{inquiryId}/replies` | 답변 작성 | ADMIN | `content` | ⚠️ |
+| POST | `/admin/inquiries/{inquiryId}/replies` | 답변 작성 | ADMIN | `content` | ✅ |
 
 ### PhotoLab OWNER (현상소 관리)
 | Method | Path | Summary | Auth | Key Parameters | Status |
 |--------|------|---------|------|----------------|--------|
 | POST | `/owner/photo-labs` | 현상소 기본사항 등록 | OWNER | `name`, `address`, `phone` | ⚠️ |
-| POST | `/owner/photo-labs/images/presigned-url` | 이미지 업로드 URL 발급 | OWNER | `fileName` | ✅ |
+| POST | `/owner/photo-labs/images/presigned-url` | 이미지 업로드 URL 발급 | OWNER | `fileName`, `photoLabId` | ⚠️ |
 | POST | `/owner/photo-labs/images` | 이미지 등록 | OWNER | `imageUrl` | 🔘 |
-| POST | `/owner/photo-labs/documents/presigned-url` | 서류 업로드 URL 발급 | OWNER | `fileName` | ✅ |
+| POST | `/owner/photo-labs/documents/presigned-url` | 서류 업로드 URL 발급 | OWNER | `fileName`, `photoLabId` | ⚠️ |
 | POST | `/owner/photo-labs/documents` | 사업자 서류 등록 | OWNER | `documentUrl` | 🔘 |
 
 ### Owner Photo (오너 사진 관리)
 | Method | Path | Summary | Auth | Key Parameters | Status |
 |--------|------|---------|------|----------------|--------|
 | POST | `/owner/photo-labs/{photoLabId}/development-orders` | 현상 주문 생성 | OWNER | `memberId`, `orderType` | ⚠️ |
-| PATCH | `/owner/photo-labs/{photoLabId}/development-orders/{id}/status` | 주문 상태 변경 | OWNER | `status` | ✅ |
-| POST | `/owner/photo-labs/{photoLabId}/scan-photos/presigned-urls` | 스캔 이미지 URL 벌크 발급 | OWNER | `count` | ✅ |
+| PATCH | `/owner/photo-labs/{photoLabId}/development-orders/{id}/status` | 주문 상태 변경 | OWNER | `status` | ⚠️ |
+| POST | `/owner/photo-labs/{photoLabId}/scan-photos/presigned-urls` | 스캔 이미지 URL 벌크 발급 | OWNER | `count` | ⚠️ |
 | POST | `/owner/photo-labs/{photoLabId}/development-orders/{id}/scanned-photos` | 스캔 이미지 메타 등록 | OWNER | `photoUrls` | 🔘 |
 | PATCH | `/owner/photo-labs/{photoLabId}/print-orders/{id}/status` | 인화 주문 완료 | OWNER | `status` | 🔘 |
 | PATCH | `/owner/photo-labs/{photoLabId}/print-orders/{id}/printing` | 예상 완료 시간 등록 | OWNER | `estimatedTime` | 🔘 |
@@ -233,13 +233,19 @@ Authorization: Bearer {access_token}
 **전체 엔드포인트**: 91개
 
 **결과 요약**:
-- ✅ **Passed**: 51개 (200/201 성공)
-- ⚠️ **Expected Error**: 28개 (검증/비즈니스 규칙 에러 - 엔드포인트 정상 작동)
-- ❌ **Failed**: 3개 (예상치 못한 500 에러)
-  - GET `/restorations` — Sort 파싱 버그 (#441, PR #442에서 수정 예정)
-  - POST `/restorations` — SUPIR s_stage1 type 버그 (#441, PR #442에서 수정 예정)
-  - POST `/restorations/{id}/share` — GCS copy 에러 (별도 조사 필요)
-- 🔘 **Not Testable**: 9개 (실제 OAuth/SMS/업로드 파일/인화 주문 필요)
+- ✅ **Passed**: 52개 (200/201 정상 응답 확인)
+- ⚠️ **Expected Error**: 27개 (검증/비즈니스 규칙 에러 — 엔드포인트 정상 작동, 테스트 데이터/파라미터 부족)
+- ❌ **Server Error**: 2개 (예상치 못한 500 에러 — 조사 필요)
+  - POST `/auth/logout` — COMMON_500 (refreshToken 쿠키 미전달로 인한 오류 가능성)
+  - POST `/auth/reissue` — COMMON_500 (refreshToken 쿠키 미전달로 인한 오류 가능성)
+- 🔘 **Not Testable**: 10개 (실제 OAuth/SMS/파일 업로드/결제/인화 주문 등 필요)
+
+**주요 수정 이력**:
+- PR #442: `GET /restorations` Sort 파싱 버그 수정 (`PageRequest.of()` 방식)
+- PR #442: `POST /restorations` SUPIR `s_stage1` 타입 버그 수정 (`Double → Integer`)
+- PR #443: Sort 파라미터 `@RequestParam` 방식 전환 + 코드리뷰 반영
+- PR #445: CD Docker pull 누락 수정 (`--profile blue --profile green`)
+- PR #448: Webhook SUPIR output 파싱 수정 (`List<String> → Object` + `instanceof` 분기)
 
 ## Error Codes
 
@@ -284,6 +290,8 @@ Authorization: Bearer {access_token}
 | AUTH_422 | 429 | 인증 시도 횟수를 초과했습니다. |
 | AUTH_423 | 409 | 이미 인증이 완료된 요청입니다. |
 | AUTH_503 | 503 | 현재 인증 서비스 이용이 원활하지 않습니다. 잠시 후 다시 시도해주세요. |
+
+> **참고**: `AUTH_401`은 두 가지 경우에 사용됩니다: 인증 토큰 미존재 또는 이메일/비밀번호 불일치 (사장님 로그인).
 
 ### Member (MEMBER_xxx)
 | Code | Status | Message |

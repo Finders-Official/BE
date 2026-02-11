@@ -1,6 +1,6 @@
 package com.finders.api.domain.photo.service.command;
 
-import com.finders.api.domain.photo.dto.ShareResponse;
+import com.finders.api.domain.photo.dto.response.ShareResponse;
 
 /**
  * 사진 복원 공유 서비스 인터페이스

@@ -1,6 +1,6 @@
 package com.finders.api.domain.photo.service.command;
 
-import com.finders.api.domain.photo.dto.PhotoRequest;
+import com.finders.api.domain.photo.dto.request.PhotoRequest;
 import com.finders.api.domain.photo.entity.Delivery;
 import com.finders.api.domain.photo.entity.DevelopmentOrder;
 import com.finders.api.domain.photo.entity.PrintOrder;
