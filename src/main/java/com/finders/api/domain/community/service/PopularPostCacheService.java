@@ -5,6 +5,7 @@ import com.finders.api.domain.community.dto.response.PostCacheDTO;
 import com.finders.api.domain.community.repository.PostQueryRepository;
 import com.finders.api.infra.redis.RedisCacheClient;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -49,6 +50,16 @@ public class PopularPostCacheService {
 
     public void evictPopularPosts() {
         redisCacheClient.delete(KEY);
+    }
+
+    public List<PostCacheDTO> refreshPopularPostsCache() {
+        // 1. DB에서 최신 데이터 조회 (PostQueryRepository의 메서드 활용)
+        List<PostCacheDTO> posts = postQueryRepository.findTop10PopularPosts();
+
+        // 2. Redis에 덮어쓰기 (기존 데이터가 있어도 TTL과 함께 새로 저장됨)
+        redisCacheClient.set(KEY, posts, TTL);
+
+        return posts;
     }
 
 }
