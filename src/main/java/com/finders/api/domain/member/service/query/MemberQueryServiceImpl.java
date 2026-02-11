@@ -3,6 +3,7 @@ package com.finders.api.domain.member.service.query;
 import com.finders.api.domain.member.dto.response.MemberResponse;
 import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.entity.MemberUser;
+import com.finders.api.domain.member.enums.MemberStatus;
 import com.finders.api.domain.terms.repository.MemberAgreementRepository;
 import com.finders.api.domain.member.repository.MemberRepository;
 import com.finders.api.domain.member.repository.MemberUserRepository;
@@ -35,6 +36,11 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     public MemberResponse.MyProfile getMyProfile(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.getStatus() != MemberStatus.ACTIVE) {
+            throw new CustomException(ErrorCode.MEMBER_INACTIVE);
+        }
+
         return convertToMyProfileDTO(member);
     }
 
