@@ -11,14 +11,13 @@ import com.finders.api.global.response.PagedResponse;
 import com.finders.api.global.response.SuccessCode;
 import com.finders.api.global.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -99,7 +98,7 @@ public class PhotoRestorationController {
                 ### 파라미터
                 - page: 페이지 번호 (0부터 시작, 기본값: 0)
                 - size: 페이지 크기 (기본값: 10)
-                - sort: 정렬 기준 (기본값: createdAt,desc)
+                - 정렬: 최신순 고정 (createdAt DESC)
 
                 ### 응답
                 - content: 복원 이력 목록
@@ -112,10 +111,12 @@ public class PhotoRestorationController {
     @GetMapping
     public PagedResponse<RestorationResponse.Summary> getRestorationHistory(
             @AuthenticationPrincipal AuthUser user,
-            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size
     ) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<RestorationResponse.Summary> response = queryService.getRestorationHistory(user.memberId(), pageable);
-        return PagedResponse.of(SuccessCode.OK, response);
+        return PagedResponse.of(SuccessCode.RESTORATION_HISTORY_FOUND, response);
     }
 
     @Operation(summary = "복원 결과 피드백", description = "복원 결과에 대한 피드백(좋음/나쁨)을 남깁니다.")
