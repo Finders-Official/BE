@@ -1,8 +1,8 @@
 package com.finders.api.domain.photo.service.query;
 
-import com.finders.api.domain.photo.dto.PhotoRequest;
-import com.finders.api.domain.photo.dto.PhotoResponse;
-import com.finders.api.domain.photo.dto.PhotoResponse.ScanResult;
+import com.finders.api.domain.photo.dto.request.PhotoRequest;
+import com.finders.api.domain.photo.dto.response.PhotoResponse;
+import com.finders.api.domain.photo.dto.response.PhotoResponse.ScanResult;
 import org.springframework.data.domain.Slice;
 
 public interface PhotoQueryService {

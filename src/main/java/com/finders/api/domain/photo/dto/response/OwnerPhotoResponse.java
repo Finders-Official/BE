@@ -1,4 +1,4 @@
-package com.finders.api.domain.photo.dto;
+package com.finders.api.domain.photo.dto.response;
 
 
 import com.finders.api.domain.photo.enums.DevelopmentOrderStatus;

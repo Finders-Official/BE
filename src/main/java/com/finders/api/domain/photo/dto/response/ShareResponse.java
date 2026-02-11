@@ -1,4 +1,4 @@
-package com.finders.api.domain.photo.dto;
+package com.finders.api.domain.photo.dto.response;
 
 /**
  * AI 복원 이미지 공유 응답

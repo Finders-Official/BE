@@ -1,6 +1,6 @@
 package com.finders.api.domain.photo.service.command;
 
-import com.finders.api.domain.photo.dto.PhotoRequest;
+import com.finders.api.domain.photo.dto.request.PhotoRequest;
 
 public interface PhotoCommandService {
     Long createPrintOrder(Long memberId, PhotoRequest.PrintQuote request);

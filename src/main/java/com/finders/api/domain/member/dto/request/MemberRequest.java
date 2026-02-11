@@ -11,7 +11,7 @@ public class MemberRequest {
     public record SocialSignupComplete(
             @Schema(description = "닉네임 (2~8자, 한글/영문/숫자)", example = "파인더")
             @NotBlank(message = "닉네임은 필수입니다.") @Pattern(
-                    regexp = "^[가-힣a-zA-Z0-9]{2,8}$",
+                    regexp = "^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]{2,8}$",
                     message = "닉네임은 2~8자의 한글, 영문, 숫자로만 구성되어야 합니다.")
             String nickname,
 

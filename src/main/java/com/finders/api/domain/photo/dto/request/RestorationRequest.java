@@ -1,4 +1,4 @@
-package com.finders.api.domain.photo.dto;
+package com.finders.api.domain.photo.dto.request;
 
 import com.finders.api.domain.photo.enums.FeedbackRating;
 import jakarta.validation.constraints.NotBlank;
