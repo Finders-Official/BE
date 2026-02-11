@@ -112,13 +112,13 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 
 ### Backend 역할 분담
 
-| 이름 | 담당 역할 |
-|---|---|
+| 이름 | 담당 역할                             |
+|---|-----------------------------------|
 | 김덕환 | 인프라 구축 / AI 사진 복원 / 1:1 문의 API 담당 |
-| 이승주 | 현상소 예약 API / 현상소 로직 담당 |
-| 이지영 | 커뮤니티 API 담당 |
-| 주보경 | 현상소 등록 / 현상소 조회 API 담당 |
-| 장지요 | 로그인 / 회원가입 / 인프라 구축 담당 |
+| 이승주 | 현상소 예약 API / 현상소 로직 담당            |
+| 이지영 | 커뮤니티 API /Redis cache 처리 담당       |
+| 주보경 | 현상소 등록 / 현상소 조회 API 담당            |
+| 장지요 | 로그인 / 회원가입 / 인프라 구축 담당            |
 
 ---
 
@@ -182,11 +182,10 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 ## 🏗️ 시스템 아키텍처
 
 
-<!-- 시스템 아키텍처 다이어그램을 준비한 뒤 아래 주석을 해제해서 사용하세요.
 <p align="center">
-  <img src="docs/images/system-architecture.png" alt="Finders System Architecture" width="100%" />
+  <img src="docs/images/Architecture.png" alt="Finders System Architecture" width="100%" />
 </p>
--->
+
 
 ---
 
@@ -197,7 +196,7 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 - `global`: 보안, 예외, 응답 포맷, 공통 설정
 ```text
 src/main/java/com/finders/api
-├─ domain
+├─ 🗂domain
 │  ├─ auth
 │  ├─ member
 │  ├─ store
@@ -207,13 +206,13 @@ src/main/java/com/finders/api
 │  ├─ community
 │  ├─ inquiry
 │  └─ terms
-├─ infra
+├─ 🗂infra
 │  ├─ oauth
 │  ├─ payment
 │  ├─ replicate
 │  ├─ storage
 │  └─ redis
-└─ global
+└─ 🗂global
    ├─ config
    ├─ security
    ├─ exception
