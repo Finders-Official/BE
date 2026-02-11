@@ -12,6 +12,7 @@ Finders API - 필름 현상소 연결 플랫폼 백엔드. Java 21 + Spring Boot
 |------|----------|
 | **코드 작성** | [docs/development/CODE_STYLE.md](docs/development/CODE_STYLE.md) |
 | **Git (브랜치/커밋)** | [docs/development/CONVENTIONS.md](docs/development/CONVENTIONS.md) |
+| **인프라 아키텍처** | [docs/architecture/INFRASTRUCTURE.md](docs/architecture/INFRASTRUCTURE.md) |
 | **이슈 생성** | [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) |
 | **PR 생성** | [.github/pull_request_template.md](.github/pull_request_template.md) |
 
@@ -41,6 +42,36 @@ docker compose down -v        # Stop and reset data
 ./gradlew test --tests "ClassName"          # Single class
 ./gradlew test --tests "ClassName.method"   # Single method
 ```
+
+## Terraform Commands
+
+```bash
+# Terraform (infra/ 디렉토리에서 실행)
+cd infra
+terraform init                # 초기화
+terraform plan                # 변경 사항 확인
+terraform validate            # 문법 검증
+
+# ⚠️ 로컬에서 terraform apply 금지 — CI/CD만 사용
+# PR 생성 시 자동 plan, develop 머지 시 자동 apply
+```
+
+## Infrastructure Context
+
+| 항목 | 값 |
+|------|-----|
+| GCP Project ID | `project-37afc2aa-d3d3-4a1a-8cd` |
+| Region | `asia-northeast3` (Seoul) |
+| VPC | `finders-vpc` (3 subnets, 6 firewall rules) |
+| GCE | `finders-server-v2` (e2-medium, internal IP `10.0.2.2`) |
+| Cloud SQL | `finders-db` (MySQL 8.0, private IP `10.68.240.3`) |
+| Databases | `finders` (prod), `finders_dev` (dev) |
+| GCS | `finders-public`, `finders-private` |
+| Cloud Run | `img-resizer` |
+| Artifact Registry | `finders-docker` (API), `finders-image` (resizer) |
+| Secret Manager | `finders-prod-config`, `finders-dev-config` (JSON) |
+| Terraform State | `gs://finders-terraform-state/` |
+| Domains | `api.finders.it.kr` (prod), `dev-api.finders.it.kr` (dev) |
 
 ## Architecture
 

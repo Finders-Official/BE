@@ -40,4 +40,8 @@
 - 서비스 계정 인증 정보
 - `.env` 파일 내용
 
-민감 정보는 환경 변수 또는 시크릿 관리 도구를 통해 관리합니다.
+민감 정보는 **GCP Secret Manager**를 통해 중앙 관리합니다.
+
+- Prod/Dev 설정: `finders-prod-config`, `finders-dev-config` (JSON 통합 시크릿)
+- GitHub Secrets: WIF 인증용 3개만 (`WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`)
+- 상세 가이드: [docs/infra/SECRET_MANAGEMENT.md](docs/infra/SECRET_MANAGEMENT.md)
