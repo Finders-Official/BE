@@ -3,6 +3,7 @@ package com.finders.api.domain.auth.service.command;
 import com.finders.api.domain.auth.dto.AuthRequest;
 import com.finders.api.domain.auth.dto.AuthResponse;
 import com.finders.api.domain.auth.dto.SignupTokenPayload;
+import com.finders.api.domain.member.entity.Member;
 import com.finders.api.domain.member.entity.MemberOwner;
 import com.finders.api.domain.member.entity.MemberUser;
 import com.finders.api.domain.member.entity.SocialAccount;
@@ -146,18 +147,18 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         try {
             Long memberId = jwtTokenProvider.getMemberIdFromToken(refreshToken);
 
-            MemberUser user = memberUserRepository.findById(memberId)
+            Member member = memberRepository.findById(memberId)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-            if (!refreshTokenHasher.matches(memberId, refreshToken, user.getRefreshTokenHash())) {
+            if (!refreshTokenHasher.matches(memberId, refreshToken, member.getRefreshTokenHash())) {
                 throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
             }
 
             // 새로운 AccessToken, RefreshToken 발급
-            String newAccessToken = jwtTokenProvider.createAccessToken(memberId, user.getRole().name());
+            String newAccessToken = jwtTokenProvider.createAccessToken(memberId, member.getRole().name());
             String newRefreshToken = jwtTokenProvider.createRefreshToken(memberId);
 
-            refreshTokenHasher.saveRefreshToken(user.getId(), newRefreshToken);
+            refreshTokenHasher.saveRefreshToken(member.getId(), newRefreshToken);
 
             long expiresIn = jwtTokenProvider.getAccessTokenExpiryMs() / 1000;
             return new AuthResponse.TokenInfo(
@@ -177,12 +178,12 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     public void logout(String refreshToken) {
         try {
             Long memberId = jwtTokenProvider.getMemberIdFromToken(refreshToken);
-            MemberUser user = memberUserRepository.findById(memberId)
+            Member member = memberRepository.findById(memberId)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-            if (refreshTokenHasher.matches(memberId, refreshToken, user.getRefreshTokenHash())) {
+            if (refreshTokenHasher.matches(memberId, refreshToken, member.getRefreshTokenHash())) {
                 refreshTokenHasher.removeRefreshToken(memberId);
-                user.updateRefreshTokenHash(null);
+                member.updateRefreshTokenHash(null);
             }
         } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
             throw new CustomException(ErrorCode.AUTH_INVALID_TOKEN);
