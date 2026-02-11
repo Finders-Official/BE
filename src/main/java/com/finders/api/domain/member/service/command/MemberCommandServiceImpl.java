@@ -22,12 +22,17 @@ import com.finders.api.global.security.JwtTokenProvider;
 import com.finders.api.global.security.RefreshTokenHasher;
 import com.finders.api.infra.messaging.MessageService;
 import com.finders.api.infra.oauth.OAuthTermsClient;
+import com.finders.api.infra.storage.StoragePath;
+import com.finders.api.infra.storage.StorageService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -50,11 +55,15 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final RefreshTokenHasher refreshTokenHasher;
     private final MessageService messageService;
     private final MemberAgreementCommandService memberAgreementCommandService;
+    private final StorageService storageService;
 
     private static final java.security.SecureRandom random = new java.security.SecureRandom();
 
     private static final String PHONE_CODE_KEY = "auth:phone:code:";
     private static final String VERIFIED_PHONE_KEY = "auth:phone:verified:";
+
+    @Qualifier("longTimeoutWebClient")
+    private final WebClient webClient;
 
     // 휴대폰 인증번호 요청
     @Override
@@ -85,9 +94,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         String codeKey = PHONE_CODE_KEY + request.requestId();
 
         VerificationData data = getRedisValueOrThrow(
-                codeKey,
-                VerificationData.class,
-                ErrorCode.AUTH_PHONE_CODE_EXPIRED
+            codeKey,
+            VerificationData.class,
+            ErrorCode.AUTH_PHONE_CODE_EXPIRED
         );
 
         if (data.isExpired()) {
@@ -134,31 +143,37 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         // MemberUser 엔티티 생성 및 저장
         MemberUser memberUser = MemberUser.builder()
-                .name(payload.name())
-                .email(payload.email())
-                .phone(request.phone())
-                .profileImage(payload.profileImage())
-                .nickname(request.nickname())
-                .build();
+            .name(payload.name())
+            .email(payload.email())
+            .phone(request.phone())
+            .profileImage(payload.profileImage())
+            .nickname(request.nickname())
+            .build();
 
         MemberUser savedUser = memberUserRepository.save(memberUser);
 
+        String gcsProfileUrl = uploadKakaoProfileImage(payload.profileImage(), savedUser.getId());
+
+        if (gcsProfileUrl != null) {
+            savedUser.updateProfileImage(gcsProfileUrl);
+        }
+
         // 약관 동의 여부 저장
         OAuthTermsClient targetClient = oAuthTermsClients.stream()
-                .filter(client -> client.getProvider() == payload.provider())
-                .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.AUTH_UNSUPPORTED_PROVIDER));
+            .filter(client -> client.getProvider() == payload.provider())
+            .findFirst()
+            .orElseThrow(() -> new CustomException(ErrorCode.AUTH_UNSUPPORTED_PROVIDER));
 
         List<String> socialAgreedTags = targetClient.getAgreedTermsTags(payload.accessToken());
         memberAgreementCommandService.saveAgreementsFromSocial(savedUser, payload.provider(), socialAgreedTags);
 
         // SocialAccount 연동 정보 저장
         SocialAccount socialAccount = SocialAccount.builder()
-                .provider(payload.provider())
-                .providerId(payload.providerId())
-                .user(savedUser)
-                .socialEmail(payload.email())
-                .build();
+            .provider(payload.provider())
+            .providerId(payload.providerId())
+            .user(savedUser)
+            .socialEmail(payload.email())
+            .build();
 
         socialAccountRepository.save(socialAccount);
 
@@ -175,9 +190,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         }
 
         return new MemberResponse.SignupResult(
-                accessToken,
-                refreshToken,
-                new MemberResponse.MemberSummary(savedUser.getId(), savedUser.getNickname())
+            accessToken,
+            refreshToken,
+            new MemberResponse.MemberSummary(savedUser.getId(), savedUser.getNickname())
         );
     }
 
@@ -185,7 +200,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     @Transactional
     public Member updateProfile(Long memberId, MemberRequest.UpdateProfile request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Member realMember = (Member) Hibernate.unproxy(member);
 
@@ -221,24 +236,24 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     @Override
     public MemberOwner saveMemberOwner(AuthRequest.OwnerSignupRequest request, String encodedPassword) {
         MemberOwner owner = MemberOwner.builder()
-                .name(request.name())
-                .email(request.email())
-                .phone(request.phone())
-                .passwordHash(encodedPassword)
-                .businessNumber(request.businessNumber())
-                .bankName(request.bankName())
-                .bankAccountNumber(request.bankAccountNumber())
-                .bankAccountHolder(request.bankAccountHolder())
-                .build();
+            .name(request.name())
+            .email(request.email())
+            .phone(request.phone())
+            .passwordHash(encodedPassword)
+            .businessNumber(request.businessNumber())
+            .bankName(request.bankName())
+            .bankAccountNumber(request.bankAccountNumber())
+            .bankAccountHolder(request.bankAccountHolder())
+            .build();
 
         return memberOwnerRepository.save(owner);
     }
 
     private void validateVPT(String phone, String token) {
         VerifiedPhoneInfo info = getRedisValueOrThrow(
-                VERIFIED_PHONE_KEY + token,
-                VerifiedPhoneInfo.class,
-                ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED
+            VERIFIED_PHONE_KEY + token,
+            VerifiedPhoneInfo.class,
+            ErrorCode.MEMBER_PHONE_VERIFY_REQUIRED
         );
 
         if (info.isExpired()) {
@@ -255,9 +270,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     }
 
     private <T> T getRedisValueOrThrow(
-            String key,
-            Class<T> valueType,
-            ErrorCode errorOnNull
+        String key,
+        Class<T> valueType,
+        ErrorCode errorOnNull
     ) {
         try {
             Object rawValue = redisTemplate.opsForValue().get(key);
@@ -272,6 +287,32 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         } catch (Exception e) {
             log.error("[MemberCommandServiceImpl.getRedisValueOrThrow] Redis 조회 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.AUTH_SERVER_ERROR);
+        }
+    }
+
+    private String uploadKakaoProfileImage(String imageUrl, Long memberId) {
+        if (imageUrl == null || imageUrl.isEmpty()) return null;
+
+        try {
+            byte[] imageBytes = webClient.get()
+                .uri(imageUrl)
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .block();
+
+            if (imageBytes == null) return null;
+
+            var upload = storageService.uploadBytes(
+                imageBytes,
+                "image/jpeg",
+                StoragePath.PROFILE,
+                memberId,
+                "kakao.jpg"
+            );
+
+            return upload.objectPath();
+        } catch (Exception e) {
+            return null;
         }
     }
 }
