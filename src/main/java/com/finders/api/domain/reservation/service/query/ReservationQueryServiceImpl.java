@@ -122,9 +122,13 @@ public class ReservationQueryServiceImpl implements ReservationQueryService {
 
         int totalMinutes = EstimatedTimeCalculator.totalMinutes(base, waitingRollCount, N, m);
 
+
+        ReservationSlot slot = reservation.getSlot();
+        LocalDateTime startAt = LocalDateTime.of(slot.getReservationDate(), slot.getReservationTime());
+
         LocalDateTime completedAt = businessHourCalculator.calculateCompletedAt(
                 photoLabId,
-                LocalDateTime.now(),
+                startAt,
                 totalMinutes
         );
 
