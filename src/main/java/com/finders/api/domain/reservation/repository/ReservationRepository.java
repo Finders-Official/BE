@@ -35,6 +35,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     select r from Reservation r
     join fetch r.photoLab pl
     join fetch r.slot s
+    join fetch r.user u
     where r.id = :reservationId
       and pl.id = :photoLabId
       and r.user.id = :memberId
