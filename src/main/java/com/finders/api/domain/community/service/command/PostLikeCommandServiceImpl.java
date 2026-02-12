@@ -13,6 +13,8 @@ import com.finders.api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -39,8 +41,7 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
         postLikeRepository.save(PostLike.create(post, memberUser));
 
         post.increaseLikeCount();
-        popularPostCacheService.evictPopularPosts();
-
+        registerCacheRefresh();
         return PostLikeResponse.PostLikeResDTO.builder()
                 .postId(post.getId())
                 .likeCount(post.getLikeCount())
@@ -68,5 +69,19 @@ public class PostLikeCommandServiceImpl implements PostLikeCommandService {
                 .likeCount(post.getLikeCount())
                 .isLiked(false)
                 .build();
+    }
+
+    private void registerCacheRefresh() {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    // 1. 기존 캐시 파기
+                    popularPostCacheService.evictPopularPosts();
+                    // 2. 최신 데이터로 캐시 즉시 재생성 (Refresh)
+                    popularPostCacheService.refreshPopularPostsCache();
+                }
+            });
+        }
     }
 }

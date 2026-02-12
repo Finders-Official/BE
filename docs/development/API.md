@@ -71,160 +71,171 @@ Authorization: Bearer {access_token}
 
 ## API Endpoints
 
-### Auth (인증)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| POST | `/auth/social/login` | 소셜 로그인(모바일 Native SDK) | None | `provider`, `accessToken` | 🔘 |
-| POST | `/auth/social/login/code` | 소셜 로그인(웹 브라우저) | None | `provider`, `code` | 🔘 |
-| POST | `/auth/owner/login` | 사장님 로그인 | None | `email`, `password` | ⚠️ |
-| POST | `/auth/owner/signup` | 사장님 회원가입 | None | `email`, `password`, `name` | ⚠️ |
-| POST | `/auth/reissue` | 토큰 재발급 | None | `refreshToken` (Cookie) | ❌ |
-| POST | `/auth/logout` | 로그아웃 | USER/OWNER | `refreshToken` (Cookie) | ❌ |
+> Swagger UI 태그 순서 기준 (`dev-api.finders.it.kr`)
+> 전체 **91개** 엔드포인트
 
-### Dev Tools (개발용 도구)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/dev/login` | 서버용 토큰 발급 | None | `SecretKey` (Header), `memberId` | ✅ |
+---
 
-### Member (회원)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/members/me` | 마이페이지 조회 | USER, OWNER, ADMIN | - | ✅ |
-| PATCH | `/members/me` | 내 정보 수정 | USER, OWNER, ADMIN | `nickname`, `profileImage` | ⚠️ |
-| POST | `/members/social/signup/complete` | 소셜 회원가입 완료 | USER | `nickname`, `phone` | ⚠️ |
-| POST | `/members/phone/verify/request` | 휴대폰 인증번호 요청 | None | `phone` | ⚠️ |
-| POST | `/members/phone/verify/confirm` | 휴대폰 인증번호 확인 | None | `phone`, `code` | ⚠️ |
-| GET | `/users/nickname/check` | 닉네임 중복 확인 | None | `nickname` | ✅ |
-| DELETE | `/users/me` | 회원 탈퇴 | USER | - | 🔘 |
+### 1. 인증(Auth) — 인증 및 토큰 관련 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 1 | POST | `/auth/social/login` | 소셜 로그인(모바일 Native SDK) | None |
+| 2 | POST | `/auth/social/login/code` | 소셜 로그인 (웹 브라우저) | None |
+| 3 | POST | `/auth/reissue` | 토큰 재발급 | None |
+| 4 | POST | `/auth/owner/signup` | 사장님 회원가입 | None |
+| 5 | POST | `/auth/owner/login` | 사장님 로그인 | None |
+| 6 | POST | `/auth/logout` | 로그아웃 | USER/OWNER |
 
-### User Address (회원 주소)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/users/addresses` | 배송지 목록 조회 | USER | - | ✅ |
-| POST | `/users/addresses` | 배송지 추가 | USER | `address`, `isDefault` | ⚠️ |
+### 2. 회원(Member) — 회원가입 완료, 휴대폰 본인 인증 및 사용자 관련 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 7 | GET | `/members/me` | 마이페이지(내 정보) 조회 | USER/OWNER/ADMIN |
+| 8 | PATCH | `/members/me` | 내 정보 수정 | USER/OWNER/ADMIN |
+| 9 | POST | `/members/social/signup/complete` | 소셜 회원가입 완료 | USER |
+| 10 | POST | `/members/phone/verify/request` | 휴대폰 인증번호 요청 | None |
+| 11 | POST | `/members/phone/verify/confirm` | 휴대폰 인증번호 확인 | None |
+| 12 | GET | `/users/nickname/check` | 닉네임 중복 확인 | None |
+| 13 | DELETE | `/users/me` | 사용자(User) 회원 탈퇴 | USER |
 
-### PhotoLab USER (현상소)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/photo-labs` | 현상소 목록 조회 | None | `page`, `size`, `sort` | ✅ |
-| GET | `/photo-labs/popular` | 인기 현상소 조회 | None | - | ✅ |
-| GET | `/photo-labs/regions` | 지역별 현상소 개수 조회 | None | - | ✅ |
-| GET | `/photo-labs/notices` | 현상소 공지 조회 | None | `photoLabId` | ✅ |
-| GET | `/photo-labs/favorites` | 관심 현상소 목록 조회 | USER | - | ✅ |
-| GET | `/photo-labs/search` | 커뮤니티용 현상소 검색 | None | `keyword`, `locationAgreed` | ✅ |
-| GET | `/photo-labs/search/autocomplete` | 검색어 자동완성 | None | `keyword` | ✅ |
-| GET | `/photo-labs/search/preview` | 현상소 목록 preview | None | - | ✅ |
-| GET | `/photo-labs/{photoLabId}` | 현상소 상세 조회 | None | - | ✅ |
-| POST | `/photo-labs/{photoLabId}/favorites` | 즐겨찾기 추가 | USER | - | ✅ |
-| DELETE | `/photo-labs/{photoLabId}/favorites` | 즐겨찾기 삭제 | USER | - | ✅ |
+### 3. 회원 주소(User Address) — 유저 배송지 관리 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 14 | GET | `/users/addresses` | 배송지 목록 조회 | USER |
+| 15 | POST | `/users/addresses` | 배송지 추가 | USER |
 
-### PhotoLab Reservation (예약)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| POST | `/photo-labs/{photoLabId}/reservations` | 예약 등록 | USER | `date`, `time`, `type` | ⚠️ |
-| GET | `/photo-labs/{photoLabId}/reservations/available-times` | 예약 가능 시간대 조회 | None | `date` | ⚠️ |
-| GET | `/photo-labs/{photoLabId}/reservations/{reservationId}` | 예약 완료 조회 | USER | - | ✅ |
-| DELETE | `/photo-labs/{photoLabId}/reservations/{reservationId}` | 예약 취소 | USER | - | 🔘 |
+### 4. PhotoLab_USER — 현상소 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 16 | GET | `/photo-labs` | 현상소 목록 조회 API | None |
+| 17 | GET | `/photo-labs/{photoLabId}` | 현상소 상세 조회 API | None |
+| 18 | GET | `/photo-labs/popular` | 인기 현상소 조회 API | None |
+| 19 | GET | `/photo-labs/regions` | 지역별 현상소 개수 조회 API | None |
+| 20 | GET | `/photo-labs/notices` | 현상소 공지 조회 API | None |
+| 21 | GET | `/photo-labs/favorites` | 관심 현상소 목록 조회(무한 스크롤) | USER |
+| 22 | GET | `/photo-labs/search` | 커뮤니티용 현상소 검색 | None |
+| 23 | GET | `/photo-labs/search/autocomplete` | 현상소 검색어 자동완성 API | None |
+| 24 | GET | `/photo-labs/search/preview` | 현상소 목록 조회 preview API | None |
+| 25 | POST | `/photo-labs/{photoLabId}/favorites` | 현상소 즐겨찾기 추가 API | USER |
+| 26 | DELETE | `/photo-labs/{photoLabId}/favorites` | 현상소 즐겨찾기 삭제 API | USER |
 
-### Photo (회원 사진)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/photos/me/work-in-progress` | 진행중 작업 조회 | USER | - | ✅ |
-| GET | `/photos/development-orders` | 현상 주문 목록 조회 | USER | - | ✅ |
-| GET | `/photos/development-orders/{id}/scan-results` | 스캔 결과 사진 목록 | USER | - | ✅ |
-| GET | `/photos/development-orders/{id}/photo-labs/account` | 현상소 계좌 조회 | USER | - | ⚠️ |
-| POST | `/photos/development-orders/{id}/receipt` | 수령 확정 | USER | - | ⚠️ |
-| POST | `/photos/development-orders/{id}/print/skip` | 인화 안함 확정 | USER | - | ✅ |
-| POST | `/photos/print-orders` | 인화 주문 생성 | USER | `photoIds`, `options` | ⚠️ |
-| GET | `/photos/print-orders/options` | 인화 옵션 목록 조회 | None | - | ✅ |
-| POST | `/photos/print-orders/quote` | 인화 가격 조회 | USER | `photoIds`, `options` | ⚠️ |
-| POST | `/photos/print-orders/{printOrderId}/deposit-receipt` | 입금 캡처 등록 | USER | `image` | ⚠️ |
+### 5. PhotoLab Reservation — 현상소 예약 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 27 | POST | `/photo-labs/{photoLabId}/reservations` | 현상소 예약 등록 | USER |
+| 28 | GET | `/photo-labs/{photoLabId}/reservations/available-times` | 현상소 날짜별 예약 가능 시간대 조회 | None |
+| 29 | GET | `/photo-labs/{photoLabId}/reservations/{reservationId}` | 현상소 예약내역 완료 조회 | USER |
+| 30 | DELETE | `/photo-labs/{photoLabId}/reservations/{reservationId}` | 현상소 예약 취소 | USER |
 
-### Photo Restoration (AI 사진 복원)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/restorations` | 복원 이력 조회 | USER | `page`, `size` | ✅ |
-| POST | `/restorations` | 사진 복원 요청 (SUPIR) | USER | `originalPath`, `plan` | ✅ |
-| GET | `/restorations/{restorationId}` | 복원 결과 조회 | USER | - | ✅ |
-| POST | `/restorations/{restorationId}/feedback` | 복원 피드백 | USER | `rating`, `comment` | ✅ |
-| POST | `/restorations/{restorationId}/share` | 복원 이미지 공유 | USER | - | ✅ |
+### 6. Photo — 회원용 현상/스캔/인화 내역 조회 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 31 | GET | `/photos/me/work-in-progress` | 회원 - 내 진행중 작업 조회 | USER |
+| 32 | GET | `/photos/development-orders` | 회원 - 내 현상 주문 목록 조회(무한스크롤) | USER |
+| 33 | GET | `/photos/development-orders/{developmentOrderId}/scan-results` | 회원 - 스캔 결과 사진 목록 조회 | USER |
+| 34 | GET | `/photos/development-orders/{developmentOrderId}/photo-labs/account` | 회원 - 현상 주문한 현상소 사업자 계좌 조회 | USER |
+| 35 | POST | `/photos/development-orders/{developmentOrderId}/receipt` | 회원 - 스캔/현상 결과 수령 확정 | USER |
+| 36 | POST | `/photos/development-orders/{developmentOrderId}/print/skip` | 회원 - 인화 안함 확정 | USER |
+| 37 | GET | `/photos/print-orders/options` | 회원 - 인화 옵션 목록 조회 | None |
+| 38 | POST | `/photos/print-orders/quote` | 회원 - 인화 옵션에 따른 가격 조회 | USER |
+| 39 | POST | `/photos/print-orders` | 회원 - 인화 주문 생성 | USER |
+| 40 | POST | `/photos/print-orders/{printOrderId}/deposit-receipt` | 회원 - 입금 캡처 등록 확정 | USER |
 
-### Community (사진 수다)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/posts` | 피드 목록 조회 | None | `page`, `size` | ✅ |
-| POST | `/posts` | 게시물 작성 | USER | `content`, `images` | ⚠️ |
-| GET | `/posts/preview` | 사진 미리보기 | None | - | ✅ |
-| GET | `/posts/me` | 내가 쓴 글 목록 | USER | - | ✅ |
-| GET | `/posts/likes` | 관심 게시글 목록 | USER | - | ✅ |
-| GET | `/posts/search` | 게시글 검색 | None | `keyword` | ✅ |
-| GET | `/posts/search/autocomplete` | 검색어 자동완성 | None | `keyword` | ✅ |
-| GET | `/posts/search/history` | 최근 검색어 목록 | USER | - | ✅ |
-| DELETE | `/posts/search/history/all` | 검색어 전체 삭제 | USER | - | ✅ |
-| DELETE | `/posts/search/history/{searchHistoryId}` | 검색어 개별 삭제 | USER | - | ⚠️ |
-| GET | `/posts/{postId}` | 게시물 상세 | None | - | ✅ |
-| DELETE | `/posts/{postId}` | 게시글 삭제 | USER | - | ⚠️ |
-| GET | `/posts/{postId}/comments` | 댓글 조회 | None | - | ✅ |
-| POST | `/posts/{postId}/comments` | 댓글 작성 | USER | `content` | ✅ |
-| DELETE | `/posts/comments/{commentId}` | 댓글 삭제 | USER | - | ✅ |
-| POST | `/posts/{postId}/likes` | 좋아요 | USER | - | ✅ |
-| DELETE | `/posts/{postId}/likes` | 좋아요 취소 | USER | - | ✅ |
+### 7. Photo Restoration — AI 사진 복원 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 41 | GET | `/restorations` | 복원 이력 조회 | USER |
+| 42 | POST | `/restorations` | 사진 복원 요청 | USER |
+| 43 | GET | `/restorations/{restorationId}` | 복원 결과 조회 | USER |
+| 44 | POST | `/restorations/{restorationId}/feedback` | 복원 결과 피드백 | USER |
+| 45 | POST | `/restorations/{restorationId}/share` | 복원 이미지 공유 | USER |
 
-### Payment (결제)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/payments` | 내 결제 목록 조회 | USER | - | ✅ |
-| POST | `/payments/pre-register` | 결제 사전등록 | USER | `orderId`, `amount` | ⚠️ |
-| POST | `/payments/complete` | 결제 완료 처리 | USER | `paymentKey`, `amount` | ⚠️ |
-| GET | `/payments/{paymentId}` | 결제 상세 조회 | USER | - | ⚠️ |
-| POST | `/payments/{paymentId}/cancel` | 결제 취소 | USER | `reason` | ⚠️ |
+### 8. Community — 사진 수다 관련 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 46 | GET | `/posts` | 피드 목록 조회 | None |
+| 47 | POST | `/posts` | 게시물 작성 | USER |
+| 48 | GET | `/posts/{postId}` | 게시물 상세 조회 | None |
+| 49 | DELETE | `/posts/{postId}` | 게시글 삭제 | USER |
+| 50 | GET | `/posts/preview` | 커뮤니티 사진 미리 보기 | None |
+| 51 | GET | `/posts/me` | 내가 쓴 글 목록 조회 | USER |
+| 52 | GET | `/posts/likes` | 관심 게시글 목록 조회 | USER |
+| 53 | GET | `/posts/search` | 사진 수다 게시글 검색 | None |
+| 54 | GET | `/posts/search/autocomplete` | 검색어 자동완성 | None |
+| 55 | GET | `/posts/search/history` | 최근 검색어 목록 조회 | USER |
+| 56 | DELETE | `/posts/search/history/{searchHistoryId}` | 최근 검색어 개별 삭제 | USER |
+| 57 | DELETE | `/posts/search/history/all` | 최근 검색어 전체 삭제 | USER |
+| 58 | POST | `/posts/{postId}/likes` | 게시물 좋아요 | USER |
+| 59 | DELETE | `/posts/{postId}/likes` | 게시물 좋아요 취소 | USER |
+| 60 | GET | `/posts/{postId}/comments` | 게시물 댓글 조회 | None |
+| 61 | POST | `/posts/{postId}/comments` | 게시물 댓글 작성 | USER |
+| 62 | DELETE | `/posts/comments/{commentId}` | 게시물 댓글 삭제 | USER |
 
-### File (파일)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| POST | `/files/presigned-url` | 업로드용 Presigned URL 발급 | USER/OWNER | `category`, `fileName`, `memberId` | ✅ |
-| GET | `/files/signed-url` | Private 파일 조회 URL 발급 | USER/OWNER | `filePath` | ✅ |
+### 9. Inquiry — 1:1 문의 API (User)
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 63 | GET | `/inquiries` | 내 문의 목록 조회 | USER |
+| 64 | POST | `/inquiries` | 문의 생성 | USER |
+| 65 | GET | `/inquiries/{inquiryId}` | 문의 상세 조회 | USER |
 
-### Inquiry USER (1:1 문의)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/inquiries` | 내 문의 목록 | USER | - | ✅ |
-| POST | `/inquiries` | 문의 생성 | USER | `title`, `content`, `photoLabId`, `objectPaths` | ✅ |
-| GET | `/inquiries/{inquiryId}` | 문의 상세 | USER | - | ✅ |
+### 10. Owner Inquiry — 1:1 문의 API (Owner)
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 66 | GET | `/owner/inquiries` | 현상소 문의 목록 조회 | OWNER |
+| 67 | GET | `/owner/inquiries/{inquiryId}` | 현상소 문의 상세 조회 | OWNER |
+| 68 | POST | `/owner/inquiries/{inquiryId}/replies` | 문의 답변 작성 | OWNER |
 
-### Inquiry OWNER (현상소 문의)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/owner/inquiries` | 현상소 문의 목록 | OWNER | `photoLabId` | ✅ |
-| GET | `/owner/inquiries/{inquiryId}` | 문의 상세 | OWNER | `photoLabId` | ✅ |
-| POST | `/owner/inquiries/{inquiryId}/replies` | 답변 작성 | OWNER | `content` | ✅ |
+### 11. Admin Inquiry — 1:1 문의 API (Admin)
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 69 | GET | `/admin/inquiries` | 서비스 문의 목록 조회 | ADMIN |
+| 70 | GET | `/admin/inquiries/{inquiryId}` | 서비스 문의 상세 조회 | ADMIN |
+| 71 | POST | `/admin/inquiries/{inquiryId}/replies` | 문의 답변 작성 | ADMIN |
 
-### Inquiry ADMIN (관리자 문의)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| GET | `/admin/inquiries` | 서비스 문의 목록 | ADMIN | - | ✅ |
-| GET | `/admin/inquiries/{inquiryId}` | 문의 상세 | ADMIN | - | ✅ |
-| POST | `/admin/inquiries/{inquiryId}/replies` | 답변 작성 | ADMIN | `content` | ✅ |
+### 12. PhotoLab_OWNER — owner용 현상소 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 72 | POST | `/owner/photo-labs` | 현상소 기본사항 등록 API | OWNER |
+| 73 | POST | `/owner/photo-labs/images/presigned-url` | 현상소 이미지 업로드 presigned url 발급 | OWNER |
+| 74 | POST | `/owner/photo-labs/images` | 현상소 이미지 등록 | OWNER |
+| 75 | POST | `/owner/photo-labs/documents/presigned-url` | 현상소 사업자 등록 서류 업로드 presigned url 발급 API | OWNER |
+| 76 | POST | `/owner/photo-labs/documents` | 현상소 사업자 서류 등록 | OWNER |
 
-### PhotoLab OWNER (현상소 관리)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| POST | `/owner/photo-labs` | 현상소 기본사항 등록 | OWNER | `name`, `address`, `phone` | ⚠️ |
-| POST | `/owner/photo-labs/images/presigned-url` | 이미지 업로드 URL 발급 | OWNER | `fileName`, `photoLabId` | ⚠️ |
-| POST | `/owner/photo-labs/images` | 이미지 등록 | OWNER | `imageUrl` | 🔘 |
-| POST | `/owner/photo-labs/documents/presigned-url` | 서류 업로드 URL 발급 | OWNER | `fileName`, `photoLabId` | ⚠️ |
-| POST | `/owner/photo-labs/documents` | 사업자 서류 등록 | OWNER | `documentUrl` | 🔘 |
+### 13. Owner Photo — 오너용 현상/스캔/인화 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 77 | POST | `/owner/photo-labs/{photoLabId}/development-orders` | 오너 - 현상 주문 생성 | OWNER |
+| 78 | PATCH | `/owner/photo-labs/{photoLabId}/development-orders/{developmentOrderId}/status` | 오너 - 현상 주문 상태 변경 | OWNER |
+| 79 | POST | `/owner/photo-labs/{photoLabId}/scan-photos/presigned-urls` | 오너 - 스캔 이미지를 업로드 할 presigned url 벌크 발급(PUT) | OWNER |
+| 80 | POST | `/owner/photo-labs/{photoLabId}/development-orders/{developmentOrderId}/scanned-photos` | 오너 - (주문 기준) 스캔 이미지 메타데이터 DB 등록 | OWNER |
+| 81 | PATCH | `/owner/photo-labs/{photoLabId}/print-orders/{printOrderId}/printing` | 오너 - 인화 주문의 예상 완료 시간 등록 | OWNER |
+| 82 | PATCH | `/owner/photo-labs/{photoLabId}/print-orders/{printOrderId}/shipping` | 오너 - 배송 주문 상태 변경 및 정보 등록 | OWNER |
+| 83 | PATCH | `/owner/photo-labs/{photoLabId}/print-orders/{printOrderId}/status` | 오너 - 현상 주문 완료 | OWNER |
 
-### Owner Photo (오너 사진 관리)
-| Method | Path | Summary | Auth | Key Parameters | Status |
-|--------|------|---------|------|----------------|--------|
-| POST | `/owner/photo-labs/{photoLabId}/development-orders` | 현상 주문 생성 | OWNER | `memberId`, `orderType` | ⚠️ |
-| PATCH | `/owner/photo-labs/{photoLabId}/development-orders/{id}/status` | 주문 상태 변경 | OWNER | `status` | ⚠️ |
-| POST | `/owner/photo-labs/{photoLabId}/scan-photos/presigned-urls` | 스캔 이미지 URL 벌크 발급 | OWNER | `count` | ⚠️ |
-| POST | `/owner/photo-labs/{photoLabId}/development-orders/{id}/scanned-photos` | 스캔 이미지 메타 등록 | OWNER | `photoUrls` | 🔘 |
-| PATCH | `/owner/photo-labs/{photoLabId}/print-orders/{id}/status` | 인화 주문 완료 | OWNER | `status` | 🔘 |
-| PATCH | `/owner/photo-labs/{photoLabId}/print-orders/{id}/printing` | 예상 완료 시간 등록 | OWNER | `estimatedTime` | 🔘 |
-| PATCH | `/owner/photo-labs/{photoLabId}/print-orders/{id}/shipping` | 배송 정보 등록 | OWNER | `trackingNumber` | 🔘 |
+### 14. File — 파일 업로드 및 관리 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 84 | POST | `/files/presigned-url` | 업로드용 Presigned URL 발급 | USER/OWNER |
+| 85 | GET | `/files/signed-url` | Private 파일 조회 URL 발급 | USER/OWNER |
+
+### 15. 개발용 도구 — 개발 및 테스트를 위한 API
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 86 | GET | `/dev/login` | 서버용 토큰 발급 | None |
+
+---
+
+### Payment — 결제 API `@Hidden`
+> Swagger UI에서 숨김 처리됨 (`@Hidden`). 추후 결제 기능 완성 시 노출 예정.
+
+| # | Method | Path | Summary | Auth |
+|---|--------|------|---------|------|
+| 87 | GET | `/payments` | 내 결제 목록 조회 | USER |
+| 88 | POST | `/payments/pre-register` | 결제 사전등록 | USER |
+| 89 | POST | `/payments/complete` | 결제 완료 처리 | USER |
+| 90 | GET | `/payments/{paymentId}` | 결제 상세 조회 | USER |
+| 91 | POST | `/payments/{paymentId}/cancel` | 결제 취소 | USER |
+
+---
 
 ## Dev Server Test Results
 
