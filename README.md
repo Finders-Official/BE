@@ -5,29 +5,21 @@
 
 <!-- ======================== HERO SECTION ======================== -->
 
-<!-- BANNER: 디자이너에게 받은 후 아래 주석을 해제하고 이미지 경로를 교체하세요
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Finders-Official/.github/main/profile/assets/banner.png" alt="Finders Banner" width="100%" />
-</p>
--->
+ <h1 style="display: flex; align-items: center; gap: 10px; margin: 0;">
+    <img
+      src="https://raw.githubusercontent.com/Finders-Official/.github/main/profile/assets/logo.png"
+      alt="Finders Logo"
+      width="35"
+      height="35"
+    />
+    Finders BE
+  </h1>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Finders-Official/.github/main/profile/assets/logo.png" alt="Finders Logo" width="120" />
+  <img src="docs/images/Landing_Page_1.png" alt="Finders_Langing_Page_1" width="100%" />
 </p>
 
-<h1 align="center">Finders</h1>
 
-<p align="center">
-  <strong>뷰파인더 너머, 너의 취향을 찾다</strong><br/>
-  <sub>Beyond the viewfinder, find your taste</sub>
-</p>
-
-<p align="center">
-  필름 현상소와 필름 사용자를 잇는 플랫폼<br/>
-  <em>A platform connecting film labs and film enthusiasts</em>
-</p>
-
-<br/>
 
 <!-- ====================== NAVIGATION ====================== -->
 
@@ -42,7 +34,7 @@
 
 ---
 
-## 🧭 About Finders
+## 🟧 About Finders
 
 **Finders**는 필름 카메라 사용자가 **현상소를 탐색하고, 예약하고, 결제까지** 한 번에 처리할 수 있는 서비스입니다.  
 AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생활 전반을 아우르는 기능을 제공합니다.
@@ -51,13 +43,13 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 
 ---
 
-## 📆 프로젝트 기간
+## 🟧 프로젝트 기간
 
 > **2025.12.19 ~ ing**
 
 ---
 
-## ✨ 핵심 기능
+## 🟧 핵심 기능
 
 1. 소셜 로그인 (Kakao, Apple) + JWT 인증
 2. 현상소 검색/상세/즐겨찾기/거리 기반 정렬
@@ -69,7 +61,22 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 
 ---
 
-## 👥 Team
+<p align="center">
+  <img src="docs/images/Landing_Page_4.png" alt="Finders_Langing_Page_4" width="100%" />
+</p>
+<p align="center">
+  <img src="docs/images/Landing_Page_7.png" alt="Finders_Langing_Page_7" width="100%" />
+</p>
+<p align="center">
+  <img src="docs/images/Landing_Page_8.png" alt="Finders_Langing_Page_8" width="100%" />
+</p>
+<p align="center">
+  <img src="docs/images/Landing_Page_9.png" alt="Finders_Langing_Page_9" width="100%" />
+</p>
+
+---
+
+## 🟧 Team
 
 
 <table>
@@ -123,7 +130,7 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 
 ---
 
-## 🛠️ Tech Stack
+## 🟧 Tech Stack
 
 <table>
   <tr>
@@ -180,17 +187,17 @@ AI 사진 복원, 커뮤니티 피드, 필름카메라 가이드 등 필름 생�
 
 ---
 
-## 🏗️ 시스템 아키텍처
+## 🟧 System Architecture
 
 
 <p align="center">
-  <img src="docs/images/Architecture.png" alt="Finders System Architecture" width="100%" />
+  <img src="docs/images/Architecture.png" alt="Finders_System_Architecture" width="100%" />
 </p>
 
 
 ---
 
-## 🧱 프로젝트 구조
+## 🟧 프로젝트 구조
 
 - `domain`: 도메인 중심 비즈니스 로직
 - `infra`: 외부 서비스 연동 (OAuth, 결제, AI, 스토리지)
@@ -222,16 +229,16 @@ src/main/java/com/finders/api
 
 ---
 
-## 🗂️ ERD
+## 🟧 ERD
 - 상세 스키마 문서: [docs/architecture/ERD.md](docs/architecture/ERD.md)
 
 <p align="center">
-  <img src="docs/images/ERD.png" alt="Finders ERD" width="100%" />
+  <img src="docs/images/ERD.png" alt="Finders_ERD" width="100%" />
 </p>
 
 ---
 
-## 🚀 배포 환경
+## 🟧 배포 환경
 
 | Environment | Branch | Domain |
 |---|---|---|
@@ -240,7 +247,7 @@ src/main/java/com/finders/api
 
 ---
 
-## 📚 Docs
+## 🟧 Docs 정의
 
 ### API Runtime Docs
 
@@ -277,7 +284,7 @@ docs/
 
 ---
 
-## ⚙️ 실행 방법
+## 🟧 실행 방법
 
 ### Prerequisites
 
@@ -302,6 +309,10 @@ docker compose up -d
 ./gradlew build
 ```
 ---
+
+<p align="center">
+  <img src="docs/images/Landing_Page_10.png" alt="Finders_Langing_Page_10" width="100%" />
+</p>
 
 <p align="center">
   <sub>UMC 9th · Finders · 2025</sub>
