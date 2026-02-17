@@ -1,10 +1,11 @@
 # Backend configuration for GCS
-# State stored in finders-487717-tf-state bucket (created manually before terraform init)
-# DO NOT manage this bucket with Terraform — circular dependency
+# State bucket is created manually before terraform init — NOT managed by Terraform (circular dependency)
+# Bucket name is injected at init time via -backend-config flag:
+#   terraform init -backend-config="bucket=<PROJECT_ID>-tf-state"
+# CI/CD uses TF_STATE_BUCKET GitHub Secret for the bucket name.
 
 terraform {
   backend "gcs" {
-    bucket = "finders-487717-tf-state"
     prefix = "terraform/state"
   }
 }
