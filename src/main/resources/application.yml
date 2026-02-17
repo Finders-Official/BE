@@ -183,7 +183,7 @@ discord:
 logging:
   level:
     root: INFO
-    com.finders: INFO
+    com.finders: DEBUG
 
 # ========================================
 # CORS 설정

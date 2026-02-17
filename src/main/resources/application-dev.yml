@@ -35,7 +35,7 @@ jwt:
 logging:
   level:
     root: INFO
-    com.finders: INFO
+    com.finders: DEBUG
     org.springframework.web: INFO
     org.hibernate.SQL: WARN
     org.hibernate.orm.jdbc.bind: WARN
