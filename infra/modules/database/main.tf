@@ -3,6 +3,7 @@ resource "google_sql_database_instance" "main" {
   project          = var.project_id
   region           = var.region
   database_version = "MYSQL_8_0"
+  root_password    = var.db_root_password
 
   settings {
     tier                        = "db-g1-small"

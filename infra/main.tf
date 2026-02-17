@@ -17,11 +17,12 @@ module "networking" {
 module "database" {
   source = "./modules/database"
 
-  project_id  = var.project_id
-  region      = var.region
-  zone        = var.zone
-  name_prefix = local.name_prefix
-  network_id  = module.networking.network_id
+  project_id       = var.project_id
+  region           = var.region
+  zone             = var.zone
+  name_prefix      = local.name_prefix
+  network_id       = module.networking.network_id
+  db_root_password = var.db_root_password
 }
 
 module "compute" {
