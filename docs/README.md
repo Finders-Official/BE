@@ -46,6 +46,7 @@
 | [GCP_LOGGING_GUIDE.md](infra/GCP_LOGGING_GUIDE.md) | GCP Cloud Logging 확인 가이드 | DevOps |
 | [IAC_TERRAFORM_INTRO.md](infra/IAC_TERRAFORM_INTRO.md) | IaC/Terraform 개념 학습 | 모든 개발자 |
 | [TERRAFORM_OPERATIONS.md](infra/TERRAFORM_OPERATIONS.md) | Terraform 운영 가이드 | DevOps |
+| [GCP_PROJECT_MIGRATION_RUNBOOK.md](infra/GCP_PROJECT_MIGRATION_RUNBOOK.md) | GCP 프로젝트 마이그레이션 런북 | DevOps |
 
 ## 🤝 Contributing
 
