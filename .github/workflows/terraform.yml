@@ -59,6 +59,10 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+
+      - name: Recover tainted Cloud Run state
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+        run: terraform untaint google_cloud_run_v2_service.img_resizer || true
       
       - name: Terraform Plan
         id: plan
