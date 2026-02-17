@@ -112,10 +112,10 @@ terraform force-unlock <LOCK_ID>
 
 ```bash
 # GCS 버킷에서 이전 버전 확인
-gcloud storage ls -l gs://finders-487717-tf-state/terraform/state/
+gcloud storage ls -l gs://<TF_STATE_BUCKET>/terraform/state/
 
 # 이전 버전 다운로드
-gcloud storage cp gs://finders-487717-tf-state/terraform/state/default.tfstate#<VERSION> ./terraform.tfstate
+gcloud storage cp gs://<TF_STATE_BUCKET>/terraform/state/default.tfstate#<VERSION> ./terraform.tfstate
 
 # State 복구
 cd infra
@@ -172,7 +172,7 @@ cp terraform.tfvars.example terraform.tfvars
 
 ```bash
 cd infra
-terraform init
+terraform init -backend-config="bucket=<TF_STATE_BUCKET>"
 terraform plan  # 변경사항 없어야 함 (No changes)
 ```
 
@@ -187,7 +187,10 @@ terraform plan  # 변경사항 없어야 함 (No changes)
 **해결**:
 ```bash
 # 권한 확인
-gcloud storage buckets get-iam-policy gs://finders-487717-tf-state
+gcloud storage buckets get-iam-policy gs://<TF_STATE_BUCKET>
+
+# 또는 환경 변수 기반
+gcloud storage buckets get-iam-policy gs://$TF_STATE_BUCKET
 ```
 
 ### "Error: Resource already exists"
@@ -229,6 +232,7 @@ terraform plan     # drift 확인
 - [Google Provider 문서](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
 - [Cloudflare Provider 문서](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs)
 - [IaC/Terraform 개념 학습](./IAC_TERRAFORM_INTRO.md)
+- [GCP 프로젝트 마이그레이션 런북](./GCP_PROJECT_MIGRATION_RUNBOOK.md)
 - [인프라 아키텍처](../architecture/INFRASTRUCTURE.md)
 
 ---

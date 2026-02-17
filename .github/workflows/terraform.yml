@@ -45,7 +45,7 @@ jobs:
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
       
       - name: Download Terraform Variables
-        run: gcloud storage cp gs://finders-487717-tf-state/terraform.tfvars terraform.tfvars
+        run: gcloud storage cp gs://${{ secrets.TF_STATE_BUCKET }}/terraform.tfvars terraform.tfvars
       
       - name: Terraform Format Check
         id: fmt
@@ -54,7 +54,7 @@ jobs:
       
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}"
       
       - name: Terraform Validate
         id: validate
@@ -119,4 +119,4 @@ jobs:
         if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         run: |
           terraform output -raw deploy_config > /tmp/deploy-config.json
-          gcloud storage cp /tmp/deploy-config.json gs://finders-487717-tf-state/deploy-config.json
+          gcloud storage cp /tmp/deploy-config.json gs://${{ secrets.TF_STATE_BUCKET }}/deploy-config.json

@@ -11,6 +11,7 @@
 | [GCP_LOGGING_GUIDE.md](./GCP_LOGGING_GUIDE.md) | GCP Cloud Logging 확인 가이드 | DevOps |
 | [IAC_TERRAFORM_INTRO.md](./IAC_TERRAFORM_INTRO.md) | IaC/Terraform 개념 학습 | 모든 개발자 |
 | [TERRAFORM_OPERATIONS.md](./TERRAFORM_OPERATIONS.md) | Terraform 운영 가이드 (plan/apply, 안전 수칙) | DevOps |
+| [GCP_PROJECT_MIGRATION_RUNBOOK.md](./GCP_PROJECT_MIGRATION_RUNBOOK.md) | GCP 프로젝트 마이그레이션 런북 (Secrets 기반 전환) | DevOps |
 
 ---
 
@@ -111,7 +112,8 @@ docs/
 │   ├─ SECRET_MANAGEMENT.md       (비밀 정보 관리)
 │   ├─ GCP_LOGGING_GUIDE.md       (로깅)
 │   ├─ IAC_TERRAFORM_INTRO.md     (IaC/Terraform 개념)
-│   └─ TERRAFORM_OPERATIONS.md    (Terraform 운영)
+│   ├─ TERRAFORM_OPERATIONS.md    (Terraform 운영)
+│   └─ GCP_PROJECT_MIGRATION_RUNBOOK.md (프로젝트 마이그레이션 런북)
 │
 └─ architecture/
     ├─ INFRASTRUCTURE.md          (전체 인프라 아키텍처)
