@@ -60,7 +60,7 @@ develop → main (PR) → prod 환경 자동 배포
     │  private-db-subnet     │  (10.0.3.0/24)         │
     │                        ▼                        │
     │              Cloud SQL (finders-db)              │
-     │          MySQL 8.0 │ Private IP: <CLOUD_SQL_IP>    │
+     │          MySQL 8.0 │ Private IP: 10.68.240.3    │
     │       ┌─────────────┴─────────────┐             │
     │       │    finders (prod)         │             │
     │       │    finders_dev (dev)      │             │
@@ -198,14 +198,14 @@ GitHub Actions가 GCP에 접근할 때 서비스 계정 키 없이 인증하는 
 
 ### VPC Peering (Private Service Access)
 
-Cloud SQL은 Google이 관리하는 별도 VPC에 존재합니다. `finders-vpc`와 Google 서비스 VPC를 **PSA (Private Service Access)** 방식으로 피어링하여, 공인 IP 없이 내부 IP(`<CLOUD_SQL_IP>`)로 DB에 접근합니다.
+Cloud SQL은 Google이 관리하는 별도 VPC에 존재합니다. `finders-vpc`와 Google 서비스 VPC를 **PSA (Private Service Access)** 방식으로 피어링하여, 공인 IP 없이 내부 IP(`10.68.240.3`)로 DB에 접근합니다.
 
 | 항목 | 값 |
 |------|-----|
 | 피어링 유형 | PSA (Private Service Access) |
 | 예약 IP 대역 | `10.68.240.0/20` |
 | 연결 서비스 | `servicenetworking.googleapis.com` |
-| 대상 | Cloud SQL (`finders-db`) → Private IP `<CLOUD_SQL_IP>` |
+| 대상 | Cloud SQL (`finders-db`) → Private IP `10.68.240.3` |
 
 ### Private IP Google Access
 
@@ -266,7 +266,7 @@ gcloud compute ssh finders-server \
   --zone=asia-northeast3-a \
   --project=finders-487717 \
   --tunnel-through-iap \
-  -- -L 3307:<CLOUD_SQL_IP>:3306
+  -- -L 3307:10.68.240.3:3306
 ```
 
 ---
@@ -327,7 +327,7 @@ GitHub Actions → WIF (finders-pool/github-provider) → terraform-ci SA → GC
 | 저장용량 | 10 GB SSD |
 | 가용성 | 단일 영역 |
 | 공개 IP | 비활성화됨 |
-| Private IP | `<CLOUD_SQL_IP>` (VPC Peering — PSA) |
+| Private IP | `10.68.240.3` (VPC Peering — PSA) |
 | 포트 | 3306 |
 | 백업 | 자동 |
 
@@ -341,7 +341,7 @@ gcloud compute ssh finders-server \
   --zone=asia-northeast3-a \
   --project=finders-487717 \
   --tunnel-through-iap \
-  -- -L 3307:<CLOUD_SQL_IP>:3306
+  -- -L 3307:10.68.240.3:3306
 
 # 2. DB 클라이언트 연결
 Host: localhost

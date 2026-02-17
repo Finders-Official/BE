@@ -64,7 +64,7 @@ terraform validate            # 문법 검증
 | Region | `asia-northeast3` (Seoul) |
 | VPC | `finders-vpc` (3 subnets, 6 firewall rules) |
 | GCE | `finders-server` (e2-medium, internal IP `10.0.2.2`) |
-| Cloud SQL | `finders-db` (MySQL 8.0, private IP `<CLOUD_SQL_IP>`) |
+| Cloud SQL | `finders-db` (MySQL 8.0, private IP `10.68.240.3`) |
 | Databases | `finders_prod` (prod), `finders_dev` (dev) |
 | GCS | `finders-487717-public`, `finders-487717-private` |
 | Cloud Run | `img-resizer` |

@@ -63,7 +63,7 @@ Finders 프로젝트는 보안 강화와 중앙 집중식 관리를 위해 기�
 
 ```json
 {
-  "SPRING_DATASOURCE_URL": "jdbc:mysql://<CLOUD_SQL_IP>:3306/finders_prod",
+  "SPRING_DATASOURCE_URL": "jdbc:mysql://10.68.240.3:3306/finders_prod",
   "SPRING_DATASOURCE_USERNAME": "finders",
   "SPRING_DATASOURCE_PASSWORD": "...",
   "JWT_SECRET": "...",
