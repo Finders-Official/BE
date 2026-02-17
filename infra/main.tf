@@ -17,11 +17,12 @@ module "networking" {
 module "database" {
   source = "./modules/database"
 
-  project_id  = var.project_id
-  region      = var.region
-  zone        = var.zone
-  name_prefix = local.name_prefix
-  network_id  = module.networking.network_id
+  project_id       = var.project_id
+  region           = var.region
+  zone             = var.zone
+  name_prefix      = local.name_prefix
+  network_id       = module.networking.network_id
+  db_root_password = var.db_root_password
 }
 
 module "compute" {
@@ -40,7 +41,7 @@ module "storage" {
 
   project_id           = var.project_id
   region               = var.region
-  name_prefix          = local.name_prefix
+  name_prefix          = var.project_id # 전역 고유 GCS 버킷 이름용 (e.g. finders-487717-public)
   cors_allowed_origins = var.cors_allowed_origins
 }
 

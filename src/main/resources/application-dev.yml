@@ -30,16 +30,14 @@ jwt:
   refresh-token-expiry: 604800000  # 7일
 
 # ========================================
-# Logging (상세)
+# Logging (base와 다른 부분만 override)
 # ========================================
 logging:
   level:
-    root: INFO
-    com.finders: DEBUG
-    org.springframework.web: INFO
-    org.hibernate.SQL: DEBUG
-    org.springframework.data.redis: DEBUG
-    io.lettuce.core: DEBUG
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+    org.springframework.data.redis: WARN
+    io.lettuce.core: WARN
 
 # ========================================
 # Actuator (개발용 노출)

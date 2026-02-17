@@ -111,6 +111,8 @@ sql/local/
 *.tfstate
 *.tfstate.*
 .terraform/
+*.tfplan
+tfplan
 crash.log
 crash.*.log
 *.tfvars

@@ -25,16 +25,16 @@
 ## 로그 조회 방법
 
 ### 로그 구조
-- **Cloud Logging Logback Appender** 사용
-- **Structured JSON** 형식으로 전송 (로그 레벨 → Severity 자동 매핑)
-- **logback-spring.xml** 설정 기반
+- **Docker `gcplogs` 드라이버**를 통해 Cloud Logging으로 전송 (prod 환경만 해당)
+- **dev 환경**은 `json-file` 드라이버를 사용하여 로컬 저장 (Cloud Logging 비용 방지)
+- **logback-spring.xml** 설정 기반으로 로그 레벨 제어
 
 ### 기본 필터 사용
 
 #### 애플리케이션 로그 조회
 ```
 resource.type="gce_instance"
-logName="projects/project-37afc2aa-d3d3-4a1a-8cd/logs/gcplogs"
+logName="projects/finders-487717/logs/gcplogs"
 ```
 
 #### 에러 로그만 조회
@@ -91,10 +91,16 @@ jsonPayload.logger_name=~"com.finders.api"
 - 네트워크 트래픽
 - 디스크 I/O
 
-### 로깅 방식 변경에 따른 안내
-- 현재 docker-compose.prod.yml에 gcplogs 드라이버가 설정되어 있습니다. 
-- 이 설정이 활성화되면 서버 터미널에서 docker logs -f 명령어를 입력해도 로그가 출력되지 않습니다. 
-- 실시간 로그 확인은 반드시 GCP 로그 탐색기를 이용해 주세요.
+### 환경별 로깅 방식
+
+| 환경 | Docker 로그 드라이버 | 로그 확인 방법 |
+|------|---------------------|----------------|
+| **Prod** | `gcplogs` → Cloud Logging | GCP 로그 탐색기 (아래 필터 사용) |
+| **Dev** | `json-file` (로컬 저장) | `docker logs -f <컨테이너>` |
+| **Local** | Docker 기본 (stdout) | 터미널 콘솔 출력 |
+
+- **Prod**: `docker logs -f` 명령어가 동작하지 않습니다. 반드시 GCP 로그 탐색기를 이용해 주세요.
+- **Dev**: Cloud Logging으로 전송되지 않습니다. SSH 접속 후 `docker logs -f`로 확인하세요.
 
 ## 참고 링크
 

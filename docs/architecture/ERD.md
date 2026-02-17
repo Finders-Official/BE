@@ -176,8 +176,8 @@ CreditRelatedType:PHOTO_RESTORATION,PAYMENT  // credit_history.related_type
 
 | 버킷                | 용도                        | 접근 방식            |
 |-------------------|---------------------------|------------------|
-| `finders-public`  | 공개 이미지 (현상소, 게시글, 프로필 등)  | 직접 URL           |
-| `finders-private` | 비공개 파일 (스캔 사진, 서류, AI 복원) | Signed URL (1시간) |
+| `finders-487717-public`  | 공개 이미지 (현상소, 게시글, 프로필 등)  | 직접 URL           |
+| `finders-487717-private` | 비공개 파일 (스캔 사진, 서류, AI 복원) | Signed URL (1시간) |
 
 ### 경로 규칙
 
@@ -212,10 +212,10 @@ CreditRelatedType:PHOTO_RESTORATION,PAYMENT  // credit_history.related_type
 
 ```java
 // public 버킷: 직접 URL 반환
-"https://storage.googleapis.com/finders-public/profiles/123/abc.jpg"
+"https://storage.googleapis.com/finders-487717-public/profiles/123/abc.jpg"
 
 // private 버킷: Signed URL 반환 (1시간 유효)
-        "https://storage.googleapis.com/finders-private/temp/orders/456/scans/def.jpg?X-Goog-Signature=..."
+        "https://storage.googleapis.com/finders-487717-private/temp/orders/456/scans/def.jpg?X-Goog-Signature=..."
 ```
 
 ---

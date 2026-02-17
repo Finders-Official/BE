@@ -87,6 +87,12 @@ variable "compute_sa_email" {
   type        = string
 }
 
+variable "db_root_password" {
+  description = "Root password for Cloud SQL instance (min 8 chars, mixed complexity)"
+  type        = string
+  sensitive   = true
+}
+
 # =============================================================================
 # GCS
 # =============================================================================
