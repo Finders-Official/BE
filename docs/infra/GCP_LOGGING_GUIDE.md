@@ -34,7 +34,7 @@
 #### 애플리케이션 로그 조회
 ```
 resource.type="gce_instance"
-logName="projects/project-37afc2aa-d3d3-4a1a-8cd/logs/gcplogs"
+logName="projects/finders-487717/logs/gcplogs"
 ```
 
 #### 에러 로그만 조회

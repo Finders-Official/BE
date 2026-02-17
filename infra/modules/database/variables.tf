@@ -23,3 +23,9 @@ variable "network_id" {
   description = "VPC network ID for private IP"
   type        = string
 }
+
+variable "db_root_password" {
+  description = "Root password for Cloud SQL instance"
+  type        = string
+  sensitive   = true
+}

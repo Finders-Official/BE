@@ -68,7 +68,7 @@ GCS 이미지 저장 필드명 규칙:
 | 레이어 | 필드명 | 저장값 | 예시 |
 |--------|--------|--------|------|
 | **Entity/DB** | `objectPath` | GCS 경로 | `posts/123/abc.jpg` |
-| **Response DTO** | `imageUrl` | 전체 URL | `https://storage.googleapis.com/finders-public/posts/123/abc.jpg` |
+| **Response DTO** | `imageUrl` | 전체 URL | `https://storage.googleapis.com/finders-487717-public/posts/123/abc.jpg` |
 | **Request DTO** | `objectPath` | GCS 경로 (presigned URL 업로드 후) | `temp/456/xyz.jpg` |
 
 ```java

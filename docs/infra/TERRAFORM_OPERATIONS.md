@@ -112,10 +112,10 @@ terraform force-unlock <LOCK_ID>
 
 ```bash
 # GCS 버킷에서 이전 버전 확인
-gcloud storage ls -l gs://finders-terraform-state/terraform/state/
+gcloud storage ls -l gs://finders-487717-tf-state/terraform/state/
 
 # 이전 버전 다운로드
-gcloud storage cp gs://finders-terraform-state/terraform/state/default.tfstate#<VERSION> ./terraform.tfstate
+gcloud storage cp gs://finders-487717-tf-state/terraform/state/default.tfstate#<VERSION> ./terraform.tfstate
 
 # State 복구
 cd infra
@@ -187,9 +187,7 @@ terraform plan  # 변경사항 없어야 함 (No changes)
 **해결**:
 ```bash
 # 권한 확인
-gcloud storage buckets get-iam-policy gs://finders-terraform-state
-
-# 팀 리더에게 IAM 권한 요청
+gcloud storage buckets get-iam-policy gs://finders-487717-tf-state
 ```
 
 ### "Error: Resource already exists"

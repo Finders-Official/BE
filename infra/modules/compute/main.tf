@@ -1,5 +1,5 @@
 resource "google_compute_instance" "app_server" {
-  name                       = "${var.name_prefix}-server-v2"
+  name                       = "${var.name_prefix}-server"
   project                    = var.project_id
   zone                       = var.zone
   machine_type               = "e2-medium"
@@ -16,7 +16,7 @@ resource "google_compute_instance" "app_server" {
 
   boot_disk {
     auto_delete  = true
-    device_name  = "${var.name_prefix}-server-v2"
+    device_name  = "${var.name_prefix}-server"
     force_attach = false
     mode         = "READ_WRITE"
 

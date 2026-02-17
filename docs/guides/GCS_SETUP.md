@@ -10,8 +10,8 @@
 
 | 버킷 | 용도 | 접근 방식 |
 |------|------|----------|
-| `finders-public` | 공개 이미지 (프로필, 현상소, 게시글) | 직접 URL |
-| `finders-private` | 비공개 파일 (스캔 사진, 서류, AI 복원) | Signed URL |
+| `finders-487717-public` | 공개 이미지 (프로필, 현상소, 게시글) | 직접 URL |
+| `finders-487717-private` | 비공개 파일 (스캔 사진, 서류, AI 복원) | Signed URL |
 
 ---
 
@@ -40,7 +40,7 @@ sudo apt-get update && sudo apt-get install -y google-cloud-cli
 gcloud auth login
 
 # 2. 프로젝트 설정
-gcloud config set project project-37afc2aa-d3d3-4a1a-8cd
+gcloud config set project finders-487717
 
 # 3. ADC 설정 (GCS 접근용) - 가장 중요!
 gcloud auth application-default login
@@ -52,8 +52,8 @@ gcloud auth application-default login
 
 ```bash
 # GCS 버킷 접근 테스트
-gsutil ls gs://finders-public
-gsutil ls gs://finders-private
+gsutil ls gs://finders-487717-public
+gsutil ls gs://finders-487717-private
 ```
 
 ---
@@ -139,10 +139,10 @@ gcloud iam service-accounts add-iam-policy-binding \
 
 ```
 # Public (직접 접근)
-https://storage.googleapis.com/finders-public/profiles/123/abc.jpg
+https://storage.googleapis.com/finders-487717-public/profiles/123/abc.jpg
 
 # Private (Signed URL)
-https://storage.googleapis.com/finders-private/orders/456/scan.jpg?X-Goog-Signature=...
+https://storage.googleapis.com/finders-487717-private/orders/456/scan.jpg?X-Goog-Signature=...
 ```
 
 ---
@@ -152,9 +152,9 @@ https://storage.googleapis.com/finders-private/orders/456/scan.jpg?X-Goog-Signat
 ### 로컬 개발
 - [ ] gcloud CLI 설치 완료
 - [ ] `gcloud auth login` 실행
-- [ ] `gcloud config set project project-37afc2aa-d3d3-4a1a-8cd` 실행
+- [ ] `gcloud config set project finders-487717` 실행
 - [ ] `gcloud auth application-default login` 실행
-- [ ] `gsutil ls gs://finders-public` 접근 확인
+- [ ] `gsutil ls gs://finders-487717-public` 접근 확인
 
 ## StorageService 메서드 사용 방식
 ### 메서드 비교: generate vs get

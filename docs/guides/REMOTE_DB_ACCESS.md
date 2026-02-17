@@ -32,7 +32,7 @@ gcloud auth login
 gcloud auth application-default login
 
 # 프로젝트 설정
-gcloud config set project project-37afc2aa-d3d3-4a1a-8cd
+gcloud config set project finders-487717
 ```
 
 ### 3. IAM 권한 확인
@@ -52,9 +52,9 @@ IAP 터널 사용을 위해 다음 권한이 필요합니다:
 **터미널을 열고** 아래 명령어를 실행합니다. (접속 중에는 터미널을 닫지 마세요!)
 
 ```bash
-gcloud compute ssh finders-server-v2 \
+gcloud compute ssh finders-server \
   --zone=asia-northeast3-a \
-  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --project=finders-487717 \
   --tunnel-through-iap \
   -- -L 3307:10.68.240.3:3306
 ```
@@ -202,9 +202,9 @@ ERROR 1045 (28000): Access denied for user 'finders'@'xxx'
 터미널 창을 열어두기 싫다면 백그라운드로 실행:
 
 ```bash
-gcloud compute ssh finders-server-v2 \
+gcloud compute ssh finders-server \
   --zone=asia-northeast3-a \
-  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --project=finders-487717 \
   --tunnel-through-iap \
   -- -L 3307:10.68.240.3:3306 -N -f
 ```
@@ -223,7 +223,7 @@ kill [PID]
 자주 사용한다면 `~/.bashrc` 또는 `~/.zshrc`에 추가:
 
 ```bash
-alias finders-db='gcloud compute ssh finders-server-v2 --zone=asia-northeast3-a --project=project-37afc2aa-d3d3-4a1a-8cd --tunnel-through-iap -- -L 3307:10.68.240.3:3306'
+alias finders-db='gcloud compute ssh finders-server --zone=asia-northeast3-a --project=finders-487717 --tunnel-through-iap -- -L 3307:10.68.240.3:3306'
 ```
 
 이후 `finders-db` 명령어로 간단히 터널 열기!

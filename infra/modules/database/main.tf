@@ -3,6 +3,7 @@ resource "google_sql_database_instance" "main" {
   project          = var.project_id
   region           = var.region
   database_version = "MYSQL_8_0"
+  root_password    = var.db_root_password
 
   settings {
     tier                        = "db-g1-small"
@@ -70,7 +71,7 @@ resource "google_sql_database_instance" "main" {
 }
 
 resource "google_sql_database" "prod" {
-  name      = var.name_prefix
+  name      = "${var.name_prefix}_prod"
   instance  = google_sql_database_instance.main.name
   project   = var.project_id
   charset   = "utf8mb4"
