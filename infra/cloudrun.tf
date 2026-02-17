@@ -1,8 +1,9 @@
 resource "google_cloud_run_v2_service" "img_resizer" {
-  project  = var.project_id
-  location = var.region
-  name     = "img-resizer"
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  project             = var.project_id
+  location            = var.region
+  name                = "img-resizer"
+  ingress             = "INGRESS_TRAFFIC_ALL"
+  deletion_protection = false
 
   template {
     scaling {
@@ -56,5 +57,4 @@ resource "google_cloud_run_v2_service" "img_resizer" {
     ]
   }
 }
-
 
