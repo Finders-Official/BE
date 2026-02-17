@@ -8,7 +8,8 @@
 
     <!-- ========================================
          Console Appender
-         - Docker gcplogs 드라이버가 GCP Cloud Logging으로 전송
+         - prod: Docker gcplogs 드라이버가 GCP Cloud Logging으로 전송
+         - dev: Docker json-file 드라이버로 로컬 저장
          ======================================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

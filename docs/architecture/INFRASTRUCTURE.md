@@ -239,7 +239,7 @@ GCE 인스턴스에 외부 IP가 없으므로, Docker 이미지 pull 등 **Googl
 | VPC/서브넷 | `finders-vpc` / `private-app-subnet` |
 | 네트워크 태그 | `api-server`, `http-server`, `https-server` |
 | 서비스 계정 | `compute-sa` |
-| 로깅 | Docker `gcplogs` 드라이버 → Cloud Logging |
+| 로깅 | Prod: Docker `gcplogs` → Cloud Logging / Dev: `json-file` 로컬 저장 |
 
 ### GCE 내 Docker 컨테이너 구성
 
@@ -453,7 +453,7 @@ GCS에 업로드된 이미지를 리사이징하는 서버리스 서비스입니
 
 | 서비스 | 용도 |
 |--------|------|
-| **Cloud Logging** | Docker 컨테이너 로그 (`gcplogs` 드라이버로 자동 전송) |
+| **Cloud Logging** | Prod 컨테이너 로그 (`gcplogs` 드라이버로 자동 전송, Dev는 `json-file` 로컬 저장) |
 | **Cloud Monitoring** | 커스텀 대시보드 (Terraform 관리) |
 
 ---
