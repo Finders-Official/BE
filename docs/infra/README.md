@@ -25,9 +25,9 @@ Finders 인프라는 **전량 Terraform으로 코드화**되어 있습니다. �
 | 카테고리 | 리소스 |
 |----------|--------|
 | Networking | VPC, 3 Subnets, 6 Firewall Rules, Cloud Router, Cloud NAT, Static IP |
-| Compute | GCE (`finders-server-v2`) |
+| Compute | GCE (`finders-server`) |
 | Database | Cloud SQL (`finders-db`), 2 DBs |
-| Storage | GCS (`finders-public`, `finders-private`) |
+| Storage | GCS (`finders-487717-public`, `finders-487717-private`) |
 | Registry | Artifact Registry (`finders-docker`, `finders-image`) |
 | Serverless | Cloud Run (`img-resizer`) |
 | Security | Secret Manager (2), WIF Pool + Provider, IAM Bindings |

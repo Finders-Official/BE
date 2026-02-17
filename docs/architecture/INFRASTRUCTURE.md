@@ -39,7 +39,7 @@ develop → main (PR) → prod 환경 자동 배포
     ┌──────────────────────┼──────────────────────────┐
     │  private-app-subnet  │  (10.0.2.0/24)           │
     │                      ▼                          │
-    │              ┌─── GCE finders-server-v2 ───┐    │
+     │              ┌─── GCE finders-server ───┐    │
     │              │   (e2-medium, 10.0.2.2)     │    │
     │              │                             │    │
     │              │   cloudflared ──► Traefik   │    │
@@ -60,7 +60,7 @@ develop → main (PR) → prod 환경 자동 배포
     │  private-db-subnet     │  (10.0.3.0/24)         │
     │                        ▼                        │
     │              Cloud SQL (finders-db)              │
-    │          MySQL 8.0 │ Private IP: 10.68.240.3    │
+     │          MySQL 8.0 │ Private IP: <CLOUD_SQL_IP>    │
     │       ┌─────────────┴─────────────┐             │
     │       │    finders (prod)         │             │
     │       │    finders_dev (dev)      │             │
@@ -69,9 +69,9 @@ develop → main (PR) → prod 환경 자동 배포
 
     ┌─ GCP 관리형 서비스 (VPC 외부) ──────────────────┐
     │                                                  │
-    │  Cloud Storage          Artifact Registry        │
-    │  ├─ finders-public      ├─ finders-docker (API)  │
-    │  └─ finders-private     └─ finders-image (resizer)│
+     │  Cloud Storage          Artifact Registry        │
+     │  ├─ finders-487717-public      ├─ finders-docker (API)  │
+     │  └─ finders-487717-private     └─ finders-image (resizer)│
     │                                                  │
     │  Cloud Run              Secret Manager           │
     │  └─ img-resizer         ├─ finders-prod-config   │
@@ -92,15 +92,15 @@ develop → main (PR) → prod 환경 자동 배포
 
 | 항목 | 값 |
 |------|-----|
-| 프로젝트 | My First Project |
-| 프로젝트 ID | project-37afc2aa-d3d3-4a1a-8cd |
+| 프로젝트 | Finders |
+| 프로젝트 ID | finders-487717 |
 | 리전 | asia-northeast3 (서울) |
 
 ---
 
 ## Terraform Infrastructure (IaC)
 
-인프라를 코드로 관리(IaC)하기 위해 Terraform을 사용합니다. State는 `gs://finders-terraform-state/`에 저장됩니다.
+인프라를 코드로 관리(IaC)하기 위해 Terraform을 사용합니다. State는 `gs://finders-487717-tf-state/`에 저장됩니다.
 
 ### 모듈 구조
 
@@ -124,9 +124,9 @@ infra/
 | 카테고리 | 리소스 |
 |----------|--------|
 | **Networking** | VPC (`finders-vpc`), 3 Subnets, 6 Firewall Rules, Cloud Router, Cloud NAT, Static IP |
-| **Compute** | GCE (`finders-server-v2`) |
-| **Database** | Cloud SQL (`finders-db`), 2 Databases (`finders`, `finders_dev`) |
-| **Storage** | GCS (`finders-public`, `finders-private`) |
+| **Compute** | GCE (`finders-server`) |
+| **Database** | Cloud SQL (`finders-db`), 2 Databases (`finders_prod`, `finders_dev`) |
+| **Storage** | GCS (`finders-487717-public`, `finders-487717-private`) |
 | **Registry** | Artifact Registry (`finders-docker`, `finders-image`) |
 | **Serverless** | Cloud Run (`img-resizer`) |
 | **Security** | Secret Manager (2), WIF Pool + Provider, IAM Bindings |
@@ -168,7 +168,7 @@ GitHub Actions가 GCP에 접근할 때 서비스 계정 키 없이 인증하는 
 
 - **Pool**: `finders-pool`
 - **Provider**: `github-provider`
-- **Service Account**: `terraform-ci@project-37afc2aa-d3d3-4a1a-8cd.iam.gserviceaccount.com`
+- **Service Account**: `terraform-ci@finders-487717.iam.gserviceaccount.com`
 - **조건**: `Finders-Official/BE` 리포지토리의 GitHub Actions만 허용
 
 ---
@@ -198,14 +198,14 @@ GitHub Actions가 GCP에 접근할 때 서비스 계정 키 없이 인증하는 
 
 ### VPC Peering (Private Service Access)
 
-Cloud SQL은 Google이 관리하는 별도 VPC에 존재합니다. `finders-vpc`와 Google 서비스 VPC를 **PSA (Private Service Access)** 방식으로 피어링하여, 공인 IP 없이 내부 IP(`10.68.240.3`)로 DB에 접근합니다.
+Cloud SQL은 Google이 관리하는 별도 VPC에 존재합니다. `finders-vpc`와 Google 서비스 VPC를 **PSA (Private Service Access)** 방식으로 피어링하여, 공인 IP 없이 내부 IP(`<CLOUD_SQL_IP>`)로 DB에 접근합니다.
 
 | 항목 | 값 |
 |------|-----|
 | 피어링 유형 | PSA (Private Service Access) |
 | 예약 IP 대역 | `10.68.240.0/20` |
 | 연결 서비스 | `servicenetworking.googleapis.com` |
-| 대상 | Cloud SQL (`finders-db`) → Private IP `10.68.240.3` |
+| 대상 | Cloud SQL (`finders-db`) → Private IP `<CLOUD_SQL_IP>` |
 
 ### Private IP Google Access
 
@@ -229,7 +229,7 @@ GCE 인스턴스에 외부 IP가 없으므로, Docker 이미지 pull 등 **Googl
 
 | 항목 | 값 |
 |------|-----|
-| 인스턴스 이름 | `finders-server-v2` |
+| 인스턴스 이름 | `finders-server` |
 | 머신 유형 | e2-medium |
 | vCPU / RAM | 2 vCPU / 4 GB |
 | 부팅 디스크 | Ubuntu 22.04 LTS, 20GB |
@@ -262,10 +262,11 @@ GCE 인스턴스에 외부 IP가 없으므로, Docker 이미지 pull 등 **Googl
 ### SSH 접속 방법
 
 ```bash
-gcloud compute ssh finders-server-v2 \
+gcloud compute ssh finders-server \
   --zone=asia-northeast3-a \
-  --project=project-37afc2aa-d3d3-4a1a-8cd \
-  --tunnel-through-iap
+  --project=finders-487717 \
+  --tunnel-through-iap \
+  -- -L 3307:<CLOUD_SQL_IP>:3306
 ```
 
 ---
@@ -326,7 +327,7 @@ GitHub Actions → WIF (finders-pool/github-provider) → terraform-ci SA → GC
 | 저장용량 | 10 GB SSD |
 | 가용성 | 단일 영역 |
 | 공개 IP | 비활성화됨 |
-| Private IP | `10.68.240.3` (VPC Peering — PSA) |
+| Private IP | `<CLOUD_SQL_IP>` (VPC Peering — PSA) |
 | 포트 | 3306 |
 | 백업 | 자동 |
 
@@ -336,16 +337,16 @@ Cloud SQL에 공개 IP가 없으므로 IAP 터널을 통해서만 접속 가능�
 
 ```bash
 # 1. 터널 열기 (로컬 3307 → Cloud SQL 3306)
-gcloud compute ssh finders-server-v2 \
+gcloud compute ssh finders-server \
   --zone=asia-northeast3-a \
-  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --project=finders-487717 \
   --tunnel-through-iap \
-  -- -L 3307:10.68.240.3:3306
+  -- -L 3307:<CLOUD_SQL_IP>:3306
 
 # 2. DB 클라이언트 연결
 Host: localhost
 Port: 3307
-Database: finders_dev (또는 finders)
+Database: finders_dev (또는 finders_prod)
 User: finders
 Password: [Secret Manager 참조]
 ```
@@ -370,8 +371,8 @@ Password: [Secret Manager 참조]
 
 | 버킷 | 용도 | 접근 방식 |
 |------|------|----------|
-| `finders-public` | 공개 이미지 (프로필, 현상소, 게시글) | 직접 URL (`allUsers:objectViewer`) |
-| `finders-private` | 비공개 파일 (스캔 사진, 서류, AI 복원) | Signed URL |
+| `finders-487717-public` | 공개 이미지 (프로필, 현상소, 게시글) | 직접 URL (`allUsers:objectViewer`) |
+| `finders-487717-private` | 비공개 파일 (스캔 사진, 서류, AI 복원) | Signed URL |
 
 ### 공통 설정
 

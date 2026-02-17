@@ -70,7 +70,7 @@ resource "google_sql_database_instance" "main" {
 }
 
 resource "google_sql_database" "prod" {
-  name      = var.name_prefix
+  name      = "${var.name_prefix}_prod"
   instance  = google_sql_database_instance.main.name
   project   = var.project_id
   charset   = "utf8mb4"

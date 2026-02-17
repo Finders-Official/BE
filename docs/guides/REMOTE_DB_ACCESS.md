@@ -8,7 +8,7 @@ Cloud SQL의 공개 IP가 비활성화되어 있어 **IAP 터널**을 통해서�
 
 ```
 [로컬 PC] → [IAP 터널] → [GCE 서버] → [Cloud SQL]
-localhost:3307 → 암호화된 터널 → 10.0.2.2 → 10.68.240.3:3306
+localhost:3307 → 암호화된 터널 → 10.0.2.2 → <CLOUD_SQL_IP>:3306
 ```
 
 ## 사전 준비
@@ -32,7 +32,7 @@ gcloud auth login
 gcloud auth application-default login
 
 # 프로젝트 설정
-gcloud config set project project-37afc2aa-d3d3-4a1a-8cd
+gcloud config set project finders-487717
 ```
 
 ### 3. IAM 권한 확인
@@ -52,11 +52,11 @@ IAP 터널 사용을 위해 다음 권한이 필요합니다:
 **터미널을 열고** 아래 명령어를 실행합니다. (접속 중에는 터미널을 닫지 마세요!)
 
 ```bash
-gcloud compute ssh finders-server-v2 \
+gcloud compute ssh finders-server \
   --zone=asia-northeast3-a \
-  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --project=finders-487717 \
   --tunnel-through-iap \
-  -- -L 3307:10.68.240.3:3306
+  -- -L 3307:<CLOUD_SQL_IP>:3306
 ```
 
 > **보안 안내**: 위 명령어에 포함된 정보(Project ID, Private IP 등)는 공개되어도 보안 위협이 없습니다.
@@ -202,11 +202,11 @@ ERROR 1045 (28000): Access denied for user 'finders'@'xxx'
 터미널 창을 열어두기 싫다면 백그라운드로 실행:
 
 ```bash
-gcloud compute ssh finders-server-v2 \
+gcloud compute ssh finders-server \
   --zone=asia-northeast3-a \
-  --project=project-37afc2aa-d3d3-4a1a-8cd \
+  --project=finders-487717 \
   --tunnel-through-iap \
-  -- -L 3307:10.68.240.3:3306 -N -f
+  -- -L 3307:<CLOUD_SQL_IP>:3306 -N -f
 ```
 
 종료하려면:
@@ -223,7 +223,7 @@ kill [PID]
 자주 사용한다면 `~/.bashrc` 또는 `~/.zshrc`에 추가:
 
 ```bash
-alias finders-db='gcloud compute ssh finders-server-v2 --zone=asia-northeast3-a --project=project-37afc2aa-d3d3-4a1a-8cd --tunnel-through-iap -- -L 3307:10.68.240.3:3306'
+alias finders-db='gcloud compute ssh finders-server --zone=asia-northeast3-a --project=finders-487717 --tunnel-through-iap -- -L 3307:<CLOUD_SQL_IP>:3306'
 ```
 
 이후 `finders-db` 명령어로 간단히 터널 열기!

@@ -60,17 +60,17 @@ terraform validate            # 문법 검증
 
 | 항목 | 값 |
 |------|-----|
-| GCP Project ID | `project-37afc2aa-d3d3-4a1a-8cd` |
+| GCP Project ID | `finders-487717` |
 | Region | `asia-northeast3` (Seoul) |
 | VPC | `finders-vpc` (3 subnets, 6 firewall rules) |
-| GCE | `finders-server-v2` (e2-medium, internal IP `10.0.2.2`) |
-| Cloud SQL | `finders-db` (MySQL 8.0, private IP `10.68.240.3`) |
-| Databases | `finders` (prod), `finders_dev` (dev) |
-| GCS | `finders-public`, `finders-private` |
+| GCE | `finders-server` (e2-medium, internal IP `10.0.2.2`) |
+| Cloud SQL | `finders-db` (MySQL 8.0, private IP `<CLOUD_SQL_IP>`) |
+| Databases | `finders_prod` (prod), `finders_dev` (dev) |
+| GCS | `finders-487717-public`, `finders-487717-private` |
 | Cloud Run | `img-resizer` |
 | Artifact Registry | `finders-docker` (API), `finders-image` (resizer) |
 | Secret Manager | `finders-prod-config`, `finders-dev-config` (JSON) |
-| Terraform State | `gs://finders-terraform-state/` |
+| Terraform State | `gs://finders-487717-tf-state/` |
 | Domains | `api.finders.it.kr` (prod), `dev-api.finders.it.kr` (dev) |
 
 ## Architecture

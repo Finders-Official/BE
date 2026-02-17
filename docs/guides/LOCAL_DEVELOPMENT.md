@@ -18,7 +18,7 @@ gcloud --version
 gcloud auth login
 
 # 프로젝트 설정
-gcloud config set project project-37afc2aa-d3d3-4a1a-8cd
+gcloud config set project finders-487717
 ```
 
 ## 3. 서비스 계정 Impersonation 설정
@@ -84,7 +84,7 @@ http://localhost:8080/swagger-ui.html 접속 → **[TEST] Storage** 섹션
 ## 주의사항
 
 - Impersonation 인증은 **1시간 후 만료**됩니다. 만료 시 3번 단계를 다시 실행하세요.
-- 테스트 시 실제 GCS 버킷(`finders-private`, `finders-public`)에 접근합니다.
+- 테스트 시 실제 GCS 버킷(`finders-487717-private`, `finders-487717-public`)에 접근합니다.
 - 테스트 파일은 `temp/` 경로에 업로드하면 30일 후 자동 삭제됩니다.
 - `[TEST] Storage` API는 **local 프로필에서만** 활성화됩니다.
 
