@@ -34,7 +34,7 @@ spring:
     open-in-view: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         default_batch_fetch_size: 100
 
   # ========================================
@@ -183,7 +183,7 @@ discord:
 logging:
   level:
     root: INFO
-    com.finders: DEBUG
+    com.finders: INFO
 
 # ========================================
 # CORS 설정

@@ -56,9 +56,10 @@ services:
       - "traefik.http.routers.dev.rule=Host(`dev-api.finders.it.kr`)"
       - "traefik.http.services.dev.loadbalancer.server.port=8080"
     logging:
-      driver: "gcplogs"
+      driver: "json-file"
       options:
-        labels: "app=finders-dev-api,env=dev,slot=blue"
+        max-size: "10m"
+        max-file: "3"
     profiles:
       - blue
     networks:
@@ -91,9 +92,10 @@ services:
       - "traefik.http.routers.dev.rule=Host(`dev-api.finders.it.kr`)"
       - "traefik.http.services.dev.loadbalancer.server.port=8080"
     logging:
-      driver: "gcplogs"
+      driver: "json-file"
       options:
-        labels: "app=finders-dev-api,env=dev,slot=green"
+        max-size: "10m"
+        max-file: "3"
     profiles:
       - green
     networks:
