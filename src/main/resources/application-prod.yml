@@ -30,6 +30,7 @@ logging:
     root: WARN
     com.finders: INFO
     org.springframework.web: WARN
+    org.hibernate: WARN
 
 # ========================================
 # Actuator (제한적 노출)

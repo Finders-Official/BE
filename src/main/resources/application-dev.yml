@@ -30,13 +30,10 @@ jwt:
   refresh-token-expiry: 604800000  # 7일
 
 # ========================================
-# Logging (비용 절감 - Cloud Logging 과금 방지)
+# Logging (base와 다른 부분만 override)
 # ========================================
 logging:
   level:
-    root: INFO
-    com.finders: DEBUG
-    org.springframework.web: INFO
     org.hibernate.SQL: WARN
     org.hibernate.orm.jdbc.bind: WARN
     org.springframework.data.redis: WARN

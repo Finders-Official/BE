@@ -18,19 +18,18 @@
     </appender>
 
     <!-- ========================================
-         로컬 프로필: 콘솔 출력 (상세)
+         로컬 프로필
+         로그 레벨은 application-local.yml에서 관리
          ======================================== -->
     <springProfile name="local">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.finders" level="DEBUG"/>
-        <logger name="org.hibernate.SQL" level="DEBUG"/>
-        <logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
     </springProfile>
 
     <!-- ========================================
-         테스트 프로필: 콘솔 출력 (간소화)
+         테스트 프로필
+         test 전용 application.yml에 logging 설정이 없으므로 여기서 관리
          ======================================== -->
     <springProfile name="test">
         <root level="WARN">
@@ -40,33 +39,23 @@
     </springProfile>
 
     <!-- ========================================
-         개발 프로필: 콘솔 출력 (간소화)
-         - Docker 로그 드라이버를 통해 로그 수집
-         - Cloud Logging 비용 절감을 위해 DEBUG 로그 제거
+         개발 프로필
+         로그 레벨은 application-dev.yml에서 관리
          ======================================== -->
     <springProfile name="dev">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.finders" level="DEBUG"/>
-        <logger name="org.springframework.web" level="INFO"/>
-        <logger name="org.hibernate.SQL" level="WARN"/>
-        <logger name="org.hibernate.orm.jdbc.bind" level="WARN"/>
-        <logger name="org.springframework.data.redis" level="WARN"/>
-        <logger name="io.lettuce.core" level="WARN"/>
     </springProfile>
 
     <!-- ========================================
-         운영 프로필: 콘솔 출력 (최소화)
-         - Docker gcplogs가 GCP Cloud Logging으로 전송
+         운영 프로필
+         로그 레벨은 application-prod.yml에서 관리
          ======================================== -->
     <springProfile name="prod">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.finders" level="INFO"/>
-        <logger name="org.springframework.web" level="WARN"/>
-        <logger name="org.hibernate" level="WARN"/>
     </springProfile>
 
 </configuration>
